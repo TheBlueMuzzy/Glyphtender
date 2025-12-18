@@ -101,7 +101,7 @@ namespace Glyphtender.Core
         private readonly HashSet<HexCoord> _validHexes;
 
         // Board dimensions (13 columns x variable rows = 92 hexes)
-        public const int Columns = 13;
+        public const int Columns = 11;
 
         public Board()
         {
@@ -111,27 +111,21 @@ namespace Glyphtender.Core
 
         private void InitializeBoard()
         {
-            // Build the 92-hex board shape
-            // Column heights: 6,7,8,7,8,7,8,7,8,7,8,7,6
-            int[] columnHeights = { 6, 7, 8, 7, 8, 7, 8, 7, 8, 7, 8, 7, 6 };
+            // Column heights: 5,8,9,10,9,10,9,10,9,8,5
+            // StartRows: where each column begins (row 0 = bottom)
+            int[] columnHeights = { 5, 8, 9, 10, 9, 10, 9, 10, 9, 8, 5 };
+            int[] startRows = { 3, 1, 1, 0, 1, 0, 1, 0, 1, 1, 3 };
 
-            for (int q = 0; q < Columns; q++)
+            for (int col = 0; col < Columns; col++)
             {
-                int height = columnHeights[q];
-                int rStart = GetColumnStartR(q);
+                int height = columnHeights[col];
+                int rStart = startRows[col];
 
-                for (int r = rStart; r < rStart + height; r++)
+                for (int row = 0; row < height; row++)
                 {
-                    _validHexes.Add(new HexCoord(q, r));
+                    _validHexes.Add(new HexCoord(col, rStart + row));
                 }
             }
-        }
-
-        private int GetColumnStartR(int q)
-        {
-            // Offset pattern for flat-top hex grid
-            // Even columns start higher, odd columns start lower
-            return -q / 2;
         }
 
         public bool IsValidHex(HexCoord coord)

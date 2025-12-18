@@ -9,7 +9,7 @@ namespace Glyphtender.Core
     /// </summary>
     public static class GameRules
     {
-        public const int HandSize = 7;
+        public const int HandSize = 8;
         public const int GlyphlingsPerPlayer = 2;
 
         // Standard letter distribution (120 tiles total, Qu as single tile)
@@ -22,17 +22,19 @@ namespace Glyphtender.Core
             {'Y', 2}, {'Z', 1}
         };
 
-        // Starting positions (Config A)
+        // Starting positions
+        // Yellow: C4-8 and C8-3
+        // Blue: C4-3 and C8-8
         public static readonly HexCoord[] YellowStartPositions =
         {
-            new HexCoord(3, -1),
-            new HexCoord(9, -4)
+            new HexCoord(3, 7),   // C4-8
+            new HexCoord(7, 2)    // C8-3
         };
 
         public static readonly HexCoord[] BlueStartPositions =
         {
-            new HexCoord(9, -1),
-            new HexCoord(3, -4)
+            new HexCoord(3, 2),   // C4-3
+            new HexCoord(7, 7)    // C8-8
         };
 
         /// <summary>

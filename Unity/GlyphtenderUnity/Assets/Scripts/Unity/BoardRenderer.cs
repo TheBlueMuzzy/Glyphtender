@@ -10,6 +10,7 @@ namespace Glyphtender.Unity
     public class BoardRenderer : MonoBehaviour
     {
         [Header("Prefabs")]
+        [Header("Prefabs")]
         public GameObject hexPrefab;
         public GameObject tilePrefab;
         public GameObject glyphlingPrefab;
@@ -47,6 +48,12 @@ namespace Glyphtender.Unity
 
         private void Start()
         {
+            // Delay initialization to ensure GameManager is ready
+            Invoke("Initialize", 0.1f);
+        }
+
+        private void Initialize()
+        {
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnGameStateChanged += RefreshBoard;
@@ -55,6 +62,12 @@ namespace Glyphtender.Unity
                 // Initial render
                 CreateBoard();
                 RefreshBoard();
+
+                Debug.Log("BoardRenderer initialized.");
+            }
+            else
+            {
+                Debug.LogError("GameManager.Instance is null!");
             }
         }
 
@@ -72,9 +85,13 @@ namespace Glyphtender.Unity
         /// </summary>
         public Vector3 HexToWorld(HexCoord hex)
         {
-            // Flat-top hex layout
-            float x = hexSize * (3f / 2f * hex.Q);
-            float z = hexSize * (Mathf.Sqrt(3f) / 2f * hex.Q + Mathf.Sqrt(3f) * hex.R);
+            // Flat-top hex layout with independent columns
+            float x = hexSize * 1.5f * hex.Q;
+
+            // Offset odd columns by half a hex height
+            float zOffset = (hex.Q % 2 == 1) ? hexSize * Mathf.Sqrt(3f) / 2f : 0f;
+            float z = hexSize * Mathf.Sqrt(3f) * hex.R + zOffset;
+
             return new Vector3(x, 0f, z);
         }
 
