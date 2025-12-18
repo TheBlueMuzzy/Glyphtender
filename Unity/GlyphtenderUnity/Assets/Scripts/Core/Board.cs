@@ -1,0 +1,180 @@
+using System;
+using System.Collections.Generic;
+
+namespace Glyphtender.Core
+{
+    /// <summary>
+    /// Axial coordinate for flat-top hexagonal grid.
+    /// Uses (q, r) axial coordinates where q is column, r is row.
+    /// </summary>
+    public struct HexCoord : IEquatable<HexCoord>
+    {
+        public readonly int Q;
+        public readonly int R;
+
+        public HexCoord(int q, int r)
+        {
+            Q = q;
+            R = r;
+        }
+
+        // Cube coordinate S (derived from q and r)
+        public int S => -Q - R;
+
+        // Six directions for flat-top hex (clockwise from right)
+        public static readonly HexCoord[] Directions = new HexCoord[]
+        {
+            new HexCoord(1, 0),   // East
+            new HexCoord(1, -1),  // Northeast
+            new HexCoord(0, -1),  // Northwest
+            new HexCoord(-1, 0),  // West
+            new HexCoord(-1, 1),  // Southwest
+            new HexCoord(0, 1)    // Southeast
+        };
+
+        public HexCoord GetNeighbor(int direction)
+        {
+            var dir = Directions[direction % 6];
+            return new HexCoord(Q + dir.Q, R + dir.R);
+        }
+
+        public IEnumerable<HexCoord> GetAllNeighbors()
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                yield return GetNeighbor(i);
+            }
+        }
+
+        public int DistanceTo(HexCoord other)
+        {
+            return (Math.Abs(Q - other.Q) + Math.Abs(R - other.R) + Math.Abs(S - other.S)) / 2;
+        }
+
+        public static HexCoord operator +(HexCoord a, HexCoord b)
+        {
+            return new HexCoord(a.Q + b.Q, a.R + b.R);
+        }
+
+        public static HexCoord operator -(HexCoord a, HexCoord b)
+        {
+            return new HexCoord(a.Q - b.Q, a.R - b.R);
+        }
+
+        public static bool operator ==(HexCoord a, HexCoord b)
+        {
+            return a.Q == b.Q && a.R == b.R;
+        }
+
+        public static bool operator !=(HexCoord a, HexCoord b)
+        {
+            return !(a == b);
+        }
+
+        public bool Equals(HexCoord other)
+        {
+            return Q == other.Q && R == other.R;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is HexCoord other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Q, R);
+        }
+
+        public override string ToString()
+        {
+            return $"({Q}, {R})";
+        }
+    }
+
+    /// <summary>
+    /// The 92-hex game board with flat-top hexagonal grid.
+    /// Handles board shape, valid positions, and leyline detection.
+    /// </summary>
+    public class Board
+    {
+        private readonly HashSet<HexCoord> _validHexes;
+
+        // Board dimensions (13 columns x variable rows = 92 hexes)
+        public const int Columns = 13;
+
+        public Board()
+        {
+            _validHexes = new HashSet<HexCoord>();
+            InitializeBoard();
+        }
+
+        private void InitializeBoard()
+        {
+            // Build the 92-hex board shape
+            // Column heights: 6,7,8,7,8,7,8,7,8,7,8,7,6
+            int[] columnHeights = { 6, 7, 8, 7, 8, 7, 8, 7, 8, 7, 8, 7, 6 };
+
+            for (int q = 0; q < Columns; q++)
+            {
+                int height = columnHeights[q];
+                int rStart = GetColumnStartR(q);
+
+                for (int r = rStart; r < rStart + height; r++)
+                {
+                    _validHexes.Add(new HexCoord(q, r));
+                }
+            }
+        }
+
+        private int GetColumnStartR(int q)
+        {
+            // Offset pattern for flat-top hex grid
+            // Even columns start higher, odd columns start lower
+            return -q / 2;
+        }
+
+        public bool IsValidHex(HexCoord coord)
+        {
+            return _validHexes.Contains(coord);
+        }
+
+        public IEnumerable<HexCoord> GetAllHexes()
+        {
+            return _validHexes;
+        }
+
+        public int HexCount => _validHexes.Count;
+
+        /// <summary>
+        /// Gets valid neighbors (only those within board bounds).
+        /// </summary>
+        public IEnumerable<HexCoord> GetValidNeighbors(HexCoord coord)
+        {
+            foreach (var neighbor in coord.GetAllNeighbors())
+            {
+                if (IsValidHex(neighbor))
+                {
+                    yield return neighbor;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets all hexes in a straight line (leyline) from start in given direction.
+        /// </summary>
+        public List<HexCoord> GetLeyline(HexCoord start, int direction)
+        {
+            var result = new List<HexCoord>();
+            var current = start.GetNeighbor(direction);
+
+            while (IsValidHex(current))
+            {
+                result.Add(current);
+                current = current.GetNeighbor(direction);
+            }
+
+            return result;
+        }
+    }
+}
