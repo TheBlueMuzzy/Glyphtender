@@ -1,0 +1,42 @@
+
+=== Journal Entry 2025-12-14T22:55:18.502523+00:00 ===
+2025-12-14-22-55-17-glyphtender-python-prototype.txt
+[Complete Python prototype development for The Glyphtender's Trial board game. Includes hex grid implementation, game rules, word scoring, AI opponents, and full playable system. Contains coordinate system design, movement/casting logic, dictionary integration, and test results.]
+
+
+
+
+=== Journal Entry 2025-12-15T03:16:25.225414+00:00 ===
+2025-12-15-03-16-24-glyphtender-ai-personality-design.txt
+[AI personality system design for The Glyphtender's Trial board game. Includes fuzzy knowledge systems, trait-based decision making, letter distribution updates, and Qu tile implementation. Contains strategic analysis, personality trait definitions, and Phase 1 completion (letter distribution + Qu handling).]
+
+
+
+
+=== Journal Entry 2025-12-15T04:09:36.676425+00:00 ===
+2025-12-15-04-09-35-glyphtender-ai-zone-detection-design.txt
+[AI personality system implementation for The Glyphtender's Trial board game. Includes fuzzy perception, opponent word detection, personality traits, and discussion of territorial zone detection mechanics. Contains complete Python implementations and testing results.]
+
+
+
+
+=== Journal Entry 2025-12-18T00:00:26.820883+00:00 ===
+2025-12-18-00-00-25-glyphtender-zone-detection-lookahead-plan.txt
+[Continuation of AI personality system implementation. Covers Glyphling-as-blocker mechanics fix, zone detection system completion, and multi-turn lookahead planning. Contains Python implementations, testing results, and phased architecture design.]
+
+
+
+
+=== Journal Entry 2025-12-18T00:01:17.831031+00:00 ===
+2025-12-18-00-01-17-unity-project-setup-github-integration.txt
+[Unity project initialization session. Covers GitHub repository setup, architecture document review, Unity Hub installation, and initial project folder structure creation. Contains step-by-step beginner instructions for Git workflow and Unity project configuration.]
+
+
+
+
+=== Journal Entry 2025-12-18T05:08:04.859256+00:00 ===
+2025-12-18-05-08-03-unity-gitignore-setup.txt
+[Unity project Git configuration session. Covers initial commit attempt, line ending warnings (LF to CRLF), permission denied error on Temp folder, and instructions for creating .gitignore file to exclude Unity-generated folders from version control.]
+
+
+
