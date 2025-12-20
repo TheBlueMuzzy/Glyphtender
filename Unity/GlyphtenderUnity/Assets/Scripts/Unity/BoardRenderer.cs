@@ -27,12 +27,19 @@ namespace Glyphtender.Unity
 
         [Header("Animation")]
         public float moveDuration = 0.5f;
-        public float resetDuration = 0.1f;
+        public float resetDuration = 0.05f;
+        public float tileCastDuration = 0.3f;
+        public float tileResetDuration = 0.1f;
 
         private Dictionary<Glyphling, Vector3> _glyphlingTargets;
         private Dictionary<Glyphling, Vector3> _glyphlingStarts;
         private Dictionary<Glyphling, float> _glyphlingLerpTime;
         private Dictionary<Glyphling, float> _glyphlingLerpDuration;
+
+        private Dictionary<HexCoord, Vector3> _tileTargets;
+        private Dictionary<HexCoord, Vector3> _tileStarts;
+        private Dictionary<HexCoord, float> _tileLerpTime;
+        private Dictionary<HexCoord, float> _tileLerpDuration;
 
         // Rendered objects
         private Dictionary<HexCoord, GameObject> _hexObjects;
@@ -53,6 +60,11 @@ namespace Glyphtender.Unity
             _glyphlingStarts = new Dictionary<Glyphling, Vector3>();
             _glyphlingLerpTime = new Dictionary<Glyphling, float>();
             _glyphlingLerpDuration = new Dictionary<Glyphling, float>();
+
+            _tileTargets = new Dictionary<HexCoord, Vector3>();
+            _tileStarts = new Dictionary<HexCoord, Vector3>();
+            _tileLerpTime = new Dictionary<HexCoord, float>();
+            _tileLerpDuration = new Dictionary<HexCoord, float>();
 
             // Flat-top hex dimensions
             _hexWidth = hexSize * 2f;
@@ -77,6 +89,33 @@ namespace Glyphtender.Unity
 
                     Vector3 start = _glyphlingStarts.TryGetValue(glyphling, out Vector3 s) ? s : obj.transform.position;
                     obj.transform.position = Vector3.Lerp(start, target, t);
+                }
+            }
+
+            // Lerp tiles toward their targets
+            foreach (var coord in new List<HexCoord>(_tileTargets.Keys))
+            {
+                if (_tileObjects.TryGetValue(coord, out GameObject tileObj))
+                {
+                    _tileLerpTime[coord] += Time.deltaTime;
+                    float duration = _tileLerpDuration.TryGetValue(coord, out float d) ? d : tileCastDuration;
+                    float t = Mathf.Clamp01(_tileLerpTime[coord] / duration);
+
+                    // Smooth step for nicer easing
+                    t = t * t * (3f - 2f * t);
+
+                    Vector3 start = _tileStarts[coord];
+                    Vector3 target = _tileTargets[coord];
+                    tileObj.transform.position = Vector3.Lerp(start, target, t);
+
+                    // Remove from tracking when done
+                    if (t >= 1f)
+                    {
+                        _tileTargets.Remove(coord);
+                        _tileStarts.Remove(coord);
+                        _tileLerpTime.Remove(coord);
+                        _tileLerpDuration.Remove(coord);
+                    }
                 }
             }
         }
@@ -259,16 +298,24 @@ namespace Glyphtender.Unity
         {
             GameObject tileObj;
 
+            // Get the starting position (from the glyphling that cast it)
+            Vector3 startPos = HexToWorld(coord) + Vector3.up * 0.15f; // Default
+            if (GameManager.Instance.LastCastOrigin != null)
+            {
+                startPos = HexToWorld(GameManager.Instance.LastCastOrigin.Value) + Vector3.up * 0.3f;
+            }
+
+            Vector3 targetPos = HexToWorld(coord) + Vector3.up * 0.15f;
+
             if (tilePrefab != null)
             {
-                tileObj = Instantiate(tilePrefab, HexToWorld(coord) + Vector3.up * 0.15f,
-                    Quaternion.identity, transform);
+                tileObj = Instantiate(tilePrefab, startPos, Quaternion.identity, transform);
             }
             else
             {
                 // Simple placeholder cube
                 tileObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                tileObj.transform.position = HexToWorld(coord) + Vector3.up * 0.15f;
+                tileObj.transform.position = startPos;
                 tileObj.transform.localScale = new Vector3(hexSize * 0.6f, 0.2f, hexSize * 0.6f);
                 tileObj.transform.SetParent(transform);
 
@@ -282,9 +329,12 @@ namespace Glyphtender.Unity
 
             tileObj.name = $"Tile_{tile.Letter}_{coord.Q}_{coord.R}";
 
-            // TODO: Add TextMesh for letter display
-
             _tileObjects[coord] = tileObj;
+
+            // Set up lerp animation
+            _tileStarts[coord] = startPos;
+            _tileTargets[coord] = targetPos;
+            _tileLerpTime[coord] = 0f;
         }
 
         private void RefreshGlyphlings()

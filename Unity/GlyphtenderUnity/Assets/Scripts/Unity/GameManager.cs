@@ -22,6 +22,7 @@ namespace Glyphtender.Unity
         public HexCoord? PendingCastPosition { get; private set; }
         private HexCoord? _originalPosition;
         public bool IsResetting { get; set; }
+        public HexCoord? LastCastOrigin { get; private set; }
         public char? PendingLetter { get; private set; }
 
         // Valid moves/casts for current selection
@@ -172,6 +173,9 @@ namespace Glyphtender.Unity
 
             PendingCastPosition = castPosition;
             ValidCasts.Clear();
+
+            // Store where the cast originates from (for animation)
+            LastCastOrigin = SelectedGlyphling.Position;
 
             // Auto-select a random letter from hand
             var hand = GameState.Hands[GameState.CurrentPlayer];
