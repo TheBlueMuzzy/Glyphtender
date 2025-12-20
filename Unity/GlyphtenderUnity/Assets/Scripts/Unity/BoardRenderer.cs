@@ -10,7 +10,6 @@ namespace Glyphtender.Unity
     public class BoardRenderer : MonoBehaviour
     {
         [Header("Prefabs")]
-        [Header("Prefabs")]
         public GameObject hexPrefab;
         public GameObject tilePrefab;
         public GameObject glyphlingPrefab;
@@ -25,6 +24,15 @@ namespace Glyphtender.Unity
 
         [Header("Settings")]
         public float hexSize = 1f;
+
+        [Header("Animation")]
+        public float moveDuration = 0.5f;
+        public float resetDuration = 0.1f;
+
+        private Dictionary<Glyphling, Vector3> _glyphlingTargets;
+        private Dictionary<Glyphling, Vector3> _glyphlingStarts;
+        private Dictionary<Glyphling, float> _glyphlingLerpTime;
+        private Dictionary<Glyphling, float> _glyphlingLerpDuration;
 
         // Rendered objects
         private Dictionary<HexCoord, GameObject> _hexObjects;
@@ -41,9 +49,36 @@ namespace Glyphtender.Unity
             _tileObjects = new Dictionary<HexCoord, GameObject>();
             _glyphlingObjects = new Dictionary<Glyphling, GameObject>();
 
+            _glyphlingTargets = new Dictionary<Glyphling, Vector3>();
+            _glyphlingStarts = new Dictionary<Glyphling, Vector3>();
+            _glyphlingLerpTime = new Dictionary<Glyphling, float>();
+            _glyphlingLerpDuration = new Dictionary<Glyphling, float>();
+
             // Flat-top hex dimensions
             _hexWidth = hexSize * 2f;
             _hexHeight = hexSize * Mathf.Sqrt(3f);
+        }
+
+        private void Update()
+        {
+            // Lerp glyphlings toward their targets
+            foreach (var glyphling in _glyphlingObjects.Keys)
+            {
+                if (_glyphlingTargets.TryGetValue(glyphling, out Vector3 target))
+                {
+                    var obj = _glyphlingObjects[glyphling];
+                    _glyphlingLerpTime[glyphling] += Time.deltaTime;
+
+                    float duration = _glyphlingLerpDuration.TryGetValue(glyphling, out float d) ? d : moveDuration;
+                    float t = Mathf.Clamp01(_glyphlingLerpTime[glyphling] / duration);
+
+                    // Smooth step for nicer easing
+                    t = t * t * (3f - 2f * t);
+
+                    Vector3 start = _glyphlingStarts.TryGetValue(glyphling, out Vector3 s) ? s : obj.transform.position;
+                    obj.transform.position = Vector3.Lerp(start, target, t);
+                }
+            }
         }
 
         private void Start()
@@ -256,7 +291,6 @@ namespace Glyphtender.Unity
         {
             var state = GameManager.Instance.GameState;
 
-            // Create glyphling objects if needed
             foreach (var glyphling in state.Glyphlings)
             {
                 if (!_glyphlingObjects.ContainsKey(glyphling))
@@ -264,9 +298,19 @@ namespace Glyphtender.Unity
                     CreateGlyphling(glyphling);
                 }
 
-                // Update position
                 var obj = _glyphlingObjects[glyphling];
-                obj.transform.position = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
+                Vector3 targetPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
+
+                // Check if position changed
+                if (!_glyphlingTargets.ContainsKey(glyphling) || _glyphlingTargets[glyphling] != targetPos)
+                {
+                    _glyphlingStarts[glyphling] = obj.transform.position;
+                    _glyphlingTargets[glyphling] = targetPos;
+                    _glyphlingLerpTime[glyphling] = 0f;
+
+                    // Use fast duration for reset (snap back), normal for moves
+                    _glyphlingLerpDuration[glyphling] = GameManager.Instance.IsResetting ? resetDuration : moveDuration;
+                }
             }
         }
 

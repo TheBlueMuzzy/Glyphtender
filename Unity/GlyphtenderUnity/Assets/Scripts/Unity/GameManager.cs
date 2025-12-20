@@ -21,6 +21,7 @@ namespace Glyphtender.Unity
         public HexCoord? PendingDestination { get; private set; }
         public HexCoord? PendingCastPosition { get; private set; }
         private HexCoord? _originalPosition;
+        public bool IsResetting { get; set; }
         public char? PendingLetter { get; private set; }
 
         // Valid moves/casts for current selection
@@ -278,6 +279,8 @@ namespace Glyphtender.Unity
         /// </summary>
         public void ResetMove()
         {
+            IsResetting = true;
+
             if (SelectedGlyphling != null && _originalPosition != null)
             {
                 SelectedGlyphling.Position = _originalPosition.Value;
@@ -288,6 +291,8 @@ namespace Glyphtender.Unity
             ClearSelection();
             OnSelectionChanged?.Invoke();
             OnGameStateChanged?.Invoke();
+
+            IsResetting = false;
         }
 
         private void ClearSelection()
