@@ -21,20 +21,32 @@ namespace Glyphtender.Core
         // Cube coordinate S (derived from q and r)
         public int S => -Q - R;
 
-        // Six directions for flat-top hex (clockwise from right)
-        public static readonly HexCoord[] Directions = new HexCoord[]
+        // Neighbor offsets for flat-top hex grid with offset columns
+        // Even columns (0, 2, 4...) and odd columns (1, 3, 5...) have different offsets
+        public static readonly HexCoord[] DirectionsEvenCol = new HexCoord[]
         {
-            new HexCoord(1, 0),   // East
-            new HexCoord(1, -1),  // Northeast
-            new HexCoord(0, -1),  // Northwest
-            new HexCoord(-1, 0),  // West
-            new HexCoord(-1, 1),  // Southwest
-            new HexCoord(0, 1)    // Southeast
+            new HexCoord(0, -1),   // North
+            new HexCoord(1, -1),   // Northeast (up-right)
+            new HexCoord(1, 0),    // Southeast (down-right)
+            new HexCoord(0, 1),    // South
+            new HexCoord(-1, 0),   // Southwest (down-left)
+            new HexCoord(-1, -1)   // Northwest (up-left)
+        };
+
+        public static readonly HexCoord[] DirectionsOddCol = new HexCoord[]
+        {
+            new HexCoord(0, -1),   // North
+            new HexCoord(1, 0),    // Northeast (up-right)
+            new HexCoord(1, 1),    // Southeast (down-right)
+            new HexCoord(0, 1),    // South
+            new HexCoord(-1, 1),   // Southwest (down-left)
+            new HexCoord(-1, 0)    // Northwest (up-left)
         };
 
         public HexCoord GetNeighbor(int direction)
         {
-            var dir = Directions[direction % 6];
+            var dirs = (Q % 2 == 0) ? DirectionsEvenCol : DirectionsOddCol;
+            var dir = dirs[direction % 6];
             return new HexCoord(Q + dir.Q, R + dir.R);
         }
 
