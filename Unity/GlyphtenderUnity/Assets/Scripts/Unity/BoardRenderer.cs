@@ -370,14 +370,17 @@ namespace Glyphtender.Unity
 
             if (glyphlingPrefab != null)
             {
-                obj = Instantiate(glyphlingPrefab, Vector3.zero, Quaternion.identity, transform);
+                Vector3 spawnPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
+                obj = Instantiate(glyphlingPrefab, spawnPos, Quaternion.identity, transform);
             }
             else
             {
                 // Simple placeholder sphere
                 obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                Vector3 spawnPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
+                obj.transform.position = spawnPos;
                 obj.transform.localScale = new Vector3(hexSize * 0.5f, hexSize * 0.5f, hexSize * 0.5f);
-                obj.transform.SetParent(transform);
+                obj.transform.SetParent(transform); ;
 
                 // Color by owner
                 var material = glyphling.Owner == Player.Yellow ? yellowMaterial : blueMaterial;
