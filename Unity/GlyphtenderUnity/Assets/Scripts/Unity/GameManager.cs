@@ -20,6 +20,7 @@ namespace Glyphtender.Unity
         public Glyphling SelectedGlyphling { get; private set; }
         public HexCoord? PendingDestination { get; private set; }
         public HexCoord? PendingCastPosition { get; private set; }
+        private HexCoord? _originalPosition;
         public char? PendingLetter { get; private set; }
 
         // Valid moves/casts for current selection
@@ -94,6 +95,14 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            // If we had a pending move, reset the glyphling's position
+            if (SelectedGlyphling != null && PendingDestination != null)
+            {
+                // Find original position and restore it
+                // We need to track this - for now, just reset the whole selection
+                ResetMove();
+            }
+
             SelectedGlyphling = glyphling;
             PendingDestination = null;
             PendingCastPosition = null;
@@ -125,8 +134,8 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // Store original position for potential undo
-            var originalPosition = SelectedGlyphling.Position;
+            // Store original position for undo
+            _originalPosition = SelectedGlyphling.Position;
 
             // Move glyphling (preview)
             PendingDestination = destination;
@@ -139,10 +148,12 @@ namespace Glyphtender.Unity
             Debug.Log($"Moved to {destination}. {ValidCasts.Count} valid cast positions.");
 
             OnSelectionChanged?.Invoke();
+            OnGameStateChanged?.Invoke();  // Add this line to update glyphling visual position
         }
 
         /// <summary>
         /// Called when player taps/clicks a hex for casting.
+        /// Temporarily auto-places a random letter and ends turn.
         /// </summary>
         public void SelectCastPosition(HexCoord castPosition)
         {
@@ -161,9 +172,23 @@ namespace Glyphtender.Unity
             PendingCastPosition = castPosition;
             ValidCasts.Clear();
 
-            Debug.Log($"Cast position: {castPosition}. Select a letter from your hand.");
+            // Auto-select a random letter from hand
+            var hand = GameState.Hands[GameState.CurrentPlayer];
+            if (hand.Count > 0)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, hand.Count);
+                char letter = hand[randomIndex];
+                PendingLetter = letter;
 
-            OnSelectionChanged?.Invoke();
+                Debug.Log($"Auto-selected letter: {letter}");
+
+                // Auto-confirm the move
+                ConfirmMove();
+            }
+            else
+            {
+                Debug.Log("No letters in hand!");
+            }
         }
 
         /// <summary>
@@ -253,15 +278,16 @@ namespace Glyphtender.Unity
         /// </summary>
         public void ResetMove()
         {
-            if (SelectedGlyphling != null && PendingDestination != null)
+            if (SelectedGlyphling != null && _originalPosition != null)
             {
-                // Find original position and restore it
-                // For now, we need to re-initialize or track original position
-                Debug.Log("Move reset.");
+                SelectedGlyphling.Position = _originalPosition.Value;
+                Debug.Log($"Reset glyphling to {_originalPosition.Value}");
             }
 
+            _originalPosition = null;
             ClearSelection();
             OnSelectionChanged?.Invoke();
+            OnGameStateChanged?.Invoke();
         }
 
         private void ClearSelection()

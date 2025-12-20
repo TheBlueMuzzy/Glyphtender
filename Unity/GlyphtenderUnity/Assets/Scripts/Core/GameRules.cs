@@ -105,6 +105,7 @@ namespace Glyphtender.Core
         {
             var validMoves = new List<HexCoord>();
 
+            // Check all 6 directions
             for (int dir = 0; dir < 6; dir++)
             {
                 var current = glyphling.Position;
@@ -113,12 +114,20 @@ namespace Glyphtender.Core
                 {
                     current = current.GetNeighbor(dir);
 
+                    // Stop if off board
                     if (!state.Board.IsValidHex(current))
                         break;
 
-                    if (state.HasTile(current) || state.HasGlyphling(current))
+                    // Stop if blocked by tile
+                    if (state.HasTile(current))
                         break;
 
+                    // Stop if blocked by another glyphling (not self)
+                    var glyphlingAtPos = state.GetGlyphlingAt(current);
+                    if (glyphlingAtPos != null && glyphlingAtPos != glyphling)
+                        break;
+
+                    // This is a valid move
                     validMoves.Add(current);
                 }
             }
@@ -130,11 +139,38 @@ namespace Glyphtender.Core
         {
             var validCasts = new List<HexCoord>();
 
-            foreach (var neighbor in glyphling.Position.GetAllNeighbors())
+            // Check all 6 directions along leylines
+            for (int dir = 0; dir < 6; dir++)
             {
-                if (state.Board.IsValidHex(neighbor) && state.IsEmpty(neighbor))
+                var current = glyphling.Position;
+
+                while (true)
                 {
-                    validCasts.Add(neighbor);
+                    current = current.GetNeighbor(dir);
+
+                    // Stop if off board
+                    if (!state.Board.IsValidHex(current))
+                        break;
+
+                    // Stop if blocked by glyphling
+                    if (state.HasGlyphling(current))
+                        break;
+
+                    // Stop if blocked by opponent's tile
+                    if (state.HasTile(current))
+                    {
+                        var tile = state.Tiles[current];
+                        if (tile.Owner != glyphling.Owner)
+                            break;
+                    }
+
+                    // If empty, it's a valid cast position
+                    if (state.IsEmpty(current))
+                    {
+                        validCasts.Add(current);
+                    }
+
+                    // Continue along leyline (can cast over own tiles)
                 }
             }
 
