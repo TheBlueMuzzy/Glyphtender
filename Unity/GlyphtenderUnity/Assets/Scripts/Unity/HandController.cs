@@ -256,11 +256,14 @@ namespace Glyphtender.Unity
             textObj.transform.SetParent(tile.transform);
             textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
             textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            textObj.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+
+            // Scale down but use large font size for crisp text
+            textObj.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
 
             var textMesh = textObj.AddComponent<TextMesh>();
             textMesh.text = letter.ToString();
-            textMesh.fontSize = 32;
+            textMesh.fontSize = 100;
+            textMesh.characterSize = 1.5f;
             textMesh.alignment = TextAlignment.Center;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.color = Color.black;
