@@ -150,7 +150,22 @@ namespace Glyphtender.Unity
                 }
                 else
                 {
-                    _trappedPulseTime.Remove(glyphling);
+                    // Reset color when no longer trapped
+                    if (_trappedPulseTime.ContainsKey(glyphling))
+                    {
+                        _trappedPulseTime.Remove(glyphling);
+
+                        // Restore original material
+                        var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
+                        if (renderer != null)
+                        {
+                            Material mat = glyphling.Owner == Player.Yellow ? yellowMaterial : blueMaterial;
+                            if (mat != null)
+                            {
+                                renderer.material = mat;
+                            }
+                        }
+                    }
                 }
             }
         }
