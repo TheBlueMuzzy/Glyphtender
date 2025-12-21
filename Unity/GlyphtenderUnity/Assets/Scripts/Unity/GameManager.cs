@@ -259,6 +259,15 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Clears the pending cast position selection.
+        /// </summary>
+        public void ClearPendingCastPosition()
+        {
+            PendingCastPosition = null;
+            OnSelectionChanged?.Invoke();
+        }
+
+        /// <summary>
         /// Shows ghost tile and word preview when both cast position and letter are selected.
         /// </summary>
         private void ShowGhostAndPreview()
@@ -273,11 +282,14 @@ namespace Glyphtender.Unity
             }
             Debug.Log($"Total preview score: {previewScore}");
 
-            // Show ghost tile preview
-            var boardRenderer = FindObjectOfType<BoardRenderer>();
-            if (boardRenderer != null)
+            // Only show ghost tile in tap mode
+            if (CurrentInputMode == InputMode.Tap)
             {
-                boardRenderer.ShowGhostTile(PendingCastPosition.Value, PendingLetter.Value, GameState.CurrentPlayer);
+                var boardRenderer = FindObjectOfType<BoardRenderer>();
+                if (boardRenderer != null)
+                {
+                    boardRenderer.ShowGhostTile(PendingCastPosition.Value, PendingLetter.Value, GameState.CurrentPlayer);
+                }
             }
         }
 

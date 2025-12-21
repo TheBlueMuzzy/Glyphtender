@@ -658,6 +658,10 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
+            // Only handle in tap mode
+            if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
+                return;
+
             if (GameManager.Instance == null) return;
 
             // Determine what action to take based on game state
