@@ -317,7 +317,7 @@ namespace Glyphtender.Unity
                 tileObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 tileObj.transform.position = startPos;
                 tileObj.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-                tileObj.transform.localScale = new Vector3(hexSize * 0.7f, 0.1f, hexSize * 0.7f);
+                tileObj.transform.localScale = new Vector3(hexSize * 1.5f, 0.1f, hexSize * 1.5f);
                 tileObj.transform.SetParent(transform);
 
                 // Color by owner
@@ -332,7 +332,7 @@ namespace Glyphtender.Unity
                 textObj.transform.SetParent(tileObj.transform);
                 textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
                 textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                textObj.transform.localScale = new Vector3(2f, 2f, 2f);
+                textObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
 
                 var textMesh = textObj.AddComponent<TextMesh>();
                 textMesh.text = tile.Letter.ToString();

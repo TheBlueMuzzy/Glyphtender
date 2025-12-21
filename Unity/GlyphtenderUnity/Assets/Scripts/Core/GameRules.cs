@@ -152,25 +152,28 @@ namespace Glyphtender.Core
                     if (!state.Board.IsValidHex(current))
                         break;
 
-                    // Stop if blocked by glyphling
-                    if (state.HasGlyphling(current))
-                        break;
-
                     // Stop if blocked by opponent's tile
                     if (state.HasTile(current))
                     {
                         var tile = state.Tiles[current];
                         if (tile.Owner != glyphling.Owner)
                             break;
+                        // Own tile - continue through it but can't cast here
+                        continue;
                     }
 
-                    // If empty, it's a valid cast position
-                    if (state.IsEmpty(current))
+                    // Stop if blocked by opponent's glyphling
+                    var glyphlingAtPos = state.GetGlyphlingAt(current);
+                    if (glyphlingAtPos != null)
                     {
-                        validCasts.Add(current);
+                        if (glyphlingAtPos.Owner != glyphling.Owner)
+                            break;
+                        // Own glyphling - continue through it but can't cast here
+                        continue;
                     }
 
-                    // Continue along leyline (can cast over own tiles)
+                    // Empty space - valid cast position
+                    validCasts.Add(current);
                 }
             }
 

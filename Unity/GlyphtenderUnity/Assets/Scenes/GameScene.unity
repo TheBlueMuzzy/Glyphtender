@@ -397,7 +397,7 @@ MonoBehaviour:
   hexHighlightMaterial: {fileID: 2100000, guid: e50706dde23752b4f98acf677aaf35a5, type: 2}
   hexValidMoveMaterial: {fileID: 2100000, guid: 7eedb8c6bad666145b1696f3a6d06eac, type: 2}
   hexValidCastMaterial: {fileID: 2100000, guid: 764048b1ca0af1b4d9744cc4fe29affa, type: 2}
-  yellowMaterial: {fileID: 0}
+  yellowMaterial: {fileID: 2100000, guid: 29f26a048c7ba684796647836537955a, type: 2}
   blueMaterial: {fileID: 2100000, guid: c4e4cb277555304458d31be3060f9d9e, type: 2}
   hexSize: 1
   moveDuration: 0.3
