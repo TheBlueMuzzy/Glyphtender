@@ -25,10 +25,12 @@ namespace Glyphtender.Unity
         public Material blueTileMaterial;
         public Material selectedMaterial;
 
-        [Header("Confirm Button")]
+        [Header("Buttons")]
         public Material confirmMaterial;
-        public float confirmButtonSize = 0.6f;
-        public Vector3 confirmButtonOffset = new Vector3(5f, 0f, 0f);
+        public Material cancelMaterial;
+        public float buttonSize = 0.6f;
+        public Vector3 confirmButtonOffset = new Vector3(4.5f, 0f, 0f);
+        public Vector3 cancelButtonOffset = new Vector3(5.5f, 0f, 0f);
 
         // State
         private bool _isUp = true;
@@ -49,6 +51,9 @@ namespace Glyphtender.Unity
         private GameObject _confirmButton;
         private bool _confirmVisible;
 
+        // Cancel Button
+        private GameObject _cancelButton;
+
         private void Start()
         {
             // Create anchor as child of camera
@@ -65,6 +70,7 @@ namespace Glyphtender.Unity
             }
 
             CreateConfirmButton();
+            CreateCancelButton();
         }
 
         private void OnDestroy()
@@ -112,7 +118,7 @@ namespace Glyphtender.Unity
             _confirmButton.transform.SetParent(_handAnchor);
             _confirmButton.transform.localPosition = confirmButtonOffset;
             _confirmButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            _confirmButton.transform.localScale = new Vector3(confirmButtonSize, 0.05f, confirmButtonSize);
+            _confirmButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
             _confirmButton.name = "ConfirmButton";
 
             if (confirmMaterial != null)
@@ -140,6 +146,41 @@ namespace Glyphtender.Unity
 
             _confirmButton.SetActive(false);
             _confirmVisible = false;
+        }
+
+        private void CreateCancelButton()
+        {
+            _cancelButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            _cancelButton.transform.SetParent(_handAnchor);
+            _cancelButton.transform.localPosition = cancelButtonOffset;
+            _cancelButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            _cancelButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
+            _cancelButton.name = "CancelButton";
+
+            if (cancelMaterial != null)
+            {
+                _cancelButton.GetComponent<Renderer>().material = cancelMaterial;
+            }
+
+            // Add click handler
+            var handler = _cancelButton.AddComponent<CancelButtonClickHandler>();
+            handler.Controller = this;
+
+            // Add text label
+            GameObject textObj = new GameObject("Label");
+            textObj.transform.SetParent(_cancelButton.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            textObj.transform.localScale = new Vector3(0.15f, 0.15f, 0.15f);
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = "X";
+            textMesh.fontSize = 32;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.black;
+
+            _cancelButton.SetActive(false);
         }
 
         /// <summary>
@@ -241,6 +282,7 @@ namespace Glyphtender.Unity
             Debug.Log($"Selected letter: {letter}");
             GameManager.Instance.SelectLetter(letter);
             ShowConfirmButton();
+            ShowCancelButton();
         }
 
         private void UpdateTileHighlights()
@@ -274,6 +316,7 @@ namespace Glyphtender.Unity
                 _selectedIndex = -1;
                 UpdateTileHighlights();
                 HideConfirmButton();
+                HideCancelButton();
             }
         }
 
@@ -288,6 +331,15 @@ namespace Glyphtender.Unity
             _confirmButton.SetActive(false);
             _confirmVisible = false;
         }
+        public void ShowCancelButton()
+        {
+            _cancelButton.SetActive(true);
+        }
+
+        public void HideCancelButton()
+        {
+            _cancelButton.SetActive(false);
+        }
 
         public void OnConfirmClicked()
         {
@@ -295,7 +347,14 @@ namespace Glyphtender.Unity
             {
                 GameManager.Instance.ConfirmMove();
                 HideConfirmButton();
+                HideCancelButton();
             }
+        }
+        public void OnCancelClicked()
+        {
+            GameManager.Instance.ResetMove();
+            HideCancelButton();
+            HideConfirmButton();
         }
     }
 
@@ -324,6 +383,19 @@ namespace Glyphtender.Unity
         private void OnMouseDown()
         {
             Controller?.OnConfirmClicked();
+        }
+    }
+
+    /// <summary>
+    /// Handles clicks on cancel button.
+    /// </summary>
+    public class CancelButtonClickHandler : MonoBehaviour
+    {
+        public HandController Controller { get; set; }
+
+        private void OnMouseDown()
+        {
+            Controller?.OnCancelClicked();
         }
     }
 }
