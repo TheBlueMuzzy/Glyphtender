@@ -195,11 +195,11 @@ namespace Glyphtender.Unity
         public Vector3 HexToWorld(HexCoord hex)
         {
             // Flat-top hex layout with independent columns
-            float x = hexSize * 1.5f * hex.Q;
+            float x = hexSize * 1.5f * hex.Column;
 
             // Offset odd columns by half a hex height
-            float zOffset = (hex.Q % 2 == 1) ? hexSize * Mathf.Sqrt(3f) / 2f : 0f;
-            float z = hexSize * Mathf.Sqrt(3f) * hex.R + zOffset;
+            float zOffset = (hex.Column % 2 == 1) ? hexSize * Mathf.Sqrt(3f) / 2f : 0f;
+            float z = hexSize * Mathf.Sqrt(3f) * hex.Row + zOffset;
 
             return new Vector3(x, 0f, z);
         }
@@ -249,7 +249,7 @@ namespace Glyphtender.Unity
 
             var board = GameManager.Instance.GameState.Board;
 
-            foreach (var hex in board.GetAllHexes())
+            foreach (var hex in board.BoardHexes)
             {
                 CreateHex(hex);
             }
@@ -279,7 +279,7 @@ namespace Glyphtender.Unity
                 }
             }
 
-            hexObj.name = $"Hex_{coord.Q}_{coord.R}";
+            hexObj.name = $"Hex_{coord.Column}_{coord.Row}";
 
             // Add HexClickHandler component
             var clickHandler = hexObj.AddComponent<HexClickHandler>();
@@ -377,7 +377,7 @@ namespace Glyphtender.Unity
                 textMesh.color = Color.black;
             }
 
-            tileObj.name = $"Tile_{tile.Letter}_{coord.Q}_{coord.R}";
+            tileObj.name = $"Tile_{tile.Letter}_{coord.Column}_{coord.Row}";
 
             _tileObjects[coord] = tileObj;
 

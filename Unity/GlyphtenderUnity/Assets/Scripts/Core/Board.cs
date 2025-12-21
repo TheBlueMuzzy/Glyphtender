@@ -5,21 +5,21 @@ namespace Glyphtender.Core
 {
     /// <summary>
     /// Axial coordinate for flat-top hexagonal grid.
-    /// Uses (q, r) axial coordinates where q is column, r is row.
+    /// Uses (q, r) axial coordinates.
     /// </summary>
     public struct HexCoord : IEquatable<HexCoord>
     {
-        public readonly int Q;
-        public readonly int R;
+        public readonly int Column;
+        public readonly int Row;
 
-        public HexCoord(int q, int r)
+        public HexCoord(int column, int row)
         {
-            Q = q;
-            R = r;
+            Column = column;
+            Row = row;
         }
 
-        // Cube coordinate S (derived from q and r)
-        public int S => -Q - R;
+        // Cube coordinate S (derived from column and row)
+        public int CubeCoordinate => -Column - Row;
 
         // Neighbor offsets for flat-top hex grid with offset columns
         // Even columns (0, 2, 4...) and odd columns (1, 3, 5...) have different offsets
@@ -45,9 +45,9 @@ namespace Glyphtender.Core
 
         public HexCoord GetNeighbor(int direction)
         {
-            var dirs = (Q % 2 == 0) ? DirectionsEvenCol : DirectionsOddCol;
+            var dirs = (Column % 2 == 0) ? DirectionsEvenCol : DirectionsOddCol;
             var dir = dirs[direction % 6];
-            return new HexCoord(Q + dir.Q, R + dir.R);
+            return new HexCoord(Column + dir.Column, Row + dir.Row);
         }
 
         public IEnumerable<HexCoord> GetAllNeighbors()
@@ -60,22 +60,22 @@ namespace Glyphtender.Core
 
         public int DistanceTo(HexCoord other)
         {
-            return (Math.Abs(Q - other.Q) + Math.Abs(R - other.R) + Math.Abs(S - other.S)) / 2;
+            return (Math.Abs(Column - other.Column) + Math.Abs(Row - other.Row) + Math.Abs(CubeCoordinate - other.CubeCoordinate)) / 2;
         }
 
         public static HexCoord operator +(HexCoord a, HexCoord b)
         {
-            return new HexCoord(a.Q + b.Q, a.R + b.R);
+            return new HexCoord(a.Column + b.Column, a.Row + b.Row);
         }
 
         public static HexCoord operator -(HexCoord a, HexCoord b)
         {
-            return new HexCoord(a.Q - b.Q, a.R - b.R);
+            return new HexCoord(a.Column - b.Column, a.Row - b.Row);
         }
 
         public static bool operator ==(HexCoord a, HexCoord b)
         {
-            return a.Q == b.Q && a.R == b.R;
+            return a.Column == b.Column && a.Row == b.Row;
         }
 
         public static bool operator !=(HexCoord a, HexCoord b)
@@ -85,7 +85,7 @@ namespace Glyphtender.Core
 
         public bool Equals(HexCoord other)
         {
-            return Q == other.Q && R == other.R;
+            return Column == other.Column && Row == other.Row;
         }
 
         public override bool Equals(object obj)
@@ -95,12 +95,12 @@ namespace Glyphtender.Core
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Q, R);
+            return HashCode.Combine(Column, Row);
         }
 
         public override string ToString()
         {
-            return $"({Q}, {R})";
+            return $"({Column}, {Row})";
         }
     }
 
@@ -110,14 +110,14 @@ namespace Glyphtender.Core
     /// </summary>
     public class Board
     {
-        private readonly HashSet<HexCoord> _validHexes;
+        private readonly HashSet<HexCoord> _boardHexes;
 
         // Board dimensions (13 columns x variable rows = 92 hexes)
         public const int Columns = 11;
 
         public Board()
         {
-            _validHexes = new HashSet<HexCoord>();
+            _boardHexes = new HashSet<HexCoord>();
             InitializeBoard();
         }
 
@@ -135,22 +135,19 @@ namespace Glyphtender.Core
 
                 for (int row = 0; row < height; row++)
                 {
-                    _validHexes.Add(new HexCoord(col, rStart + row));
+                    _boardHexes.Add(new HexCoord(col, rStart + row));
                 }
             }
         }
 
-        public bool IsValidHex(HexCoord coord)
+        public bool IsBoardHex(HexCoord coord)
         {
-            return _validHexes.Contains(coord);
+            return _boardHexes.Contains(coord);
         }
 
-        public IEnumerable<HexCoord> GetAllHexes()
-        {
-            return _validHexes;
-        }
+        public IEnumerable<HexCoord> BoardHexes => _boardHexes;
 
-        public int HexCount => _validHexes.Count;
+        public int HexCount => _boardHexes.Count;
 
         /// <summary>
         /// Gets valid neighbors (only those within board bounds).
@@ -159,7 +156,7 @@ namespace Glyphtender.Core
         {
             foreach (var neighbor in coord.GetAllNeighbors())
             {
-                if (IsValidHex(neighbor))
+                if (IsBoardHex(neighbor))
                 {
                     yield return neighbor;
                 }
@@ -174,7 +171,7 @@ namespace Glyphtender.Core
             var result = new List<HexCoord>();
             var current = start.GetNeighbor(direction);
 
-            while (IsValidHex(current))
+            while (IsBoardHex(current))
             {
                 result.Add(current);
                 current = current.GetNeighbor(direction);

@@ -115,7 +115,7 @@ namespace Glyphtender.Core
                     current = current.GetNeighbor(dir);
 
                     // Stop if off board
-                    if (!state.Board.IsValidHex(current))
+                    if (!state.Board.IsBoardHex(current))
                         break;
 
                     // Stop if blocked by tile
@@ -149,7 +149,7 @@ namespace Glyphtender.Core
                     current = current.GetNeighbor(dir);
 
                     // Stop if off board
-                    if (!state.Board.IsValidHex(current))
+                    if (!state.Board.IsBoardHex(current))
                         break;
 
                     // Stop if blocked by opponent's tile

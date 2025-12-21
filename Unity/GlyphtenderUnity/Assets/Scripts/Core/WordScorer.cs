@@ -128,7 +128,7 @@ namespace Glyphtender.Core
             while (true)
             {
                 var prev = realStart.GetNeighbor(oppositeDir);
-                if (state.Board.IsValidHex(prev) && state.HasTile(prev))
+                if (state.Board.IsBoardHex(prev) && state.HasTile(prev))
                 {
                     realStart = prev;
                 }
@@ -140,7 +140,7 @@ namespace Glyphtender.Core
 
             // Now collect letters going forward
             var current = realStart;
-            while (state.Board.IsValidHex(current) && state.HasTile(current))
+            while (state.Board.IsBoardHex(current) && state.HasTile(current))
             {
                 positions.Add(current);
                 letters.Add(state.Tiles[current].Letter);
