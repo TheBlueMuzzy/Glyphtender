@@ -175,6 +175,16 @@ namespace Glyphtender.Unity
 
             Debug.Log($"Cast position selected: {castPosition}. Now select a letter from your hand.");
 
+            // If a letter is already selected, move the ghost tile to new position
+            if (PendingLetter != null)
+            {
+                var boardRenderer = FindObjectOfType<BoardRenderer>();
+                if (boardRenderer != null)
+                {
+                    boardRenderer.ShowGhostTile(castPosition, PendingLetter.Value, GameState.CurrentPlayer);
+                }
+            }
+
             OnSelectionChanged?.Invoke();
         }
 
@@ -207,6 +217,13 @@ namespace Glyphtender.Unity
             }
             Debug.Log($"Total preview score: {previewScore}");
 
+            // Show ghost tile preview
+            var boardRenderer = FindObjectOfType<BoardRenderer>();
+            if (boardRenderer != null)
+            {
+                boardRenderer.ShowGhostTile(PendingCastPosition.Value, letter, GameState.CurrentPlayer);
+            }
+
             OnSelectionChanged?.Invoke();
         }
 
@@ -220,6 +237,13 @@ namespace Glyphtender.Unity
             {
                 Debug.Log("Move not complete!");
                 return;
+            }
+
+            // Hide ghost tile
+            var boardRenderer = FindObjectOfType<BoardRenderer>();
+            if (boardRenderer != null)
+            {
+                boardRenderer.HideGhostTile();
             }
 
             // Place tile
@@ -266,6 +290,13 @@ namespace Glyphtender.Unity
         public void ResetMove()
         {
             IsResetting = true;
+
+            // Hide ghost tile
+            var boardRenderer = FindObjectOfType<BoardRenderer>();
+            if (boardRenderer != null)
+            {
+                boardRenderer.HideGhostTile();
+            }
 
             if (SelectedGlyphling != null && _originalPosition != null)
             {

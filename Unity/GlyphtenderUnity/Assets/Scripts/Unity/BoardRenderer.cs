@@ -44,6 +44,8 @@ namespace Glyphtender.Unity
         private HexCoord? _highlightedCastPosition;
         private Vector3 _originalHexScale;
 
+        private GameObject _ghostTile;
+
         // Rendered objects
         private Dictionary<HexCoord, GameObject> _hexObjects;
         private Dictionary<HexCoord, GameObject> _tileObjects;
@@ -457,6 +459,62 @@ namespace Glyphtender.Unity
                 _originalHexScale = hexObj.transform.localScale;
                 _highlightedCastPosition = pendingCast;
                 hexObj.transform.localScale = _originalHexScale * 1.3f;
+            }
+        }
+
+        public void ShowGhostTile(HexCoord position, char letter, Player owner)
+        {
+            HideGhostTile();
+
+            Vector3 pos = HexToWorld(position) + Vector3.up * 0.2f;
+
+            _ghostTile = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            _ghostTile.transform.position = pos;
+            _ghostTile.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            _ghostTile.transform.localScale = new Vector3(hexSize * 1.5f, 0.1f, hexSize * 1.5f);
+            _ghostTile.transform.SetParent(transform);
+            _ghostTile.name = "GhostTile";
+
+            // Semi-transparent material
+            var renderer = _ghostTile.GetComponent<Renderer>();
+            Material mat = new Material(owner == Player.Yellow ? yellowMaterial : blueMaterial);
+            Color c = mat.color;
+            c.a = 0.5f;
+            mat.color = c;
+
+            // Enable transparency
+            mat.SetFloat("_Mode", 3);
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetInt("_ZWrite", 0);
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.renderQueue = 3000;
+
+            renderer.material = mat;
+
+            // Add letter text
+            GameObject textObj = new GameObject("Letter");
+            textObj.transform.SetParent(_ghostTile.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            textObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = letter.ToString();
+            textMesh.fontSize = 32;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = new Color(0f, 0f, 0f, 0.7f);
+        }
+
+        public void HideGhostTile()
+        {
+            if (_ghostTile != null)
+            {
+                Destroy(_ghostTile);
+                _ghostTile = null;
             }
         }
 
