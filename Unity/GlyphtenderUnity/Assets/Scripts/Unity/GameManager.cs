@@ -25,6 +25,9 @@ namespace Glyphtender.Unity
         public HexCoord? LastCastOrigin { get; private set; }
         public char? PendingLetter { get; private set; }
 
+        public bool IsInCycleMode { get; private set; }
+        public int LastTurnWordCount { get; private set; }
+
         // Valid moves/casts for current selection
         public List<HexCoord> ValidMoves { get; private set; }
         public List<HexCoord> ValidCasts { get; private set; }
@@ -253,9 +256,6 @@ namespace Glyphtender.Unity
                 GameState.CurrentPlayer,
                 PendingCastPosition.Value);
 
-            // Draw new tile
-            GameRules.DrawTile(GameState, GameState.CurrentPlayer);
-
             // Score words formed by the new tile
             var newWords = WordScorer.FindWordsAt(GameState, PendingCastPosition.Value, PendingLetter.Value);
             int turnScore = 0;
@@ -267,6 +267,23 @@ namespace Glyphtender.Unity
             }
             GameState.Scores[GameState.CurrentPlayer] += turnScore;
             Debug.Log($"Turn score: {turnScore}. Total: {GameState.Scores[GameState.CurrentPlayer]}");
+
+            // Track how many words were formed
+            LastTurnWordCount = newWords.Count;
+
+            // If no words formed, enter cycle mode instead of ending turn
+            if (newWords.Count == 0)
+            {
+                Debug.Log("No words formed! Entering cycle mode.");
+                IsInCycleMode = true;
+                ClearSelection();
+                OnSelectionChanged?.Invoke();
+                OnGameStateChanged?.Invoke();
+                return;  // Don't end turn yet, don't draw tile
+            }
+
+            // Draw new tile
+            GameRules.DrawTile(GameState, GameState.CurrentPlayer);
 
             // Check for tangles
             var tangled = TangleChecker.CheckAndScoreTangles(GameState);
@@ -318,6 +335,36 @@ namespace Glyphtender.Unity
             OnGameStateChanged?.Invoke();
 
             IsResetting = false;
+        }
+        /// <summary>
+        /// Ends cycle mode and finishes the turn.
+        /// </summary>
+        public void EndCycleMode()
+        {
+            IsInCycleMode = false;
+
+            // Check for tangles
+            var tangled = TangleChecker.CheckAndScoreTangles(GameState);
+            foreach (var g in tangled)
+            {
+                Debug.Log($"Glyphling tangled at {g.Position}! +{TangleChecker.TangleBonus} to opponent.");
+            }
+
+            // Check game over
+            if (TangleChecker.ShouldEndGame(GameState))
+            {
+                GameState.IsGameOver = true;
+                Debug.Log("Game Over!");
+            }
+
+            // End turn
+            GameRules.EndTurn(GameState);
+
+            Debug.Log($"Turn ended. Now {GameState.CurrentPlayer}'s turn.");
+
+            ClearSelection();
+            OnTurnEnded?.Invoke();
+            OnGameStateChanged?.Invoke();
         }
 
         private void ClearSelection()

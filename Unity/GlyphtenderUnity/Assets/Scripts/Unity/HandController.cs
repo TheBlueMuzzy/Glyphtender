@@ -55,6 +55,11 @@ namespace Glyphtender.Unity
         // Cancel Button
         private GameObject _cancelButton;
 
+        // Cycle mode
+        private bool _isInCycleMode;
+        private HashSet<int> _selectedForDiscard = new HashSet<int>();
+        private GameObject _cyclePromptText;
+
         private void Start()
         {
             // Create anchor as child of camera
@@ -72,6 +77,27 @@ namespace Glyphtender.Unity
 
             CreateConfirmButton();
             CreateCancelButton();
+            CreateCyclePrompt();
+        }
+
+        private void CreateCyclePrompt()
+        {
+            GameObject textObj = new GameObject("CyclePrompt");
+            textObj.transform.SetParent(_handAnchor);
+            textObj.transform.localPosition = new Vector3(0f, -1f, 0f);
+            textObj.transform.localRotation = Quaternion.Euler(180f, 0f, 0f);
+            textObj.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = "You may refresh any number of tiles.";
+            textMesh.fontSize = 100;
+            textMesh.characterSize = 0.5f;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.white;
+
+            _cyclePromptText = textObj;
+            _cyclePromptText.SetActive(false);
         }
 
         private void OnDestroy()
@@ -189,6 +215,8 @@ namespace Glyphtender.Unity
         /// </summary>
         public void RefreshHand()
         {
+            Debug.Log($"RefreshHand called. IsInCycleMode: {_isInCycleMode}");
+
             if (GameManager.Instance?.GameState == null) return;
 
             var state = GameManager.Instance.GameState;
@@ -274,6 +302,13 @@ namespace Glyphtender.Unity
         /// </summary>
         public void OnTileClicked(int index, char letter)
         {
+            // Handle cycle mode selection
+            if (_isInCycleMode)
+            {
+                ToggleTileForDiscard(index);
+                return;
+            }
+
             // Only allow selection when we're in cast position selection phase
             if (GameManager.Instance.PendingCastPosition == null)
             {
@@ -315,6 +350,19 @@ namespace Glyphtender.Unity
 
         private void OnSelectionChanged()
         {
+            // Check if we entered cycle mode
+            if (GameManager.Instance.IsInCycleMode && !_isInCycleMode)
+            {
+                EnterCycleMode();
+                return;
+            }
+
+            // If in cycle mode, don't do normal selection logic
+            if (_isInCycleMode)
+            {
+                return;
+            }
+
             // If selection was cleared, reset highlights and buttons
             if (GameManager.Instance.SelectedGlyphling == null)
             {
@@ -328,6 +376,42 @@ namespace Glyphtender.Unity
             {
                 ShowCancelButton();
             }
+        }
+        private void EnterCycleMode()
+        {
+            Debug.Log("EnterCycleMode called!");
+            _isInCycleMode = true;
+            _selectedForDiscard.Clear();
+
+            // Show prompt and OK button
+            _cyclePromptText.SetActive(true);
+            Debug.Log($"Confirm button before show: {_confirmButton.activeSelf}");
+            ShowConfirmButton();
+            Debug.Log($"Confirm button after show: {_confirmButton.activeSelf}");
+            HideCancelButton();
+
+            Debug.Log("Entered cycle mode - select tiles to discard");
+        }
+        private void ToggleTileForDiscard(int index)
+        {
+            if (_selectedForDiscard.Contains(index))
+            {
+                // Deselect - scale and move back down
+                _selectedForDiscard.Remove(index);
+                var tile = _handTileObjects[index];
+                tile.transform.localPosition += new Vector3(0f, 0.3f, 0f);
+                tile.transform.localScale = new Vector3(tileSize, 0.05f, tileSize);
+            }
+            else
+            {
+                // Select - scale up and move up
+                _selectedForDiscard.Add(index);
+                var tile = _handTileObjects[index];
+                tile.transform.localPosition -= new Vector3(0f, 0.3f, 0f);
+                tile.transform.localScale = new Vector3(tileSize * 1.2f, 0.05f, tileSize * 1.2f);
+            }
+
+            Debug.Log($"Tiles selected for discard: {_selectedForDiscard.Count}");
         }
 
         public void ShowConfirmButton()
@@ -353,17 +437,69 @@ namespace Glyphtender.Unity
 
         public void OnConfirmClicked()
         {
+            // Handle cycle mode confirmation
+            if (_isInCycleMode)
+            {
+                ConfirmCycleDiscard();
+                return;
+            }
+
             if (GameManager.Instance.PendingLetter != null)
             {
                 GameManager.Instance.ConfirmMove();
-                HideConfirmButton();
-                HideCancelButton();
+
+                // Only hide buttons if we didn't enter cycle mode
+                if (!GameManager.Instance.IsInCycleMode)
+                {
+                    HideConfirmButton();
+                    HideCancelButton();
+                }
             }
         }
         public void OnCancelClicked()
         {
             GameManager.Instance.ResetMove();
             HideCancelButton();
+            HideConfirmButton();
+        }
+
+        private void ConfirmCycleDiscard()
+        {
+            // Get the tiles to discard
+            var state = GameManager.Instance.GameState;
+            var hand = state.Hands[state.CurrentPlayer];
+            var toDiscard = new List<char>();
+
+            foreach (int index in _selectedForDiscard)
+            {
+                toDiscard.Add(_currentHand[index]);
+            }
+
+            // Remove discarded tiles from hand
+            foreach (char letter in toDiscard)
+            {
+                hand.Remove(letter);
+            }
+
+            // Draw back up to 8 tiles
+            while (hand.Count < GameRules.HandSize && state.TileBag.Count > 0)
+            {
+                GameRules.DrawTile(state, state.CurrentPlayer);
+            }
+
+            Debug.Log($"Discarded {toDiscard.Count} tiles, drew back up to {hand.Count}");
+
+            // Exit cycle mode
+            ExitCycleMode();
+
+            // End the turn
+            GameManager.Instance.EndCycleMode();
+        }
+        private void ExitCycleMode()
+        {
+            _isInCycleMode = false;
+            _selectedForDiscard.Clear();
+            _cyclePromptText.SetActive(false);
             HideConfirmButton();
         }
     }
