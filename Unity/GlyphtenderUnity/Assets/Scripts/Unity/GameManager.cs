@@ -155,7 +155,6 @@ namespace Glyphtender.Unity
 
         /// <summary>
         /// Called when player taps/clicks a hex for casting.
-        /// Temporarily auto-places a random letter and ends turn.
         /// </summary>
         public void SelectCastPosition(HexCoord castPosition)
         {
@@ -172,28 +171,11 @@ namespace Glyphtender.Unity
             }
 
             PendingCastPosition = castPosition;
-            ValidCasts.Clear();
-
-            // Store where the cast originates from (for animation)
             LastCastOrigin = SelectedGlyphling.Position;
 
-            // Auto-select a random letter from hand
-            var hand = GameState.Hands[GameState.CurrentPlayer];
-            if (hand.Count > 0)
-            {
-                int randomIndex = UnityEngine.Random.Range(0, hand.Count);
-                char letter = hand[randomIndex];
-                PendingLetter = letter;
+            Debug.Log($"Cast position selected: {castPosition}. Now select a letter from your hand.");
 
-                Debug.Log($"Auto-selected letter: {letter}");
-
-                // Auto-confirm the move
-                ConfirmMove();
-            }
-            else
-            {
-                Debug.Log("No letters in hand!");
-            }
+            OnSelectionChanged?.Invoke();
         }
 
         /// <summary>
@@ -224,6 +206,9 @@ namespace Glyphtender.Unity
                 previewScore += word.Score;
             }
             Debug.Log($"Total preview score: {previewScore}");
+
+            // Auto-confirm for now (later: wait for confirm button)
+            ConfirmMove();
 
             OnSelectionChanged?.Invoke();
         }

@@ -296,8 +296,6 @@ namespace Glyphtender.Unity
 
         private void CreateTile(HexCoord coord, Tile tile)
         {
-            GameObject tileObj;
-
             // Get the starting position (from the glyphling that cast it)
             Vector3 startPos = HexToWorld(coord) + Vector3.up * 0.15f; // Default
             if (GameManager.Instance.LastCastOrigin != null)
@@ -307,16 +305,19 @@ namespace Glyphtender.Unity
 
             Vector3 targetPos = HexToWorld(coord) + Vector3.up * 0.15f;
 
+            GameObject tileObj;
+
             if (tilePrefab != null)
             {
                 tileObj = Instantiate(tilePrefab, startPos, Quaternion.identity, transform);
             }
             else
             {
-                // Simple placeholder cube
-                tileObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                // Create cylinder as hex placeholder (matching hand tiles)
+                tileObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 tileObj.transform.position = startPos;
-                tileObj.transform.localScale = new Vector3(hexSize * 0.6f, 0.2f, hexSize * 0.6f);
+                tileObj.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+                tileObj.transform.localScale = new Vector3(hexSize * 0.7f, 0.1f, hexSize * 0.7f);
                 tileObj.transform.SetParent(transform);
 
                 // Color by owner
@@ -325,6 +326,20 @@ namespace Glyphtender.Unity
                 {
                     tileObj.GetComponent<Renderer>().material = material;
                 }
+
+                // Add letter text
+                GameObject textObj = new GameObject("Letter");
+                textObj.transform.SetParent(tileObj.transform);
+                textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                textObj.transform.localScale = new Vector3(2f, 2f, 2f);
+
+                var textMesh = textObj.AddComponent<TextMesh>();
+                textMesh.text = tile.Letter.ToString();
+                textMesh.fontSize = 32;
+                textMesh.alignment = TextAlignment.Center;
+                textMesh.anchor = TextAnchor.MiddleCenter;
+                textMesh.color = Color.black;
             }
 
             tileObj.name = $"Tile_{tile.Letter}_{coord.Q}_{coord.R}";
@@ -335,6 +350,7 @@ namespace Glyphtender.Unity
             _tileStarts[coord] = startPos;
             _tileTargets[coord] = targetPos;
             _tileLerpTime[coord] = 0f;
+            _tileLerpDuration[coord] = tileCastDuration;
         }
 
         private void RefreshGlyphlings()
