@@ -55,6 +55,9 @@ namespace Glyphtender.Unity
         // Cancel Button
         private GameObject _cancelButton;
 
+        // Replay Button
+        private GameObject _replayButton;
+
         // Cycle mode
         private bool _isInCycleMode;
         private HashSet<int> _selectedForDiscard = new HashSet<int>();
@@ -72,12 +75,15 @@ namespace Glyphtender.Unity
             {
                 GameManager.Instance.OnGameStateChanged += RefreshHand;
                 GameManager.Instance.OnSelectionChanged += OnSelectionChanged;
+                GameManager.Instance.OnGameEnded += OnGameEnded;
+                GameManager.Instance.OnGameRestarted += OnGameRestarted;
                 RefreshHand();
             }
 
             CreateConfirmButton();
             CreateCancelButton();
             CreateCyclePrompt();
+            CreateReplayButton();
         }
 
         private void CreateCyclePrompt()
@@ -106,7 +112,88 @@ namespace Glyphtender.Unity
             {
                 GameManager.Instance.OnGameStateChanged -= RefreshHand;
                 GameManager.Instance.OnSelectionChanged -= OnSelectionChanged;
+                GameManager.Instance.OnGameEnded -= OnGameEnded;
+                GameManager.Instance.OnGameRestarted -= OnGameRestarted;
             }
+        }
+        private void CreateReplayButton()
+        {
+            _replayButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            _replayButton.transform.SetParent(_handAnchor);
+            _replayButton.transform.localPosition = Vector3.zero;
+            _replayButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            _replayButton.transform.localScale = new Vector3(1f, 0.05f, 1f);
+            _replayButton.name = "ReplayButton";
+
+            if (confirmMaterial != null)
+            {
+                _replayButton.GetComponent<Renderer>().material = confirmMaterial;
+            }
+
+            // Add click handler
+            var handler = _replayButton.AddComponent<ReplayButtonClickHandler>();
+            handler.Controller = this;
+
+            // Add text label
+            GameObject textObj = new GameObject("Label");
+            textObj.transform.SetParent(_replayButton.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            textObj.transform.localScale = new Vector3(0.025f, 0.025f, 0.025f);
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = "REPLAY";
+            textMesh.fontSize = 100;
+            textMesh.characterSize = 1f;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.black;
+
+            _replayButton.SetActive(false);
+        }
+
+        private void OnGameEnded(Player? winner)
+        {
+            // Hide all hand tiles
+            foreach (var tile in _handTileObjects)
+            {
+                tile.SetActive(false);
+            }
+
+            // Hide buttons
+            HideConfirmButton();
+            HideCancelButton();
+            _cyclePromptText.SetActive(false);
+
+            // Show replay button
+            _replayButton.SetActive(true);
+        }
+        private void OnGameRestarted()
+        {
+            // Reset cycle mode
+            _isInCycleMode = false;
+            _selectedForDiscard.Clear();
+            _cyclePromptText.SetActive(false);
+
+            // Hide replay button
+            _replayButton.SetActive(false);
+
+            // Show hand tiles again
+            foreach (var tile in _handTileObjects)
+            {
+                tile.SetActive(true);
+            }
+
+            // Refresh hand
+            RefreshHand();
+        }
+        public void OnReplayClicked()
+        {
+            // Hide replay button
+            _replayButton.SetActive(false);
+
+            // Restart game
+            GameManager.Instance.InitializeGame();
         }
 
         private void Update()
@@ -542,6 +629,18 @@ namespace Glyphtender.Unity
         private void OnMouseDown()
         {
             Controller?.OnCancelClicked();
+        }
+    }
+    /// <summary>
+    /// Handles clicks on replay button.
+    /// </summary>
+    public class ReplayButtonClickHandler : MonoBehaviour
+    {
+        public HandController Controller { get; set; }
+
+        private void OnMouseDown()
+        {
+            Controller?.OnReplayClicked();
         }
     }
 }

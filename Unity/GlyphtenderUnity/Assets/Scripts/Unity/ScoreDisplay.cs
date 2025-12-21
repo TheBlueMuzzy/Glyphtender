@@ -24,6 +24,8 @@ namespace Glyphtender.Unity
         private TextMesh _blueScoreText;
         private TextMesh _yellowPreviewText;
         private TextMesh _bluePreviewText;
+        private TextMesh _yellowWinnerText;
+        private TextMesh _blueWinnerText;
 
         private void Start()
         {
@@ -39,6 +41,8 @@ namespace Glyphtender.Unity
             {
                 GameManager.Instance.OnGameStateChanged += RefreshScores;
                 GameManager.Instance.OnSelectionChanged += RefreshPreviews;
+                GameManager.Instance.OnGameEnded += ShowWinner;
+                GameManager.Instance.OnGameRestarted += OnGameRestarted;
                 RefreshScores();
             }
         }
@@ -49,6 +53,8 @@ namespace Glyphtender.Unity
             {
                 GameManager.Instance.OnGameStateChanged -= RefreshScores;
                 GameManager.Instance.OnSelectionChanged -= RefreshPreviews;
+                GameManager.Instance.OnGameEnded -= ShowWinner;
+                GameManager.Instance.OnGameRestarted -= OnGameRestarted;
             }
         }
 
@@ -197,6 +203,76 @@ namespace Glyphtender.Unity
             {
                 HidePreview();
             }
+        }
+
+        /// <summary>
+        /// Shows the winner display when game ends.
+        /// </summary>
+        private void ShowWinner(Player? winner)
+        {
+            // Hide previews
+            HidePreview();
+
+            if (winner == Player.Yellow)
+            {
+                // Enlarge yellow score
+                _yellowScoreText.transform.localScale *= 1.5f;
+
+                // Add winner text below
+                _yellowWinnerText = CreateTextMesh("YellowWinner",
+                    yellowScorePosition + new Vector3(0f, -1f, 0f),
+                    previewFontSize,
+                    new Color(1f, 0.9f, 0.2f));
+                _yellowWinnerText.text = "WINNER";
+            }
+            else if (winner == Player.Blue)
+            {
+                // Enlarge blue score
+                _blueScoreText.transform.localScale *= 1.5f;
+
+                // Add winner text below
+                _blueWinnerText = CreateTextMesh("BlueWinner",
+                    blueScorePosition + new Vector3(0f, -1f, 0f),
+                    previewFontSize,
+                    new Color(0.2f, 0.6f, 1f));
+                _blueWinnerText.text = "WINNER";
+            }
+            else
+            {
+                // Tie - show both
+                _yellowWinnerText = CreateTextMesh("YellowTie",
+                    yellowScorePosition + new Vector3(0f, -1f, 0f),
+                    previewFontSize,
+                    new Color(1f, 0.9f, 0.2f));
+                _yellowWinnerText.text = "TIE";
+
+                _blueWinnerText = CreateTextMesh("BlueTie",
+                    blueScorePosition + new Vector3(0f, -1f, 0f),
+                    previewFontSize,
+                    new Color(0.2f, 0.6f, 1f));
+                _blueWinnerText.text = "TIE";
+            }
+        }
+        private void OnGameRestarted()
+        {
+            // Reset score text scale
+            _yellowScoreText.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+            _blueScoreText.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+            // Remove winner texts if they exist
+            if (_yellowWinnerText != null)
+            {
+                Destroy(_yellowWinnerText.gameObject);
+                _yellowWinnerText = null;
+            }
+            if (_blueWinnerText != null)
+            {
+                Destroy(_blueWinnerText.gameObject);
+                _blueWinnerText = null;
+            }
+
+            // Refresh scores to show 0
+            RefreshScores();
         }
     }
 }

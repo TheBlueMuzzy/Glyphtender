@@ -167,6 +167,7 @@ namespace Glyphtender.Unity
             {
                 GameManager.Instance.OnGameStateChanged += RefreshBoard;
                 GameManager.Instance.OnSelectionChanged += RefreshHighlights;
+                GameManager.Instance.OnGameRestarted += OnGameRestarted;
 
                 // Initial render
                 CreateBoard();
@@ -186,6 +187,7 @@ namespace Glyphtender.Unity
             {
                 GameManager.Instance.OnGameStateChanged -= RefreshBoard;
                 GameManager.Instance.OnSelectionChanged -= RefreshHighlights;
+                GameManager.Instance.OnGameRestarted -= OnGameRestarted;
             }
         }
 
@@ -491,7 +493,39 @@ namespace Glyphtender.Unity
                 hexObj.transform.localScale = _originalHexScale * 1.3f;
             }
         }
+        private void OnGameRestarted()
+        {
+            // Clear all tiles from board
+            foreach (var tile in _tileObjects.Values)
+            {
+                Destroy(tile);
+            }
+            _tileObjects.Clear();
+            _tileTargets.Clear();
+            _tileStarts.Clear();
+            _tileLerpTime.Clear();
+            _tileLerpDuration.Clear();
 
+            // Clear all glyphlings (new ones will be created)
+            foreach (var obj in _glyphlingObjects.Values)
+            {
+                Destroy(obj);
+            }
+            _glyphlingObjects.Clear();
+            _glyphlingTargets.Clear();
+            _glyphlingStarts.Clear();
+            _glyphlingLerpTime.Clear();
+            _glyphlingLerpDuration.Clear();
+
+            // Clear trapped state
+            _trappedPulseTime.Clear();
+
+            // Reset highlights
+            RefreshHighlights();
+
+            // Refresh board to create new glyphlings
+            RefreshBoard();
+        }
         public void ShowGhostTile(HexCoord position, char letter, Player owner)
         {
             HideGhostTile();

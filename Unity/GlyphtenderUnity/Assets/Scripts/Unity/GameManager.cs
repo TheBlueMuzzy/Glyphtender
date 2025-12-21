@@ -36,6 +36,8 @@ namespace Glyphtender.Unity
         public event System.Action OnGameStateChanged;
         public event System.Action OnSelectionChanged;
         public event System.Action OnTurnEnded;
+        public event System.Action<Player?> OnGameEnded;
+        public event System.Action OnGameRestarted;
 
         private void Awake()
         {
@@ -57,12 +59,20 @@ namespace Glyphtender.Unity
 
         public void InitializeGame()
         {
-            // Load dictionary
-            WordScorer = new WordScorer();
-            LoadDictionary();
+            // Load dictionary (only if not already loaded)
+            if (WordScorer == null)
+            {
+                WordScorer = new WordScorer();
+                LoadDictionary();
+            }
 
             // Create new game
             GameState = GameRules.CreateNewGame();
+
+            // Reset all state
+            IsInCycleMode = false;
+            LastTurnWordCount = 0;
+            _originalPosition = null;
 
             Debug.Log($"Game initialized. Board has {GameState.Board.HexCount} hexes.");
             Debug.Log($"Dictionary loaded with {WordScorer.WordCount} words.");
@@ -71,6 +81,7 @@ namespace Glyphtender.Unity
 
             ClearSelection();
             OnGameStateChanged?.Invoke();
+            OnGameRestarted?.Invoke();
         }
 
         private void LoadDictionary()
@@ -93,6 +104,13 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectGlyphling(Glyphling glyphling)
         {
+            // Don't allow selection if game is over
+            if (GameState.IsGameOver)
+            {
+                Debug.Log("Game is over!");
+                return;
+            }
+
             // Can only select own glyphlings
             if (glyphling.Owner != GameState.CurrentPlayer)
             {
@@ -286,17 +304,17 @@ namespace Glyphtender.Unity
             GameRules.DrawTile(GameState, GameState.CurrentPlayer);
 
             // Check for tangles
-            var tangled = TangleChecker.CheckAndScoreTangles(GameState);
+            var tangled = TangleChecker.GetTangledGlyphlings(GameState);
             foreach (var g in tangled)
             {
-                Debug.Log($"Glyphling tangled at {g.Position}! +{TangleChecker.TangleBonus} to opponent.");
+                Debug.Log($"Glyphling tangled at {g.Position}!");
             }
 
             // Check game over
             if (TangleChecker.ShouldEndGame(GameState))
             {
-                GameState.IsGameOver = true;
-                Debug.Log("Game Over!");
+                EndGame();
+                return;
             }
 
             // End turn
@@ -344,17 +362,17 @@ namespace Glyphtender.Unity
             IsInCycleMode = false;
 
             // Check for tangles
-            var tangled = TangleChecker.CheckAndScoreTangles(GameState);
+            var tangled = TangleChecker.GetTangledGlyphlings(GameState);
             foreach (var g in tangled)
             {
-                Debug.Log($"Glyphling tangled at {g.Position}! +{TangleChecker.TangleBonus} to opponent.");
+                Debug.Log($"Glyphling tangled at {g.Position}!");
             }
 
             // Check game over
             if (TangleChecker.ShouldEndGame(GameState))
             {
-                GameState.IsGameOver = true;
-                Debug.Log("Game Over!");
+                EndGame();
+                return;
             }
 
             // End turn
@@ -365,6 +383,46 @@ namespace Glyphtender.Unity
             ClearSelection();
             OnTurnEnded?.Invoke();
             OnGameStateChanged?.Invoke();
+        }
+        /// <summary>
+        /// Ends the game, calculates final tangle points, and determines winner.
+        /// </summary>
+        private void EndGame()
+        {
+            GameState.IsGameOver = true;
+
+            // Calculate and award tangle points
+            var tanglePoints = TangleChecker.CalculateTanglePoints(GameState);
+            GameState.Scores[Player.Yellow] += tanglePoints[Player.Yellow];
+            GameState.Scores[Player.Blue] += tanglePoints[Player.Blue];
+
+            Debug.Log($"Tangle points - Yellow: +{tanglePoints[Player.Yellow]}, Blue: +{tanglePoints[Player.Blue]}");
+            Debug.Log($"Final scores - Yellow: {GameState.Scores[Player.Yellow]}, Blue: {GameState.Scores[Player.Blue]}");
+
+            // Determine winner
+            Player? winner = null;
+            if (GameState.Scores[Player.Yellow] > GameState.Scores[Player.Blue])
+            {
+                winner = Player.Yellow;
+            }
+            else if (GameState.Scores[Player.Blue] > GameState.Scores[Player.Yellow])
+            {
+                winner = Player.Blue;
+            }
+            // If equal, winner stays null (tie)
+
+            if (winner != null)
+            {
+                Debug.Log($"{winner} wins!");
+            }
+            else
+            {
+                Debug.Log("It's a tie!");
+            }
+
+            ClearSelection();
+            OnGameStateChanged?.Invoke();
+            OnGameEnded?.Invoke(winner);
         }
 
         private void ClearSelection()

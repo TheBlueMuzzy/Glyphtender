@@ -4,12 +4,12 @@ namespace Glyphtender.Core
 {
     /// <summary>
     /// Detects when glyphlings are "tangled" (unable to move).
-    /// A tangled glyphling scores bonus points for the opponent.
+    /// A tangled glyphling scores bonus points for the opponent based on adjacent pieces.
     /// Pure C# with no Unity dependencies.
     /// </summary>
     public static class TangleChecker
     {
-        public const int TangleBonus = 10;
+        public const int TanglePointsPerAdjacent = 3;
 
         /// <summary>
         /// Checks if a glyphling is tangled (has no valid moves).
@@ -21,13 +21,13 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Gets all tangled glyphlings for a player.
+        /// Gets all tangled glyphlings.
         /// </summary>
-        public static List<Glyphling> GetTangledGlyphlings(GameState state, Player player)
+        public static List<Glyphling> GetTangledGlyphlings(GameState state)
         {
             var tangled = new List<Glyphling>();
 
-            foreach (var glyphling in state.GetPlayerGlyphlings(player))
+            foreach (var glyphling in state.Glyphlings)
             {
                 if (IsTangled(state, glyphling))
                 {
@@ -39,56 +39,57 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Checks for newly tangled glyphlings and awards points.
-        /// Call this after each move.
-        /// Returns list of newly tangled glyphlings.
+        /// Calculates and awards tangle points at end of game.
+        /// You get 3 points for each of your tiles/glyphlings adjacent to a tangled enemy glyphling.
         /// </summary>
-        public static List<Glyphling> CheckAndScoreTangles(GameState state)
+        public static Dictionary<Player, int> CalculateTanglePoints(GameState state)
         {
-            var newlyTangled = new List<Glyphling>();
-
-            // Check all glyphlings
-            foreach (var glyphling in state.Glyphlings)
+            var points = new Dictionary<Player, int>
             {
-                if (IsTangled(state, glyphling))
-                {
-                    newlyTangled.Add(glyphling);
+                { Player.Yellow, 0 },
+                { Player.Blue, 0 }
+            };
 
-                    // Award points to opponent
-                    Player opponent = glyphling.Owner == Player.Yellow
-                        ? Player.Blue
-                        : Player.Yellow;
-                    state.Scores[opponent] += TangleBonus;
+            var tangledGlyphlings = GetTangledGlyphlings(state);
+
+            foreach (var tangled in tangledGlyphlings)
+            {
+                Player enemy = tangled.Owner;
+                Player scorer = enemy == Player.Yellow ? Player.Blue : Player.Yellow;
+
+                // Check all adjacent hexes
+                foreach (var neighborCoord in tangled.Position.GetAllNeighbors())
+                {
+                    if (!state.Board.IsBoardHex(neighborCoord)) continue;
+
+                    // Check for scorer's tile
+                    if (state.Tiles.TryGetValue(neighborCoord, out Tile tile))
+                    {
+                        if (tile.Owner == scorer)
+                        {
+                            points[scorer] += TanglePointsPerAdjacent;
+                        }
+                    }
+
+                    // Check for scorer's glyphling
+                    var adjacentGlyphling = state.GetGlyphlingAt(neighborCoord);
+                    if (adjacentGlyphling != null && adjacentGlyphling.Owner == scorer)
+                    {
+                        points[scorer] += TanglePointsPerAdjacent;
+                    }
                 }
             }
 
-            return newlyTangled;
+            return points;
         }
 
         /// <summary>
-        /// Checks if a player has all glyphlings tangled.
-        /// This could be a game-ending condition.
-        /// </summary>
-        public static bool AllGlyphlingsTangled(GameState state, Player player)
-        {
-            foreach (var glyphling in state.GetPlayerGlyphlings(player))
-            {
-                if (!IsTangled(state, glyphling))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Checks if the game should end due to tangle conditions.
+        /// Checks if the game should end (any two glyphlings are tangled).
         /// </summary>
         public static bool ShouldEndGame(GameState state)
         {
-            // Game ends if both of a player's glyphlings are tangled
-            return AllGlyphlingsTangled(state, Player.Yellow) ||
-                   AllGlyphlingsTangled(state, Player.Blue);
+            var tangled = GetTangledGlyphlings(state);
+            return tangled.Count >= 2;
         }
     }
 }
