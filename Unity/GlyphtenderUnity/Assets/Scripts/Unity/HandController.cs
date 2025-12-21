@@ -1,6 +1,7 @@
 using UnityEngine;
 using Glyphtender.Core;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
 
 namespace Glyphtender.Unity
 {
@@ -225,6 +226,7 @@ namespace Glyphtender.Unity
             tile.transform.localPosition = localPos;
             tile.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Flat
             tile.transform.localScale = new Vector3(tileSize, 0.05f, tileSize);
+            tile.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
 
             // Set material based on current player
             var state = GameManager.Instance.GameState;
