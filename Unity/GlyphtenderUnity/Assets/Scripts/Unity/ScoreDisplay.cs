@@ -151,15 +151,37 @@ namespace Glyphtender.Unity
             // Only show preview if we have both a cast position and letter selected
             if (pendingLetter != null && pendingCastPosition != null)
             {
+                var state = GameManager.Instance.GameState;
+                var currentPlayer = state.CurrentPlayer;
+
+                // Temporarily add the tile for scoring calculation
+                bool hadTile = state.Tiles.ContainsKey(pendingCastPosition.Value);
+                Tile oldTile = hadTile ? state.Tiles[pendingCastPosition.Value] : null;
+                state.Tiles[pendingCastPosition.Value] = new Tile(
+                    pendingLetter.Value,
+                    currentPlayer,
+                    pendingCastPosition.Value);
+
                 var words = GameManager.Instance.WordScorer.FindWordsAt(
-                    GameManager.Instance.GameState,
+                    state,
                     pendingCastPosition.Value,
                     pendingLetter.Value);
 
                 int totalScore = 0;
                 foreach (var word in words)
                 {
-                    totalScore += word.Score;
+                    int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, state, currentPlayer);
+                    totalScore += wordScore;
+                }
+
+                // Restore original state
+                if (hadTile)
+                {
+                    state.Tiles[pendingCastPosition.Value] = oldTile;
+                }
+                else
+                {
+                    state.Tiles.Remove(pendingCastPosition.Value);
                 }
 
                 if (totalScore > 0)

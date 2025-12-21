@@ -256,9 +256,17 @@ namespace Glyphtender.Unity
             // Draw new tile
             GameRules.DrawTile(GameState, GameState.CurrentPlayer);
 
-            // Score words
-            var words = WordScorer.FindAllWords(GameState);
-            // For now, just log them - proper scoring will track new vs existing words
+            // Score words formed by the new tile
+            var newWords = WordScorer.FindWordsAt(GameState, PendingCastPosition.Value, PendingLetter.Value);
+            int turnScore = 0;
+            foreach (var word in newWords)
+            {
+                int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, GameState, GameState.CurrentPlayer);
+                turnScore += wordScore;
+                Debug.Log($"Scored word: {word.Letters} (+{wordScore})");
+            }
+            GameState.Scores[GameState.CurrentPlayer] += turnScore;
+            Debug.Log($"Turn score: {turnScore}. Total: {GameState.Scores[GameState.CurrentPlayer]}");
 
             // Check for tangles
             var tangled = TangleChecker.CheckAndScoreTangles(GameState);
