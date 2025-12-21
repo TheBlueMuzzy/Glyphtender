@@ -194,16 +194,16 @@ namespace Glyphtender.Unity
             PendingCastPosition = castPosition;
             LastCastOrigin = SelectedGlyphling.Position;
 
-            Debug.Log($"Cast position selected: {castPosition}. Now select a letter from your hand.");
+            Debug.Log($"Cast position selected: {castPosition}");
 
-            // If a letter is already selected, move the ghost tile to new position
+            // If we already have a letter, show ghost and preview words
             if (PendingLetter != null)
             {
-                var boardRenderer = FindObjectOfType<BoardRenderer>();
-                if (boardRenderer != null)
-                {
-                    boardRenderer.ShowGhostTile(castPosition, PendingLetter.Value, GameState.CurrentPlayer);
-                }
+                ShowGhostAndPreview();
+            }
+            else
+            {
+                Debug.Log("Now select a letter from your hand.");
             }
 
             OnSelectionChanged?.Invoke();
@@ -214,9 +214,9 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectLetter(char letter)
         {
-            if (PendingCastPosition == null)
+            if (PendingDestination == null)
             {
-                Debug.Log("Select a cast position first!");
+                Debug.Log("Move your glyphling first!");
                 return;
             }
 
@@ -227,9 +227,23 @@ namespace Glyphtender.Unity
             }
 
             PendingLetter = letter;
+            Debug.Log($"Selected letter: {letter}");
 
+            // If we already have a cast position, show ghost and preview words
+            if (PendingCastPosition != null)
+            {
+                ShowGhostAndPreview();
+            }
+
+            OnSelectionChanged?.Invoke();
+        }
+        /// <summary>
+        /// Shows ghost tile and word preview when both cast position and letter are selected.
+        /// </summary>
+        private void ShowGhostAndPreview()
+        {
             // Preview words that would be formed
-            var previewWords = WordScorer.FindWordsAt(GameState, PendingCastPosition.Value, letter);
+            var previewWords = WordScorer.FindWordsAt(GameState, PendingCastPosition.Value, PendingLetter.Value);
             int previewScore = 0;
             foreach (var word in previewWords)
             {
@@ -242,10 +256,8 @@ namespace Glyphtender.Unity
             var boardRenderer = FindObjectOfType<BoardRenderer>();
             if (boardRenderer != null)
             {
-                boardRenderer.ShowGhostTile(PendingCastPosition.Value, letter, GameState.CurrentPlayer);
+                boardRenderer.ShowGhostTile(PendingCastPosition.Value, PendingLetter.Value, GameState.CurrentPlayer);
             }
-
-            OnSelectionChanged?.Invoke();
         }
 
         /// <summary>

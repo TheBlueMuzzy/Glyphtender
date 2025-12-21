@@ -396,10 +396,10 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // Only allow selection when we're in cast position selection phase
-            if (GameManager.Instance.PendingCastPosition == null)
+            // Only allow selection after moving the glyphling
+            if (GameManager.Instance.PendingDestination == null)
             {
-                Debug.Log("Choose a cast position first!");
+                Debug.Log("Move your glyphling first!");
                 return;
             }
 
@@ -408,7 +408,12 @@ namespace Glyphtender.Unity
 
             Debug.Log($"Selected letter: {letter}");
             GameManager.Instance.SelectLetter(letter);
-            ShowConfirmButton();
+
+            // Show confirm button only if both letter and cast position are selected
+            if (GameManager.Instance.PendingCastPosition != null)
+            {
+                ShowConfirmButton();
+            }
             ShowCancelButton();
         }
 
@@ -462,6 +467,13 @@ namespace Glyphtender.Unity
             else if (GameManager.Instance.PendingDestination != null)
             {
                 ShowCancelButton();
+
+                // Show confirm if both cast position and letter are selected
+                if (GameManager.Instance.PendingCastPosition != null &&
+                    GameManager.Instance.PendingLetter != null)
+                {
+                    ShowConfirmButton();
+                }
             }
         }
         private void EnterCycleMode()
