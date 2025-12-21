@@ -14,18 +14,28 @@ namespace Glyphtender.Unity
         public char Letter { get; set; }
 
         private bool _isDragging;
+        private bool _isPlaced;
         private Vector3 _originalPosition;
-        private static HandTileDragHandler _currentlyPlacedTile;
         private Vector3 _originalScale;
+        private Quaternion _originalRotation;
         private Transform _originalParent;
+        private Color _originalColor;
         private Camera _mainCamera;
         private BoardRenderer _boardRenderer;
         private HexCoord? _hoveredHex;
+        private Renderer _renderer;
+
+        private static HandTileDragHandler _currentlyPlacedTile;
 
         private void Start()
         {
             _mainCamera = Camera.main;
             _boardRenderer = FindObjectOfType<BoardRenderer>();
+            _renderer = GetComponent<Renderer>();
+            if (_renderer != null)
+            {
+                _originalColor = _renderer.material.color;
+            }
         }
 
         private void OnMouseDown()
@@ -41,29 +51,36 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // If another tile is already placed, return it to hand first
-            if (_currentlyPlacedTile != null && _currentlyPlacedTile != this)
+            // If another tile is already placed (and it's not this one), return it to hand first
+            if (_currentlyPlacedTile != null && _currentlyPlacedTile != this && !_isPlaced)
             {
                 _currentlyPlacedTile.ReturnToHand();
             }
 
+            // If this tile isn't already placed, save original position
+            if (!_isPlaced)
+            {
+                _originalPosition = transform.position;
+                _originalScale = transform.localScale;
+                _originalRotation = transform.localRotation;
+                _originalParent = transform.parent;
+
+                // Unparent so it moves in world space
+                transform.SetParent(null);
+
+                // Select this letter
+                GameManager.Instance.SelectLetter(Letter);
+                Controller.SetSelectedIndex(Index);
+            }
+
             _isDragging = true;
-            _originalPosition = transform.position;
-            _originalScale = transform.localScale;
-            _originalParent = transform.parent;
 
-            // Unparent so it moves in world space
-            transform.SetParent(null);
+            // Set scale for board visibility
+            transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
+            transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
 
-            // Keep same visual size as in hand
-            transform.localScale = new Vector3(
-                _originalScale.x * 1.2f,
-                _originalScale.y,
-                _originalScale.z * 1.2f);
-
-            // Select this letter
-            GameManager.Instance.SelectLetter(Letter);
-            Controller.SetSelectedIndex(Index);
+            // Make semi-transparent while dragging
+            SetGhostAppearance(true);
 
             Debug.Log($"Started dragging letter {Letter}");
         }
@@ -109,16 +126,20 @@ namespace Glyphtender.Unity
             // Check if dropped on valid hex
             if (_hoveredHex != null && GameManager.Instance.ValidCasts.Contains(_hoveredHex.Value))
             {
-                // Valid drop - set cast position and move tile to board
+                // Valid drop - set cast position and keep tile on board as ghost
                 GameManager.Instance.SelectCastPosition(_hoveredHex.Value);
 
-                // Position tile on the board at same scale as hand
+                // Position tile on the board
                 Vector3 boardPos = _boardRenderer.HexToWorld(_hoveredHex.Value) + Vector3.up * 0.2f;
                 transform.position = boardPos;
-                transform.localScale = _originalScale;
+                transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
                 transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
 
-                // Track this as the currently placed tile
+                // Keep ghost appearance
+                SetGhostAppearance(true);
+
+                // Mark as placed
+                _isPlaced = true;
                 _currentlyPlacedTile = this;
 
                 // Show confirm button
@@ -142,7 +163,13 @@ namespace Glyphtender.Unity
             transform.SetParent(_originalParent);
             transform.position = _originalPosition;
             transform.localScale = _originalScale;
-            transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            transform.localRotation = _originalRotation;
+
+            // Restore solid appearance
+            SetGhostAppearance(false);
+
+            _isPlaced = false;
+            _isDragging = false;
 
             if (_currentlyPlacedTile == this)
             {
@@ -155,9 +182,83 @@ namespace Glyphtender.Unity
             Controller.HideConfirmButton();
         }
 
+        /// <summary>
+        /// Called when the move is confirmed - hide this ghost tile.
+        /// </summary>
+        public void OnMoveConfirmed()
+        {
+            if (_isPlaced)
+            {
+                // Hide this tile - the real tile will be created by BoardRenderer
+                gameObject.SetActive(false);
+                _isPlaced = false;
+                _currentlyPlacedTile = null;
+            }
+        }
+
+        /// <summary>
+        /// Resets the tile after turn ends.
+        /// </summary>
+        public void ResetAfterTurn()
+        {
+            if (!gameObject.activeSelf)
+            {
+                gameObject.SetActive(true);
+            }
+
+            transform.SetParent(_originalParent);
+            transform.position = _originalPosition;
+            transform.localScale = _originalScale;
+            transform.localRotation = _originalRotation;
+
+            SetGhostAppearance(false);
+            _isPlaced = false;
+
+            if (_currentlyPlacedTile == this)
+            {
+                _currentlyPlacedTile = null;
+            }
+        }
+
+        private void SetGhostAppearance(bool isGhost)
+        {
+            if (_renderer == null) return;
+
+            // Create a new material instance if needed
+            if (_originalColor == default)
+            {
+                _originalColor = _renderer.material.color;
+            }
+
+            Color color = _originalColor;
+            color.a = isGhost ? 0.5f : 1f;
+
+            // Set rendering mode to transparent
+            Material mat = _renderer.material;
+            if (isGhost)
+            {
+                mat.SetOverrideTag("RenderType", "Transparent");
+                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                mat.SetInt("_ZWrite", 0);
+                mat.EnableKeyword("_ALPHABLEND_ON");
+                mat.renderQueue = 3000;
+            }
+            else
+            {
+                mat.SetOverrideTag("RenderType", "Opaque");
+                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+                mat.SetInt("_ZWrite", 1);
+                mat.DisableKeyword("_ALPHABLEND_ON");
+                mat.renderQueue = -1;
+            }
+
+            mat.color = color;
+        }
+
         private Vector3 GetMouseWorldPosition()
         {
-            // Cast ray from camera through mouse position to board plane (y=0)
             Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
             Plane boardPlane = new Plane(Vector3.up, Vector3.zero);
 
@@ -167,6 +268,17 @@ namespace Glyphtender.Unity
             }
 
             return transform.position;
+        }
+
+        /// <summary>
+        /// Static method to return the currently placed tile to hand.
+        /// </summary>
+        public static void ReturnCurrentlyPlacedTile()
+        {
+            if (_currentlyPlacedTile != null)
+            {
+                _currentlyPlacedTile.ReturnToHand();
+            }
         }
     }
 }
