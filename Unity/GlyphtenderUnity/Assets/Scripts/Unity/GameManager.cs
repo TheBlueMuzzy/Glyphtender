@@ -207,9 +207,6 @@ namespace Glyphtender.Unity
             }
             Debug.Log($"Total preview score: {previewScore}");
 
-            // Auto-confirm for now (later: wait for confirm button)
-            ConfirmMove();
-
             OnSelectionChanged?.Invoke();
         }
 

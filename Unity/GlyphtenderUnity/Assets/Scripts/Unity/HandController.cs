@@ -25,6 +25,11 @@ namespace Glyphtender.Unity
         public Material blueTileMaterial;
         public Material selectedMaterial;
 
+        [Header("Confirm Button")]
+        public Material confirmMaterial;
+        public float confirmButtonSize = 0.6f;
+        public Vector3 confirmButtonOffset = new Vector3(5f, 0f, 0f);
+
         // State
         private bool _isUp = true;
         private float _lerpTime;
@@ -40,13 +45,17 @@ namespace Glyphtender.Unity
         // Reference to anchor point
         private Transform _handAnchor;
 
+        // Confirm Button
+        private GameObject _confirmButton;
+        private bool _confirmVisible;
+
         private void Start()
         {
             // Create anchor as child of camera
             _handAnchor = new GameObject("HandAnchor").transform;
             _handAnchor.SetParent(Camera.main.transform);
             _handAnchor.localPosition = handUpPosition;
-            _handAnchor.localRotation = Quaternion.Euler(180f, 0f, 0f); // Angle toward camera
+            _handAnchor.localRotation = Quaternion.Euler(180f, 0f, 0f);
 
             if (GameManager.Instance != null)
             {
@@ -54,6 +63,8 @@ namespace Glyphtender.Unity
                 GameManager.Instance.OnSelectionChanged += OnSelectionChanged;
                 RefreshHand();
             }
+
+            CreateConfirmButton();
         }
 
         private void OnDestroy()
@@ -93,6 +104,42 @@ namespace Glyphtender.Unity
             _lerpTarget = _isUp ? handUpPosition : handDownPosition;
             _lerpTime = 0f;
             _isLerping = true;
+        }
+
+        private void CreateConfirmButton()
+        {
+            _confirmButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            _confirmButton.transform.SetParent(_handAnchor);
+            _confirmButton.transform.localPosition = confirmButtonOffset;
+            _confirmButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            _confirmButton.transform.localScale = new Vector3(confirmButtonSize, 0.05f, confirmButtonSize);
+            _confirmButton.name = "ConfirmButton";
+
+            if (confirmMaterial != null)
+            {
+                _confirmButton.GetComponent<Renderer>().material = confirmMaterial;
+            }
+
+            // Add click handler
+            var handler = _confirmButton.AddComponent<ConfirmButtonClickHandler>();
+            handler.Controller = this;
+
+            // Add text label
+            GameObject textObj = new GameObject("Label");
+            textObj.transform.SetParent(_confirmButton.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            textObj.transform.localScale = new Vector3(0.15f, 0.15f, 0.15f);
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = "OK";
+            textMesh.fontSize = 32;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.black;
+
+            _confirmButton.SetActive(false);
+            _confirmVisible = false;
         }
 
         /// <summary>
@@ -193,6 +240,7 @@ namespace Glyphtender.Unity
 
             Debug.Log($"Selected letter: {letter}");
             GameManager.Instance.SelectLetter(letter);
+            ShowConfirmButton();
         }
 
         private void UpdateTileHighlights()
@@ -225,6 +273,28 @@ namespace Glyphtender.Unity
             {
                 _selectedIndex = -1;
                 UpdateTileHighlights();
+                HideConfirmButton();
+            }
+        }
+
+        public void ShowConfirmButton()
+        {
+            _confirmButton.SetActive(true);
+            _confirmVisible = true;
+        }
+
+        public void HideConfirmButton()
+        {
+            _confirmButton.SetActive(false);
+            _confirmVisible = false;
+        }
+
+        public void OnConfirmClicked()
+        {
+            if (GameManager.Instance.PendingLetter != null)
+            {
+                GameManager.Instance.ConfirmMove();
+                HideConfirmButton();
             }
         }
     }
@@ -241,6 +311,19 @@ namespace Glyphtender.Unity
         private void OnMouseDown()
         {
             Controller?.OnTileClicked(Index, Letter);
+        }
+    }
+
+    /// <summary>
+    /// Handles clicks on confirm button.
+    /// </summary>
+    public class ConfirmButtonClickHandler : MonoBehaviour
+    {
+        public HandController Controller { get; set; }
+
+        private void OnMouseDown()
+        {
+            Controller?.OnConfirmClicked();
         }
     }
 }

@@ -41,6 +41,9 @@ namespace Glyphtender.Unity
         private Dictionary<HexCoord, float> _tileLerpTime;
         private Dictionary<HexCoord, float> _tileLerpDuration;
 
+        private HexCoord? _highlightedCastPosition;
+        private Vector3 _originalHexScale;
+
         // Rendered objects
         private Dictionary<HexCoord, GameObject> _hexObjects;
         private Dictionary<HexCoord, GameObject> _tileObjects;
@@ -422,6 +425,13 @@ namespace Glyphtender.Unity
         {
             if (GameManager.Instance == null) return;
 
+            // Reset previously highlighted cast position scale
+            if (_highlightedCastPosition != null && _hexObjects.TryGetValue(_highlightedCastPosition.Value, out var prevHex))
+            {
+                prevHex.transform.localScale = _originalHexScale;
+            }
+            _highlightedCastPosition = null;
+
             // Reset all hexes to default
             foreach (var kvp in _hexObjects)
             {
@@ -438,6 +448,15 @@ namespace Glyphtender.Unity
             foreach (var coord in GameManager.Instance.ValidCasts)
             {
                 SetHexMaterial(coord, hexValidCastMaterial);
+            }
+
+            // Scale up selected cast position
+            var pendingCast = GameManager.Instance.PendingCastPosition;
+            if (pendingCast != null && _hexObjects.TryGetValue(pendingCast.Value, out var hexObj))
+            {
+                _originalHexScale = hexObj.transform.localScale;
+                _highlightedCastPosition = pendingCast;
+                hexObj.transform.localScale = _originalHexScale * 1.3f;
             }
         }
 
