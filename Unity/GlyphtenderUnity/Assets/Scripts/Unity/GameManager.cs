@@ -26,6 +26,16 @@ namespace Glyphtender.Unity
         public char? PendingLetter { get; private set; }
 
         public bool IsInCycleMode { get; private set; }
+        public enum InputMode { Tap, Drag }
+        public InputMode CurrentInputMode { get; private set; } = InputMode.Tap;
+
+        public void SetInputMode(InputMode mode)
+        {
+            CurrentInputMode = mode;
+            Debug.Log($"Input mode set to: {mode}");
+            OnInputModeChanged?.Invoke();
+        }
+
         public int LastTurnWordCount { get; private set; }
 
         // Valid moves/casts for current selection
@@ -38,6 +48,7 @@ namespace Glyphtender.Unity
         public event System.Action OnTurnEnded;
         public event System.Action<Player?> OnGameEnded;
         public event System.Action OnGameRestarted;
+        public event System.Action OnInputModeChanged;
 
         private void Awake()
         {
@@ -237,6 +248,16 @@ namespace Glyphtender.Unity
 
             OnSelectionChanged?.Invoke();
         }
+
+        /// <summary>
+        /// Clears the pending letter selection.
+        /// </summary>
+        public void ClearPendingLetter()
+        {
+            PendingLetter = null;
+            OnSelectionChanged?.Invoke();
+        }
+
         /// <summary>
         /// Shows ghost tile and word preview when both cast position and letter are selected.
         /// </summary>

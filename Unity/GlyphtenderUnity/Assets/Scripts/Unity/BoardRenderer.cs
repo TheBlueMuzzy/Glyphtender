@@ -21,6 +21,7 @@ namespace Glyphtender.Unity
         public Material hexValidCastMaterial;
         public Material yellowMaterial;
         public Material blueMaterial;
+        public Material hexHoverMaterial;
 
         [Header("Settings")]
         public float hexSize = 1f;
@@ -43,6 +44,9 @@ namespace Glyphtender.Unity
 
         private HexCoord? _highlightedCastPosition;
         private Vector3 _originalHexScale;
+
+        private HexCoord? _hoverHighlightedHex;
+        private Material _originalHoverMaterial;
 
         private GameObject _ghostTile;
         private Dictionary<Glyphling, bool> _trappedGlyphlings = new Dictionary<Glyphling, bool>();
@@ -226,35 +230,25 @@ namespace Glyphtender.Unity
         /// </summary>
         public HexCoord WorldToHex(Vector3 worldPos)
         {
-            // Convert to fractional hex coordinates
-            float q = (2f / 3f * worldPos.x) / hexSize;
-            float r = (-1f / 3f * worldPos.x + Mathf.Sqrt(3f) / 3f * worldPos.z) / hexSize;
+            // Reverse of HexToWorld
+            // x = hexSize * 1.5f * column
+            // z = hexSize * sqrt(3) * row + offset (offset = hexSize * sqrt(3) / 2 for odd columns)
 
-            return RoundToHex(q, r);
-        }
+            // First estimate column from x
+            float colFloat = worldPos.x / (hexSize * 1.5f);
+            int col = Mathf.RoundToInt(colFloat);
 
-        private HexCoord RoundToHex(float q, float r)
-        {
-            float s = -q - r;
+            // Clamp column to valid range
+            col = Mathf.Clamp(col, 0, Board.Columns - 1);
 
-            int roundQ = Mathf.RoundToInt(q);
-            int roundR = Mathf.RoundToInt(r);
-            int roundS = Mathf.RoundToInt(s);
+            // Calculate z offset for this column
+            float zOffset = (col % 2 == 1) ? hexSize * Mathf.Sqrt(3f) / 2f : 0f;
 
-            float qDiff = Mathf.Abs(roundQ - q);
-            float rDiff = Mathf.Abs(roundR - r);
-            float sDiff = Mathf.Abs(roundS - s);
+            // Calculate row from z
+            float rowFloat = (worldPos.z - zOffset) / (hexSize * Mathf.Sqrt(3f));
+            int row = Mathf.RoundToInt(rowFloat);
 
-            if (qDiff > rDiff && qDiff > sDiff)
-            {
-                roundQ = -roundR - roundS;
-            }
-            else if (rDiff > sDiff)
-            {
-                roundR = -roundQ - roundS;
-            }
-
-            return new HexCoord(roundQ, roundR);
+            return new HexCoord(col, row);
         }
 
         /// <summary>
@@ -464,6 +458,10 @@ namespace Glyphtender.Unity
             var clickHandler = obj.AddComponent<GlyphlingClickHandler>();
             clickHandler.Glyphling = glyphling;
 
+            // Add drag handler
+            var dragHandler = obj.AddComponent<GlyphlingDragHandler>();
+            dragHandler.Glyphling = glyphling;
+
             _glyphlingObjects[glyphling] = obj;
         }
 
@@ -507,6 +505,47 @@ namespace Glyphtender.Unity
                 _highlightedCastPosition = pendingCast;
                 hexObj.transform.localScale = _originalHexScale * 1.3f;
             }
+        }
+
+        /// <summary>
+        /// Highlights a hex as the current hover/drop target.
+        /// </summary>
+        public void SetHoverHighlight(HexCoord coord)
+        {
+            // Clear previous hover
+            ClearHoverHighlight();
+
+            if (_hexObjects.TryGetValue(coord, out var hexObj))
+            {
+                var renderer = hexObj.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    _originalHoverMaterial = renderer.material;
+                    _hoverHighlightedHex = coord;
+
+                    if (hexHoverMaterial != null)
+                    {
+                        renderer.material = hexHoverMaterial;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears the hover highlight.
+        /// </summary>
+        public void ClearHoverHighlight()
+        {
+            if (_hoverHighlightedHex != null && _hexObjects.TryGetValue(_hoverHighlightedHex.Value, out var hexObj))
+            {
+                var renderer = hexObj.GetComponent<Renderer>();
+                if (renderer != null && _originalHoverMaterial != null)
+                {
+                    renderer.material = _originalHoverMaterial;
+                }
+            }
+            _hoverHighlightedHex = null;
+            _originalHoverMaterial = null;
         }
         private void OnGameRestarted()
         {
@@ -642,6 +681,10 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
+            // Only handle in tap mode
+            if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
+                return;
+
             if (GameManager.Instance == null) return;
 
             GameManager.Instance.SelectGlyphling(Glyphling);

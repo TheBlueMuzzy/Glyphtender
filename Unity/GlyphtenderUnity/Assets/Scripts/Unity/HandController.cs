@@ -14,7 +14,7 @@ namespace Glyphtender.Unity
         [Header("Layout")]
         public float tileSpacing = 1.2f;
         public float tileSize = 0.8f;
- 
+
         public Vector3 handUpPosition = new Vector3(0f, -3f, 6f);
         public Vector3 handDownPosition = new Vector3(0f, -4.5f, 6f);
 
@@ -58,6 +58,10 @@ namespace Glyphtender.Unity
         // Replay Button
         private GameObject _replayButton;
 
+        // Input Mode Toggle Button
+        private GameObject _inputModeButton;
+        private TextMesh _inputModeText;
+
         // Cycle mode
         private bool _isInCycleMode;
         private HashSet<int> _selectedForDiscard = new HashSet<int>();
@@ -84,6 +88,7 @@ namespace Glyphtender.Unity
             CreateCancelButton();
             CreateCyclePrompt();
             CreateReplayButton();
+            CreateInputModeButton();
         }
 
         private void CreateCyclePrompt()
@@ -116,6 +121,7 @@ namespace Glyphtender.Unity
                 GameManager.Instance.OnGameRestarted -= OnGameRestarted;
             }
         }
+
         private void CreateReplayButton()
         {
             _replayButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -152,6 +158,53 @@ namespace Glyphtender.Unity
             _replayButton.SetActive(false);
         }
 
+        private void CreateInputModeButton()
+        {
+            _inputModeButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            _inputModeButton.transform.SetParent(_handAnchor);
+            _inputModeButton.transform.localPosition = new Vector3(-5f, 0f, 0f);
+            _inputModeButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            _inputModeButton.transform.localScale = new Vector3(0.8f, 0.05f, 0.8f);
+            _inputModeButton.name = "InputModeButton";
+
+            // Use a neutral color
+            var renderer = _inputModeButton.GetComponent<Renderer>();
+            renderer.material = new Material(Shader.Find("Standard"));
+            renderer.material.color = new Color(0.7f, 0.7f, 0.7f);
+
+            // Add click handler
+            var handler = _inputModeButton.AddComponent<InputModeButtonClickHandler>();
+            handler.Controller = this;
+
+            // Add text label
+            GameObject textObj = new GameObject("Label");
+            textObj.transform.SetParent(_inputModeButton.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            textObj.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+
+            _inputModeText = textObj.AddComponent<TextMesh>();
+            _inputModeText.text = "TAP";
+            _inputModeText.fontSize = 100;
+            _inputModeText.characterSize = 0.5f;
+            _inputModeText.alignment = TextAlignment.Center;
+            _inputModeText.anchor = TextAnchor.MiddleCenter;
+            _inputModeText.color = Color.black;
+        }
+
+        public void OnInputModeClicked()
+        {
+            if (GameManager.Instance.CurrentInputMode == GameManager.InputMode.Tap)
+            {
+                GameManager.Instance.SetInputMode(GameManager.InputMode.Drag);
+                _inputModeText.text = "DRAG";
+            }
+            else
+            {
+                GameManager.Instance.SetInputMode(GameManager.InputMode.Tap);
+                _inputModeText.text = "TAP";
+            }
+        }
         private void OnGameEnded(Player? winner)
         {
             // Hide all hand tiles
@@ -168,6 +221,7 @@ namespace Glyphtender.Unity
             // Show replay button
             _replayButton.SetActive(true);
         }
+
         private void OnGameRestarted()
         {
             // Reset cycle mode
@@ -187,6 +241,7 @@ namespace Glyphtender.Unity
             // Refresh hand
             RefreshHand();
         }
+
         public void OnReplayClicked()
         {
             // Hide replay button
@@ -354,10 +409,16 @@ namespace Glyphtender.Unity
             tile.name = $"HandTile_{letter}_{index}";
 
             // Add click handler
-            var handler = tile.AddComponent<HandTileClickHandler>();
-            handler.Controller = this;
-            handler.Index = index;
-            handler.Letter = letter;
+            var clickHandler = tile.AddComponent<HandTileClickHandler>();
+            clickHandler.Controller = this;
+            clickHandler.Index = index;
+            clickHandler.Letter = letter;
+
+            // Add drag handler
+            var dragHandler = tile.AddComponent<HandTileDragHandler>();
+            dragHandler.Controller = this;
+            dragHandler.Index = index;
+            dragHandler.Letter = letter;
 
             // Add 3D text for letter (placeholder)
             CreateLetterText(tile, letter);
@@ -415,6 +476,24 @@ namespace Glyphtender.Unity
                 ShowConfirmButton();
             }
             ShowCancelButton();
+        }
+
+        /// <summary>
+        /// Sets the selected tile index (used by drag handler).
+        /// </summary>
+        public void SetSelectedIndex(int index)
+        {
+            _selectedIndex = index;
+            UpdateTileHighlights();
+        }
+
+        /// <summary>
+        /// Clears the selected tile index.
+        /// </summary>
+        public void ClearSelectedIndex()
+        {
+            _selectedIndex = -1;
+            UpdateTileHighlights();
         }
 
         private void UpdateTileHighlights()
@@ -476,6 +555,7 @@ namespace Glyphtender.Unity
                 }
             }
         }
+
         private void EnterCycleMode()
         {
             Debug.Log("EnterCycleMode called!");
@@ -491,6 +571,7 @@ namespace Glyphtender.Unity
 
             Debug.Log("Entered cycle mode - select tiles to discard");
         }
+
         private void ToggleTileForDiscard(int index)
         {
             if (_selectedForDiscard.Contains(index))
@@ -524,6 +605,7 @@ namespace Glyphtender.Unity
             _confirmButton.SetActive(false);
             _confirmVisible = false;
         }
+
         public void ShowCancelButton()
         {
             _cancelButton.SetActive(true);
@@ -555,6 +637,7 @@ namespace Glyphtender.Unity
                 }
             }
         }
+
         public void OnCancelClicked()
         {
             GameManager.Instance.ResetMove();
@@ -594,6 +677,7 @@ namespace Glyphtender.Unity
             // End the turn
             GameManager.Instance.EndCycleMode();
         }
+
         private void ExitCycleMode()
         {
             _isInCycleMode = false;
@@ -614,6 +698,10 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
+            // Only handle in tap mode
+            if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
+                return;
+
             Controller?.OnTileClicked(Index, Letter);
         }
     }
@@ -643,6 +731,7 @@ namespace Glyphtender.Unity
             Controller?.OnCancelClicked();
         }
     }
+
     /// <summary>
     /// Handles clicks on replay button.
     /// </summary>
@@ -653,6 +742,18 @@ namespace Glyphtender.Unity
         private void OnMouseDown()
         {
             Controller?.OnReplayClicked();
+        }
+    }
+    /// <summary>
+    /// Handles clicks on input mode toggle button.
+    /// </summary>
+    public class InputModeButtonClickHandler : MonoBehaviour
+    {
+        public HandController Controller { get; set; }
+
+        private void OnMouseDown()
+        {
+            Controller?.OnInputModeClicked();
         }
     }
 }
