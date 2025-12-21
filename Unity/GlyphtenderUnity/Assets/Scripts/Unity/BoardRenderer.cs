@@ -45,6 +45,8 @@ namespace Glyphtender.Unity
         private Vector3 _originalHexScale;
 
         private GameObject _ghostTile;
+        private Dictionary<Glyphling, bool> _trappedGlyphlings = new Dictionary<Glyphling, bool>();
+        private Dictionary<Glyphling, float> _trappedPulseTime = new Dictionary<Glyphling, float>();
 
         // Rendered objects
         private Dictionary<HexCoord, GameObject> _hexObjects;
@@ -121,6 +123,34 @@ namespace Glyphtender.Unity
                         _tileLerpTime.Remove(coord);
                         _tileLerpDuration.Remove(coord);
                     }
+                }
+            }
+            // Pulse trapped glyphlings
+            foreach (var glyphling in _glyphlingObjects.Keys)
+            {
+                bool isTrapped = TangleChecker.IsTangled(GameManager.Instance.GameState, glyphling);
+
+                if (isTrapped)
+                {
+                    if (!_trappedPulseTime.ContainsKey(glyphling))
+                    {
+                        _trappedPulseTime[glyphling] = 0f;
+                    }
+
+                    _trappedPulseTime[glyphling] += Time.deltaTime;
+                    float pulse = (Mathf.Sin(_trappedPulseTime[glyphling] * 4f) + 1f) / 2f;
+
+                    var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        Color baseColor = glyphling.Owner == Player.Yellow ? Color.yellow : Color.blue;
+                        Color trappedColor = Color.red;
+                        renderer.material.color = Color.Lerp(baseColor, trappedColor, pulse * 0.5f);
+                    }
+                }
+                else
+                {
+                    _trappedPulseTime.Remove(glyphling);
                 }
             }
         }
