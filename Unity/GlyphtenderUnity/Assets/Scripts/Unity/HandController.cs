@@ -310,13 +310,18 @@ namespace Glyphtender.Unity
 
         private void OnSelectionChanged()
         {
-            // If selection was cleared, reset highlights
+            // If selection was cleared, reset highlights and buttons
             if (GameManager.Instance.SelectedGlyphling == null)
             {
                 _selectedIndex = -1;
                 UpdateTileHighlights();
                 HideConfirmButton();
                 HideCancelButton();
+            }
+            // If we have a pending destination, show cancel button
+            else if (GameManager.Instance.PendingDestination != null)
+            {
+                ShowCancelButton();
             }
         }
 
