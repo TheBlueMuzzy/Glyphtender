@@ -5,6 +5,19 @@ using System.Collections.Generic;
 namespace Glyphtender.Unity
 {
     /// <summary>
+    /// Represents the current phase of a player's turn.
+    /// </summary>
+    public enum GameTurnState
+    {
+        Idle,              // Waiting for player to select a glyphling
+        GlyphlingSelected, // Glyphling chosen, showing valid moves
+        MovePending,       // Destination chosen, selecting cast position and/or letter
+        ReadyToConfirm,    // Both cast position and letter selected
+        CycleMode,         // No word formed, selecting tiles to discard
+        GameOver           // Game has ended
+    }
+
+    /// <summary>
     /// Central game controller. Manages game state, turns, and coordinates
     /// between input, rendering, and game logic.
     /// </summary>
@@ -26,6 +39,7 @@ namespace Glyphtender.Unity
         public char? PendingLetter { get; private set; }
 
         public bool IsInCycleMode { get; private set; }
+        public GameTurnState CurrentTurnState { get; private set; } = GameTurnState.Idle;
         public enum InputMode { Tap, Drag }
         public InputMode CurrentInputMode { get; private set; } = InputMode.Tap;
 
@@ -91,6 +105,7 @@ namespace Glyphtender.Unity
             Debug.Log($"Blue hand: {string.Join(", ", GameState.Hands[Player.Blue])}");
 
             ClearSelection();
+            UpdateTurnState();
             OnGameStateChanged?.Invoke();
             OnGameRestarted?.Invoke();
         }
@@ -148,6 +163,7 @@ namespace Glyphtender.Unity
 
             Debug.Log($"Selected glyphling at {glyphling.Position}. {ValidMoves.Count} valid moves.");
 
+            UpdateTurnState();
             OnSelectionChanged?.Invoke();
         }
 
@@ -181,6 +197,7 @@ namespace Glyphtender.Unity
 
             Debug.Log($"Moved to {destination}. {ValidCasts.Count} valid cast positions.");
 
+            UpdateTurnState();
             OnSelectionChanged?.Invoke();
             OnGameStateChanged?.Invoke();  // Add this line to update glyphling visual position
         }
@@ -217,6 +234,7 @@ namespace Glyphtender.Unity
                 Debug.Log("Now select a letter from your hand.");
             }
 
+            UpdateTurnState();
             OnSelectionChanged?.Invoke();
         }
 
@@ -246,6 +264,7 @@ namespace Glyphtender.Unity
                 ShowGhostAndPreview();
             }
 
+            UpdateTurnState();
             OnSelectionChanged?.Invoke();
         }
 
@@ -255,6 +274,7 @@ namespace Glyphtender.Unity
         public void ClearPendingLetter()
         {
             PendingLetter = null;
+            UpdateTurnState();
             OnSelectionChanged?.Invoke();
         }
 
@@ -264,6 +284,7 @@ namespace Glyphtender.Unity
         public void ClearPendingCastPosition()
         {
             PendingCastPosition = null;
+            UpdateTurnState();
             OnSelectionChanged?.Invoke();
         }
 
@@ -339,6 +360,7 @@ namespace Glyphtender.Unity
             {
                 Debug.Log("No words formed! Entering cycle mode.");
                 IsInCycleMode = true;
+                UpdateTurnState();
                 ClearSelection();
                 OnSelectionChanged?.Invoke();
                 OnGameStateChanged?.Invoke();
@@ -368,6 +390,7 @@ namespace Glyphtender.Unity
             Debug.Log($"Turn ended. Now {GameState.CurrentPlayer}'s turn.");
 
             ClearSelection();
+            UpdateTurnState();
             OnTurnEnded?.Invoke();
             OnGameStateChanged?.Invoke();
         }
@@ -394,6 +417,7 @@ namespace Glyphtender.Unity
 
             _originalPosition = null;
             ClearSelection();
+            UpdateTurnState();
             OnSelectionChanged?.Invoke();
             OnGameStateChanged?.Invoke();
 
@@ -426,6 +450,7 @@ namespace Glyphtender.Unity
             Debug.Log($"Turn ended. Now {GameState.CurrentPlayer}'s turn.");
 
             ClearSelection();
+            UpdateTurnState();
             OnTurnEnded?.Invoke();
             OnGameStateChanged?.Invoke();
         }
@@ -466,6 +491,7 @@ namespace Glyphtender.Unity
             }
 
             ClearSelection();
+            UpdateTurnState();
             OnGameStateChanged?.Invoke();
             OnGameEnded?.Invoke(winner);
         }
@@ -478,6 +504,38 @@ namespace Glyphtender.Unity
             PendingLetter = null;
             ValidMoves.Clear();
             ValidCasts.Clear();
+        }
+
+        /// <summary>
+        /// Updates CurrentTurnState based on current game conditions.
+        /// </summary>
+        private void UpdateTurnState()
+        {
+            if (GameState.IsGameOver)
+            {
+                CurrentTurnState = GameTurnState.GameOver;
+            }
+            else if (IsInCycleMode)
+            {
+                CurrentTurnState = GameTurnState.CycleMode;
+            }
+            else if (PendingDestination != null && PendingCastPosition != null && PendingLetter != null)
+            {
+                CurrentTurnState = GameTurnState.ReadyToConfirm;
+            }
+            else if (PendingDestination != null)
+            {
+                CurrentTurnState = GameTurnState.MovePending;
+            }
+            else if (SelectedGlyphling != null)
+            {
+                CurrentTurnState = GameTurnState.GlyphlingSelected;
+            }
+            else
+            {
+                CurrentTurnState = GameTurnState.Idle;
+            }
+            Debug.Log($"Turn state: {CurrentTurnState}");
         }
     }
 }
