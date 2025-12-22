@@ -172,12 +172,13 @@ namespace Glyphtender.Unity
                     Vector3 mouseWorldPos = ray.origin + ray.direction * distance;
 
                     // Apply vertical offset so dragged object is visible above finger
+                    float offset = GameSettings.GetDragOffsetWorld();
                     transform.position = new Vector3(
                         mouseWorldPos.x,
                         0.5f,
-                        mouseWorldPos.z + GameSettings.DragOffset
+                        mouseWorldPos.z + offset
                     );
-                    UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, GameSettings.DragOffset));
+                    UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));
                 }
             }
             else
@@ -186,12 +187,13 @@ namespace Glyphtender.Unity
                 Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
 
                 // Apply vertical offset so dragged object is visible above finger
+                float offset = GameSettings.GetDragOffsetWorld();
                 transform.position = new Vector3(
                     mouseWorldPos.x,
                     0.5f,
-                    mouseWorldPos.z + GameSettings.DragOffset
+                    mouseWorldPos.z + offset
                 );
-                UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, GameSettings.DragOffset));
+                UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));
 
                 if (Input.GetMouseButtonUp(0))
                 {

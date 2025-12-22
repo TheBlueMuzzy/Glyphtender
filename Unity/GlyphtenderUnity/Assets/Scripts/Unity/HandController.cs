@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Glyphtender.Core;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
@@ -54,7 +54,7 @@ namespace Glyphtender.Unity
         public Material cancelMaterial;
         public float buttonSize = 0.75f;
 
-        [Header("Input Mode Button (anchored to top-right corner)")]
+        [Header("Menu Button (anchored to top-right corner)")]
         public float inputModeFromRight = 1.0f;   // Units from right edge
         public float inputModeFromTop = 1.0f;     // Units from top edge
 
@@ -153,7 +153,7 @@ namespace Glyphtender.Unity
             CreateCancelButton();
             CreateCyclePrompt();
             CreateReplayButton();
-            CreateInputModeButton();
+            CreateMenuButton();
 
             ApplyDockConfig();
             PositionUIElements();
@@ -221,7 +221,7 @@ namespace Glyphtender.Unity
             float halfWidth = halfHeight * uiCamera.aspect;
 
             // Corner positions
-            // Note: _uiAnchor is rotated 180� on X, so Y is flipped
+            // Note: _uiAnchor is rotated 180° on X, so Y is flipped
             //   Top of screen = negative Y
             //   Bottom of screen = positive Y
             //   Right side = positive X
@@ -400,37 +400,28 @@ namespace Glyphtender.Unity
             _replayButton.SetActive(false);
         }
 
-        private void CreateInputModeButton()
+        private void CreateMenuButton()
         {
             Material grayMaterial = new Material(Shader.Find("Standard"));
             grayMaterial.color = new Color(0.7f, 0.7f, 0.7f);
 
             _inputModeButton = CreateButton(
                 parent: _uiAnchor,
-                name: "InputModeButton",
+                name: "MenuButton",
                 scale: new Vector3(buttonSize, 0.05f, buttonSize),
                 material: grayMaterial,
-                labelText: "TAP",
-                labelScale: new Vector3(0.05f, 0.05f, 0.05f),
+                labelText: "=",
+                labelScale: new Vector3(0.08f, 0.08f, 0.08f),
                 fontSize: 100,
                 characterSize: 0.5f,
-                onClick: OnInputModeClicked,
+                onClick: OnMenuClicked,
                 textMesh: out _inputModeText
             );
         }
 
-        public void OnInputModeClicked()
+        public void OnMenuClicked()
         {
-            if (GameManager.Instance.CurrentInputMode == GameManager.InputMode.Tap)
-            {
-                GameManager.Instance.SetInputMode(GameManager.InputMode.Drag);
-                _inputModeText.text = "DRAG";
-            }
-            else
-            {
-                GameManager.Instance.SetInputMode(GameManager.InputMode.Tap);
-                _inputModeText.text = "TAP";
-            }
+            MenuController.Instance?.ToggleMenu();
         }
 
         private void OnGameEnded(Player? winner)
