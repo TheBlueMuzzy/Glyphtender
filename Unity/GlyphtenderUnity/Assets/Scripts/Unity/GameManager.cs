@@ -63,6 +63,7 @@ namespace Glyphtender.Unity
         public event System.Action<Player?> OnGameEnded;
         public event System.Action OnGameRestarted;
         public event System.Action OnInputModeChanged;
+        public event System.Action<GameTurnState> OnTurnStateChanged;
 
         private void Awake()
         {
@@ -129,10 +130,12 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectGlyphling(Glyphling glyphling)
         {
-            // Don't allow selection if game is over
-            if (GameState.IsGameOver)
+            // Only allow selection in Idle state (or if re-selecting before confirming)
+            if (CurrentTurnState != GameTurnState.Idle &&
+                CurrentTurnState != GameTurnState.GlyphlingSelected &&
+                CurrentTurnState != GameTurnState.MovePending)
             {
-                Debug.Log("Game is over!");
+                Debug.Log($"Cannot select glyphling in {CurrentTurnState} state");
                 return;
             }
 
@@ -171,9 +174,10 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectDestination(HexCoord destination)
         {
-            if (SelectedGlyphling == null)
+            // Only allow destination selection after glyphling is selected
+            if (CurrentTurnState != GameTurnState.GlyphlingSelected)
             {
-                Debug.Log("Select a glyphling first!");
+                Debug.Log($"Cannot select destination in {CurrentTurnState} state");
                 return;
             }
 
@@ -206,9 +210,11 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectCastPosition(HexCoord castPosition)
         {
-            if (PendingDestination == null)
+            // Only allow cast selection after move is pending
+            if (CurrentTurnState != GameTurnState.MovePending &&
+                CurrentTurnState != GameTurnState.ReadyToConfirm)
             {
-                Debug.Log("Move your glyphling first!");
+                Debug.Log($"Cannot select cast position in {CurrentTurnState} state");
                 return;
             }
 
@@ -242,9 +248,11 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectLetter(char letter)
         {
-            if (PendingDestination == null)
+            // Only allow letter selection after move is pending
+            if (CurrentTurnState != GameTurnState.MovePending &&
+                CurrentTurnState != GameTurnState.ReadyToConfirm)
             {
-                Debug.Log("Move your glyphling first!");
+                Debug.Log($"Cannot select letter in {CurrentTurnState} state");
                 return;
             }
 
@@ -318,10 +326,10 @@ namespace Glyphtender.Unity
         /// </summary>
         public void ConfirmMove()
         {
-            if (SelectedGlyphling == null || PendingDestination == null ||
-                PendingCastPosition == null || PendingLetter == null)
+            // Only allow confirm in ReadyToConfirm state
+            if (CurrentTurnState != GameTurnState.ReadyToConfirm)
             {
-                Debug.Log("Move not complete!");
+                Debug.Log($"Cannot confirm move in {CurrentTurnState} state");
                 return;
             }
 
@@ -398,6 +406,14 @@ namespace Glyphtender.Unity
         /// </summary>
         public void ResetMove()
         {
+            // Only allow reset when there's something to reset
+            if (CurrentTurnState == GameTurnState.Idle ||
+                CurrentTurnState == GameTurnState.CycleMode ||
+                CurrentTurnState == GameTurnState.GameOver)
+            {
+                return;
+            }
+
             IsResetting = true;
 
             // Hide ghost tile
@@ -509,6 +525,8 @@ namespace Glyphtender.Unity
         /// </summary>
         private void UpdateTurnState()
         {
+            GameTurnState previousState = CurrentTurnState;
+
             if (GameState.IsGameOver)
             {
                 CurrentTurnState = GameTurnState.GameOver;
@@ -535,7 +553,11 @@ namespace Glyphtender.Unity
                 CurrentTurnState = GameTurnState.Idle;
             }
 
-            Debug.Log($"Turn state: {CurrentTurnState}");
+            if (CurrentTurnState != previousState)
+            {
+                Debug.Log($"Turn state: {previousState} -> {CurrentTurnState}");
+                OnTurnStateChanged?.Invoke(CurrentTurnState);
+            }
         }
     }
 }
