@@ -171,16 +171,27 @@ namespace Glyphtender.Unity
                     float distance = ray.origin.y / -ray.direction.y;
                     Vector3 mouseWorldPos = ray.origin + ray.direction * distance;
 
-                    transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
-                    UpdateHoverHighlight(mouseWorldPos);
+                    // Apply vertical offset so dragged object is visible above finger
+                    transform.position = new Vector3(
+                        mouseWorldPos.x,
+                        0.5f,
+                        mouseWorldPos.z + GameSettings.DragOffset
+                    );
+                    UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, GameSettings.DragOffset));
                 }
             }
             else
             {
                 // Mouse input
                 Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
-                transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
-                UpdateHoverHighlight(mouseWorldPos);
+
+                // Apply vertical offset so dragged object is visible above finger
+                transform.position = new Vector3(
+                    mouseWorldPos.x,
+                    0.5f,
+                    mouseWorldPos.z + GameSettings.DragOffset
+                );
+                UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, GameSettings.DragOffset));
 
                 if (Input.GetMouseButtonUp(0))
                 {
