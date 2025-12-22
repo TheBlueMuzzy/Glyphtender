@@ -586,7 +586,10 @@ namespace Glyphtender.Unity
             _currentHand.Clear();
             _selectedIndex = -1;
 
-            float totalWidth = (hand.Count - 1) * tileSpacing;
+            // Calculate effective spacing (may auto-fit in portrait bottom dock)
+            float effectiveSpacing = GetEffectiveTileSpacing(hand.Count);
+
+            float totalWidth = (hand.Count - 1) * effectiveSpacing;
             float startX = -totalWidth / 2f;
 
             for (int i = 0; i < hand.Count; i++)
@@ -594,10 +597,41 @@ namespace Glyphtender.Unity
                 char letter = hand[i];
                 _currentHand.Add(letter);
 
-                Vector3 localPos = new Vector3(startX + i * tileSpacing, 0f, 0f);
+                Vector3 localPos = new Vector3(startX + i * effectiveSpacing, 0f, 0f);
                 GameObject tileObj = CreateHandTile(letter, localPos, i);
                 _handTileObjects.Add(tileObj);
             }
+        }
+
+        /// <summary>
+        /// Calculates effective tile spacing.
+        /// In portrait mode with bottom dock, auto-fits to screen width.
+        /// Otherwise uses the Inspector tileSpacing value.
+        /// </summary>
+        private float GetEffectiveTileSpacing(int tileCount)
+        {
+            // Only auto-fit for bottom dock in portrait mode
+            bool isPortrait = Screen.height > Screen.width;
+            if (currentDock != DockPosition.Bottom || !isPortrait)
+            {
+                return tileSpacing;
+            }
+
+            if (uiCamera == null || tileCount <= 1)
+            {
+                return tileSpacing;
+            }
+
+            // Calculate available width (camera width minus margins for tile radius on each side)
+            float camWidth = uiCamera.orthographicSize * uiCamera.aspect * 2f;
+            float margin = tileSize;  // Half tile on each side
+            float availableWidth = camWidth - margin;
+
+            // Calculate max spacing that fits all tiles
+            float maxSpacing = availableWidth / (tileCount - 1);
+
+            // Use the smaller of user's setting or auto-fit max
+            return Mathf.Min(tileSpacing, maxSpacing);
         }
 
         private GameObject CreateHandTile(char letter, Vector3 localPos, int index)

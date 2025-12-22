@@ -27,6 +27,13 @@ namespace Glyphtender.Unity
         private Renderer _renderer;
 
         private static HandTileDragHandler _currentlyPlacedTile;
+        private static bool _isDraggingAny;
+
+        /// <summary>
+        /// True if any hand tile is currently being dragged.
+        /// Used by TouchInputController to disable panning.
+        /// </summary>
+        public static bool IsDraggingTile => _isDraggingAny;
 
         private void Start()
         {
@@ -87,6 +94,7 @@ namespace Glyphtender.Unity
             }
 
             _isDragging = true;
+            _isDraggingAny = true;
 
             // Set scale for board visibility
             transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
@@ -143,6 +151,7 @@ namespace Glyphtender.Unity
         private void EndDrag()
         {
             _isDragging = false;
+            _isDraggingAny = false;
             _boardRenderer.ClearHoverHighlight();
 
             // Check if dropped on valid hex

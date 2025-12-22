@@ -182,8 +182,8 @@ namespace Glyphtender.Unity
                 }
             }
 
-            // Single finger pan (only if not on selectable and has moved)
-            if (Input.touchCount == 1 && data.hasMoved && !data.isOnSelectable)
+            // Single finger pan (only if not on selectable, has moved, and not dragging a tile)
+            if (Input.touchCount == 1 && data.hasMoved && !data.isOnSelectable && !HandTileDragHandler.IsDraggingTile)
             {
                 HandleSingleFingerPan(data.previousPosition, data.currentPosition);
             }
@@ -407,8 +407,8 @@ namespace Glyphtender.Unity
                 {
                     _mouseHasMoved = true;
 
-                    // Pan with left mouse if not on selectable
-                    if (!_mouseOnSelectable)
+                    // Pan with left mouse if not on selectable and not dragging a tile
+                    if (!_mouseOnSelectable && !HandTileDragHandler.IsDraggingTile)
                     {
                         HandleSingleFingerPan(_mousePreviousPosition, currentPos);
                     }
