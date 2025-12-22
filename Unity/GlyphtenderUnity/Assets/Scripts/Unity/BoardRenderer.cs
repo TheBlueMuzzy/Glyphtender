@@ -33,14 +33,6 @@ namespace Glyphtender.Unity
         public float tileResetDuration = 0.1f;
 
         private Dictionary<Glyphling, Vector3> _glyphlingTargets;
-        private Dictionary<Glyphling, Vector3> _glyphlingStarts;
-        private Dictionary<Glyphling, float> _glyphlingLerpTime;
-        private Dictionary<Glyphling, float> _glyphlingLerpDuration;
-
-        private Dictionary<HexCoord, Vector3> _tileTargets;
-        private Dictionary<HexCoord, Vector3> _tileStarts;
-        private Dictionary<HexCoord, float> _tileLerpTime;
-        private Dictionary<HexCoord, float> _tileLerpDuration;
 
         private HexCoord? _highlightedCastPosition;
         private Vector3 _originalHexScale;
@@ -68,14 +60,6 @@ namespace Glyphtender.Unity
             _glyphlingObjects = new Dictionary<Glyphling, GameObject>();
 
             _glyphlingTargets = new Dictionary<Glyphling, Vector3>();
-            _glyphlingStarts = new Dictionary<Glyphling, Vector3>();
-            _glyphlingLerpTime = new Dictionary<Glyphling, float>();
-            _glyphlingLerpDuration = new Dictionary<Glyphling, float>();
-
-            _tileTargets = new Dictionary<HexCoord, Vector3>();
-            _tileStarts = new Dictionary<HexCoord, Vector3>();
-            _tileLerpTime = new Dictionary<HexCoord, float>();
-            _tileLerpDuration = new Dictionary<HexCoord, float>();
 
             // Flat-top hex dimensions
             _hexWidth = hexSize * 2f;
@@ -84,51 +68,7 @@ namespace Glyphtender.Unity
 
         private void Update()
         {
-            // Lerp glyphlings toward their targets
-            foreach (var glyphling in _glyphlingObjects.Keys)
-            {
-                if (_glyphlingTargets.TryGetValue(glyphling, out Vector3 target))
-                {
-                    var obj = _glyphlingObjects[glyphling];
-                    _glyphlingLerpTime[glyphling] += Time.deltaTime;
-
-                    float duration = _glyphlingLerpDuration.TryGetValue(glyphling, out float d) ? d : moveDuration;
-                    float t = Mathf.Clamp01(_glyphlingLerpTime[glyphling] / duration);
-
-                    // Smooth step for nicer easing
-                    t = t * t * (3f - 2f * t);
-
-                    Vector3 start = _glyphlingStarts.TryGetValue(glyphling, out Vector3 s) ? s : obj.transform.position;
-                    obj.transform.position = Vector3.Lerp(start, target, t);
-                }
-            }
-
-            // Lerp tiles toward their targets
-            foreach (var coord in new List<HexCoord>(_tileTargets.Keys))
-            {
-                if (_tileObjects.TryGetValue(coord, out GameObject tileObj))
-                {
-                    _tileLerpTime[coord] += Time.deltaTime;
-                    float duration = _tileLerpDuration.TryGetValue(coord, out float d) ? d : tileCastDuration;
-                    float t = Mathf.Clamp01(_tileLerpTime[coord] / duration);
-
-                    // Smooth step for nicer easing
-                    t = t * t * (3f - 2f * t);
-
-                    Vector3 start = _tileStarts[coord];
-                    Vector3 target = _tileTargets[coord];
-                    tileObj.transform.position = Vector3.Lerp(start, target, t);
-
-                    // Remove from tracking when done
-                    if (t >= 1f)
-                    {
-                        _tileTargets.Remove(coord);
-                        _tileStarts.Remove(coord);
-                        _tileLerpTime.Remove(coord);
-                        _tileLerpDuration.Remove(coord);
-                    }
-                }
-            }
+           
             // Pulse trapped glyphlings
             foreach (var glyphling in _glyphlingObjects.Keys)
             {
@@ -182,6 +122,9 @@ namespace Glyphtender.Unity
 
         private void Initialize()
         {
+
+            TweenManager.EnsureExists();
+
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnGameStateChanged += RefreshBoard;
@@ -392,11 +335,8 @@ namespace Glyphtender.Unity
 
             _tileObjects[coord] = tileObj;
 
-            // Set up lerp animation
-            _tileStarts[coord] = startPos;
-            _tileTargets[coord] = targetPos;
-            _tileLerpTime[coord] = 0f;
-            _tileLerpDuration[coord] = tileCastDuration;
+            // Animate tile from cast origin to destination
+            TweenManager.Instance.MoveFromTo(tileObj.transform, startPos, targetPos, tileCastDuration);
         }
 
         private void RefreshGlyphlings()
@@ -413,15 +353,15 @@ namespace Glyphtender.Unity
                 var obj = _glyphlingObjects[glyphling];
                 Vector3 targetPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
 
-                // Check if position changed
+                // Check if position changed (compare to current target, not current position)
                 if (!_glyphlingTargets.ContainsKey(glyphling) || _glyphlingTargets[glyphling] != targetPos)
                 {
-                    _glyphlingStarts[glyphling] = obj.transform.position;
                     _glyphlingTargets[glyphling] = targetPos;
-                    _glyphlingLerpTime[glyphling] = 0f;
 
                     // Use fast duration for reset (snap back), normal for moves
-                    _glyphlingLerpDuration[glyphling] = GameManager.Instance.IsResetting ? resetDuration : moveDuration;
+                    float duration = GameManager.Instance.IsResetting ? resetDuration : moveDuration;
+
+                    TweenManager.Instance.MoveTo(obj.transform, targetPos, duration);
                 }
             }
         }
@@ -555,10 +495,6 @@ namespace Glyphtender.Unity
                 Destroy(tile);
             }
             _tileObjects.Clear();
-            _tileTargets.Clear();
-            _tileStarts.Clear();
-            _tileLerpTime.Clear();
-            _tileLerpDuration.Clear();
 
             // Clear all glyphlings (new ones will be created)
             foreach (var obj in _glyphlingObjects.Values)
@@ -567,9 +503,6 @@ namespace Glyphtender.Unity
             }
             _glyphlingObjects.Clear();
             _glyphlingTargets.Clear();
-            _glyphlingStarts.Clear();
-            _glyphlingLerpTime.Clear();
-            _glyphlingLerpDuration.Clear();
 
             // Clear trapped state
             _trappedPulseTime.Clear();
