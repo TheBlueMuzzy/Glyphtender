@@ -38,7 +38,7 @@ namespace Glyphtender.Unity
         public HexCoord? LastCastOrigin { get; private set; }
         public char? PendingLetter { get; private set; }
 
-        public bool IsInCycleMode { get; private set; }
+        public bool IsInCycleMode => CurrentTurnState == GameTurnState.CycleMode;
         public GameTurnState CurrentTurnState { get; private set; } = GameTurnState.Idle;
         public enum InputMode { Tap, Drag }
         public InputMode CurrentInputMode { get; private set; } = InputMode.Tap;
@@ -95,7 +95,6 @@ namespace Glyphtender.Unity
             GameState = GameRules.CreateNewGame();
 
             // Reset all state
-            IsInCycleMode = false;
             LastTurnWordCount = 0;
             _originalPosition = null;
 
@@ -359,8 +358,7 @@ namespace Glyphtender.Unity
             if (newWords.Count == 0)
             {
                 Debug.Log("No words formed! Entering cycle mode.");
-                IsInCycleMode = true;
-                UpdateTurnState();
+                CurrentTurnState = GameTurnState.CycleMode;
                 ClearSelection();
                 OnSelectionChanged?.Invoke();
                 OnGameStateChanged?.Invoke();
@@ -428,7 +426,6 @@ namespace Glyphtender.Unity
         /// </summary>
         public void EndCycleMode()
         {
-            IsInCycleMode = false;
 
             // Check for tangles
             var tangled = TangleChecker.GetTangledGlyphlings(GameState);
@@ -450,6 +447,7 @@ namespace Glyphtender.Unity
             Debug.Log($"Turn ended. Now {GameState.CurrentPlayer}'s turn.");
 
             ClearSelection();
+            CurrentTurnState = GameTurnState.Idle;
             UpdateTurnState();
             OnTurnEnded?.Invoke();
             OnGameStateChanged?.Invoke();
@@ -515,9 +513,10 @@ namespace Glyphtender.Unity
             {
                 CurrentTurnState = GameTurnState.GameOver;
             }
-            else if (IsInCycleMode)
+            else if (CurrentTurnState == GameTurnState.CycleMode)
             {
-                CurrentTurnState = GameTurnState.CycleMode;
+                // Stay in CycleMode until explicitly exited
+                return;
             }
             else if (PendingDestination != null && PendingCastPosition != null && PendingLetter != null)
             {
@@ -535,6 +534,7 @@ namespace Glyphtender.Unity
             {
                 CurrentTurnState = GameTurnState.Idle;
             }
+
             Debug.Log($"Turn state: {CurrentTurnState}");
         }
     }
