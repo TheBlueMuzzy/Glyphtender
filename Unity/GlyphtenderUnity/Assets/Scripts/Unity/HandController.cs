@@ -424,6 +424,28 @@ namespace Glyphtender.Unity
             MenuController.Instance?.ToggleMenu();
         }
 
+        /// <summary>
+        /// Hides hand tiles and cycle prompt when menu is open.
+        /// </summary>
+        public void HideHand()
+        {
+            if (_handAnchor != null)
+            {
+                _handAnchor.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// Shows hand tiles and cycle prompt when menu closes.
+        /// </summary>
+        public void ShowHand()
+        {
+            if (_handAnchor != null)
+            {
+                _handAnchor.gameObject.SetActive(true);
+            }
+        }
+
         private void OnGameEnded(Player? winner)
         {
             foreach (var tile in _handTileObjects)
@@ -921,6 +943,10 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
+            // Block input when menu is open
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+                return;
+
             if (!GameManager.Instance.IsInCycleMode &&
                 GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
                 return;

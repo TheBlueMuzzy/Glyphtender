@@ -630,6 +630,10 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
+            // Block input when menu is open
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+                return;
+
             // Only handle in tap mode
             if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
                 return;
@@ -702,6 +706,10 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
+            // Block input when menu is open
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+                return;
+
             // Only handle in drag mode
             if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Drag)
                 return;
@@ -806,13 +814,14 @@ namespace Glyphtender.Unity
                     Vector3 mouseWorldPos = ray.origin + ray.direction * distance;
 
                     // Apply vertical offset so dragged object is visible above finger
+                    float offset = GameSettings.GetDragOffsetWorld();
                     _draggedObject.transform.position = new Vector3(
                         mouseWorldPos.x,
                         0.5f,
-                        mouseWorldPos.z + GameSettings.DragOffset
+                        mouseWorldPos.z + offset
                     );
 
-                    UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, GameSettings.DragOffset));
+                    UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));
                 }
             }
             else
@@ -821,13 +830,14 @@ namespace Glyphtender.Unity
                 Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
 
                 // Apply vertical offset so dragged object is visible above finger
+                float offset = GameSettings.GetDragOffsetWorld();
                 _draggedObject.transform.position = new Vector3(
                     mouseWorldPos.x,
                     0.5f,
-                    mouseWorldPos.z + GameSettings.DragOffset
+                    mouseWorldPos.z + offset
                 );
 
-                UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, GameSettings.DragOffset));
+                UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));
 
                 if (Input.GetMouseButtonUp(0))
                 {

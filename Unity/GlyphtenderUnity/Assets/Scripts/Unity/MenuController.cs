@@ -286,6 +286,9 @@ namespace Glyphtender.Unity
             _menuRoot.SetActive(true);
             _backgroundBlocker.SetActive(true);
 
+            // Hide hand elements
+            handController?.HideHand();
+
             _animationStartScale = Vector3.zero;
             _animationEndScale = Vector3.one;
             _menuRoot.transform.localScale = _animationStartScale;
@@ -298,6 +301,9 @@ namespace Glyphtender.Unity
             if (!_isOpen || _isAnimating) return;
 
             _isOpen = false;
+
+            // Show hand elements
+            handController?.ShowHand();
 
             _animationStartScale = Vector3.one;
             _animationEndScale = Vector3.zero;

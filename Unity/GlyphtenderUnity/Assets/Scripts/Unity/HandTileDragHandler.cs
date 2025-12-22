@@ -50,6 +50,10 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
+            // Block input when menu is open
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+                return;
+
             // Only handle in drag mode
             if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Drag)
                 return;

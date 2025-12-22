@@ -70,6 +70,9 @@ namespace Glyphtender.Unity
             // Skip if no camera controller
             if (cameraController == null) return;
 
+            // Skip board input when menu is open
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen) return;
+
             // Handle touch input
             if (Input.touchCount > 0)
             {
