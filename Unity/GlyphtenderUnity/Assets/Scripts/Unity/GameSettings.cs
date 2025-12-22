@@ -13,7 +13,7 @@ namespace Glyphtender.Unity
         /// Multiplied by base offset to get actual world units.
         /// 0 = no offset, 1 = small offset, 2 = large offset.
         /// </summary>
-        public static float DragOffset { get; set; } = 1f;
+        public static float DragOffset { get; set; } = 2f;
 
         /// <summary>
         /// Base offset distance in world units (multiplied by DragOffset).

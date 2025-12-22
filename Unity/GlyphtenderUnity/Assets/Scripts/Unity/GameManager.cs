@@ -41,7 +41,7 @@ namespace Glyphtender.Unity
         public bool IsInCycleMode => CurrentTurnState == GameTurnState.CycleMode;
         public GameTurnState CurrentTurnState { get; private set; } = GameTurnState.Idle;
         public enum InputMode { Tap, Drag }
-        public InputMode CurrentInputMode { get; private set; } = InputMode.Tap;
+        public InputMode CurrentInputMode { get; private set; } = InputMode.Drag;
 
         public void SetInputMode(InputMode mode)
         {

@@ -827,7 +827,7 @@ namespace Glyphtender.Unity
                         mouseWorldPos.z + offset
                     );
 
-                    UpdateHoverHighlight(mouseWorldPos);  // Use finger position, not offset
+                    UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));  // Use object position
                 }
             }
             else
@@ -843,7 +843,7 @@ namespace Glyphtender.Unity
                     mouseWorldPos.z + offset
                 );
 
-                UpdateHoverHighlight(mouseWorldPos);  // Use mouse position, not offset
+                UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));  // Use object position
 
                 if (Input.GetMouseButtonUp(0))
                 {
