@@ -908,8 +908,9 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
-            // Only handle in tap mode
-            if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
+            // Always allow in cycle mode, otherwise only in tap mode
+            if (!GameManager.Instance.IsInCycleMode &&
+                GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
                 return;
 
             Controller?.OnTileClicked(Index, Letter);
