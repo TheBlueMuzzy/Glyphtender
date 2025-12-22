@@ -260,6 +260,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 897ce978b9ecf324cafdbe4455cef28c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiCamera: {fileID: 0}
   yellowScorePosition: {x: -4, y: 2, z: 6}
   blueScorePosition: {x: 4, y: 2, z: 6}
   fontSize: 10
@@ -308,16 +309,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e369e5d2f82b3d43822dc6bfe054a1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiCamera: {fileID: 0}
   currentDock: 0
-  tileSpacing: 0.8
-  tileSize: 0.5
+  tileSpacing: 0.9
+  tileSize: 0.8
   toggleDuration: 0.2
   yellowTileMaterial: {fileID: 2100000, guid: 29f26a048c7ba684796647836537955a, type: 2}
   blueTileMaterial: {fileID: 2100000, guid: c4e4cb277555304458d31be3060f9d9e, type: 2}
   selectedMaterial: {fileID: 2100000, guid: 87ed1c6ce549c694491b602fb287cff6, type: 2}
   confirmMaterial: {fileID: 2100000, guid: 87ed1c6ce549c694491b602fb287cff6, type: 2}
   cancelMaterial: {fileID: 2100000, guid: 8eb44f2727c49b74189b70d2b7aff749, type: 2}
-  buttonSize: 0.6
+  buttonSize: 0.75
+  inputModeFromRight: 0.75
+  inputModeFromTop: 0.75
+  confirmFromRight: 1.25
+  confirmFromBottom: 2.5
+  cancelFromRight: 0.75
+  cancelFromBottom: 3.35
 --- !u!1 &649223871
 GameObject:
   m_ObjectHideFlags: 0
@@ -495,6 +503,7 @@ MonoBehaviour:
   tapDistanceThreshold: 20
   doubleTapTime: 0.3
   cameraController: {fileID: 886909321}
+  uiCamera: {fileID: 0}
 --- !u!1 &1446835201
 GameObject:
   m_ObjectHideFlags: 0
@@ -556,7 +565,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 10
+  orthographic size: 7
   m_Depth: 1
   m_CullingMask:
     serializedVersion: 2

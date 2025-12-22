@@ -19,6 +19,7 @@ namespace Glyphtender.Unity
         private Vector3 _originalScale;
         private Quaternion _originalRotation;
         private Transform _originalParent;
+        private int _originalLayer;
         private Color _originalColor;
         private Camera _mainCamera;
         private BoardRenderer _boardRenderer;
@@ -36,6 +37,7 @@ namespace Glyphtender.Unity
             {
                 _originalColor = _renderer.material.color;
             }
+            _originalLayer = gameObject.layer;
         }
 
         private void OnMouseDown()
@@ -66,13 +68,22 @@ namespace Glyphtender.Unity
                 _originalScale = transform.localScale;
                 _originalRotation = transform.localRotation;
                 _originalParent = transform.parent;
+                _originalLayer = gameObject.layer;
 
                 // Unparent so it moves in world space
                 transform.SetParent(null);
 
+                // Switch to Board layer so Main Camera renders it during drag
+                SetLayerRecursively(gameObject, LayerMask.NameToLayer("Board"));
+
                 // Select this letter
                 GameManager.Instance.SelectLetter(Letter);
                 Controller.SetSelectedIndex(Index);
+            }
+            else
+            {
+                // Already placed - just switch layer for dragging
+                SetLayerRecursively(gameObject, LayerMask.NameToLayer("Board"));
             }
 
             _isDragging = true;
@@ -100,7 +111,7 @@ namespace Glyphtender.Unity
         {
             if (!_isDragging) return;
 
-            // Move tile to follow cursor
+            // Move tile to follow cursor using Main Camera (board camera)
             Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
             transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
 
@@ -146,6 +157,7 @@ namespace Glyphtender.Unity
                 transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
                 transform.rotation = Quaternion.Euler(0f, 0f, 0f);
 
+                // Keep on Board layer so it's visible with the board
                 // Keep ghost appearance
                 SetGhostAppearance(true);
 
@@ -175,6 +187,9 @@ namespace Glyphtender.Unity
             transform.position = _originalPosition;
             transform.localScale = _originalScale;
             transform.localRotation = _originalRotation;
+
+            // Restore to UI3D layer
+            SetLayerRecursively(gameObject, LayerMask.NameToLayer("UI3D"));
 
             // Restore solid appearance
             SetGhostAppearance(false);
@@ -222,6 +237,9 @@ namespace Glyphtender.Unity
             transform.localScale = _originalScale;
             transform.localRotation = _originalRotation;
 
+            // Restore to UI3D layer
+            SetLayerRecursively(gameObject, LayerMask.NameToLayer("UI3D"));
+
             SetGhostAppearance(false);
             _isPlaced = false;
 
@@ -266,6 +284,18 @@ namespace Glyphtender.Unity
             }
 
             mat.color = color;
+        }
+
+        /// <summary>
+        /// Sets layer for object and all children.
+        /// </summary>
+        private void SetLayerRecursively(GameObject obj, int layer)
+        {
+            obj.layer = layer;
+            foreach (Transform child in obj.transform)
+            {
+                SetLayerRecursively(child.gameObject, layer);
+            }
         }
 
         /// <summary>

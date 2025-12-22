@@ -16,6 +16,7 @@ namespace Glyphtender.Unity
 
         [Header("References")]
         public CameraController cameraController;
+        public Camera uiCamera;  // Reference to UI camera for raycasting UI elements
 
         // Touch tracking
         private Dictionary<int, TouchData> _activeTouches = new Dictionary<int, TouchData>();
@@ -28,8 +29,9 @@ namespace Glyphtender.Unity
         private float _initialPinchDistance;
         private float _pinchZoomStart;
 
-        // Layer mask for selectable objects
-        private int _selectableLayerMask;
+        // Layer masks
+        private int _boardLayerMask;
+        private int _uiLayerMask;
 
         private class TouchData
         {
@@ -48,8 +50,19 @@ namespace Glyphtender.Unity
                 cameraController = FindObjectOfType<CameraController>();
             }
 
-            // Default layer mask - can be customized if needed
-            _selectableLayerMask = ~0;  // All layers for now
+            // Find UI camera if not set
+            if (uiCamera == null)
+            {
+                var uiCamObj = GameObject.Find("UICamera");
+                if (uiCamObj != null)
+                {
+                    uiCamera = uiCamObj.GetComponent<Camera>();
+                }
+            }
+
+            // Set up layer masks
+            _boardLayerMask = LayerMask.GetMask("Default", "Board");
+            _uiLayerMask = LayerMask.GetMask("UI3D");
         }
 
         private void Update()
@@ -101,18 +114,33 @@ namespace Glyphtender.Unity
 
         private void OnTouchBegan(Touch touch)
         {
-            // Raycast to see what we hit
-            Ray ray = Camera.main.ScreenPointToRay(touch.position);
-            RaycastHit hit;
-
             bool hitSelectable = false;
             GameObject hitObject = null;
 
-            if (Physics.Raycast(ray, out hit, 100f, _selectableLayerMask))
+            // First, raycast with UI camera for UI elements (buttons, hand tiles)
+            if (uiCamera != null)
             {
-                // Check if this object is currently selectable
-                hitSelectable = IsSelectable(hit.collider.gameObject);
-                hitObject = hit.collider.gameObject;
+                Ray uiRay = uiCamera.ScreenPointToRay(touch.position);
+                RaycastHit uiHit;
+
+                if (Physics.Raycast(uiRay, out uiHit, 100f, _uiLayerMask))
+                {
+                    hitSelectable = IsSelectable(uiHit.collider.gameObject);
+                    hitObject = uiHit.collider.gameObject;
+                }
+            }
+
+            // If no UI hit, raycast with main camera for board elements
+            if (hitObject == null)
+            {
+                Ray boardRay = Camera.main.ScreenPointToRay(touch.position);
+                RaycastHit boardHit;
+
+                if (Physics.Raycast(boardRay, out boardHit, 100f, _boardLayerMask))
+                {
+                    hitSelectable = IsSelectable(boardHit.collider.gameObject);
+                    hitObject = boardHit.collider.gameObject;
+                }
             }
 
             _activeTouches[touch.fingerId] = new TouchData
@@ -338,13 +366,30 @@ namespace Glyphtender.Unity
             // Left click handling for double-click zoom test
             if (Input.GetMouseButtonDown(0))
             {
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit;
                 _mouseOnSelectable = false;
 
-                if (Physics.Raycast(ray, out hit, 100f, _selectableLayerMask))
+                // First, raycast with UI camera for UI elements
+                if (uiCamera != null)
                 {
-                    _mouseOnSelectable = IsSelectable(hit.collider.gameObject);
+                    Ray uiRay = uiCamera.ScreenPointToRay(Input.mousePosition);
+                    RaycastHit uiHit;
+
+                    if (Physics.Raycast(uiRay, out uiHit, 100f, _uiLayerMask))
+                    {
+                        _mouseOnSelectable = IsSelectable(uiHit.collider.gameObject);
+                    }
+                }
+
+                // If no UI hit, raycast with main camera for board elements
+                if (!_mouseOnSelectable)
+                {
+                    Ray boardRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    RaycastHit boardHit;
+
+                    if (Physics.Raycast(boardRay, out boardHit, 100f, _boardLayerMask))
+                    {
+                        _mouseOnSelectable = IsSelectable(boardHit.collider.gameObject);
+                    }
                 }
 
                 _mouseDownPosition = Input.mousePosition;
