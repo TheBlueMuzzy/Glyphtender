@@ -25,6 +25,7 @@ namespace Glyphtender.Unity
         private BoardRenderer _boardRenderer;
         private HexCoord? _hoveredHex;
         private Renderer _renderer;
+        private int _dragFingerId = -1;  // Track which finger started the drag
 
         private static HandTileDragHandler _currentlyPlacedTile;
         private static bool _isDraggingAny;
@@ -96,6 +97,21 @@ namespace Glyphtender.Unity
             _isDragging = true;
             _isDraggingAny = true;
 
+            // Capture which finger started this drag
+            _dragFingerId = -1;  // -1 means mouse
+            if (Input.touchCount > 0)
+            {
+                for (int i = 0; i < Input.touchCount; i++)
+                {
+                    Touch t = Input.GetTouch(i);
+                    if (t.phase == TouchPhase.Began)
+                    {
+                        _dragFingerId = t.fingerId;
+                        break;
+                    }
+                }
+            }
+
             // Set scale for board visibility
             transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
 
@@ -119,10 +135,67 @@ namespace Glyphtender.Unity
         {
             if (!_isDragging) return;
 
-            // Move tile to follow cursor using Main Camera (board camera)
-            Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
-            transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
+            // Get position from the specific finger that started the drag
+            Vector3 screenPos = Input.mousePosition;
+            bool fingerReleased = false;
 
+            if (_dragFingerId >= 0)
+            {
+                // Touch input - find our specific finger
+                bool foundFinger = false;
+                for (int i = 0; i < Input.touchCount; i++)
+                {
+                    Touch t = Input.GetTouch(i);
+                    if (t.fingerId == _dragFingerId)
+                    {
+                        foundFinger = true;
+                        screenPos = t.position;
+
+                        if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
+                        {
+                            fingerReleased = true;
+                        }
+                        break;
+                    }
+                }
+
+                if (!foundFinger)
+                {
+                    // Finger no longer exists - must have been released
+                    fingerReleased = true;
+                }
+                else if (!fingerReleased)
+                {
+                    // Move tile to follow this specific finger
+                    Ray ray = _mainCamera.ScreenPointToRay(screenPos);
+                    float distance = ray.origin.y / -ray.direction.y;
+                    Vector3 mouseWorldPos = ray.origin + ray.direction * distance;
+
+                    transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
+                    UpdateHoverHighlight(mouseWorldPos);
+                }
+            }
+            else
+            {
+                // Mouse input
+                Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
+                transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
+                UpdateHoverHighlight(mouseWorldPos);
+
+                if (Input.GetMouseButtonUp(0))
+                {
+                    fingerReleased = true;
+                }
+            }
+
+            if (fingerReleased)
+            {
+                EndDrag();
+            }
+        }
+
+        private void UpdateHoverHighlight(Vector3 mouseWorldPos)
+        {
             // Check which hex we're hovering over
             HexCoord? newHoveredHex = _boardRenderer.WorldToHex(mouseWorldPos);
 
@@ -139,12 +212,6 @@ namespace Glyphtender.Unity
                 {
                     _boardRenderer.ClearHoverHighlight();
                 }
-            }
-
-            // Check for mouse release
-            if (Input.GetMouseButtonUp(0))
-            {
-                EndDrag();
             }
         }
 

@@ -105,10 +105,37 @@ namespace Glyphtender.Unity
                 }
             }
 
-            // Handle pinch zoom when two fingers are down
+            // Handle pinch zoom when two fingers are down (but not while dragging)
             if (Input.touchCount == 2)
             {
-                HandlePinchZoom();
+                bool isDragging = HandTileDragHandler.IsDraggingTile || HexDragHandler.IsDraggingGlyphling;
+
+                if (isDragging)
+                {
+                    // While dragging with finger 1, finger 2 pans instead of zooming
+                    // Use the second touch directly for panning
+                    Touch touch0 = Input.GetTouch(0);
+                    Touch touch1 = Input.GetTouch(1);
+
+                    // Figure out which touch is NOT the dragging one
+                    // The dragging touch is on a selectable, so use the other one
+                    Touch panTouch = touch1;
+                    if (_activeTouches.TryGetValue(touch0.fingerId, out TouchData data0) && !data0.isOnSelectable)
+                    {
+                        panTouch = touch0;
+                    }
+
+                    // Pan using this touch's delta
+                    if (panTouch.phase == TouchPhase.Moved)
+                    {
+                        Vector2 previousPos = panTouch.position - panTouch.deltaPosition;
+                        HandleSingleFingerPan(previousPos, panTouch.position);
+                    }
+                }
+                else
+                {
+                    HandlePinchZoom();
+                }
             }
         }
 

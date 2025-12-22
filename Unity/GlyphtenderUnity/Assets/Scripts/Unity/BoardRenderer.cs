@@ -686,6 +686,7 @@ namespace Glyphtender.Unity
         private Vector3 _originalPosition;
         private HexCoord? _hoveredHex;
         private Camera _mainCamera;
+        private int _dragFingerId = -1;  // Track which finger started the drag
 
         private static bool _isAnyDragging;
         public static bool IsDraggingGlyphling => _isAnyDragging;
@@ -721,6 +722,22 @@ namespace Glyphtender.Unity
                     GameManager.Instance.ResetMove();
                 }
 
+                // Capture which finger started this drag
+                _dragFingerId = -1;  // -1 means mouse
+                if (Input.touchCount > 0)
+                {
+                    // Find the touch that's at this position
+                    for (int i = 0; i < Input.touchCount; i++)
+                    {
+                        Touch t = Input.GetTouch(i);
+                        if (t.phase == TouchPhase.Began)
+                        {
+                            _dragFingerId = t.fingerId;
+                            break;
+                        }
+                    }
+                }
+
                 // Start dragging this glyphling
                 _draggedGlyphling = glyphlingHere;
                 _draggedObject = BoardRenderer.GetGlyphlingObject(glyphlingHere);
@@ -734,7 +751,7 @@ namespace Glyphtender.Unity
                     // Select this glyphling
                     GameManager.Instance.SelectGlyphling(glyphlingHere);
 
-                    Debug.Log($"Started dragging glyphling from {Coord}");
+                    Debug.Log($"Started dragging glyphling from {Coord}, fingerId={_dragFingerId}");
                 }
             }
         }
@@ -743,10 +760,70 @@ namespace Glyphtender.Unity
         {
             if (!_isDragging || _draggedObject == null) return;
 
-            // Move glyphling to follow cursor
-            Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
-            _draggedObject.transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
+            // Get position from the specific finger that started the drag
+            Vector3 screenPos = Vector3.zero;
+            bool fingerReleased = false;
 
+            if (_dragFingerId >= 0)
+            {
+                // Touch input - find our specific finger
+                bool foundFinger = false;
+                for (int i = 0; i < Input.touchCount; i++)
+                {
+                    Touch t = Input.GetTouch(i);
+                    if (t.fingerId == _dragFingerId)
+                    {
+                        foundFinger = true;
+                        screenPos = t.position;
+
+                        if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
+                        {
+                            fingerReleased = true;
+                        }
+                        break;
+                    }
+                }
+
+                if (!foundFinger)
+                {
+                    // Finger no longer exists - must have been released
+                    fingerReleased = true;
+                }
+                else if (!fingerReleased)
+                {
+                    // Move glyphling to follow this specific finger
+                    // Convert screen position to world position on the board plane (Y=0)
+                    Ray ray = _mainCamera.ScreenPointToRay(screenPos);
+                    float distance = ray.origin.y / -ray.direction.y;
+                    Vector3 mouseWorldPos = ray.origin + ray.direction * distance;
+
+                    _draggedObject.transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
+
+                    UpdateHoverHighlight(mouseWorldPos);
+                }
+            }
+            else
+            {
+                // Mouse input
+                Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
+                _draggedObject.transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
+
+                UpdateHoverHighlight(mouseWorldPos);
+
+                if (Input.GetMouseButtonUp(0))
+                {
+                    fingerReleased = true;
+                }
+            }
+
+            if (fingerReleased)
+            {
+                EndDrag();
+            }
+        }
+
+        private void UpdateHoverHighlight(Vector3 mouseWorldPos)
+        {
             // Check which hex we're hovering over
             HexCoord? newHoveredHex = BoardRenderer.WorldToHex(mouseWorldPos);
 
@@ -763,12 +840,6 @@ namespace Glyphtender.Unity
                 {
                     BoardRenderer.ClearHoverHighlight();
                 }
-            }
-
-            // Check for mouse release
-            if (Input.GetMouseButtonUp(0))
-            {
-                EndDrag();
             }
         }
 
