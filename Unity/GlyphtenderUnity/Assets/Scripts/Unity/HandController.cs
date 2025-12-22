@@ -29,10 +29,13 @@ namespace Glyphtender.Unity
 
     /// <summary>
     /// Manages the player's hand of tiles in 3D space.
-    /// Attached to camera so it follows the view.
+    /// Attached to UI camera so it stays fixed during board zoom/pan.
     /// </summary>
     public class HandController : MonoBehaviour
     {
+        [Header("Camera")]
+        public Camera uiCamera;  // Reference to UI camera (set in inspector or auto-found)
+
         [Header("Dock Settings")]
         public DockPosition currentDock = DockPosition.Bottom;
 
@@ -95,13 +98,36 @@ namespace Glyphtender.Unity
 
         private void Start()
         {
-            // Create anchor as child of camera
+            // Find UI camera if not set
+            if (uiCamera == null)
+            {
+                // Try to get from parent (if HandController is child of UICamera)
+                uiCamera = GetComponentInParent<Camera>();
+
+                // If still null, try to find by name
+                if (uiCamera == null)
+                {
+                    var uiCamObj = GameObject.Find("UICamera");
+                    if (uiCamObj != null)
+                    {
+                        uiCamera = uiCamObj.GetComponent<Camera>();
+                    }
+                }
+
+                if (uiCamera == null)
+                {
+                    Debug.LogError("HandController: No UI camera found!");
+                    return;
+                }
+            }
+
+            // Create anchor as child of UI camera
             _handAnchor = new GameObject("HandAnchor").transform;
-            _handAnchor.SetParent(Camera.main.transform);
+            _handAnchor.SetParent(uiCamera.transform);
 
             // Create separate anchor for buttons (always bottom right)
             _buttonAnchor = new GameObject("ButtonAnchor").transform;
-            _buttonAnchor.SetParent(Camera.main.transform);
+            _buttonAnchor.SetParent(uiCamera.transform);
             _buttonAnchor.localRotation = Quaternion.Euler(180f, 0f, 0f);
 
             if (GameManager.Instance != null)
@@ -125,12 +151,13 @@ namespace Glyphtender.Unity
 
         private void ApplyDockConfig()
         {
+            if (uiCamera == null) return;
+
             bool isPortrait = Screen.height > Screen.width;
-            Camera cam = Camera.main;
 
             // Get camera bounds in world space
-            float camHeight = cam.orthographicSize * 2f;
-            float camWidth = camHeight * cam.aspect;
+            float camHeight = uiCamera.orthographicSize * 2f;
+            float camWidth = camHeight * uiCamera.aspect;
             float handDistance = 6f;
 
             if (isPortrait)
@@ -152,11 +179,11 @@ namespace Glyphtender.Unity
                     float bottomEdge;
                     if (isPortrait)
                     {
-                        bottomEdge = cam.orthographicSize * 0.9f;
+                        bottomEdge = uiCamera.orthographicSize * 0.9f;
                     }
                     else
                     {
-                        bottomEdge = cam.orthographicSize - 1.0f;
+                        bottomEdge = uiCamera.orthographicSize - 1.0f;
                     }
 
                     _currentConfig = new DockConfig
@@ -176,11 +203,11 @@ namespace Glyphtender.Unity
                     float leftEdge;
                     if (isPortrait)
                     {
-                        leftEdge = cam.orthographicSize * cam.aspect * 0.9f;
+                        leftEdge = uiCamera.orthographicSize * uiCamera.aspect * 0.9f;
                     }
                     else
                     {
-                        leftEdge = cam.orthographicSize * cam.aspect - 1.0f;
+                        leftEdge = uiCamera.orthographicSize * uiCamera.aspect - 1.0f;
                     }
 
                     _currentConfig = new DockConfig
@@ -200,11 +227,11 @@ namespace Glyphtender.Unity
                     float rightEdge;
                     if (isPortrait)
                     {
-                        rightEdge = cam.orthographicSize * cam.aspect * 0.9f;
+                        rightEdge = uiCamera.orthographicSize * uiCamera.aspect * 0.9f;
                     }
                     else
                     {
-                        rightEdge = cam.orthographicSize * cam.aspect - 1.0f;
+                        rightEdge = uiCamera.orthographicSize * uiCamera.aspect - 1.0f;
                     }
 
                     _currentConfig = new DockConfig
@@ -226,8 +253,8 @@ namespace Glyphtender.Unity
             _handAnchor.localRotation = _currentConfig.handRotation;
 
             // Position buttons in bottom right corner (fixed position)
-            float buttonBottomOffset = cam.orthographicSize - 1.5f;
-            float buttonRightOffset = cam.orthographicSize * cam.aspect - 1.5f;
+            float buttonBottomOffset = uiCamera.orthographicSize - 1.5f;
+            float buttonRightOffset = uiCamera.orthographicSize * uiCamera.aspect - 1.5f;
             _buttonAnchor.localPosition = new Vector3(buttonRightOffset, -buttonBottomOffset, handDistance);
 
             // Update button positions relative to button anchor
@@ -252,7 +279,7 @@ namespace Glyphtender.Unity
             // Refresh hand with new tile sizes
             RefreshHand();
 
-            Debug.Log($"Dock applied: {currentDock}, Portrait: {isPortrait}, CamSize: {cam.orthographicSize}");
+            Debug.Log($"Dock applied: {currentDock}, Portrait: {isPortrait}, CamSize: {uiCamera.orthographicSize}");
         }
 
         /// <summary>
@@ -397,11 +424,13 @@ namespace Glyphtender.Unity
 
         private void Update()
         {
+            if (uiCamera == null) return;
+
             // Check for aspect ratio changes
             bool isPortrait = Screen.height > Screen.width;
-            if (Mathf.Abs(Camera.main.aspect - _lastAspect) > 0.01f || isPortrait != _lastIsPortrait)
+            if (Mathf.Abs(uiCamera.aspect - _lastAspect) > 0.01f || isPortrait != _lastIsPortrait)
             {
-                _lastAspect = Camera.main.aspect;
+                _lastAspect = uiCamera.aspect;
                 _lastIsPortrait = isPortrait;
                 ApplyDockConfig();
             }
@@ -474,6 +503,9 @@ namespace Glyphtender.Unity
             button.name = name;
             button.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
 
+            // Set layer to UI3D so it's rendered by UI camera
+            button.layer = LayerMask.NameToLayer("UI3D");
+
             if (material != null)
             {
                 button.GetComponent<Renderer>().material = material;
@@ -489,6 +521,7 @@ namespace Glyphtender.Unity
             textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
             textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             textObj.transform.localScale = labelScale;
+            textObj.layer = LayerMask.NameToLayer("UI3D");
 
             textMesh = textObj.AddComponent<TextMesh>();
             textMesh.text = labelText;
@@ -582,6 +615,9 @@ namespace Glyphtender.Unity
             tile.transform.localScale = new Vector3(tileSize, 0.05f, tileSize);
             tile.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
 
+            // Set layer to UI3D so it's rendered by UI camera
+            tile.layer = LayerMask.NameToLayer("UI3D");
+
             // Set material based on current player
             var state = GameManager.Instance.GameState;
             Material mat = state.CurrentPlayer == Player.Yellow ? yellowTileMaterial : blueTileMaterial;
@@ -615,6 +651,9 @@ namespace Glyphtender.Unity
             GameObject textObj = new GameObject("Letter");
             textObj.transform.SetParent(tile.transform);
             textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+
+            // Set layer to UI3D
+            textObj.layer = LayerMask.NameToLayer("UI3D");
 
             // Rotate to face camera, accounting for dock rotation
             if (currentDock == DockPosition.Left)

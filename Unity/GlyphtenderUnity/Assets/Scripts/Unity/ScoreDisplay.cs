@@ -4,12 +4,15 @@ using Glyphtender.Core;
 namespace Glyphtender.Unity
 {
     /// <summary>
-    /// Displays player scores in 3D space, parented to camera.
+    /// Displays player scores in 3D space, parented to UI camera.
     /// Yellow score in top left, Blue score in top right.
     /// Shows preview of points being added below the score.
     /// </summary>
     public class ScoreDisplay : MonoBehaviour
     {
+        [Header("Camera")]
+        public Camera uiCamera;  // Reference to UI camera (set in inspector or auto-found)
+
         [Header("Layout")]
         public Vector3 yellowScorePosition = new Vector3(-4f, 3f, 6f);
         public Vector3 blueScorePosition = new Vector3(4f, 3f, 6f);
@@ -31,9 +34,32 @@ namespace Glyphtender.Unity
 
         private void Start()
         {
-            // Create anchor as child of camera
+            // Find UI camera if not set
+            if (uiCamera == null)
+            {
+                // Try to get from parent (if ScoreDisplay is child of UICamera)
+                uiCamera = GetComponentInParent<Camera>();
+
+                // If still null, try to find by name
+                if (uiCamera == null)
+                {
+                    var uiCamObj = GameObject.Find("UICamera");
+                    if (uiCamObj != null)
+                    {
+                        uiCamera = uiCamObj.GetComponent<Camera>();
+                    }
+                }
+
+                if (uiCamera == null)
+                {
+                    Debug.LogError("ScoreDisplay: No UI camera found!");
+                    return;
+                }
+            }
+
+            // Create anchor as child of UI camera
             _displayAnchor = new GameObject("ScoreDisplayAnchor").transform;
-            _displayAnchor.SetParent(Camera.main.transform);
+            _displayAnchor.SetParent(uiCamera.transform);
             _displayAnchor.localPosition = Vector3.zero;
             _displayAnchor.localRotation = Quaternion.identity;
 
@@ -44,29 +70,34 @@ namespace Glyphtender.Unity
                 GameManager.Instance.OnGameStateChanged += RefreshScores;
                 GameManager.Instance.OnSelectionChanged += RefreshPreviews;
                 GameManager.Instance.OnGameEnded += ShowWinner;
+                GameManager.Instance.OnGameRestarted += OnGameRestarted;
                 RefreshScores();
             }
         }
 
         private void Update()
         {
+            if (uiCamera == null) return;
+
             // Check for aspect ratio changes
             bool isPortrait = Screen.height > Screen.width;
-            if (Mathf.Abs(Camera.main.aspect - _lastAspect) > 0.01f || isPortrait != _lastIsPortrait)
+            if (Mathf.Abs(uiCamera.aspect - _lastAspect) > 0.01f || isPortrait != _lastIsPortrait)
             {
-                _lastAspect = Camera.main.aspect;
+                _lastAspect = uiCamera.aspect;
                 _lastIsPortrait = isPortrait;
                 RepositionScores();
             }
         }
+
         private void RepositionScores()
         {
-            Camera cam = Camera.main;
+            if (uiCamera == null) return;
+
             float handDistance = 6f;
 
             // Calculate top corners based on camera bounds
-            float topOffset = cam.orthographicSize - 1.5f;
-            float sideOffset = cam.orthographicSize * cam.aspect - 1.5f;
+            float topOffset = uiCamera.orthographicSize - 1.5f;
+            float sideOffset = uiCamera.orthographicSize * uiCamera.aspect - 1.5f;
 
             // Yellow score (top left)
             Vector3 yellowPos = new Vector3(-sideOffset, topOffset, handDistance);
@@ -78,7 +109,11 @@ namespace Glyphtender.Unity
             _blueScoreText.transform.localPosition = bluePos;
             _bluePreviewText.transform.localPosition = bluePos + new Vector3(0f, -0.8f, 0f);
 
-            Debug.Log($"Scores repositioned. Aspect: {cam.aspect}");
+            // Update stored positions for winner text placement
+            yellowScorePosition = yellowPos;
+            blueScorePosition = bluePos;
+
+            Debug.Log($"Scores repositioned. Aspect: {uiCamera.aspect}");
         }
 
         private void OnDestroy()
@@ -94,15 +129,17 @@ namespace Glyphtender.Unity
 
         private void CreateScoreTexts()
         {
-            Camera cam = Camera.main;
+            if (uiCamera == null) return;
+
             float handDistance = 6f;
 
             // Calculate top corners based on camera bounds
-            float topOffset = cam.orthographicSize - 1.5f;
-            float sideOffset = cam.orthographicSize * cam.aspect - 1.5f;
+            float topOffset = uiCamera.orthographicSize - 1.5f;
+            float sideOffset = uiCamera.orthographicSize * uiCamera.aspect - 1.5f;
 
             // Yellow score (top left)
             Vector3 yellowPos = new Vector3(-sideOffset, topOffset, handDistance);
+            yellowScorePosition = yellowPos;
             _yellowScoreText = CreateTextMesh("YellowScore", yellowPos, fontSize, new Color(1f, 0.9f, 0.2f));
 
             // Yellow preview (below yellow score)
@@ -112,6 +149,7 @@ namespace Glyphtender.Unity
 
             // Blue score (top right)
             Vector3 bluePos = new Vector3(sideOffset, topOffset, handDistance);
+            blueScorePosition = bluePos;
             _blueScoreText = CreateTextMesh("BlueScore", bluePos, fontSize, new Color(0.2f, 0.6f, 1f));
 
             // Blue preview (below blue score)
@@ -126,6 +164,9 @@ namespace Glyphtender.Unity
             textObj.transform.SetParent(_displayAnchor);
             textObj.transform.localPosition = localPosition;
             textObj.transform.localRotation = Quaternion.identity;
+
+            // Set layer to UI3D so it's rendered by UI camera
+            textObj.layer = LayerMask.NameToLayer("UI3D");
 
             // Scale down but use large font size for crisp text
             textObj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
@@ -296,6 +337,7 @@ namespace Glyphtender.Unity
                 _blueWinnerText.text = "TIE";
             }
         }
+
         private void OnGameRestarted()
         {
             // Reset score text scale
