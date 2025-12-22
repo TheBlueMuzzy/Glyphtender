@@ -308,10 +308,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e369e5d2f82b3d43822dc6bfe054a1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentDock: 0
   tileSpacing: 0.8
   tileSize: 0.5
-  handUpPosition: {x: 0, y: -3, z: 6}
-  handDownPosition: {x: 0, y: -4.5, z: 6}
   toggleDuration: 0.2
   yellowTileMaterial: {fileID: 2100000, guid: 29f26a048c7ba684796647836537955a, type: 2}
   blueTileMaterial: {fileID: 2100000, guid: c4e4cb277555304458d31be3060f9d9e, type: 2}
@@ -319,8 +318,6 @@ MonoBehaviour:
   confirmMaterial: {fileID: 2100000, guid: 87ed1c6ce549c694491b602fb287cff6, type: 2}
   cancelMaterial: {fileID: 2100000, guid: 8eb44f2727c49b74189b70d2b7aff749, type: 2}
   buttonSize: 0.6
-  confirmButtonOffset: {x: 5, y: 0, z: 0}
-  cancelButtonOffset: {x: 5.5, y: 0, z: 0}
 --- !u!1 &649223871
 GameObject:
   m_ObjectHideFlags: 0
@@ -380,6 +377,7 @@ GameObject:
   - component: {fileID: 886909319}
   - component: {fileID: 886909318}
   - component: {fileID: 886909321}
+  - component: {fileID: 886909322}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -479,6 +477,26 @@ MonoBehaviour:
   boardWidth: 16
   boardHeight: 18
   paddingPercent: 0.1
+  minZoom: 1
+  maxZoom: 2.5
+  doubleTapZoom: 2.5
+  zoomAnimDuration: 0.25
+  panAnimDuration: 0.25
+--- !u!114 &886909322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 886909317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35d7ec021b1009643b358a2c705218d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tapDistanceThreshold: 20
+  doubleTapTime: 0.3
+  cameraController: {fileID: 886909321}
 --- !u!1 &1732899552
 GameObject:
   m_ObjectHideFlags: 0
