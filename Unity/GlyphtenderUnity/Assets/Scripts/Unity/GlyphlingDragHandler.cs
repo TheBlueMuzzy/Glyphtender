@@ -29,12 +29,11 @@ namespace Glyphtender.Unity
             if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Drag)
                 return;
 
-            // Don't allow if game is over
-            if (GameManager.Instance.GameState.IsGameOver)
-                return;
-
-            // Don't allow during cycle mode
-            if (GameManager.Instance.IsInCycleMode)
+            // Only allow in states where glyphling selection is valid
+            var state = GameManager.Instance.CurrentTurnState;
+            if (state != GameTurnState.Idle &&
+                state != GameTurnState.GlyphlingSelected &&
+                state != GameTurnState.MovePending)
                 return;
 
             // Can only drag own glyphlings
@@ -67,7 +66,7 @@ namespace Glyphtender.Unity
             if (!_isDragging) return;
 
             // Move glyphling to follow cursor
-            Vector3 mouseWorldPos = GetMouseWorldPosition();
+            Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
             transform.position = new Vector3(mouseWorldPos.x, _originalPosition.y, mouseWorldPos.z);
 
             // Check which hex we're hovering over
@@ -116,20 +115,6 @@ namespace Glyphtender.Unity
             }
 
             _hoveredHex = null;
-        }
-
-        private Vector3 GetMouseWorldPosition()
-        {
-            // Cast ray from camera through mouse position to board plane (y=0)
-            Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
-            Plane boardPlane = new Plane(Vector3.up, Vector3.zero);
-
-            if (boardPlane.Raycast(ray, out float distance))
-            {
-                return ray.GetPoint(distance);
-            }
-
-            return transform.position;
         }
     }
 }

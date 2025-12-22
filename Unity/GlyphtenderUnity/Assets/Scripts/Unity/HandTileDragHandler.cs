@@ -44,8 +44,10 @@ namespace Glyphtender.Unity
             if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Drag)
                 return;
 
-            // Only allow after glyphling has moved
-            if (GameManager.Instance.PendingDestination == null)
+            // Only allow in states where tile selection is valid
+            var state = GameManager.Instance.CurrentTurnState;
+            if (state != GameTurnState.MovePending &&
+                state != GameTurnState.ReadyToConfirm)
             {
                 Debug.Log("Move your glyphling first!");
                 return;
@@ -99,7 +101,7 @@ namespace Glyphtender.Unity
             if (!_isDragging) return;
 
             // Move tile to follow cursor
-            Vector3 mouseWorldPos = GetMouseWorldPosition();
+            Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
             transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
 
             // Check which hex we're hovering over
@@ -264,19 +266,6 @@ namespace Glyphtender.Unity
             }
 
             mat.color = color;
-        }
-
-        private Vector3 GetMouseWorldPosition()
-        {
-            Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
-            Plane boardPlane = new Plane(Vector3.up, Vector3.zero);
-
-            if (boardPlane.Raycast(ray, out float distance))
-            {
-                return ray.GetPoint(distance);
-            }
-
-            return transform.position;
         }
 
         /// <summary>
