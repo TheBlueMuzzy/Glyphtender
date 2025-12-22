@@ -303,6 +303,7 @@ namespace Glyphtender.Unity
             _replayButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             _replayButton.transform.localScale = new Vector3(1f, 0.05f, 1f);
             _replayButton.name = "ReplayButton";
+            _replayButton.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
 
             if (confirmMaterial != null)
             {
@@ -339,6 +340,7 @@ namespace Glyphtender.Unity
             _inputModeButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             _inputModeButton.transform.localScale = new Vector3(0.8f, 0.05f, 0.8f);
             _inputModeButton.name = "InputModeButton";
+            _inputModeButton.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
 
             // Use a neutral color
             var renderer = _inputModeButton.GetComponent<Renderer>();
@@ -488,6 +490,7 @@ namespace Glyphtender.Unity
             _confirmButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             _confirmButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
             _confirmButton.name = "ConfirmButton";
+            _confirmButton.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
 
             if (confirmMaterial != null)
             {
@@ -523,6 +526,7 @@ namespace Glyphtender.Unity
             _cancelButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             _cancelButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
             _cancelButton.name = "CancelButton";
+            _cancelButton.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
 
             if (cancelMaterial != null)
             {
