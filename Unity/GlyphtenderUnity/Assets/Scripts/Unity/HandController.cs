@@ -297,74 +297,42 @@ namespace Glyphtender.Unity
 
         private void CreateReplayButton()
         {
-            _replayButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            _replayButton.transform.SetParent(_handAnchor);
-            _replayButton.transform.localPosition = Vector3.zero;
-            _replayButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            _replayButton.transform.localScale = new Vector3(1f, 0.05f, 1f);
-            _replayButton.name = "ReplayButton";
-            _replayButton.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
-
-            if (confirmMaterial != null)
-            {
-                _replayButton.GetComponent<Renderer>().material = confirmMaterial;
-            }
-
-            // Add click handler
-            var handler = _replayButton.AddComponent<ButtonClickHandler>();
-            handler.Initialize(OnReplayClicked);
-
-            // Add text label
-            GameObject textObj = new GameObject("Label");
-            textObj.transform.SetParent(_replayButton.transform);
-            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            textObj.transform.localScale = new Vector3(0.025f, 0.025f, 0.025f);
-
-            var textMesh = textObj.AddComponent<TextMesh>();
-            textMesh.text = "REPLAY";
-            textMesh.fontSize = 100;
-            textMesh.characterSize = 1f;
-            textMesh.alignment = TextAlignment.Center;
-            textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.color = Color.black;
+            _replayButton = CreateButton(
+                parent: _handAnchor,
+                name: "ReplayButton",
+                scale: new Vector3(1f, 0.05f, 1f),
+                material: confirmMaterial,
+                labelText: "REPLAY",
+                labelScale: new Vector3(0.025f, 0.025f, 0.025f),
+                fontSize: 100,
+                characterSize: 1f,
+                onClick: OnReplayClicked,
+                textMesh: out _
+            );
 
             _replayButton.SetActive(false);
         }
 
         private void CreateInputModeButton()
         {
-            _inputModeButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            _inputModeButton.transform.SetParent(_handAnchor);
+            // Create gray material for this button
+            Material grayMaterial = new Material(Shader.Find("Standard"));
+            grayMaterial.color = new Color(0.7f, 0.7f, 0.7f);
+
+            _inputModeButton = CreateButton(
+                parent: _handAnchor,
+                name: "InputModeButton",
+                scale: new Vector3(0.8f, 0.05f, 0.8f),
+                material: grayMaterial,
+                labelText: "TAP",
+                labelScale: new Vector3(0.05f, 0.05f, 0.05f),
+                fontSize: 100,
+                characterSize: 0.5f,
+                onClick: OnInputModeClicked,
+                textMesh: out _inputModeText
+            );
+
             _inputModeButton.transform.localPosition = new Vector3(-5f, 0f, 0f);
-            _inputModeButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            _inputModeButton.transform.localScale = new Vector3(0.8f, 0.05f, 0.8f);
-            _inputModeButton.name = "InputModeButton";
-            _inputModeButton.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
-
-            // Use a neutral color
-            var renderer = _inputModeButton.GetComponent<Renderer>();
-            renderer.material = new Material(Shader.Find("Standard"));
-            renderer.material.color = new Color(0.7f, 0.7f, 0.7f);
-
-            // Add click handler
-            var handler = _inputModeButton.AddComponent<ButtonClickHandler>();
-            handler.Initialize(OnInputModeClicked);
-
-            // Add text label
-            GameObject textObj = new GameObject("Label");
-            textObj.transform.SetParent(_inputModeButton.transform);
-            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            textObj.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-
-            _inputModeText = textObj.AddComponent<TextMesh>();
-            _inputModeText.text = "TAP";
-            _inputModeText.fontSize = 100;
-            _inputModeText.characterSize = 0.5f;
-            _inputModeText.alignment = TextAlignment.Center;
-            _inputModeText.anchor = TextAnchor.MiddleCenter;
-            _inputModeText.color = Color.black;
         }
 
         public void OnInputModeClicked()
@@ -483,37 +451,70 @@ namespace Glyphtender.Unity
             _isLerping = true;
         }
 
-        private void CreateConfirmButton()
+        /// <summary>
+        /// Creates a cylindrical button with a text label.
+        /// </summary>
+        private GameObject CreateButton(
+            Transform parent,
+            string name,
+            Vector3 scale,
+            Material material,
+            string labelText,
+            Vector3 labelScale,
+            int fontSize,
+            float characterSize,
+            System.Action onClick,
+            out TextMesh textMesh)
         {
-            _confirmButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            _confirmButton.transform.SetParent(_buttonAnchor);
-            _confirmButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            _confirmButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
-            _confirmButton.name = "ConfirmButton";
-            _confirmButton.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            GameObject button = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            button.transform.SetParent(parent);
+            button.transform.localPosition = Vector3.zero;
+            button.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            button.transform.localScale = scale;
+            button.name = name;
+            button.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
 
-            if (confirmMaterial != null)
+            if (material != null)
             {
-                _confirmButton.GetComponent<Renderer>().material = confirmMaterial;
+                button.GetComponent<Renderer>().material = material;
             }
 
             // Add click handler
-            var handler = _confirmButton.AddComponent<ButtonClickHandler>();
-            handler.Initialize(OnConfirmClicked);
+            var handler = button.AddComponent<ButtonClickHandler>();
+            handler.Initialize(onClick);
 
             // Add text label
             GameObject textObj = new GameObject("Label");
-            textObj.transform.SetParent(_confirmButton.transform);
+            textObj.transform.SetParent(button.transform);
             textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
             textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            textObj.transform.localScale = new Vector3(0.15f, 0.15f, 0.15f);
+            textObj.transform.localScale = labelScale;
 
-            var textMesh = textObj.AddComponent<TextMesh>();
-            textMesh.text = "OK";
-            textMesh.fontSize = 32;
+            textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = labelText;
+            textMesh.fontSize = fontSize;
+            textMesh.characterSize = characterSize;
             textMesh.alignment = TextAlignment.Center;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.color = Color.black;
+
+            return button;
+        }
+
+        private void CreateConfirmButton()
+        {
+            _confirmButton = CreateButton(
+                parent: _buttonAnchor,
+                name: "ConfirmButton",
+                scale: new Vector3(buttonSize, 0.05f, buttonSize),
+                material: confirmMaterial,
+                labelText: "OK",
+                labelScale: new Vector3(0.15f, 0.15f, 0.15f),
+                fontSize: 32,
+                characterSize: 1f,
+                onClick: OnConfirmClicked,
+                textMesh: out _
+            );
 
             _confirmButton.SetActive(false);
             _confirmVisible = false;
@@ -521,35 +522,18 @@ namespace Glyphtender.Unity
 
         private void CreateCancelButton()
         {
-            _cancelButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            _cancelButton.transform.SetParent(_buttonAnchor);
-            _cancelButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            _cancelButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
-            _cancelButton.name = "CancelButton";
-            _cancelButton.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
-
-            if (cancelMaterial != null)
-            {
-                _cancelButton.GetComponent<Renderer>().material = cancelMaterial;
-            }
-
-            // Add click handler
-            var handler = _cancelButton.AddComponent<ButtonClickHandler>();
-            handler.Initialize(OnCancelClicked);
-
-            // Add text label
-            GameObject textObj = new GameObject("Label");
-            textObj.transform.SetParent(_cancelButton.transform);
-            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            textObj.transform.localScale = new Vector3(0.15f, 0.15f, 0.15f);
-
-            var textMesh = textObj.AddComponent<TextMesh>();
-            textMesh.text = "X";
-            textMesh.fontSize = 32;
-            textMesh.alignment = TextAlignment.Center;
-            textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.color = Color.black;
+            _cancelButton = CreateButton(
+                parent: _buttonAnchor,
+                name: "CancelButton",
+                scale: new Vector3(buttonSize, 0.05f, buttonSize),
+                material: cancelMaterial,
+                labelText: "X",
+                labelScale: new Vector3(0.15f, 0.15f, 0.15f),
+                fontSize: 32,
+                characterSize: 1f,
+                onClick: OnCancelClicked,
+                textMesh: out _
+            );
 
             _cancelButton.SetActive(false);
         }
