@@ -760,14 +760,20 @@ namespace Glyphtender.Unity
 
                 if (_draggedObject != null)
                 {
-                    _originalPosition = _draggedObject.transform.position;
+                    // Get original position from glyphling's DATA position, not visual
+                    // This ensures we return to correct spot after ResetMove changes data
+                    _originalPosition = BoardRenderer.HexToWorld(glyphlingHere.Position) + Vector3.up * 0.3f;
+
+                    // Also sync the visual to match data immediately
+                    _draggedObject.transform.position = _originalPosition;
+
                     _isDragging = true;
                     _isAnyDragging = true;
 
                     // Select this glyphling
                     GameManager.Instance.SelectGlyphling(glyphlingHere);
 
-                    Debug.Log($"Started dragging glyphling from {Coord}, fingerId={_dragFingerId}");
+                    Debug.Log($"Started dragging glyphling from {glyphlingHere.Position}, fingerId={_dragFingerId}");
                 }
             }
         }
@@ -821,7 +827,7 @@ namespace Glyphtender.Unity
                         mouseWorldPos.z + offset
                     );
 
-                    UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));
+                    UpdateHoverHighlight(mouseWorldPos);  // Use finger position, not offset
                 }
             }
             else
@@ -837,7 +843,7 @@ namespace Glyphtender.Unity
                     mouseWorldPos.z + offset
                 );
 
-                UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));
+                UpdateHoverHighlight(mouseWorldPos);  // Use mouse position, not offset
 
                 if (Input.GetMouseButtonUp(0))
                 {
@@ -892,10 +898,11 @@ namespace Glyphtender.Unity
             }
             else
             {
-                // Invalid drop - return to original position
+                // Invalid drop - return to original position and reset game state
                 _draggedObject.transform.position = _originalPosition;
+                GameManager.Instance.ResetMove();
 
-                Debug.Log("Invalid drop - returning glyphling");
+                Debug.Log("Invalid drop - returning glyphling and resetting move");
             }
 
             _hoveredHex = null;

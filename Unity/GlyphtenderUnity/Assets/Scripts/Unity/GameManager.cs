@@ -516,6 +516,7 @@ namespace Glyphtender.Unity
             PendingDestination = null;
             PendingCastPosition = null;
             PendingLetter = null;
+            _originalPosition = null;
             ValidMoves.Clear();
             ValidCasts.Clear();
         }
