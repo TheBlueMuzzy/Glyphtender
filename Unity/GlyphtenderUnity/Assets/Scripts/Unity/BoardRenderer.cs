@@ -21,10 +21,19 @@ namespace Glyphtender.Unity
         public Material hexValidCastMaterial;
         public Material yellowMaterial;
         public Material blueMaterial;
+        public Material yellowCastMaterial;
+        public Material blueCastMaterial;
         public Material hexHoverMaterial;
 
         [Header("Settings")]
-        public float hexSize = 1f;
+        [Tooltip("Size of each hex (when equal to hexSpacing, they touch)")]
+        public float hexSize = 0.9f;
+
+        [Tooltip("Distance between hex centers")]
+        public float hexSpacing = 1f;
+
+        [Tooltip("Size of glyphling spheres (relative to hexSize)")]
+        public float glyphlingSize = 0.5f;
 
         [Header("Animation")]
         public float moveDuration = 0.5f;
@@ -61,9 +70,9 @@ namespace Glyphtender.Unity
 
             _glyphlingTargets = new Dictionary<Glyphling, Vector3>();
 
-            // Flat-top hex dimensions
-            _hexWidth = hexSize * 2f;
-            _hexHeight = hexSize * Mathf.Sqrt(3f);
+            // Flat-top hex dimensions (for camera fitting)
+            _hexWidth = hexSpacing * 2f;
+            _hexHeight = hexSpacing * Mathf.Sqrt(3f);
         }
 
         private void Update()
@@ -159,11 +168,11 @@ namespace Glyphtender.Unity
         public Vector3 HexToWorld(HexCoord hex)
         {
             // Flat-top hex layout with independent columns
-            float x = hexSize * 1.5f * hex.Column;
+            float x = hexSpacing * 1.5f * hex.Column;
 
             // Offset odd columns by half a hex height
-            float zOffset = (hex.Column % 2 == 1) ? hexSize * Mathf.Sqrt(3f) / 2f : 0f;
-            float z = hexSize * Mathf.Sqrt(3f) * hex.Row + zOffset;
+            float zOffset = (hex.Column % 2 == 1) ? hexSpacing * Mathf.Sqrt(3f) / 2f : 0f;
+            float z = hexSpacing * Mathf.Sqrt(3f) * hex.Row + zOffset;
 
             return new Vector3(x, 0f, z);
         }
@@ -174,21 +183,21 @@ namespace Glyphtender.Unity
         public HexCoord WorldToHex(Vector3 worldPos)
         {
             // Reverse of HexToWorld
-            // x = hexSize * 1.5f * column
-            // z = hexSize * sqrt(3) * row + offset (offset = hexSize * sqrt(3) / 2 for odd columns)
+            // x = hexSpacing * 1.5f * column
+            // z = hexSpacing * sqrt(3) * row + offset (offset = hexSpacing * sqrt(3) / 2 for odd columns)
 
             // First estimate column from x
-            float colFloat = worldPos.x / (hexSize * 1.5f);
+            float colFloat = worldPos.x / (hexSpacing * 1.5f);
             int col = Mathf.RoundToInt(colFloat);
 
             // Clamp column to valid range
             col = Mathf.Clamp(col, 0, Board.Columns - 1);
 
             // Calculate z offset for this column
-            float zOffset = (col % 2 == 1) ? hexSize * Mathf.Sqrt(3f) / 2f : 0f;
+            float zOffset = (col % 2 == 1) ? hexSpacing * Mathf.Sqrt(3f) / 2f : 0f;
 
             // Calculate row from z
-            float rowFloat = (worldPos.z - zOffset) / (hexSize * Mathf.Sqrt(3f));
+            float rowFloat = (worldPos.z - zOffset) / (hexSpacing * Mathf.Sqrt(3f));
             int row = Mathf.RoundToInt(rowFloat);
 
             return new HexCoord(col, row);
@@ -224,7 +233,9 @@ namespace Glyphtender.Unity
                 // Create simple placeholder cylinder if no prefab
                 hexObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 hexObj.transform.position = HexToWorld(coord);
-                hexObj.transform.localScale = new Vector3(hexSize * 0.9f, 0.1f, hexSize * 0.9f);
+                // Scale by sqrt(3) so that when hexSize == hexSpacing, circles touch
+                float visualSize = hexSize * Mathf.Sqrt(3f);
+                hexObj.transform.localScale = new Vector3(visualSize, 0.1f, visualSize);
                 hexObj.transform.SetParent(transform);
 
                 if (hexDefaultMaterial != null)
@@ -387,7 +398,7 @@ namespace Glyphtender.Unity
                 obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 Vector3 spawnPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
                 obj.transform.position = spawnPos;
-                obj.transform.localScale = new Vector3(hexSize * 0.5f, hexSize * 0.5f, hexSize * 0.5f);
+                obj.transform.localScale = new Vector3(hexSize * glyphlingSize, hexSize * glyphlingSize, hexSize * glyphlingSize);
                 obj.transform.SetParent(transform);
 
                 // Color by owner
@@ -468,10 +479,14 @@ namespace Glyphtender.Unity
                 SetHexMaterial(coord, hexValidMoveMaterial);
             }
 
-            // Highlight valid casts
+            // Highlight valid casts with player-specific color
             foreach (var coord in GameManager.Instance.ValidCasts)
             {
-                SetHexMaterial(coord, hexValidCastMaterial);
+                // Use player's cast color, fallback to generic if not set
+                Material castMat = GameManager.Instance.GameState.CurrentPlayer == Player.Yellow
+                    ? (yellowCastMaterial ?? hexValidCastMaterial)
+                    : (blueCastMaterial ?? hexValidCastMaterial);
+                SetHexMaterial(coord, castMat);
             }
 
             // Scale up selected cast position

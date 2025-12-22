@@ -311,9 +311,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiCamera: {fileID: 0}
   currentDock: 0
-  tileSpacing: 0.9
-  tileSize: 0.8
-  toggleDuration: 0.2
+  tileSpacing: 1.3
+  tileSize: 1.25
+  maxHandSize: 8
+  portraitWidthPercent: 0.95
+  landscapeBasePercent: 0.45
+  referenceAspect: 2.2
+  toggleDuration: 0.3
+  userHandScale: 1
+  handInactiveScale: 0.9
+  handScaleDuration: 0.15
   yellowTileMaterial: {fileID: 2100000, guid: 29f26a048c7ba684796647836537955a, type: 2}
   blueTileMaterial: {fileID: 2100000, guid: c4e4cb277555304458d31be3060f9d9e, type: 2}
   selectedMaterial: {fileID: 2100000, guid: 87ed1c6ce549c694491b602fb287cff6, type: 2}
@@ -410,8 +417,8 @@ Camera:
   m_GameObject: {fileID: 886909317}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0, g: 0.23529412, b: 0.11764706, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -689,8 +696,12 @@ MonoBehaviour:
   hexValidCastMaterial: {fileID: 2100000, guid: 764048b1ca0af1b4d9744cc4fe29affa, type: 2}
   yellowMaterial: {fileID: 2100000, guid: 29f26a048c7ba684796647836537955a, type: 2}
   blueMaterial: {fileID: 2100000, guid: c4e4cb277555304458d31be3060f9d9e, type: 2}
+  yellowCastMaterial: {fileID: 2100000, guid: 404bda4bd2fc7174281380ebb6485089, type: 2}
+  blueCastMaterial: {fileID: 2100000, guid: 1b1765b85303cc342bb7bab16a0a673e, type: 2}
   hexHoverMaterial: {fileID: 2100000, guid: 76429ab267e559747a9f15413eeb491a, type: 2}
-  hexSize: 1
+  hexSize: 0.9
+  hexSpacing: 1
+  glyphlingSize: 1
   moveDuration: 0.3
   resetDuration: 0.1
   tileCastDuration: 0.3

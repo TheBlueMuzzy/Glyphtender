@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Glyphtender.Core;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 
@@ -38,11 +39,35 @@ namespace Glyphtender.Unity
         public DockPosition currentDock = DockPosition.Bottom;
 
         [Header("Layout")]
-        public float tileSpacing = 1.2f;
-        public float tileSize = 0.8f;
+        [Tooltip("Distance between tile centers")]
+        public float tileSpacing = 1.3f;
+
+        [Tooltip("Size of each tile (when equal to tileSpacing, they touch)")]
+        public float tileSize = 1.25f;
+
+        [Tooltip("Max tiles the hand can hold (for width calculation)")]
+        public int maxHandSize = 8;
+
+        [Header("Responsive Width")]
+        [Tooltip("Percent of screen width for hand in portrait")]
+        public float portraitWidthPercent = 0.95f;
+
+        [Tooltip("Percent of screen width for hand in landscape at reference aspect")]
+        public float landscapeBasePercent = 0.45f;
+
+        [Tooltip("Reference aspect ratio for landscape (phone = 2.2)")]
+        public float referenceAspect = 2.2f;
 
         [Header("Animation")]
         public float toggleDuration = 0.2f;
+
+        [Header("Hand Scaling")]
+        [Tooltip("User preference multiplier (menu slider)")]
+        public float userHandScale = 1f;
+
+        [Tooltip("Scale of hand when not ready to place a letter")]
+        public float handInactiveScale = 0.7f;
+        public float handScaleDuration = 0.15f;
 
         [Header("Materials")]
         public Material yellowTileMaterial;
@@ -106,6 +131,11 @@ namespace Glyphtender.Unity
         private HashSet<int> _selectedForDiscard = new HashSet<int>();
         private GameObject _cyclePromptText;
 
+        // Hand scaling
+        private bool _handIsActive = false;
+        private Coroutine _handScaleCoroutine;
+        private float _responsiveScale = 1f;
+
         private float _handDistance = 6f;
 
         private void Start()
@@ -158,6 +188,12 @@ namespace Glyphtender.Unity
             ApplyDockConfig();
             PositionUIElements();
 
+            // Initialize responsive scaling
+            _handIsActive = false;
+            _responsiveScale = CalculateResponsiveScale();
+            UpdateHandScale(animate: false);
+            Debug.Log($"[HandController] Initial responsive scale: {_responsiveScale}");
+
             RefreshHand();
         }
 
@@ -173,6 +209,7 @@ namespace Glyphtender.Unity
                 _lastIsPortrait = isPortrait;
                 ApplyDockConfig();
                 PositionUIElements();
+                RefreshResponsiveScale();
             }
 
             // Handle toggle lerp
@@ -468,6 +505,11 @@ namespace Glyphtender.Unity
 
             _replayButton.SetActive(false);
 
+            // Reset hand to inactive state
+            _handIsActive = false;
+            _responsiveScale = CalculateResponsiveScale();
+            UpdateHandScale(animate: false);
+
             foreach (var tile in _handTileObjects)
             {
                 tile.SetActive(true);
@@ -599,10 +641,8 @@ namespace Glyphtender.Unity
             _currentHand.Clear();
             _selectedIndex = -1;
 
-            // Calculate effective spacing (may auto-fit in portrait bottom dock)
-            float effectiveSpacing = GetEffectiveTileSpacing(hand.Count);
-
-            float totalWidth = (hand.Count - 1) * effectiveSpacing;
+            // Use fixed spacing - responsive scale handles fitting to screen
+            float totalWidth = (hand.Count - 1) * tileSpacing;
             float startX = -totalWidth / 2f;
 
             for (int i = 0; i < hand.Count; i++)
@@ -610,41 +650,80 @@ namespace Glyphtender.Unity
                 char letter = hand[i];
                 _currentHand.Add(letter);
 
-                Vector3 localPos = new Vector3(startX + i * effectiveSpacing, 0f, 0f);
+                Vector3 localPos = new Vector3(startX + i * tileSpacing, 0f, 0f);
                 GameObject tileObj = CreateHandTile(letter, localPos, i);
                 _handTileObjects.Add(tileObj);
             }
         }
 
         /// <summary>
-        /// Calculates effective tile spacing.
-        /// In portrait mode with bottom dock, auto-fits to screen width.
-        /// Otherwise uses the Inspector tileSpacing value.
+        /// Calculates the responsive scale factor based on screen width and aspect ratio.
         /// </summary>
-        private float GetEffectiveTileSpacing(int tileCount)
+        private float CalculateResponsiveScale()
         {
-            // Only auto-fit for bottom dock in portrait mode
+            if (uiCamera == null) return 1f;
+
             bool isPortrait = Screen.height > Screen.width;
-            if (currentDock != DockPosition.Bottom || !isPortrait)
+            float aspect = uiCamera.aspect;
+
+            // Calculate target width percent based on orientation
+            float targetPercent;
+            if (isPortrait)
             {
-                return tileSpacing;
+                targetPercent = portraitWidthPercent;
+            }
+            else
+            {
+                // Landscape: scale down for wider screens
+                // At referenceAspect, use landscapeBasePercent
+                // Wider = smaller percent
+                targetPercent = landscapeBasePercent * (referenceAspect / aspect);
+                // Clamp to reasonable range
+                targetPercent = Mathf.Clamp(targetPercent, 0.2f, 0.95f);
             }
 
-            if (uiCamera == null || tileCount <= 1)
+            // Calculate available width in world units
+            float camWidth = uiCamera.orthographicSize * aspect * 2f;
+            float targetWidth = camWidth * targetPercent;
+
+            // Calculate natural hand width at scale 1.0 (based on max hand size)
+            float naturalWidth = (maxHandSize - 1) * tileSpacing + tileSize;
+
+            // Scale factor to fit target width
+            return targetWidth / naturalWidth;
+        }
+
+        /// <summary>
+        /// Updates the hand anchor scale combining responsive, user, and active scales.
+        /// </summary>
+        private void UpdateHandScale(bool animate = false)
+        {
+            if (_handAnchor == null) return;
+
+            float activeScale = _handIsActive ? 1f : handInactiveScale;
+            float targetScale = _responsiveScale * userHandScale * activeScale;
+
+            if (animate)
             {
-                return tileSpacing;
+                if (_handScaleCoroutine != null)
+                {
+                    StopCoroutine(_handScaleCoroutine);
+                }
+                _handScaleCoroutine = StartCoroutine(AnimateHandScale(targetScale));
             }
+            else
+            {
+                _handAnchor.localScale = Vector3.one * targetScale;
+            }
+        }
 
-            // Calculate available width (camera width minus margins for tile radius on each side)
-            float camWidth = uiCamera.orthographicSize * uiCamera.aspect * 2f;
-            float margin = tileSize;  // Half tile on each side
-            float availableWidth = camWidth - margin;
-
-            // Calculate max spacing that fits all tiles
-            float maxSpacing = availableWidth / (tileCount - 1);
-
-            // Use the smaller of user's setting or auto-fit max
-            return Mathf.Min(tileSpacing, maxSpacing);
+        /// <summary>
+        /// Recalculates responsive scale and updates hand. Called when aspect ratio changes.
+        /// </summary>
+        private void RefreshResponsiveScale()
+        {
+            _responsiveScale = CalculateResponsiveScale();
+            UpdateHandScale(animate: false);
         }
 
         private GameObject CreateHandTile(char letter, Vector3 localPos, int index)
@@ -796,6 +875,19 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            // Check if hand should be active (ready to place a letter)
+            var turnState = GameManager.Instance.CurrentTurnState;
+            bool shouldBeActive = (turnState == GameTurnState.MovePending);
+
+            if (shouldBeActive && !_handIsActive)
+            {
+                SetHandActive(true);
+            }
+            else if (!shouldBeActive && _handIsActive)
+            {
+                SetHandActive(false);
+            }
+
             if (GameManager.Instance.SelectedGlyphling == null)
             {
                 _selectedIndex = -1;
@@ -815,6 +907,37 @@ namespace Glyphtender.Unity
             }
         }
 
+        private void SetHandActive(bool active)
+        {
+            _handIsActive = active;
+
+            Debug.Log($"[HandController] SetHandActive({active})");
+
+            UpdateHandScale(animate: true);
+        }
+
+        private IEnumerator AnimateHandScale(float targetScale)
+        {
+            if (_handAnchor == null) yield break;
+
+            Vector3 startScale = _handAnchor.localScale;
+            Vector3 endScale = Vector3.one * targetScale;
+            float elapsed = 0f;
+
+            while (elapsed < handScaleDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / handScaleDuration;
+                // Ease out cubic
+                t = 1f - Mathf.Pow(1f - t, 3f);
+                _handAnchor.localScale = Vector3.Lerp(startScale, endScale, t);
+                yield return null;
+            }
+
+            _handAnchor.localScale = endScale;
+            _handScaleCoroutine = null;
+        }
+
         private void EnterCycleMode()
         {
             _isInCycleMode = true;
@@ -823,6 +946,9 @@ namespace Glyphtender.Unity
             _cyclePromptText.SetActive(true);
             ShowConfirmButton();
             HideCancelButton();
+
+            // Hand is active in cycle mode (interacting with letters)
+            SetHandActive(true);
 
             Debug.Log("Entered cycle mode - select tiles to discard");
         }
@@ -929,6 +1055,9 @@ namespace Glyphtender.Unity
             _selectedForDiscard.Clear();
             _cyclePromptText.SetActive(false);
             HideConfirmButton();
+
+            // Hand returns to inactive state
+            SetHandActive(false);
         }
     }
 
