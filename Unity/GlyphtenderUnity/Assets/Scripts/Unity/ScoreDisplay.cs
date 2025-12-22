@@ -26,6 +26,8 @@ namespace Glyphtender.Unity
         private TextMesh _bluePreviewText;
         private TextMesh _yellowWinnerText;
         private TextMesh _blueWinnerText;
+        private float _lastAspect;
+        private bool _lastIsPortrait;
 
         private void Start()
         {
@@ -42,9 +44,41 @@ namespace Glyphtender.Unity
                 GameManager.Instance.OnGameStateChanged += RefreshScores;
                 GameManager.Instance.OnSelectionChanged += RefreshPreviews;
                 GameManager.Instance.OnGameEnded += ShowWinner;
-                GameManager.Instance.OnGameRestarted += OnGameRestarted;
                 RefreshScores();
             }
+        }
+
+        private void Update()
+        {
+            // Check for aspect ratio changes
+            bool isPortrait = Screen.height > Screen.width;
+            if (Mathf.Abs(Camera.main.aspect - _lastAspect) > 0.01f || isPortrait != _lastIsPortrait)
+            {
+                _lastAspect = Camera.main.aspect;
+                _lastIsPortrait = isPortrait;
+                RepositionScores();
+            }
+        }
+        private void RepositionScores()
+        {
+            Camera cam = Camera.main;
+            float handDistance = 6f;
+
+            // Calculate top corners based on camera bounds
+            float topOffset = cam.orthographicSize - 1.5f;
+            float sideOffset = cam.orthographicSize * cam.aspect - 1.5f;
+
+            // Yellow score (top left)
+            Vector3 yellowPos = new Vector3(-sideOffset, topOffset, handDistance);
+            _yellowScoreText.transform.localPosition = yellowPos;
+            _yellowPreviewText.transform.localPosition = yellowPos + new Vector3(0f, -0.8f, 0f);
+
+            // Blue score (top right)
+            Vector3 bluePos = new Vector3(sideOffset, topOffset, handDistance);
+            _blueScoreText.transform.localPosition = bluePos;
+            _bluePreviewText.transform.localPosition = bluePos + new Vector3(0f, -0.8f, 0f);
+
+            Debug.Log($"Scores repositioned. Aspect: {cam.aspect}");
         }
 
         private void OnDestroy()
@@ -60,19 +94,28 @@ namespace Glyphtender.Unity
 
         private void CreateScoreTexts()
         {
+            Camera cam = Camera.main;
+            float handDistance = 6f;
+
+            // Calculate top corners based on camera bounds
+            float topOffset = cam.orthographicSize - 1.5f;
+            float sideOffset = cam.orthographicSize * cam.aspect - 1.5f;
+
             // Yellow score (top left)
-            _yellowScoreText = CreateTextMesh("YellowScore", yellowScorePosition, fontSize, new Color(1f, 0.9f, 0.2f));
+            Vector3 yellowPos = new Vector3(-sideOffset, topOffset, handDistance);
+            _yellowScoreText = CreateTextMesh("YellowScore", yellowPos, fontSize, new Color(1f, 0.9f, 0.2f));
 
             // Yellow preview (below yellow score)
-            Vector3 yellowPreviewPos = yellowScorePosition + new Vector3(0f, -0.6f, 0f);
+            Vector3 yellowPreviewPos = yellowPos + new Vector3(0f, -0.8f, 0f);
             _yellowPreviewText = CreateTextMesh("YellowPreview", yellowPreviewPos, previewFontSize, new Color(1f, 0.9f, 0.2f));
             _yellowPreviewText.gameObject.SetActive(false);
 
             // Blue score (top right)
-            _blueScoreText = CreateTextMesh("BlueScore", blueScorePosition, fontSize, new Color(0.2f, 0.6f, 1f));
+            Vector3 bluePos = new Vector3(sideOffset, topOffset, handDistance);
+            _blueScoreText = CreateTextMesh("BlueScore", bluePos, fontSize, new Color(0.2f, 0.6f, 1f));
 
             // Blue preview (below blue score)
-            Vector3 bluePreviewPos = blueScorePosition + new Vector3(0f, -0.6f, 0f);
+            Vector3 bluePreviewPos = bluePos + new Vector3(0f, -0.8f, 0f);
             _bluePreviewText = CreateTextMesh("BluePreview", bluePreviewPos, previewFontSize, new Color(0.2f, 0.6f, 1f));
             _bluePreviewText.gameObject.SetActive(false);
         }

@@ -57,6 +57,8 @@ namespace Glyphtender.Unity
         private DockConfig _currentConfig;
 
         // State
+        private float _lastAspect;
+        private bool _lastIsPortrait;
         private bool _isUp = true;
         private float _lerpTime;
         private Vector3 _lerpStart;
@@ -425,6 +427,15 @@ namespace Glyphtender.Unity
 
         private void Update()
         {
+            // Check for aspect ratio changes
+            bool isPortrait = Screen.height > Screen.width;
+            if (Mathf.Abs(Camera.main.aspect - _lastAspect) > 0.01f || isPortrait != _lastIsPortrait)
+            {
+                _lastAspect = Camera.main.aspect;
+                _lastIsPortrait = isPortrait;
+                ApplyDockConfig();
+            }
+
             // Handle toggle lerp
             if (_isLerping)
             {
