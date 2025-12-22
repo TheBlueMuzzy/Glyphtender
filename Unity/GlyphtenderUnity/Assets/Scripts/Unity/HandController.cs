@@ -311,8 +311,8 @@ namespace Glyphtender.Unity
             }
 
             // Add click handler
-            var handler = _replayButton.AddComponent<ReplayButtonClickHandler>();
-            handler.Controller = this;
+            var handler = _replayButton.AddComponent<ButtonClickHandler>();
+            handler.Initialize(OnReplayClicked);
 
             // Add text label
             GameObject textObj = new GameObject("Label");
@@ -348,8 +348,8 @@ namespace Glyphtender.Unity
             renderer.material.color = new Color(0.7f, 0.7f, 0.7f);
 
             // Add click handler
-            var handler = _inputModeButton.AddComponent<InputModeButtonClickHandler>();
-            handler.Controller = this;
+            var handler = _inputModeButton.AddComponent<ButtonClickHandler>();
+            handler.Initialize(OnInputModeClicked);
 
             // Add text label
             GameObject textObj = new GameObject("Label");
@@ -498,8 +498,8 @@ namespace Glyphtender.Unity
             }
 
             // Add click handler
-            var handler = _confirmButton.AddComponent<ConfirmButtonClickHandler>();
-            handler.Controller = this;
+            var handler = _confirmButton.AddComponent<ButtonClickHandler>();
+            handler.Initialize(OnConfirmClicked);
 
             // Add text label
             GameObject textObj = new GameObject("Label");
@@ -534,8 +534,8 @@ namespace Glyphtender.Unity
             }
 
             // Add click handler
-            var handler = _cancelButton.AddComponent<CancelButtonClickHandler>();
-            handler.Controller = this;
+            var handler = _cancelButton.AddComponent<ButtonClickHandler>();
+            handler.Initialize(OnCancelClicked);
 
             // Add text label
             GameObject textObj = new GameObject("Label");
@@ -918,54 +918,20 @@ namespace Glyphtender.Unity
     }
 
     /// <summary>
-    /// Handles clicks on confirm button.
+    /// Generic click handler for buttons. Takes a callback action.
     /// </summary>
-    public class ConfirmButtonClickHandler : MonoBehaviour
+    public class ButtonClickHandler : MonoBehaviour
     {
-        public HandController Controller { get; set; }
+        private System.Action _onClick;
 
-        private void OnMouseDown()
+        public void Initialize(System.Action onClick)
         {
-            Controller?.OnConfirmClicked();
+            _onClick = onClick;
         }
-    }
-
-    /// <summary>
-    /// Handles clicks on cancel button.
-    /// </summary>
-    public class CancelButtonClickHandler : MonoBehaviour
-    {
-        public HandController Controller { get; set; }
 
         private void OnMouseDown()
         {
-            Controller?.OnCancelClicked();
-        }
-    }
-
-    /// <summary>
-    /// Handles clicks on replay button.
-    /// </summary>
-    public class ReplayButtonClickHandler : MonoBehaviour
-    {
-        public HandController Controller { get; set; }
-
-        private void OnMouseDown()
-        {
-            Controller?.OnReplayClicked();
-        }
-    }
-
-    /// <summary>
-    /// Handles clicks on input mode toggle button.
-    /// </summary>
-    public class InputModeButtonClickHandler : MonoBehaviour
-    {
-        public HandController Controller { get; set; }
-
-        private void OnMouseDown()
-        {
-            Controller?.OnInputModeClicked();
+            _onClick?.Invoke();
         }
     }
 }
