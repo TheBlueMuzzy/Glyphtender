@@ -53,7 +53,8 @@ namespace Glyphtender.Unity
             }
 
             _isDragging = true;
-            _originalPosition = transform.position;
+            // Get the logical position from game state, converted to world position
+            _originalPosition = _boardRenderer.HexToWorld(Glyphling.Position) + Vector3.up * 0.3f;
 
             // Select this glyphling to show valid moves
             GameManager.Instance.SelectGlyphling(Glyphling);
