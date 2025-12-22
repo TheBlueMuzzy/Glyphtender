@@ -68,7 +68,7 @@ namespace Glyphtender.Unity
 
         private void Update()
         {
-           
+
             // Pulse trapped glyphlings
             foreach (var glyphling in _glyphlingObjects.Keys)
             {
@@ -238,6 +238,12 @@ namespace Glyphtender.Unity
             // Add HexClickHandler component
             var clickHandler = hexObj.AddComponent<HexClickHandler>();
             clickHandler.Coord = coord;
+            clickHandler.BoardRenderer = this;
+
+            // Add HexDragHandler for drag mode
+            var dragHandler = hexObj.AddComponent<HexDragHandler>();
+            dragHandler.Coord = coord;
+            dragHandler.BoardRenderer = this;
 
             _hexObjects[coord] = hexObj;
         }
@@ -382,7 +388,7 @@ namespace Glyphtender.Unity
                 Vector3 spawnPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
                 obj.transform.position = spawnPos;
                 obj.transform.localScale = new Vector3(hexSize * 0.5f, hexSize * 0.5f, hexSize * 0.5f);
-                obj.transform.SetParent(transform); ;
+                obj.transform.SetParent(transform);
 
                 // Color by owner
                 var material = glyphling.Owner == Player.Yellow ? yellowMaterial : blueMaterial;
@@ -390,19 +396,50 @@ namespace Glyphtender.Unity
                 {
                     obj.GetComponent<Renderer>().material = material;
                 }
+
+                // Remove collider - selection is handled by hex
+                var collider = obj.GetComponent<Collider>();
+                if (collider != null)
+                {
+                    Destroy(collider);
+                }
             }
 
             obj.name = $"Glyphling_{glyphling.Owner}_{glyphling.Index}";
 
-            // Add click handler
-            var clickHandler = obj.AddComponent<GlyphlingClickHandler>();
-            clickHandler.Glyphling = glyphling;
-
-            // Add drag handler
-            var dragHandler = obj.AddComponent<GlyphlingDragHandler>();
-            dragHandler.Glyphling = glyphling;
+            // No click/drag handlers needed - hex handles all interaction
 
             _glyphlingObjects[glyphling] = obj;
+        }
+
+        /// <summary>
+        /// Gets the glyphling at a hex coordinate, if any.
+        /// </summary>
+        public Glyphling GetGlyphlingAt(HexCoord coord)
+        {
+            var state = GameManager.Instance?.GameState;
+            if (state == null) return null;
+
+            foreach (var g in state.Glyphlings)
+            {
+                if (g.Position.Equals(coord))
+                {
+                    return g;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the GameObject for a glyphling.
+        /// </summary>
+        public GameObject GetGlyphlingObject(Glyphling glyphling)
+        {
+            if (glyphling != null && _glyphlingObjects.TryGetValue(glyphling, out var obj))
+            {
+                return obj;
+            }
+            return null;
         }
 
         /// <summary>
@@ -583,11 +620,13 @@ namespace Glyphtender.Unity
     }
 
     /// <summary>
-    /// Handles clicks on hex tiles.
+    /// Handles tap input on hex tiles.
+    /// Now also handles glyphling selection - tap the hex to select the glyphling on it.
     /// </summary>
     public class HexClickHandler : MonoBehaviour
     {
         public HexCoord Coord { get; set; }
+        public BoardRenderer BoardRenderer { get; set; }
 
         private void OnMouseDown()
         {
@@ -597,7 +636,30 @@ namespace Glyphtender.Unity
 
             if (GameManager.Instance == null) return;
 
-            // Determine what action to take based on game state
+            var state = GameManager.Instance.GameState;
+
+            // First, check if there's a glyphling at this hex
+            Glyphling glyphlingHere = BoardRenderer.GetGlyphlingAt(Coord);
+
+            // If there's a glyphling here and it belongs to current player, select it
+            if (glyphlingHere != null && glyphlingHere.Owner == state.CurrentPlayer)
+            {
+                // If we're mid-turn, reset the current move first
+                var turnState = GameManager.Instance.CurrentTurnState;
+                if (turnState == GameTurnState.GlyphlingSelected ||
+                    turnState == GameTurnState.MovePending ||
+                    turnState == GameTurnState.ReadyToConfirm)
+                {
+                    // Return any placed hand tile back to hand
+                    HandTileDragHandler.ReturnCurrentlyPlacedTile();
+                    GameManager.Instance.ResetMove();
+                }
+
+                GameManager.Instance.SelectGlyphling(glyphlingHere);
+                return;
+            }
+
+            // Otherwise, check for valid moves/casts
             if (GameManager.Instance.ValidMoves.Contains(Coord))
             {
                 GameManager.Instance.SelectDestination(Coord);
@@ -610,21 +672,135 @@ namespace Glyphtender.Unity
     }
 
     /// <summary>
-    /// Handles clicks on glyphlings.
+    /// Handles drag input on hex tiles for glyphling movement.
+    /// Tap a hex with your glyphling to start dragging it.
     /// </summary>
-    public class GlyphlingClickHandler : MonoBehaviour
+    public class HexDragHandler : MonoBehaviour
     {
-        public Glyphling Glyphling { get; set; }
+        public HexCoord Coord { get; set; }
+        public BoardRenderer BoardRenderer { get; set; }
+
+        private bool _isDragging;
+        private Glyphling _draggedGlyphling;
+        private GameObject _draggedObject;
+        private Vector3 _originalPosition;
+        private HexCoord? _hoveredHex;
+        private Camera _mainCamera;
+
+        private static bool _isAnyDragging;
+        public static bool IsDraggingGlyphling => _isAnyDragging;
+
+        private void Start()
+        {
+            _mainCamera = Camera.main;
+        }
 
         private void OnMouseDown()
         {
-            // Only handle in tap mode
-            if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
+            // Only handle in drag mode
+            if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Drag)
                 return;
 
             if (GameManager.Instance == null) return;
 
-            GameManager.Instance.SelectGlyphling(Glyphling);
+            var state = GameManager.Instance.GameState;
+
+            // Check if there's a current player's glyphling at this hex
+            Glyphling glyphlingHere = BoardRenderer.GetGlyphlingAt(Coord);
+
+            if (glyphlingHere != null && glyphlingHere.Owner == state.CurrentPlayer)
+            {
+                // If we're mid-turn, reset the current move first
+                var turnState = GameManager.Instance.CurrentTurnState;
+                if (turnState == GameTurnState.GlyphlingSelected ||
+                    turnState == GameTurnState.MovePending ||
+                    turnState == GameTurnState.ReadyToConfirm)
+                {
+                    // Return any placed hand tile back to hand
+                    HandTileDragHandler.ReturnCurrentlyPlacedTile();
+                    GameManager.Instance.ResetMove();
+                }
+
+                // Start dragging this glyphling
+                _draggedGlyphling = glyphlingHere;
+                _draggedObject = BoardRenderer.GetGlyphlingObject(glyphlingHere);
+
+                if (_draggedObject != null)
+                {
+                    _originalPosition = _draggedObject.transform.position;
+                    _isDragging = true;
+                    _isAnyDragging = true;
+
+                    // Select this glyphling
+                    GameManager.Instance.SelectGlyphling(glyphlingHere);
+
+                    Debug.Log($"Started dragging glyphling from {Coord}");
+                }
+            }
+        }
+
+        private void Update()
+        {
+            if (!_isDragging || _draggedObject == null) return;
+
+            // Move glyphling to follow cursor
+            Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
+            _draggedObject.transform.position = new Vector3(mouseWorldPos.x, 0.5f, mouseWorldPos.z);
+
+            // Check which hex we're hovering over
+            HexCoord? newHoveredHex = BoardRenderer.WorldToHex(mouseWorldPos);
+
+            if (newHoveredHex != _hoveredHex)
+            {
+                _hoveredHex = newHoveredHex;
+
+                // Show highlight if over a valid move destination
+                if (_hoveredHex != null && GameManager.Instance.ValidMoves.Contains(_hoveredHex.Value))
+                {
+                    BoardRenderer.SetHoverHighlight(_hoveredHex.Value);
+                }
+                else
+                {
+                    BoardRenderer.ClearHoverHighlight();
+                }
+            }
+
+            // Check for mouse release
+            if (Input.GetMouseButtonUp(0))
+            {
+                EndDrag();
+            }
+        }
+
+        private void EndDrag()
+        {
+            _isDragging = false;
+            _isAnyDragging = false;
+            BoardRenderer.ClearHoverHighlight();
+
+            // Check if dropped on valid hex
+            if (_hoveredHex != null && GameManager.Instance.ValidMoves.Contains(_hoveredHex.Value))
+            {
+                // Valid drop - select destination
+                GameManager.Instance.SelectDestination(_hoveredHex.Value);
+
+                // Snap glyphling to destination
+                Vector3 destPos = BoardRenderer.HexToWorld(_hoveredHex.Value) + Vector3.up * 0.3f;
+                _draggedObject.transform.position = destPos;
+
+                Debug.Log($"Dropped glyphling on {_hoveredHex.Value}");
+            }
+            else
+            {
+                // Invalid drop - return to original position
+                _draggedObject.transform.position = _originalPosition;
+
+                Debug.Log("Invalid drop - returning glyphling");
+            }
+
+            _hoveredHex = null;
+            _draggedGlyphling = null;
+            _draggedObject = null;
         }
     }
 }

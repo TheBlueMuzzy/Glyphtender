@@ -182,8 +182,9 @@ namespace Glyphtender.Unity
                 }
             }
 
-            // Single finger pan (only if not on selectable, has moved, and not dragging a tile)
-            if (Input.touchCount == 1 && data.hasMoved && !data.isOnSelectable && !HandTileDragHandler.IsDraggingTile)
+            // Single finger pan (only if not on selectable, has moved, and not dragging)
+            if (Input.touchCount == 1 && data.hasMoved && !data.isOnSelectable &&
+                !HandTileDragHandler.IsDraggingTile && !HexDragHandler.IsDraggingGlyphling)
             {
                 HandleSingleFingerPan(data.previousPosition, data.currentPosition);
             }
@@ -282,24 +283,30 @@ namespace Glyphtender.Unity
             var hexHandler = obj.GetComponent<HexClickHandler>();
             if (hexHandler != null)
             {
-                // Hex is selectable if it's a valid move or valid cast
-                return GameManager.Instance.ValidMoves.Contains(hexHandler.Coord) ||
-                       GameManager.Instance.ValidCasts.Contains(hexHandler.Coord);
-            }
-
-            // Check for glyphling click handler
-            var glyphlingHandler = obj.GetComponent<GlyphlingClickHandler>();
-            if (glyphlingHandler != null)
-            {
-                // Glyphling is selectable if it belongs to current player
-                // and we're in a state where selection is allowed
-                var turnState = GameManager.Instance.CurrentTurnState;
-                if (turnState == GameTurnState.Idle ||
-                    turnState == GameTurnState.GlyphlingSelected ||
-                    turnState == GameTurnState.MovePending)
+                // Hex is selectable if:
+                // 1. It's a valid move destination
+                // 2. It's a valid cast position
+                // 3. It has a current player's glyphling on it
+                if (GameManager.Instance.ValidMoves.Contains(hexHandler.Coord) ||
+                    GameManager.Instance.ValidCasts.Contains(hexHandler.Coord))
                 {
-                    return glyphlingHandler.Glyphling.Owner == GameManager.Instance.GameState.CurrentPlayer;
+                    return true;
                 }
+
+                // Check for glyphling at this hex
+                var glyphling = hexHandler.BoardRenderer?.GetGlyphlingAt(hexHandler.Coord);
+                if (glyphling != null && glyphling.Owner == GameManager.Instance.GameState.CurrentPlayer)
+                {
+                    var turnState = GameManager.Instance.CurrentTurnState;
+                    if (turnState == GameTurnState.Idle ||
+                        turnState == GameTurnState.GlyphlingSelected ||
+                        turnState == GameTurnState.MovePending ||
+                        turnState == GameTurnState.ReadyToConfirm)
+                    {
+                        return true;
+                    }
+                }
+
                 return false;
             }
 
@@ -407,8 +414,8 @@ namespace Glyphtender.Unity
                 {
                     _mouseHasMoved = true;
 
-                    // Pan with left mouse if not on selectable and not dragging a tile
-                    if (!_mouseOnSelectable && !HandTileDragHandler.IsDraggingTile)
+                    // Pan with left mouse if not on selectable and not dragging
+                    if (!_mouseOnSelectable && !HandTileDragHandler.IsDraggingTile && !HexDragHandler.IsDraggingGlyphling)
                     {
                         HandleSingleFingerPan(_mousePreviousPosition, currentPos);
                     }
