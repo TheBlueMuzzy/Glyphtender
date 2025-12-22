@@ -33,6 +33,10 @@ namespace Glyphtender.Unity
             if (GameManager.Instance.GameState.IsGameOver)
                 return;
 
+            // Don't allow during cycle mode
+            if (GameManager.Instance.IsInCycleMode)
+                return;
+
             // Can only drag own glyphlings
             if (Glyphling.Owner != GameManager.Instance.GameState.CurrentPlayer)
             {

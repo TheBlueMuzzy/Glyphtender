@@ -77,7 +77,16 @@ namespace Glyphtender.Unity
 
             // Set scale for board visibility
             transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
-            transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+
+            // Set tile flat and facing up
+            transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+            // Fix the letter text to face up
+            var letterText = transform.Find("Letter");
+            if (letterText != null)
+            {
+                letterText.rotation = Quaternion.Euler(90f, 0f, 0f);
+            }
 
             // Make semi-transparent while dragging
             SetGhostAppearance(true);
@@ -133,7 +142,7 @@ namespace Glyphtender.Unity
                 Vector3 boardPos = _boardRenderer.HexToWorld(_hoveredHex.Value) + Vector3.up * 0.2f;
                 transform.position = boardPos;
                 transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
-                transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+                transform.rotation = Quaternion.Euler(0f, 0f, 0f);
 
                 // Keep ghost appearance
                 SetGhostAppearance(true);

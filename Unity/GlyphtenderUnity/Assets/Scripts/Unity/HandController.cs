@@ -5,18 +5,40 @@ using UnityEngine.Rendering;
 
 namespace Glyphtender.Unity
 {
+    public enum DockPosition
+    {
+        Bottom,
+        Left,
+        Right
+    }
+
+    /// <summary>
+    /// Configuration for a specific dock position and orientation.
+    /// </summary>
+    public struct DockConfig
+    {
+        public Vector3 handUpPosition;
+        public Vector3 handDownPosition;
+        public Quaternion handRotation;
+        public float tileSize;
+        public float tileSpacing;
+        public float buttonSize;
+        public Vector3 inputModeButtonOffset;
+        public bool isVerticalLayout;
+    }
+
     /// <summary>
     /// Manages the player's hand of tiles in 3D space.
     /// Attached to camera so it follows the view.
     /// </summary>
     public class HandController : MonoBehaviour
     {
+        [Header("Dock Settings")]
+        public DockPosition currentDock = DockPosition.Bottom;
+
         [Header("Layout")]
         public float tileSpacing = 1.2f;
         public float tileSize = 0.8f;
-
-        public Vector3 handUpPosition = new Vector3(0f, -3f, 6f);
-        public Vector3 handDownPosition = new Vector3(0f, -4.5f, 6f);
 
         [Header("Animation")]
         public float toggleDuration = 0.2f;
@@ -30,8 +52,9 @@ namespace Glyphtender.Unity
         public Material confirmMaterial;
         public Material cancelMaterial;
         public float buttonSize = 0.6f;
-        public Vector3 confirmButtonOffset = new Vector3(4.5f, 0f, 0f);
-        public Vector3 cancelButtonOffset = new Vector3(5.5f, 0f, 0f);
+
+        // Dock configurations
+        private DockConfig _currentConfig;
 
         // State
         private bool _isUp = true;
@@ -47,6 +70,7 @@ namespace Glyphtender.Unity
 
         // Reference to anchor point
         private Transform _handAnchor;
+        private Transform _buttonAnchor;
 
         // Confirm Button
         private GameObject _confirmButton;
@@ -72,8 +96,11 @@ namespace Glyphtender.Unity
             // Create anchor as child of camera
             _handAnchor = new GameObject("HandAnchor").transform;
             _handAnchor.SetParent(Camera.main.transform);
-            _handAnchor.localPosition = handUpPosition;
-            _handAnchor.localRotation = Quaternion.Euler(180f, 0f, 0f);
+
+            // Create separate anchor for buttons (always bottom right)
+            _buttonAnchor = new GameObject("ButtonAnchor").transform;
+            _buttonAnchor.SetParent(Camera.main.transform);
+            _buttonAnchor.localRotation = Quaternion.Euler(180f, 0f, 0f);
 
             if (GameManager.Instance != null)
             {
@@ -81,7 +108,6 @@ namespace Glyphtender.Unity
                 GameManager.Instance.OnSelectionChanged += OnSelectionChanged;
                 GameManager.Instance.OnGameEnded += OnGameEnded;
                 GameManager.Instance.OnGameRestarted += OnGameRestarted;
-                RefreshHand();
             }
 
             CreateConfirmButton();
@@ -89,6 +115,151 @@ namespace Glyphtender.Unity
             CreateCyclePrompt();
             CreateReplayButton();
             CreateInputModeButton();
+
+            ApplyDockConfig();
+
+            RefreshHand();
+        }
+
+        private void ApplyDockConfig()
+        {
+            bool isPortrait = Screen.height > Screen.width;
+            Camera cam = Camera.main;
+
+            // Get camera bounds in world space
+            float camHeight = cam.orthographicSize * 2f;
+            float camWidth = camHeight * cam.aspect;
+            float handDistance = 6f;
+
+            if (isPortrait)
+            {
+                tileSize = 0.6f;
+                tileSpacing = 0.8f;
+                buttonSize = 0.5f;
+            }
+            else
+            {
+                tileSize = 0.8f;
+                tileSpacing = 1.2f;
+                buttonSize = 0.6f;
+            }
+
+            switch (currentDock)
+            {
+                case DockPosition.Bottom:
+                    float bottomEdge;
+                    if (isPortrait)
+                    {
+                        bottomEdge = cam.orthographicSize * 0.9f;
+                    }
+                    else
+                    {
+                        bottomEdge = cam.orthographicSize - 1.0f;
+                    }
+
+                    _currentConfig = new DockConfig
+                    {
+                        handUpPosition = new Vector3(0f, -bottomEdge, handDistance),
+                        handDownPosition = new Vector3(0f, -bottomEdge - 1.5f, handDistance),
+                        handRotation = Quaternion.Euler(180f, 0f, 0f),
+                        tileSize = tileSize,
+                        tileSpacing = tileSpacing,
+                        buttonSize = buttonSize,
+                        inputModeButtonOffset = new Vector3(-5f, 0f, 0f),
+                        isVerticalLayout = false
+                    };
+                    break;
+
+                case DockPosition.Left:
+                    float leftEdge;
+                    if (isPortrait)
+                    {
+                        leftEdge = cam.orthographicSize * cam.aspect * 0.9f;
+                    }
+                    else
+                    {
+                        leftEdge = cam.orthographicSize * cam.aspect - 1.0f;
+                    }
+
+                    _currentConfig = new DockConfig
+                    {
+                        handUpPosition = new Vector3(-leftEdge, 0f, handDistance),
+                        handDownPosition = new Vector3(-leftEdge - 1.5f, 0f, handDistance),
+                        handRotation = Quaternion.Euler(180f, 0f, 90f),
+                        tileSize = tileSize,
+                        tileSpacing = tileSpacing,
+                        buttonSize = buttonSize,
+                        inputModeButtonOffset = new Vector3(0f, -5f, 0f),
+                        isVerticalLayout = true
+                    };
+                    break;
+
+                case DockPosition.Right:
+                    float rightEdge;
+                    if (isPortrait)
+                    {
+                        rightEdge = cam.orthographicSize * cam.aspect * 0.9f;
+                    }
+                    else
+                    {
+                        rightEdge = cam.orthographicSize * cam.aspect - 1.0f;
+                    }
+
+                    _currentConfig = new DockConfig
+                    {
+                        handUpPosition = new Vector3(rightEdge, 0f, handDistance),
+                        handDownPosition = new Vector3(rightEdge + 1.5f, 0f, handDistance),
+                        handRotation = Quaternion.Euler(180f, 0f, -90f),
+                        tileSize = tileSize,
+                        tileSpacing = tileSpacing,
+                        buttonSize = buttonSize,
+                        inputModeButtonOffset = new Vector3(0f, 5f, 0f),
+                        isVerticalLayout = true
+                    };
+                    break;
+            }
+
+            // Apply hand configuration
+            _handAnchor.localPosition = _currentConfig.handUpPosition;
+            _handAnchor.localRotation = _currentConfig.handRotation;
+
+            // Position buttons in bottom right corner (fixed position)
+            float buttonBottomOffset = cam.orthographicSize - 1.5f;
+            float buttonRightOffset = cam.orthographicSize * cam.aspect - 1.5f;
+            _buttonAnchor.localPosition = new Vector3(buttonRightOffset, -buttonBottomOffset, handDistance);
+
+            // Update button positions relative to button anchor
+            if (_confirmButton != null)
+            {
+                _confirmButton.transform.localPosition = new Vector3(-1.2f, 0f, 0f);
+                _confirmButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
+            }
+            if (_cancelButton != null)
+            {
+                _cancelButton.transform.localPosition = new Vector3(0.2f, 0f, 0f);
+                _cancelButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
+            }
+
+            // Update input mode button position
+            if (_inputModeButton != null)
+            {
+                _inputModeButton.transform.localPosition = _currentConfig.inputModeButtonOffset;
+                _inputModeButton.transform.localScale = new Vector3(buttonSize * 1.2f, 0.05f, buttonSize * 1.2f);
+            }
+
+            // Refresh hand with new tile sizes
+            RefreshHand();
+
+            Debug.Log($"Dock applied: {currentDock}, Portrait: {isPortrait}, CamSize: {cam.orthographicSize}");
+        }
+
+        /// <summary>
+        /// Changes the dock position.
+        /// </summary>
+        public void SetDockPosition(DockPosition dock)
+        {
+            currentDock = dock;
+            ApplyDockConfig();
         }
 
         private void CreateCyclePrompt()
@@ -205,6 +376,7 @@ namespace Glyphtender.Unity
                 _inputModeText.text = "TAP";
             }
         }
+
         private void OnGameEnded(Player? winner)
         {
             // Hide all hand tiles
@@ -267,6 +439,23 @@ namespace Glyphtender.Unity
                     _isLerping = false;
                 }
             }
+
+            // Debug: Press D to cycle dock positions
+            if (Input.GetKeyDown(KeyCode.D))
+            {
+                switch (currentDock)
+                {
+                    case DockPosition.Bottom:
+                        SetDockPosition(DockPosition.Left);
+                        break;
+                    case DockPosition.Left:
+                        SetDockPosition(DockPosition.Right);
+                        break;
+                    case DockPosition.Right:
+                        SetDockPosition(DockPosition.Bottom);
+                        break;
+                }
+            }
         }
 
         /// <summary>
@@ -276,7 +465,7 @@ namespace Glyphtender.Unity
         {
             _isUp = !_isUp;
             _lerpStart = _handAnchor.localPosition;
-            _lerpTarget = _isUp ? handUpPosition : handDownPosition;
+            _lerpTarget = _isUp ? _currentConfig.handUpPosition : _currentConfig.handDownPosition;
             _lerpTime = 0f;
             _isLerping = true;
         }
@@ -284,8 +473,7 @@ namespace Glyphtender.Unity
         private void CreateConfirmButton()
         {
             _confirmButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            _confirmButton.transform.SetParent(_handAnchor);
-            _confirmButton.transform.localPosition = confirmButtonOffset;
+            _confirmButton.transform.SetParent(_buttonAnchor);
             _confirmButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             _confirmButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
             _confirmButton.name = "ConfirmButton";
@@ -320,8 +508,7 @@ namespace Glyphtender.Unity
         private void CreateCancelButton()
         {
             _cancelButton = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            _cancelButton.transform.SetParent(_handAnchor);
-            _cancelButton.transform.localPosition = cancelButtonOffset;
+            _cancelButton.transform.SetParent(_buttonAnchor);
             _cancelButton.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             _cancelButton.transform.localScale = new Vector3(buttonSize, 0.05f, buttonSize);
             _cancelButton.name = "CancelButton";
@@ -357,8 +544,6 @@ namespace Glyphtender.Unity
         /// </summary>
         public void RefreshHand()
         {
-            Debug.Log($"RefreshHand called. IsInCycleMode: {_isInCycleMode}");
-
             if (GameManager.Instance?.GameState == null) return;
 
             var state = GameManager.Instance.GameState;
@@ -420,7 +605,7 @@ namespace Glyphtender.Unity
             dragHandler.Index = index;
             dragHandler.Letter = letter;
 
-            // Add 3D text for letter (placeholder)
+            // Add 3D text for letter
             CreateLetterText(tile, letter);
 
             return tile;
@@ -431,7 +616,20 @@ namespace Glyphtender.Unity
             GameObject textObj = new GameObject("Letter");
             textObj.transform.SetParent(tile.transform);
             textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+
+            // Rotate to face camera, accounting for dock rotation
+            if (currentDock == DockPosition.Left)
+            {
+                textObj.transform.localRotation = Quaternion.Euler(90f, -90f, 0f);
+            }
+            else if (currentDock == DockPosition.Right)
+            {
+                textObj.transform.localRotation = Quaternion.Euler(90f, 90f, 0f);
+            }
+            else
+            {
+                textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            }
 
             // Scale down but use large font size for crisp text
             textObj.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
@@ -558,15 +756,12 @@ namespace Glyphtender.Unity
 
         private void EnterCycleMode()
         {
-            Debug.Log("EnterCycleMode called!");
             _isInCycleMode = true;
             _selectedForDiscard.Clear();
 
             // Show prompt and OK button
             _cyclePromptText.SetActive(true);
-            Debug.Log($"Confirm button before show: {_confirmButton.activeSelf}");
             ShowConfirmButton();
-            Debug.Log($"Confirm button after show: {_confirmButton.activeSelf}");
             HideCancelButton();
 
             Debug.Log("Entered cycle mode - select tiles to discard");
@@ -744,6 +939,7 @@ namespace Glyphtender.Unity
             Controller?.OnReplayClicked();
         }
     }
+
     /// <summary>
     /// Handles clicks on input mode toggle button.
     /// </summary>
