@@ -12,16 +12,6 @@ namespace Glyphtender.Core
     {
         private readonly HashSet<string> _dictionary;
 
-        // Letter point values
-        private static readonly Dictionary<char, int> LetterValues = new Dictionary<char, int>
-        {
-            {'A', 1}, {'B', 3}, {'C', 3}, {'D', 2}, {'E', 1}, {'F', 4},
-            {'G', 2}, {'H', 4}, {'I', 1}, {'J', 8}, {'K', 5}, {'L', 1},
-            {'M', 3}, {'N', 1}, {'O', 1}, {'P', 3}, {'Q', 10}, {'R', 1},
-            {'S', 1}, {'T', 1}, {'U', 1}, {'V', 4}, {'W', 4}, {'X', 8},
-            {'Y', 4}, {'Z', 10}
-        };
-
         public int WordCount => _dictionary.Count;
 
         public WordScorer()
@@ -53,28 +43,6 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Gets the point value of a single letter.
-        /// </summary>
-        public static int GetLetterValue(char letter)
-        {
-            char upper = char.ToUpperInvariant(letter);
-            return LetterValues.TryGetValue(upper, out int value) ? value : 0;
-        }
-
-        /// <summary>
-        /// Calculates score for a word (sum of letter values).
-        /// </summary>
-        public static int ScoreWord(string word)
-        {
-            int score = 0;
-            foreach (char c in word.ToUpperInvariant())
-            {
-                score += GetLetterValue(c);
-            }
-            return score;
-        }
-
-        /// <summary>
         /// Calculates score for a word based on Glyphtender rules:
         /// 1 point per letter + 1 bonus point for each tile owned by the scoring player.
         /// </summary>
@@ -100,7 +68,7 @@ namespace Glyphtender.Core
 
         /// <summary>
         /// Finds all words formed on the board along leylines.
-        /// Returns list of (word, positions, score).
+        /// Returns list of (word, positions).
         /// </summary>
         public List<WordResult> FindAllWords(GameState state)
         {
@@ -126,7 +94,6 @@ namespace Glyphtender.Core
 
                             if (IsValidWord(word.Letters))
                             {
-                                word.Score = ScoreWord(word.Letters);
                                 results.Add(word);
                             }
                         }
@@ -212,7 +179,6 @@ namespace Glyphtender.Core
                         if (!foundWords.Contains(wordKey))
                         {
                             foundWords.Add(wordKey);
-                            word.Score = ScoreWord(word.Letters);
                             results.Add(word);
                         }
                     }
@@ -315,6 +281,5 @@ namespace Glyphtender.Core
         public string Letters { get; set; }
         public List<HexCoord> Positions { get; set; }
         public int Direction { get; set; }
-        public int Score { get; set; }
     }
 }

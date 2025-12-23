@@ -202,7 +202,7 @@ namespace Glyphtender.Unity
 
             UpdateTurnState();
             OnSelectionChanged?.Invoke();
-            OnGameStateChanged?.Invoke();  // Add this line to update glyphling visual position
+            OnGameStateChanged?.Invoke();
         }
 
         /// <summary>
@@ -305,18 +305,18 @@ namespace Glyphtender.Unity
             int previewScore = 0;
             foreach (var word in previewWords)
             {
-                Debug.Log($"Would form: {word.Letters} (+{word.Score})");
-                previewScore += word.Score;
+                int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, GameState, GameState.CurrentPlayer);
+                Debug.Log($"Would form: {word.Letters} (+{wordScore})");
+                previewScore += wordScore;
             }
             Debug.Log($"Total preview score: {previewScore}");
 
             // Only show ghost tile in tap mode
             if (CurrentInputMode == InputMode.Tap)
             {
-                var boardRenderer = FindObjectOfType<BoardRenderer>();
-                if (boardRenderer != null)
+                if (BoardRenderer.Instance != null)
                 {
-                    boardRenderer.ShowGhostTile(PendingCastPosition.Value, PendingLetter.Value, GameState.CurrentPlayer);
+                    BoardRenderer.Instance.ShowGhostTile(PendingCastPosition.Value, PendingLetter.Value, GameState.CurrentPlayer);
                 }
             }
         }
@@ -334,10 +334,9 @@ namespace Glyphtender.Unity
             }
 
             // Hide ghost tile
-            var boardRenderer = FindObjectOfType<BoardRenderer>();
-            if (boardRenderer != null)
+            if (BoardRenderer.Instance != null)
             {
-                boardRenderer.HideGhostTile();
+                BoardRenderer.Instance.HideGhostTile();
             }
 
             // Place tile
@@ -417,10 +416,9 @@ namespace Glyphtender.Unity
             IsResetting = true;
 
             // Hide ghost tile
-            var boardRenderer = FindObjectOfType<BoardRenderer>();
-            if (boardRenderer != null)
+            if (BoardRenderer.Instance != null)
             {
-                boardRenderer.HideGhostTile();
+                BoardRenderer.Instance.HideGhostTile();
             }
 
             if (SelectedGlyphling != null && _originalPosition != null)
@@ -437,12 +435,12 @@ namespace Glyphtender.Unity
 
             IsResetting = false;
         }
+
         /// <summary>
         /// Ends cycle mode and finishes the turn.
         /// </summary>
         public void EndCycleMode()
         {
-
             // Check for tangles
             var tangled = TangleChecker.GetTangledGlyphlings(GameState);
             foreach (var g in tangled)
@@ -468,6 +466,7 @@ namespace Glyphtender.Unity
             OnTurnEnded?.Invoke();
             OnGameStateChanged?.Invoke();
         }
+
         /// <summary>
         /// Ends the game, calculates final tangle points, and determines winner.
         /// </summary>

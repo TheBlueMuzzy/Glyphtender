@@ -232,14 +232,13 @@ namespace Glyphtender.Unity
             // Cancel Button: above confirm button
             if (_cancelButton != null)
             {
-                float screenX = halfWidth - cancelMarginRight - cancelRadius;
-                // Position relative to confirm: confirm's top edge + gap + cancel's radius
-                float confirmTopEdge = halfHeight - confirmMarginBottom - confirmRadius * 2;
-                float screenY = confirmTopEdge - cancelMarginAboveConfirm - cancelRadius;
-                _cancelButton.transform.localPosition = new Vector3(screenX / scaleFactor, screenY / scaleFactor, 0f);
+                float confirmScreenY = halfHeight - confirmMarginBottom - confirmRadius;
+                float cancelScreenX = halfWidth - cancelMarginRight - cancelRadius;
+                float cancelScreenY = confirmScreenY - confirmRadius - cancelMarginAboveConfirm - cancelRadius;
+                _cancelButton.transform.localPosition = new Vector3(cancelScreenX / scaleFactor, cancelScreenY / scaleFactor, 0f);
             }
 
-            // Replay Button: center
+            // Replay button: center of screen
             if (_replayButton != null)
             {
                 _replayButton.transform.localPosition = new Vector3(0f, 0f, 0f);
@@ -258,15 +257,14 @@ namespace Glyphtender.Unity
 
         private void CreateConfirmButton()
         {
-            float size = _baseButtonSize * confirmSize;
             _confirmButton = CreateButton(
-                parent: _uiAnchor,
-                name: "ConfirmButton",
-                scale: new Vector3(size, 0.05f, size),
-                material: confirmMaterial,
+                _uiAnchor,
+                "ConfirmButton",
+                new Vector3(_baseButtonSize * confirmSize, 0.1f, _baseButtonSize * confirmSize),
+                confirmMaterial,
                 labelText: "✓",
                 labelScale: new Vector3(0.15f, 0.15f, 0.15f),
-                fontSize: 24,
+                fontSize: 32,
                 characterSize: 1f,
                 onClick: OnConfirmClicked,
                 out _
@@ -276,15 +274,14 @@ namespace Glyphtender.Unity
 
         private void CreateCancelButton()
         {
-            float size = _baseButtonSize * cancelSize;
             _cancelButton = CreateButton(
-                parent: _uiAnchor,
-                name: "CancelButton",
-                scale: new Vector3(size, 0.05f, size),
-                material: cancelMaterial,
-                labelText: "X",
-                labelScale: new Vector3(0.12f, 0.12f, 0.12f),
-                fontSize: 24,
+                _uiAnchor,
+                "CancelButton",
+                new Vector3(_baseButtonSize * cancelSize, 0.1f, _baseButtonSize * cancelSize),
+                cancelMaterial,
+                labelText: "✕",
+                labelScale: new Vector3(0.15f, 0.15f, 0.15f),
+                fontSize: 32,
                 characterSize: 1f,
                 onClick: OnCancelClicked,
                 out _
@@ -294,15 +291,14 @@ namespace Glyphtender.Unity
 
         private void CreateReplayButton()
         {
-            float size = _baseButtonSize * 2f;  // Replay is always 2x base
             _replayButton = CreateButton(
-                parent: _uiAnchor,
-                name: "ReplayButton",
-                scale: new Vector3(size, 0.05f, size),
-                material: confirmMaterial,
+                _uiAnchor,
+                "ReplayButton",
+                new Vector3(1.5f, 0.1f, 1.5f),
+                confirmMaterial,
                 labelText: "Play Again",
                 labelScale: new Vector3(0.08f, 0.08f, 0.08f),
-                fontSize: 24,
+                fontSize: 32,
                 characterSize: 1f,
                 onClick: OnReplayClicked,
                 out _
@@ -312,12 +308,11 @@ namespace Glyphtender.Unity
 
         private void CreateMenuButton()
         {
-            float size = _baseButtonSize * menuSize;
             _menuButton = CreateButton(
-                parent: _uiAnchor,
-                name: "MenuButton",
-                scale: new Vector3(size, 0.05f, size),
-                material: menuMaterial,
+                _uiAnchor,
+                "MenuButton",
+                new Vector3(_baseButtonSize * menuSize, 0.1f, _baseButtonSize * menuSize),
+                menuMaterial,
                 labelText: "≡",
                 labelScale: new Vector3(0.2f, 0.2f, 0.2f),
                 fontSize: 24,
@@ -434,10 +429,9 @@ namespace Glyphtender.Unity
         private void OnConfirmClicked()
         {
             // Check if HandController is in cycle mode
-            var handController = FindObjectOfType<HandController>();
-            if (handController != null && handController.IsInCycleMode)
+            if (HandController.Instance != null && HandController.Instance.IsInCycleMode)
             {
-                handController.ConfirmCycleDiscard();
+                HandController.Instance.ConfirmCycleDiscard();
                 HideConfirmButton();
                 HideCancelButton();
                 return;
@@ -488,8 +482,7 @@ namespace Glyphtender.Unity
         private void UpdateButtonVisibility()
         {
             // Check if HandController is in cycle mode
-            var handController = FindObjectOfType<HandController>();
-            if (handController != null && handController.IsInCycleMode)
+            if (HandController.Instance != null && HandController.Instance.IsInCycleMode)
             {
                 return;
             }

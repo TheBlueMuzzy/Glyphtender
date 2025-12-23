@@ -9,6 +9,8 @@ namespace Glyphtender.Unity
     /// </summary>
     public class BoardRenderer : MonoBehaviour
     {
+        public static BoardRenderer Instance { get; private set; }
+
         [Header("Prefabs")]
         public GameObject hexPrefab;
         public GameObject tilePrefab;
@@ -64,6 +66,13 @@ namespace Glyphtender.Unity
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+
             _hexObjects = new Dictionary<HexCoord, GameObject>();
             _tileObjects = new Dictionary<HexCoord, GameObject>();
             _glyphlingObjects = new Dictionary<Glyphling, GameObject>();

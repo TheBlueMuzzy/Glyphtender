@@ -121,12 +121,7 @@ namespace Glyphtender.Unity
                         {
                             alpha = borderThickness - distFromSurface;
                         }
-                        // Debug: Save texture to see what it looks like
-                        byte[] bytes = _pillTexture.EncodeToPNG();
-                        System.IO.File.WriteAllBytes(Application.dataPath + "/PillTexture_Debug.png", bytes);
-                        Debug.Log("Saved pill texture to: " + Application.dataPath + "/PillTexture_Debug.png");
 
-                        _pillTexture.Apply();
                         _pillTexture.SetPixel(x, y, new Color(1, 1, 1, alpha));
                     }
                 }
@@ -213,17 +208,16 @@ namespace Glyphtender.Unity
             if (word.Positions == null || word.Positions.Count < 2) return;
 
             // Get board renderer for hex positions
-            var boardRenderer = FindObjectOfType<BoardRenderer>();
-            if (boardRenderer == null) return;
+            if (BoardRenderer.Instance == null) return;
 
             // Get world positions of first and last tiles
             HexCoord firstHex = word.Positions[0];
             HexCoord lastHex = word.Positions[word.Positions.Count - 1];
 
-            Vector3 startPos = boardRenderer.HexToWorld(firstHex);
-            Vector3 endPos = boardRenderer.HexToWorld(lastHex);
+            Vector3 startPos = BoardRenderer.Instance.HexToWorld(firstHex);
+            Vector3 endPos = BoardRenderer.Instance.HexToWorld(lastHex);
 
-            float hexSize = boardRenderer.hexSize;
+            float hexSize = BoardRenderer.Instance.hexSize;
 
             // Extend to tile edges (half a hex beyond center)
             Vector3 direction = (endPos - startPos).normalized;
@@ -296,20 +290,20 @@ namespace Glyphtender.Unity
             {
                 return new Vector2[]
                 {
-            new Vector2(0.25f, 1f),
-            new Vector2(0f, 1f),
-            new Vector2(0.25f, 0f),
-            new Vector2(0f, 0f)
+                    new Vector2(0.25f, 1f),
+                    new Vector2(0f, 1f),
+                    new Vector2(0.25f, 0f),
+                    new Vector2(0f, 0f)
                 };
             }
             else
             {
                 return new Vector2[]
                 {
-            new Vector2(1f, 1f),
-            new Vector2(0.75f, 1f),
-            new Vector2(1f, 0f),
-            new Vector2(0.75f, 0f)
+                    new Vector2(1f, 1f),
+                    new Vector2(0.75f, 1f),
+                    new Vector2(1f, 0f),
+                    new Vector2(0.75f, 0f)
                 };
             }
         }
@@ -322,10 +316,10 @@ namespace Glyphtender.Unity
             // Middle half of texture (0.25 to 0.75)
             return new Vector2[]
             {
-        new Vector2(0.25f, 0f),
-        new Vector2(0.75f, 0f),
-        new Vector2(0.25f, 1f),
-        new Vector2(0.75f, 1f)
+                new Vector2(0.25f, 0f),
+                new Vector2(0.75f, 0f),
+                new Vector2(0.25f, 1f),
+                new Vector2(0.75f, 1f)
             };
         }
 
