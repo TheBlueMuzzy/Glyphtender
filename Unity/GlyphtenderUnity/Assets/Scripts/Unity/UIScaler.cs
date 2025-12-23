@@ -74,6 +74,15 @@ namespace Glyphtender.Unity
             _lastAspect = uiCamera.aspect;
             _lastOrthoSize = uiCamera.orthographicSize;
             _lastIsPortrait = IsPortrait;
+
+            // Fire layout change after one frame to ensure all subscribers are ready
+            StartCoroutine(DelayedLayoutRefresh());
+        }
+
+        private System.Collections.IEnumerator DelayedLayoutRefresh()
+        {
+            yield return null; // Wait one frame
+            OnLayoutChanged?.Invoke();
         }
 
         private void Update()

@@ -111,6 +111,7 @@ namespace Glyphtender.Unity
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnSelectionChanged += OnSelectionChanged;
+                GameManager.Instance.OnTurnStateChanged += OnTurnStateChanged;
                 GameManager.Instance.OnGameEnded += OnGameEnded;
                 GameManager.Instance.OnGameRestarted += OnGameRestarted;
             }
@@ -138,6 +139,7 @@ namespace Glyphtender.Unity
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnSelectionChanged -= OnSelectionChanged;
+                GameManager.Instance.OnTurnStateChanged -= OnTurnStateChanged;
                 GameManager.Instance.OnGameEnded -= OnGameEnded;
                 GameManager.Instance.OnGameRestarted -= OnGameRestarted;
             }
@@ -155,6 +157,14 @@ namespace Glyphtender.Unity
         {
             UpdateUIScale();
             PositionUIElements();
+        }
+
+        /// <summary>
+        /// Called when turn state changes - update button visibility.
+        /// </summary>
+        private void OnTurnStateChanged(GameTurnState newState)
+        {
+            UpdateButtonVisibility();
         }
 
         /// <summary>
@@ -428,11 +438,16 @@ namespace Glyphtender.Unity
             if (handController != null && handController.IsInCycleMode)
             {
                 handController.ConfirmCycleDiscard();
+                HideConfirmButton();
+                HideCancelButton();
                 return;
             }
 
             if (GameManager.Instance.CurrentTurnState == GameTurnState.ReadyToConfirm)
             {
+                // Don't hide buttons here - ConfirmMove may trigger cycle mode
+                // which needs to show the confirm button. Let EnterCycleMode or
+                // OnSelectionChanged handle button visibility.
                 GameManager.Instance.ConfirmMove();
             }
         }
@@ -464,6 +479,14 @@ namespace Glyphtender.Unity
 
         private void OnSelectionChanged()
         {
+            UpdateButtonVisibility();
+        }
+
+        /// <summary>
+        /// Updates confirm/cancel button visibility based on current turn state.
+        /// </summary>
+        private void UpdateButtonVisibility()
+        {
             // Check if HandController is in cycle mode
             var handController = FindObjectOfType<HandController>();
             if (handController != null && handController.IsInCycleMode)
@@ -471,20 +494,26 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            if (GameManager.Instance.SelectedGlyphling == null)
+            var state = GameManager.Instance.CurrentTurnState;
+
+            // Show confirm only in ReadyToConfirm state
+            if (state == GameTurnState.ReadyToConfirm)
+            {
+                ShowConfirmButton();
+            }
+            else
             {
                 HideConfirmButton();
-                HideCancelButton();
             }
-            else if (GameManager.Instance.PendingDestination != null)
+
+            // Show cancel when there's a pending move (MovePending or ReadyToConfirm)
+            if (state == GameTurnState.MovePending || state == GameTurnState.ReadyToConfirm)
             {
                 ShowCancelButton();
-
-                if (GameManager.Instance.PendingCastPosition != null &&
-                    GameManager.Instance.PendingLetter != null)
-                {
-                    ShowConfirmButton();
-                }
+            }
+            else
+            {
+                HideCancelButton();
             }
         }
 

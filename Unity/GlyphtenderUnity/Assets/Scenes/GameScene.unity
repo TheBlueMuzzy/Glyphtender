@@ -372,7 +372,7 @@ MonoBehaviour:
   boardCenter: {x: 7.5, y: 8.5}
   boardWidth: 16
   boardHeight: 18
-  cameraAngle: 60
+  cameraAngle: 90
   paddingPercent: 0.1
   minZoom: 1
   maxZoom: 2.5
@@ -504,8 +504,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiCamera: {fileID: 1446835203}
-  yellowScorePosition: {x: -2, y: 2, z: 6}
-  blueScorePosition: {x: 2, y: 2, z: 6}
+  yellowScorePosition: {x: -2, y: 0, z: 6}
+  blueScorePosition: {x: 2, y: 0, z: 6}
   marginFromSide: 2.5
   marginFromTop: 1.75
   previewOffsetY: 10
