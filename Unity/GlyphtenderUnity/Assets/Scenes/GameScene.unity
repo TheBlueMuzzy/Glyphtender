@@ -401,6 +401,7 @@ MonoBehaviour:
   _uiLayerMask:
     serializedVersion: 2
     m_Bits: 128
+  _mainCamera: {fileID: 886909319}
 --- !u!1 &1446835201
 GameObject:
   m_ObjectHideFlags: 0

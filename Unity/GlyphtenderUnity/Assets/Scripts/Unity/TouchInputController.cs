@@ -33,6 +33,8 @@ namespace Glyphtender.Unity
         [SerializeField] private LayerMask _boardLayerMask;
         [SerializeField] private LayerMask _uiLayerMask;
 
+        [SerializeField] private Camera _mainCamera;
+
         private class TouchData
         {
             public Vector2 startPosition;
@@ -45,6 +47,9 @@ namespace Glyphtender.Unity
 
         private void Start()
         {
+            if (_mainCamera == null)
+                _mainCamera = _mainCamera ;
+
             if (cameraController == null)
             {
                 cameraController = FindObjectOfType<CameraController>();
@@ -140,6 +145,7 @@ namespace Glyphtender.Unity
 
         private void OnTouchBegan(Touch touch)
         {
+            Debug.Log($"OnTouchBegan: pos={touch.position}, uiCam={uiCamera != null}, mainCam={_mainCamera  != null}, uiMask={_uiLayerMask.value}, boardMask={_boardLayerMask.value}");
             bool hitSelectable = false;
             GameObject hitObject = null;
 
@@ -159,7 +165,7 @@ namespace Glyphtender.Unity
             // If no UI hit, raycast with main camera for board elements
             if (hitObject == null)
             {
-                Ray boardRay = Camera.main.ScreenPointToRay(touch.position);
+                Ray boardRay = _mainCamera .ScreenPointToRay(touch.position);
                 RaycastHit boardHit;
 
                 if (Physics.Raycast(boardRay, out boardHit, 100f, _boardLayerMask))
@@ -416,7 +422,7 @@ namespace Glyphtender.Unity
                 // If no UI hit, raycast with main camera for board elements
                 if (!_mouseOnSelectable)
                 {
-                    Ray boardRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    Ray boardRay = _mainCamera .ScreenPointToRay(Input.mousePosition);
                     RaycastHit boardHit;
 
                     if (Physics.Raycast(boardRay, out boardHit, 100f, _boardLayerMask))
