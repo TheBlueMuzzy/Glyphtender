@@ -515,7 +515,8 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            if (GameManager.Instance.CurrentTurnState != GameTurnState.MovePending)
+            if (GameManager.Instance.CurrentTurnState != GameTurnState.MovePending &&
+                GameManager.Instance.CurrentTurnState != GameTurnState.ReadyToConfirm)
             {
                 return;
             }

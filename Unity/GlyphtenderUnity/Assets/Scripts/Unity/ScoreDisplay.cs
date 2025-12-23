@@ -154,6 +154,10 @@ namespace Glyphtender.Unity
             Vector3 bluePreviewPos = bluePos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
             _bluePreviewText = CreateTextMesh("BluePreview", bluePreviewPos, previewFontSize, new Color(0.2f, 0.6f, 1f), responsiveScale);
             _bluePreviewText.gameObject.SetActive(false);
+
+            // Hide scores until game ends
+            _yellowScoreText.gameObject.SetActive(false);
+            _blueScoreText.gameObject.SetActive(false);
         }
 
         private TextMesh CreateTextMesh(string name, Vector3 localPosition, int size, Color color, float scale)
@@ -322,6 +326,10 @@ namespace Glyphtender.Unity
         {
             // Hide previews
             HidePreview();
+
+            // Show scores at game end
+            _yellowScoreText.gameObject.SetActive(true);
+            _blueScoreText.gameObject.SetActive(true);
 
             float responsiveScale = GetResponsiveScale();
 

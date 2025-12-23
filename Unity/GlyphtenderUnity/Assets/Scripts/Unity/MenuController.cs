@@ -129,21 +129,12 @@ namespace Glyphtender.Unity
             );
             yPos -= rowSpacing;
 
-            // Hand Dock toggle
-            CreateMenuRow("Hand Dock", yPos,
+            // Restart button (centered, no label)
+            CreateActionButton("Restart", yPos,
                 () => {
-                    DockPosition current = handController?.currentDock ?? DockPosition.Bottom;
-                    DockPosition next = current switch
-                    {
-                        DockPosition.Bottom => DockPosition.Left,
-                        DockPosition.Left => DockPosition.Right,
-                        DockPosition.Right => DockPosition.Bottom,
-                        _ => DockPosition.Bottom
-                    };
-                    handController?.SetDockPosition(next);
-                    return next.ToString();
-                },
-                () => handController?.currentDock.ToString() ?? "Bottom"
+                    CloseMenu();
+                    GameManager.Instance.InitializeGame();
+                }
             );
         }
 
@@ -274,6 +265,49 @@ namespace Glyphtender.Unity
             handler.OnClick = () => {
                 valueText.text = onToggle();
             };
+
+            _menuItems.Add(btn);
+        }
+
+        private void CreateActionButton(string text, float yPos, Action onClick)
+        {
+            GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            btn.name = $"Button_{text}";
+            btn.transform.SetParent(_menuRoot.transform);
+            btn.transform.localPosition = new Vector3(0f, yPos, -0.08f);
+            btn.transform.localRotation = Quaternion.identity;
+            btn.transform.localScale = new Vector3(2f, 0.4f, 0.05f);
+            btn.layer = LayerMask.NameToLayer("UI3D");
+
+            var renderer = btn.GetComponent<Renderer>();
+            if (buttonMaterial != null)
+            {
+                renderer.material = buttonMaterial;
+            }
+            else
+            {
+                renderer.material.color = new Color(0.3f, 0.3f, 0.35f);
+            }
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+
+            // Button text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(btn.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0f, -1.5f);
+            textObj.transform.localRotation = Quaternion.identity;
+            textObj.transform.localScale = new Vector3(0.04f, 0.1f, 1f);
+            textObj.layer = LayerMask.NameToLayer("UI3D");
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = text;
+            textMesh.fontSize = 36;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.white;
+
+            // Click handler
+            var handler = btn.AddComponent<MenuButtonClickHandler>();
+            handler.OnClick = onClick;
 
             _menuItems.Add(btn);
         }
