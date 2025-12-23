@@ -30,8 +30,8 @@ namespace Glyphtender.Unity
         private float _pinchZoomStart;
 
         // Layer masks
-        private int _boardLayerMask;
-        private int _uiLayerMask;
+        [SerializeField] private LayerMask _boardLayerMask;
+        [SerializeField] private LayerMask _uiLayerMask;
 
         private class TouchData
         {
@@ -59,10 +59,6 @@ namespace Glyphtender.Unity
                     uiCamera = uiCamObj.GetComponent<Camera>();
                 }
             }
-
-            // Set up layer masks
-            _boardLayerMask = LayerMask.GetMask("Default", "Board");
-            _uiLayerMask = LayerMask.GetMask("UI3D");
         }
 
         private void Update()

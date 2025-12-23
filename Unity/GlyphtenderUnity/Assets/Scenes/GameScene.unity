@@ -394,7 +394,13 @@ MonoBehaviour:
   tapDistanceThreshold: 20
   doubleTapTime: 0.3
   cameraController: {fileID: 886909321}
-  uiCamera: {fileID: 0}
+  uiCamera: {fileID: 1446835203}
+  _boardLayerMask:
+    serializedVersion: 2
+    m_Bits: 65
+  _uiLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!1 &1446835201
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,7 +411,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1446835204}
   - component: {fileID: 1446835203}
-  - component: {fileID: 1446835202}
   - component: {fileID: 1446835206}
   - component: {fileID: 1446835205}
   - component: {fileID: 1446835207}
@@ -417,14 +422,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1446835202
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1446835201}
-  m_Enabled: 1
 --- !u!20 &1446835203
 Camera:
   m_ObjectHideFlags: 0
