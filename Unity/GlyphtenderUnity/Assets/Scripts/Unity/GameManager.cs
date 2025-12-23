@@ -37,6 +37,7 @@ namespace Glyphtender.Unity
         public bool IsResetting { get; set; }
         public HexCoord? LastCastOrigin { get; private set; }
         public char? PendingLetter { get; private set; }
+        private AIController _aiController;
 
         public bool IsInCycleMode => CurrentTurnState == GameTurnState.CycleMode;
         public GameTurnState CurrentTurnState { get; private set; } = GameTurnState.Idle;
@@ -108,6 +109,14 @@ namespace Glyphtender.Unity
             UpdateTurnState();
             OnGameStateChanged?.Invoke();
             OnGameRestarted?.Invoke();
+
+            // Initialize AI if present
+            _aiController = FindObjectOfType<AIController>();
+            if (_aiController != null)
+            {
+                _aiController.Initialize(WordScorer);
+                Debug.Log("AI opponent ready.");
+            }
         }
 
         private void LoadDictionary()
@@ -397,6 +406,13 @@ namespace Glyphtender.Unity
             ClearSelection();
             UpdateTurnState();
             OnTurnEnded?.Invoke();
+
+            // Check if it's AI's turn
+            if (_aiController != null && GameState.CurrentPlayer == _aiController.AIPlayer)
+            {
+                _aiController.TakeTurn(GameState);
+            }
+
             OnGameStateChanged?.Invoke();
         }
 
@@ -464,7 +480,31 @@ namespace Glyphtender.Unity
             CurrentTurnState = GameTurnState.Idle;
             UpdateTurnState();
             OnTurnEnded?.Invoke();
+
+            // Check if it's AI's turn
+            if (_aiController != null && GameState.CurrentPlayer == _aiController.AIPlayer)
+            {
+                _aiController.TakeTurn(GameState);
+            }
+
             OnGameStateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Called by AIController when AI completes its turn.
+        /// </summary>
+        public void OnTurnComplete()
+        {
+            ClearSelection();
+            UpdateTurnState();
+            OnTurnEnded?.Invoke();
+            OnGameStateChanged?.Invoke();
+
+            // Check if it's AI's turn again (e.g., if human somehow skipped)
+            if (_aiController != null && GameState.CurrentPlayer == _aiController.AIPlayer)
+            {
+                _aiController.TakeTurn(GameState);
+            }
         }
 
         /// <summary>

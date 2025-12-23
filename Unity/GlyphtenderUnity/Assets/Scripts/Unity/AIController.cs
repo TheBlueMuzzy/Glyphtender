@@ -137,9 +137,12 @@ namespace Glyphtender.Unity
             }
             else
             {
+                Debug.LogWarning("AI found no valid moves!");
                 // No valid moves - go to cycle mode
                 ExecuteCycle(state);
             }
+
+            Debug.Log($"AI turn complete. Next player: {state.CurrentPlayer}");
 
             _isThinking = false;
         }
@@ -148,6 +151,14 @@ namespace Glyphtender.Unity
         /// Executes the AI's chosen move through the game systems.
         /// </summary>
         private void ExecuteMove(AIMove move, GameState state)
+        {
+            StartCoroutine(ExecuteMoveAnimated(move, state));
+        }
+
+        /// <summary>
+        /// Executes the move with proper animation timing.
+        /// </summary>
+        private IEnumerator ExecuteMoveAnimated(AIMove move, GameState state)
         {
             Debug.Log($"AI plays: {move.Letter} at {move.CastPosition}, " +
                       $"glyphling {move.Glyphling.Index} to {move.Destination}");
@@ -166,52 +177,76 @@ namespace Glyphtender.Unity
             if (actualGlyphling == null)
             {
                 Debug.LogError("Could not find glyphling for AI move!");
-                return;
+                _isThinking = false;
+                yield break;
             }
 
-            // Execute through GameRules
-            bool success = GameRules.ExecuteMove(
-                state,
-                actualGlyphling,
-                move.Destination,
-                move.CastPosition,
-                move.Letter
-            );
+            // Step 1: Move the glyphling
+            actualGlyphling.Position = move.Destination;
 
-            if (success)
+            // Refresh board to trigger move animation
+            if (_boardRenderer != null)
             {
-                // Score the words
-                var words = _wordScorer.FindWordsAt(state, move.CastPosition, move.Letter);
-                int totalPoints = 0;
-
-                foreach (var word in words)
-                {
-                    int points = WordScorer.ScoreWordForPlayer(
-                        word.Letters, word.Positions, state, _aiPlayer);
-                    totalPoints += points;
-                    Debug.Log($"AI formed: {word.Letters} for {points} points");
-                }
-
-                // Update perception
-                _brain.OnScore(totalPoints);
-
-                // Update game state scores
-                state.Scores[_aiPlayer] += totalPoints;
-
-                // Notify game manager / renderer
-                if (_boardRenderer != null)
-                {
-                    _boardRenderer.RefreshBoard();
-                }
-
-                // End turn
-                _brain.EndTurn();
-                GameRules.EndTurn(state);
+                _boardRenderer.RefreshBoard();
             }
-            else
+
+            // Wait for move animation
+            yield return new WaitForSeconds(0.6f);
+
+            // Step 2: Place the tile
+            state.Hands[_aiPlayer].Remove(move.Letter);
+            state.Tiles[move.CastPosition] = new Tile(move.Letter, _aiPlayer, move.CastPosition);
+
+            // Refresh board to show tile
+            if (_boardRenderer != null)
             {
-                Debug.LogError($"AI move failed! This shouldn't happen.");
+                _boardRenderer.RefreshBoard();
             }
+
+            // Wait for tile animation
+            yield return new WaitForSeconds(0.4f);
+
+            // Step 3: Score the words
+            var words = _wordScorer.FindWordsAt(state, move.CastPosition, move.Letter);
+            int totalPoints = 0;
+
+            foreach (var word in words)
+            {
+                int points = WordScorer.ScoreWordForPlayer(
+                    word.Letters, word.Positions, state, _aiPlayer);
+                totalPoints += points;
+                Debug.Log($"AI formed: {word.Letters} for {points} points");
+            }
+
+            // Update perception
+            _brain.OnScore(totalPoints);
+
+            // Update game state scores
+            state.Scores[_aiPlayer] += totalPoints;
+
+            // Draw new tile
+            GameRules.DrawTile(state, _aiPlayer);
+
+            // Refresh to show score update
+            if (_boardRenderer != null)
+            {
+                _boardRenderer.RefreshBoard();
+            }
+
+            // Brief pause before ending turn
+            yield return new WaitForSeconds(0.3f);
+
+            // End turn
+            _brain.EndTurn();
+            GameRules.EndTurn(state);
+
+            // Notify game manager that AI turn is complete
+            if (_gameManager != null)
+            {
+                _gameManager.OnTurnComplete();
+            }
+
+            Debug.Log($"AI turn complete. Next player: {state.CurrentPlayer}");
         }
 
         /// <summary>
@@ -242,6 +277,12 @@ namespace Glyphtender.Unity
             // End turn
             _brain.EndTurn();
             GameRules.EndTurn(state);
+
+            // Notify game manager that AI turn is complete
+            if (_gameManager != null)
+            {
+                _gameManager.OnTurnComplete();
+            }
 
             // Refresh and notify
             if (_boardRenderer != null)

@@ -90,12 +90,19 @@ namespace Glyphtender.Core
             var candidates = new List<AIMove>();
             var hand = state.Hands[AIPlayer];
 
-            // Get all AI glyphlings
+            // Get all AI glyphlings that aren't tangled
             var myGlyphlings = new List<Glyphling>();
             foreach (var g in state.Glyphlings)
             {
                 if (g.Owner == AIPlayer)
-                    myGlyphlings.Add(g);
+                {
+                    // Skip tangled glyphlings (no valid moves)
+                    var moves = GameRules.GetValidMoves(state, g);
+                    if (moves.Count > 0)
+                    {
+                        myGlyphlings.Add(g);
+                    }
+                }
             }
 
             // For each glyphling, for each reachable position, for each cast position, for each letter
