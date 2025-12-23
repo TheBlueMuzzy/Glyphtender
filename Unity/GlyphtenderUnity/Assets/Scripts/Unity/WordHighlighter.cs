@@ -200,6 +200,27 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Highlights words that would be formed at a specific position with a specific letter.
+        /// Used by AI to show its move.
+        /// </summary>
+        public void HighlightWordsAt(HexCoord position, char letter)
+        {
+            ClearHighlights();
+
+            if (GameManager.Instance?.GameState == null) return;
+
+            var words = GameManager.Instance.WordScorer.FindWordsAt(
+                GameManager.Instance.GameState,
+                position,
+                letter);
+
+            foreach (var word in words)
+            {
+                CreateWordOutline(word);
+            }
+        }
+
+        /// <summary>
         /// Creates an outline around a word using 3 parts: left cap, middle, right cap.
         /// This prevents the rounded ends from stretching.
         /// </summary>

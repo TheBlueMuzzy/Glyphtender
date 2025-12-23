@@ -184,34 +184,29 @@ namespace Glyphtender.Unity
             // Step 1: Move the glyphling
             actualGlyphling.Position = move.Destination;
 
-            // Refresh board to trigger move animation
             if (_boardRenderer != null)
             {
                 _boardRenderer.RefreshBoard();
             }
 
-            // Wait for move animation
             yield return new WaitForSeconds(0.6f);
 
-            // Step 2: Place the tile (set cast origin for animation)
+            // Step 2: Place the tile
             if (_gameManager != null)
             {
                 _gameManager.SetLastCastOrigin(move.Destination);
             }
-
             state.Hands[_aiPlayer].Remove(move.Letter);
             state.Tiles[move.CastPosition] = new Tile(move.Letter, _aiPlayer, move.CastPosition);
 
-            // Refresh board to show tile
             if (_boardRenderer != null)
             {
                 _boardRenderer.RefreshBoard();
             }
 
-            // Wait for tile animation
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.5f);
 
-            // Step 3: Score the words
+            // Step 3: Show preview score and word highlights
             var words = _wordScorer.FindWordsAt(state, move.CastPosition, move.Letter);
             int totalPoints = 0;
 
@@ -223,29 +218,42 @@ namespace Glyphtender.Unity
                 Debug.Log($"AI formed: {word.Letters} for {points} points");
             }
 
-            // Update perception
-            _brain.OnScore(totalPoints);
+            var scoreDisplay = FindObjectOfType<ScoreDisplay>();
+            if (scoreDisplay != null && totalPoints > 0)
+            {
+                scoreDisplay.ShowPreview(totalPoints);
+            }
 
-            // Update game state scores
+            var wordHighlighter = FindObjectOfType<WordHighlighter>();
+            if (wordHighlighter != null)
+            {
+                wordHighlighter.HighlightWordsAt(move.CastPosition, move.Letter);
+            }
+
+            yield return new WaitForSeconds(1.0f);
+
+            // Step 4: Clear highlights and finalize score
+            if (wordHighlighter != null)
+            {
+                wordHighlighter.ClearHighlights();
+            }
+
+            _brain.OnScore(totalPoints);
             state.Scores[_aiPlayer] += totalPoints;
 
-            // Draw new tile
             GameRules.DrawTile(state, _aiPlayer);
 
-            // Refresh to show score update
             if (_boardRenderer != null)
             {
                 _boardRenderer.RefreshBoard();
             }
 
-            // Brief pause before ending turn
             yield return new WaitForSeconds(0.3f);
 
-            // End turn
+            // Step 5: End turn
             _brain.EndTurn();
             GameRules.EndTurn(state);
 
-            // Notify game manager that AI turn is complete
             if (_gameManager != null)
             {
                 _gameManager.OnTurnComplete();
