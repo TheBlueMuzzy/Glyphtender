@@ -111,10 +111,6 @@ namespace Glyphtender.Core
                 // Get valid move destinations (including staying put if already there)
                 var moveDestinations = GameRules.GetValidMoves(state, glyphling);
 
-                // Add current position as an option (move distance 0)
-                if (!moveDestinations.Contains(glyphling.Position))
-                    moveDestinations.Add(glyphling.Position);
-
                 foreach (var dest in moveDestinations)
                 {
                     // Temporarily move glyphling to get cast positions
