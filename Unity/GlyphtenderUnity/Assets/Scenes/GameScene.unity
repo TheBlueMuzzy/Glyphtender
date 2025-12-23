@@ -216,123 +216,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!1 &236294949
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 236294950}
-  - component: {fileID: 236294951}
-  m_Layer: 7
-  m_Name: ScoreDisplay
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &236294950
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 236294949}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.6615138, y: 2.3743858, z: 1.2935476}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1446835204}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &236294951
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 236294949}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 897ce978b9ecf324cafdbe4455cef28c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiCamera: {fileID: 0}
-  yellowScorePosition: {x: -4, y: 2, z: 6}
-  blueScorePosition: {x: 4, y: 2, z: 6}
-  fontSize: 10
-  previewFontSize: 5
---- !u!1 &539873914
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 539873916}
-  - component: {fileID: 539873917}
-  m_Layer: 7
-  m_Name: HandController
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &539873916
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 539873914}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 2.8440218, y: 9.436163, z: 5.05513}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1446835204}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &539873917
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 539873914}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e369e5d2f82b3d43822dc6bfe054a1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiCamera: {fileID: 0}
-  currentDock: 0
-  tileSpacing: 1.3
-  tileSize: 1.25
-  maxHandSize: 8
-  portraitWidthPercent: 0.95
-  landscapeBasePercent: 0.45
-  referenceAspect: 2.2
-  toggleDuration: 0.3
-  userHandScale: 1
-  handInactiveScale: 0.9
-  handScaleDuration: 0.15
-  yellowTileMaterial: {fileID: 2100000, guid: 29f26a048c7ba684796647836537955a, type: 2}
-  blueTileMaterial: {fileID: 2100000, guid: c4e4cb277555304458d31be3060f9d9e, type: 2}
-  selectedMaterial: {fileID: 2100000, guid: 87ed1c6ce549c694491b602fb287cff6, type: 2}
-  confirmMaterial: {fileID: 2100000, guid: 87ed1c6ce549c694491b602fb287cff6, type: 2}
-  cancelMaterial: {fileID: 2100000, guid: 8eb44f2727c49b74189b70d2b7aff749, type: 2}
-  buttonSize: 0.75
-  inputModeFromRight: 0.75
-  inputModeFromTop: 0.75
-  confirmFromRight: 1.25
-  confirmFromBottom: 2.5
-  cancelFromRight: 0.75
-  cancelFromBottom: 3.35
 --- !u!1 &649223871
 GameObject:
   m_ObjectHideFlags: 0
@@ -442,8 +325,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 12
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -489,6 +372,7 @@ MonoBehaviour:
   boardCenter: {x: 7.5, y: 8.5}
   boardWidth: 16
   boardHeight: 18
+  cameraAngle: 60
   paddingPercent: 0.1
   minZoom: 1
   maxZoom: 2.5
@@ -522,6 +406,10 @@ GameObject:
   - component: {fileID: 1446835204}
   - component: {fileID: 1446835203}
   - component: {fileID: 1446835202}
+  - component: {fileID: 1446835207}
+  - component: {fileID: 1446835206}
+  - component: {fileID: 1446835205}
+  - component: {fileID: 1446835208}
   m_Layer: 7
   m_Name: UICamera
   m_TagString: Untagged
@@ -600,11 +488,92 @@ Transform:
   m_LocalPosition: {x: 7.5, y: 20, z: 8.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 539873916}
-  - {fileID: 236294950}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!114 &1446835205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446835201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 897ce978b9ecf324cafdbe4455cef28c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiCamera: {fileID: 1446835203}
+  yellowScorePosition: {x: -4, y: 3, z: 6}
+  blueScorePosition: {x: 4, y: 3, z: 6}
+  marginFromEdge: 1.5
+  fontSize: 16
+  previewFontSize: 10
+  baseTextScale: 0.1
+--- !u!114 &1446835206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446835201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e369e5d2f82b3d43822dc6bfe054a1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiCamera: {fileID: 0}
+  currentDock: 0
+  tileSpacing: 1.3
+  tileSize: 1.25
+  maxHandSize: 8
+  toggleDuration: 0.2
+  userHandScale: 1
+  handInactiveScale: 1
+  handScaleDuration: 0.15
+  yellowTileMaterial: {fileID: 2100000, guid: 404bda4bd2fc7174281380ebb6485089, type: 2}
+  blueTileMaterial: {fileID: 2100000, guid: 1b1765b85303cc342bb7bab16a0a673e, type: 2}
+  selectedMaterial: {fileID: 2100000, guid: 87ed1c6ce549c694491b602fb287cff6, type: 2}
+--- !u!114 &1446835207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446835201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1210b02d080ef604db0f369731db7f0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiCamera: {fileID: 1446835203}
+  confirmMaterial: {fileID: 2100000, guid: acd7ccca06ba9934ea443780c39f87a8, type: 2}
+  cancelMaterial: {fileID: 2100000, guid: 8eb44f2727c49b74189b70d2b7aff749, type: 2}
+  menuMaterial: {fileID: 2100000, guid: b41856410140f7c42915d1c2cc1b02a6, type: 2}
+  buttonSize: 0.75
+  menuFromRight: 1
+  menuFromTop: 1
+  confirmFromRight: 1
+  confirmFromBottom: 1.75
+  cancelFromRight: 1
+  cancelFromBottom: 3
+--- !u!114 &1446835208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446835201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a970b521bba751f4a92f0a4c402f65ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiCamera: {fileID: 0}
+  portraitWidthPercent: 0.95
+  landscapeBasePercent: 0.45
+  referenceAspect: 2.2
+  referenceOrthoSize: 5
 --- !u!1 &1713144601
 GameObject:
   m_ObjectHideFlags: 0
@@ -635,7 +604,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiCamera: {fileID: 1446835203}
-  handController: {fileID: 539873917}
+  handController: {fileID: 0}
   panelMaterial: {fileID: 0}
   buttonMaterial: {fileID: 0}
   panelWidth: 6

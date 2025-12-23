@@ -13,6 +13,11 @@ namespace Glyphtender.Unity
         public float boardWidth = 16f;
         public float boardHeight = 18f;
 
+        [Header("Camera Angle")]
+        [Tooltip("Camera tilt angle (90 = top-down, 60 = angled)")]
+        [Range(30f, 90f)]
+        public float cameraAngle = 60f;
+
         [Header("Padding")]
         public float paddingPercent = 0.1f;
 
@@ -140,14 +145,21 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
-        /// Sets camera position based on current pan offset.
+        /// Sets camera position based on current pan offset and angle.
         /// </summary>
         private void ApplyCameraPosition()
         {
             float camX = boardCenter.x + _panOffset.x;
             float camZ = boardCenter.y + _panOffset.y;
-            transform.position = new Vector3(camX, 20f, camZ);
-            transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+
+            // Calculate camera height and Z offset based on angle
+            float distanceFromBoard = 20f;
+            float angleRad = cameraAngle * Mathf.Deg2Rad;
+            float camY = distanceFromBoard * Mathf.Sin(angleRad);
+            float camZOffset = -distanceFromBoard * Mathf.Cos(angleRad);
+
+            transform.position = new Vector3(camX, camY, camZ + camZOffset);
+            transform.rotation = Quaternion.Euler(cameraAngle, 0f, 0f);
         }
 
         /// <summary>
