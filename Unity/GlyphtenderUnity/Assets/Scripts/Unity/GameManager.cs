@@ -408,7 +408,7 @@ namespace Glyphtender.Unity
             OnTurnEnded?.Invoke();
 
             // Check if it's AI's turn
-            if (_aiController != null && GameState.CurrentPlayer == _aiController.AIPlayer)
+            if (_aiController != null && _aiController.enabled && GameState.CurrentPlayer == _aiController.AIPlayer)
             {
                 _aiController.TakeTurn(GameState);
             }
@@ -482,7 +482,7 @@ namespace Glyphtender.Unity
             OnTurnEnded?.Invoke();
 
             // Check if it's AI's turn
-            if (_aiController != null && GameState.CurrentPlayer == _aiController.AIPlayer)
+            if (_aiController != null && _aiController.enabled && GameState.CurrentPlayer == _aiController.AIPlayer)
             {
                 _aiController.TakeTurn(GameState);
             }
@@ -523,7 +523,7 @@ namespace Glyphtender.Unity
             OnGameStateChanged?.Invoke();
 
             // Check if it's AI's turn again
-            if (_aiController != null && GameState.CurrentPlayer == _aiController.AIPlayer)
+            if (_aiController != null && _aiController.enabled && GameState.CurrentPlayer == _aiController.AIPlayer)
             {
                 _aiController.TakeTurn(GameState);
             }

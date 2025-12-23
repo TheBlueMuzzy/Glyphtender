@@ -105,6 +105,87 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Takes over a turn in progress, handling whatever state it's in.
+        /// </summary>
+        public void TakeOverTurn(GameState state)
+        {
+            if (_brain == null)
+            {
+                Debug.LogError("AIController.TakeOverTurn called but AI not initialized!");
+                return;
+            }
+
+            if (_isThinking)
+            {
+                Debug.LogWarning("AI is already thinking!");
+                return;
+            }
+
+            var turnState = GameManager.Instance.CurrentTurnState;
+
+            if (turnState == GameTurnState.CycleMode)
+            {
+                // Handle cycle mode - choose discards and confirm
+                StartCoroutine(HandleCycleMode(state));
+            }
+            else
+            {
+                // Reset any partial move and play full turn
+                GameManager.Instance.ResetMove();
+                TakeTurn(state);
+            }
+        }
+
+        /// <summary>
+        /// Handles cycle mode when AI takes over mid-turn.
+        /// </summary>
+        private IEnumerator HandleCycleMode(GameState state)
+        {
+            _isThinking = true;
+
+            yield return new WaitForSeconds(0.5f);
+
+            // Choose discards using AI logic
+            var discards = _brain.ChooseDiscards(state);
+
+            if (discards.Count > 0)
+            {
+                Debug.Log($"AI discards: {string.Join(", ", discards)}");
+
+                var hand = state.Hands[_aiPlayer];
+                foreach (var letter in discards)
+                {
+                    hand.Remove(letter);
+                    GameRules.DrawTile(state, _aiPlayer);
+                }
+            }
+            else
+            {
+                Debug.Log("AI keeps hand (no discards)");
+            }
+
+            // Exit cycle mode through HandController
+            var handController = FindObjectOfType<HandController>();
+            if (handController != null)
+            {
+                handController.ConfirmCycleDiscard();
+            }
+            else
+            {
+                // Fallback if no HandController
+                _brain.EndTurn();
+                GameRules.EndTurn(state);
+
+                if (_gameManager != null)
+                {
+                    _gameManager.OnTurnComplete();
+                }
+            }
+
+            _isThinking = false;
+        }
+
+        /// <summary>
         /// Coroutine that thinks for a moment, then executes the move.
         /// </summary>
         private IEnumerator ThinkAndMove(GameState state)

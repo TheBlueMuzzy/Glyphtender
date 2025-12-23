@@ -95,7 +95,6 @@ namespace Glyphtender.Unity
             _menuRoot.transform.localPosition = new Vector3(0f, 0f, menuZ);
             _menuRoot.transform.localRotation = Quaternion.identity;
             _menuRoot.layer = LayerMask.NameToLayer("UI3D");
-
             CreateBackgroundBlocker();
             CreatePanelBackground();
             CreateTitle();
@@ -126,6 +125,47 @@ namespace Glyphtender.Unity
                     return next.ToString();
                 },
                 () => Mathf.RoundToInt(GameSettings.DragOffset).ToString()
+            );
+            yPos -= rowSpacing;
+
+            // AI Personality toggle
+            CreateMenuRow("AI", yPos,
+                () => {
+                    var aiController = FindObjectOfType<AIController>();
+                    if (aiController == null) return "Off";
+
+                    string[] options = { "Off", "Timid", "Bully", "Builder", "Opportunist", "Balanced", "Chaotic", "Scholar", "Shark" };
+                    string current = aiController.enabled ? aiController.PersonalityName : "Off";
+
+                    int currentIndex = System.Array.IndexOf(options, current);
+                    if (currentIndex < 0) currentIndex = 0;
+                    int nextIndex = (currentIndex + 1) % options.Length;
+
+                    string next = options[nextIndex];
+                    if (next == "Off")
+                    {
+                        aiController.enabled = false;
+                    }
+                    else
+                    {
+                        aiController.enabled = true;
+                        aiController.SetPersonality(next);
+
+                        // If it's AI's turn, take over immediately
+                        if (GameManager.Instance.GameState.CurrentPlayer == aiController.AIPlayer)
+                        {
+                            CloseMenu();
+                            aiController.TakeOverTurn(GameManager.Instance.GameState);
+                        }
+                    }
+
+                    return next;
+                },
+                () => {
+                    var aiController = FindObjectOfType<AIController>();
+                    if (aiController == null || !aiController.enabled) return "Off";
+                    return aiController.PersonalityName;
+                }
             );
             yPos -= rowSpacing;
 
