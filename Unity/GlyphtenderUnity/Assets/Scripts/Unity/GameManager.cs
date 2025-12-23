@@ -491,16 +491,38 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Sets the cast origin for tile animation.
+        /// </summary>
+        public void SetLastCastOrigin(HexCoord origin)
+        {
+            LastCastOrigin = origin;
+        }
+
+        /// <summary>
         /// Called by AIController when AI completes its turn.
         /// </summary>
         public void OnTurnComplete()
         {
+            // Check for tangles
+            var tangled = TangleChecker.GetTangledGlyphlings(GameState);
+            foreach (var g in tangled)
+            {
+                Debug.Log($"Glyphling tangled at {g.Position}!");
+            }
+
+            // Check game over
+            if (TangleChecker.ShouldEndGame(GameState))
+            {
+                EndGame();
+                return;
+            }
+
             ClearSelection();
             UpdateTurnState();
             OnTurnEnded?.Invoke();
             OnGameStateChanged?.Invoke();
 
-            // Check if it's AI's turn again (e.g., if human somehow skipped)
+            // Check if it's AI's turn again
             if (_aiController != null && GameState.CurrentPlayer == _aiController.AIPlayer)
             {
                 _aiController.TakeTurn(GameState);

@@ -193,7 +193,12 @@ namespace Glyphtender.Unity
             // Wait for move animation
             yield return new WaitForSeconds(0.6f);
 
-            // Step 2: Place the tile
+            // Step 2: Place the tile (set cast origin for animation)
+            if (_gameManager != null)
+            {
+                _gameManager.SetLastCastOrigin(move.Destination);
+            }
+
             state.Hands[_aiPlayer].Remove(move.Letter);
             state.Tiles[move.CastPosition] = new Tile(move.Letter, _aiPlayer, move.CastPosition);
 
