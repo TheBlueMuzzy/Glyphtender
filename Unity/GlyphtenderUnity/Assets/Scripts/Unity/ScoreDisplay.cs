@@ -16,12 +16,24 @@ namespace Glyphtender.Unity
         [Header("Layout")]
         public Vector3 yellowScorePosition = new Vector3(-4f, 3f, 6f);
         public Vector3 blueScorePosition = new Vector3(4f, 3f, 6f);
-        public float marginFromEdge = 1.5f;
+        public float marginFromSide = 0.5f;
+        public float marginFromTop = 0.5f;
+
+        [Header("Preview Layout")]
+        [Tooltip("How far below the main score the preview appears")]
+        public float previewOffsetY = 0.8f;
+
+        [Header("Winner Layout")]
+        [Tooltip("How far below the main score the winner text appears")]
+        public float winnerOffsetY = 1.0f;
 
         [Header("Text Settings")]
         public int fontSize = 48;
         public int previewFontSize = 32;
         public float baseTextScale = 0.1f;
+
+        [Tooltip("Additional multiplier for landscape mode")]
+        public float landscapeScaleBoost = 1.0f;
 
         // Score display objects
         private Transform _displayAnchor;
@@ -97,14 +109,31 @@ namespace Glyphtender.Unity
             }
         }
 
+        /// <summary>
+        /// Calculates the responsive scale including landscape boost.
+        /// </summary>
+        private float GetResponsiveScale()
+        {
+            if (UIScaler.Instance == null) return baseTextScale;
+
+            float scale = baseTextScale * UIScaler.Instance.GetElementScale() * UIScaler.Instance.GetLandscapeElementScale();
+
+            if (!UIScaler.Instance.IsPortrait)
+            {
+                scale *= landscapeScaleBoost;
+            }
+
+            return scale;
+        }
+
         private void CreateScoreTexts()
         {
             if (UIScaler.Instance == null) return;
 
             // Calculate top corners using UIScaler
-            float topOffset = UIScaler.Instance.GetTopEdge(marginFromEdge);
-            float sideOffset = UIScaler.Instance.HalfWidth - marginFromEdge;
-            float responsiveScale = baseTextScale * UIScaler.Instance.GetElementScale();
+            float topOffset = UIScaler.Instance.GetTopEdge(marginFromTop);
+            float sideOffset = UIScaler.Instance.HalfWidth - marginFromSide;
+            float responsiveScale = GetResponsiveScale();
 
             // Yellow score (top left)
             Vector3 yellowPos = new Vector3(-sideOffset, topOffset, _handDistance);
@@ -112,7 +141,7 @@ namespace Glyphtender.Unity
             _yellowScoreText = CreateTextMesh("YellowScore", yellowPos, fontSize, new Color(1f, 0.9f, 0.2f), responsiveScale);
 
             // Yellow preview (below yellow score)
-            Vector3 yellowPreviewPos = yellowPos + new Vector3(0f, -0.8f * responsiveScale, 0f);
+            Vector3 yellowPreviewPos = yellowPos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
             _yellowPreviewText = CreateTextMesh("YellowPreview", yellowPreviewPos, previewFontSize, new Color(1f, 0.9f, 0.2f), responsiveScale);
             _yellowPreviewText.gameObject.SetActive(false);
 
@@ -122,7 +151,7 @@ namespace Glyphtender.Unity
             _blueScoreText = CreateTextMesh("BlueScore", bluePos, fontSize, new Color(0.2f, 0.6f, 1f), responsiveScale);
 
             // Blue preview (below blue score)
-            Vector3 bluePreviewPos = bluePos + new Vector3(0f, -0.8f * responsiveScale, 0f);
+            Vector3 bluePreviewPos = bluePos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
             _bluePreviewText = CreateTextMesh("BluePreview", bluePreviewPos, previewFontSize, new Color(0.2f, 0.6f, 1f), responsiveScale);
             _bluePreviewText.gameObject.SetActive(false);
         }
@@ -156,22 +185,22 @@ namespace Glyphtender.Unity
             if (UIScaler.Instance == null) return;
 
             // Calculate top corners using UIScaler
-            float topOffset = UIScaler.Instance.GetTopEdge(marginFromEdge);
-            float sideOffset = UIScaler.Instance.HalfWidth - marginFromEdge;
-            float responsiveScale = baseTextScale * UIScaler.Instance.GetElementScale();
+            float topOffset = UIScaler.Instance.GetTopEdge(marginFromTop);
+            float sideOffset = UIScaler.Instance.HalfWidth - marginFromSide;
+            float responsiveScale = GetResponsiveScale();
 
             // Yellow score (top left)
             Vector3 yellowPos = new Vector3(-sideOffset, topOffset, _handDistance);
             _yellowScoreText.transform.localPosition = yellowPos;
             _yellowScoreText.transform.localScale = Vector3.one * responsiveScale;
-            _yellowPreviewText.transform.localPosition = yellowPos + new Vector3(0f, -0.8f * responsiveScale, 0f);
+            _yellowPreviewText.transform.localPosition = yellowPos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
             _yellowPreviewText.transform.localScale = Vector3.one * responsiveScale;
 
             // Blue score (top right)
             Vector3 bluePos = new Vector3(sideOffset, topOffset, _handDistance);
             _blueScoreText.transform.localPosition = bluePos;
             _blueScoreText.transform.localScale = Vector3.one * responsiveScale;
-            _bluePreviewText.transform.localPosition = bluePos + new Vector3(0f, -0.8f * responsiveScale, 0f);
+            _bluePreviewText.transform.localPosition = bluePos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
             _bluePreviewText.transform.localScale = Vector3.one * responsiveScale;
 
             // Update stored positions for winner text placement
@@ -294,7 +323,7 @@ namespace Glyphtender.Unity
             // Hide previews
             HidePreview();
 
-            float responsiveScale = baseTextScale * (UIScaler.Instance?.GetElementScale() ?? 1f);
+            float responsiveScale = GetResponsiveScale();
 
             if (winner == Player.Yellow)
             {
@@ -303,7 +332,7 @@ namespace Glyphtender.Unity
 
                 // Add winner text below
                 _yellowWinnerText = CreateTextMesh("YellowWinner",
-                    yellowScorePosition + new Vector3(0f, -1f * responsiveScale, 0f),
+                    yellowScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f),
                     previewFontSize,
                     new Color(1f, 0.9f, 0.2f),
                     responsiveScale);
@@ -316,7 +345,7 @@ namespace Glyphtender.Unity
 
                 // Add winner text below
                 _blueWinnerText = CreateTextMesh("BlueWinner",
-                    blueScorePosition + new Vector3(0f, -1f * responsiveScale, 0f),
+                    blueScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f),
                     previewFontSize,
                     new Color(0.2f, 0.6f, 1f),
                     responsiveScale);
@@ -326,14 +355,14 @@ namespace Glyphtender.Unity
             {
                 // Tie - show both
                 _yellowWinnerText = CreateTextMesh("YellowTie",
-                    yellowScorePosition + new Vector3(0f, -1f * responsiveScale, 0f),
+                    yellowScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f),
                     previewFontSize,
                     new Color(1f, 0.9f, 0.2f),
                     responsiveScale);
                 _yellowWinnerText.text = "TIE";
 
                 _blueWinnerText = CreateTextMesh("BlueTie",
-                    blueScorePosition + new Vector3(0f, -1f * responsiveScale, 0f),
+                    blueScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f),
                     previewFontSize,
                     new Color(0.2f, 0.6f, 1f),
                     responsiveScale);
@@ -343,7 +372,7 @@ namespace Glyphtender.Unity
 
         private void OnGameRestarted()
         {
-            float responsiveScale = baseTextScale * (UIScaler.Instance?.GetElementScale() ?? 1f);
+            float responsiveScale = GetResponsiveScale();
 
             // Reset score text scale
             _yellowScoreText.transform.localScale = Vector3.one * responsiveScale;

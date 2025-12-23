@@ -406,9 +406,9 @@ GameObject:
   - component: {fileID: 1446835204}
   - component: {fileID: 1446835203}
   - component: {fileID: 1446835202}
-  - component: {fileID: 1446835207}
   - component: {fileID: 1446835206}
   - component: {fileID: 1446835205}
+  - component: {fileID: 1446835207}
   - component: {fileID: 1446835208}
   m_Layer: 7
   m_Name: UICamera
@@ -504,12 +504,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiCamera: {fileID: 1446835203}
-  yellowScorePosition: {x: -4, y: 3, z: 6}
-  blueScorePosition: {x: 4, y: 3, z: 6}
-  marginFromEdge: 1.5
-  fontSize: 16
-  previewFontSize: 10
+  yellowScorePosition: {x: -2, y: 2, z: 6}
+  blueScorePosition: {x: 2, y: 2, z: 6}
+  marginFromSide: 2.5
+  marginFromTop: 1.75
+  previewOffsetY: 10
+  winnerOffsetY: 1
+  fontSize: 12
+  previewFontSize: 8
   baseTextScale: 0.1
+  landscapeScaleBoost: 1.5
 --- !u!114 &1446835206
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -550,13 +554,17 @@ MonoBehaviour:
   confirmMaterial: {fileID: 2100000, guid: acd7ccca06ba9934ea443780c39f87a8, type: 2}
   cancelMaterial: {fileID: 2100000, guid: 8eb44f2727c49b74189b70d2b7aff749, type: 2}
   menuMaterial: {fileID: 2100000, guid: b41856410140f7c42915d1c2cc1b02a6, type: 2}
-  buttonSize: 0.75
-  menuFromRight: 1
-  menuFromTop: 1
-  confirmFromRight: 1
-  confirmFromBottom: 1.75
-  cancelFromRight: 1
-  cancelFromBottom: 3
+  buttonGroupScale: 1
+  landscapeScaleBoost: 1.5
+  menuSize: 1.25
+  menuMarginRight: 0.5
+  menuMarginTop: 0.25
+  confirmSize: 1.5
+  confirmMarginRight: 1
+  confirmMarginBottom: 2
+  cancelSize: 1.5
+  cancelMarginRight: 0.5
+  cancelMarginAboveConfirm: 0
 --- !u!114 &1446835208
 MonoBehaviour:
   m_ObjectHideFlags: 0

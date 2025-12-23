@@ -20,24 +20,41 @@ namespace Glyphtender.Unity
         public Material cancelMaterial;
         public Material menuMaterial;
 
-        [Header("Button Size")]
-        public float buttonSize = 0.75f;
+        [Header("Button Group Scale (affects all buttons)")]
+        [Tooltip("Master scale for all buttons - adjust this first")]
+        public float buttonGroupScale = 1.0f;
 
-        [Header("Menu Button (anchored to top-right corner)")]
-        public float menuFromRight = 1.0f;
-        public float menuFromTop = 1.0f;
+        [Tooltip("Additional multiplier for landscape mode")]
+        public float landscapeScaleBoost = 1.0f;
 
-        [Header("Confirm Button (anchored to bottom-right corner)")]
-        public float confirmFromRight = 1.0f;
-        public float confirmFromBottom = 1.75f;
+        [Header("Menu Button")]
+        [Tooltip("Size multiplier for menu button")]
+        public float menuSize = 1.0f;
+        [Tooltip("Margin from right edge")]
+        public float menuMarginRight = 0.5f;
+        [Tooltip("Margin from top edge")]
+        public float menuMarginTop = 0.5f;
 
-        [Header("Cancel Button (anchored to bottom-right corner)")]
-        public float cancelFromRight = 1.0f;
-        public float cancelFromBottom = 3.0f;
+        [Header("Confirm Button")]
+        [Tooltip("Size multiplier for confirm button")]
+        public float confirmSize = 1.0f;
+        [Tooltip("Margin from right edge")]
+        public float confirmMarginRight = 0.5f;
+        [Tooltip("Margin from bottom edge")]
+        public float confirmMarginBottom = 0.5f;
+
+        [Header("Cancel Button")]
+        [Tooltip("Size multiplier for cancel button")]
+        public float cancelSize = 1.0f;
+        [Tooltip("Margin from right edge")]
+        public float cancelMarginRight = 0.5f;
+        [Tooltip("Margin from bottom edge (stacks above confirm)")]
+        public float cancelMarginAboveConfirm = 0.3f;
 
         // UI Anchor
         private Transform _uiAnchor;
         private float _uiDistance = 6f;
+        private float _baseButtonSize = 0.75f;  // Internal base size
 
         // Buttons
         private GameObject _confirmButton;
@@ -142,52 +159,74 @@ namespace Glyphtender.Unity
 
         /// <summary>
         /// Applies the UI responsive scale to the UI anchor.
+        /// Combines element scale (ortho size) with landscape scale (wider = bigger buttons).
         /// </summary>
         private void UpdateUIScale()
         {
             if (_uiAnchor == null || UIScaler.Instance == null) return;
-            float scale = UIScaler.Instance.GetLandscapeElementScale() * UIScaler.Instance.GetElementScale();
-            _uiAnchor.localScale = Vector3.one * scale;
+
+            // Combine: UIScaler responsive + landscape boost + button group scale
+            float elementScale = UIScaler.Instance.GetElementScale();
+            float landscapeScale = UIScaler.Instance.GetLandscapeElementScale();
+
+            // Apply additional landscape boost if not portrait
+            if (!UIScaler.Instance.IsPortrait)
+            {
+                landscapeScale *= landscapeScaleBoost;
+            }
+
+            _uiAnchor.localScale = Vector3.one * elementScale * landscapeScale * buttonGroupScale;
         }
 
         /// <summary>
-        /// Positions UI elements relative to screen corners.
+        /// Positions UI elements relative to screen corners using margins.
+        /// Margins are from button edge to screen edge (margin=0 means button touches edge).
         /// </summary>
         private void PositionUIElements()
         {
-            if (UIScaler.Instance == null) return;
+            if (UIScaler.Instance == null || _uiAnchor == null) return;
 
             float halfHeight = UIScaler.Instance.HalfHeight;
             float halfWidth = UIScaler.Instance.HalfWidth;
 
-            // Note: _uiAnchor is rotated 180° on X, so Y is flipped
-            float rightEdge = halfWidth;
-            float leftEdge = -halfWidth;
-            float topEdge = -halfHeight;
-            float bottomEdge = halfHeight;
+            // Account for anchor scale - local positions need to be divided by scale
+            // so they end up at the correct screen position after scaling
+            float scaleFactor = _uiAnchor.localScale.x;
+            if (scaleFactor <= 0) scaleFactor = 1f;
 
-            // Menu Button: top-right
+            // Note: _uiAnchor is rotated 180° on X, so Y is flipped
+            // In this coordinate system: +X is right, +Y is down (bottom of screen)
+
+            // Button radii in screen units (after scaling)
+            float menuRadius = GetButtonRadius(menuSize) * scaleFactor;
+            float confirmRadius = GetButtonRadius(confirmSize) * scaleFactor;
+            float cancelRadius = GetButtonRadius(cancelSize) * scaleFactor;
+
+            // Menu Button: top-right corner
             if (_menuButton != null)
             {
-                float x = rightEdge - menuFromRight;
-                float y = topEdge + menuFromTop;
-                _menuButton.transform.localPosition = new Vector3(x, y, 0f);
+                // Position so button edge is margin away from screen edge
+                float screenX = halfWidth - menuMarginRight - menuRadius;
+                float screenY = -halfHeight + menuMarginTop + menuRadius;
+                _menuButton.transform.localPosition = new Vector3(screenX / scaleFactor, screenY / scaleFactor, 0f);
             }
 
-            // Confirm Button: bottom-right
+            // Confirm Button: bottom-right corner
             if (_confirmButton != null)
             {
-                float x = rightEdge - confirmFromRight;
-                float y = bottomEdge - confirmFromBottom;
-                _confirmButton.transform.localPosition = new Vector3(x, y, 0f);
+                float screenX = halfWidth - confirmMarginRight - confirmRadius;
+                float screenY = halfHeight - confirmMarginBottom - confirmRadius;
+                _confirmButton.transform.localPosition = new Vector3(screenX / scaleFactor, screenY / scaleFactor, 0f);
             }
 
-            // Cancel Button: bottom-right, above confirm
+            // Cancel Button: above confirm button
             if (_cancelButton != null)
             {
-                float x = rightEdge - cancelFromRight;
-                float y = bottomEdge - cancelFromBottom;
-                _cancelButton.transform.localPosition = new Vector3(x, y, 0f);
+                float screenX = halfWidth - cancelMarginRight - cancelRadius;
+                // Position relative to confirm: confirm's top edge + gap + cancel's radius
+                float confirmTopEdge = halfHeight - confirmMarginBottom - confirmRadius * 2;
+                float screenY = confirmTopEdge - cancelMarginAboveConfirm - cancelRadius;
+                _cancelButton.transform.localPosition = new Vector3(screenX / scaleFactor, screenY / scaleFactor, 0f);
             }
 
             // Replay Button: center
@@ -197,14 +236,23 @@ namespace Glyphtender.Unity
             }
         }
 
+        /// <summary>
+        /// Gets the radius of a button given its size multiplier.
+        /// </summary>
+        private float GetButtonRadius(float sizeMultiplier)
+        {
+            return _baseButtonSize * sizeMultiplier * 0.5f;
+        }
+
         #region Button Creation
 
         private void CreateConfirmButton()
         {
+            float size = _baseButtonSize * confirmSize;
             _confirmButton = CreateButton(
                 parent: _uiAnchor,
                 name: "ConfirmButton",
-                scale: new Vector3(buttonSize, 0.05f, buttonSize),
+                scale: new Vector3(size, 0.05f, size),
                 material: confirmMaterial,
                 labelText: "✓",
                 labelScale: new Vector3(0.15f, 0.15f, 0.15f),
@@ -218,10 +266,11 @@ namespace Glyphtender.Unity
 
         private void CreateCancelButton()
         {
+            float size = _baseButtonSize * cancelSize;
             _cancelButton = CreateButton(
                 parent: _uiAnchor,
                 name: "CancelButton",
-                scale: new Vector3(buttonSize * 0.8f, 0.05f, buttonSize * 0.8f),
+                scale: new Vector3(size, 0.05f, size),
                 material: cancelMaterial,
                 labelText: "X",
                 labelScale: new Vector3(0.12f, 0.12f, 0.12f),
@@ -235,10 +284,11 @@ namespace Glyphtender.Unity
 
         private void CreateReplayButton()
         {
+            float size = _baseButtonSize * 2f;  // Replay is always 2x base
             _replayButton = CreateButton(
                 parent: _uiAnchor,
                 name: "ReplayButton",
-                scale: new Vector3(buttonSize * 2f, 0.05f, buttonSize * 2f),
+                scale: new Vector3(size, 0.05f, size),
                 material: confirmMaterial,
                 labelText: "Play Again",
                 labelScale: new Vector3(0.08f, 0.08f, 0.08f),
@@ -252,12 +302,13 @@ namespace Glyphtender.Unity
 
         private void CreateMenuButton()
         {
+            float size = _baseButtonSize * menuSize;
             _menuButton = CreateButton(
                 parent: _uiAnchor,
                 name: "MenuButton",
-                scale: new Vector3(buttonSize, 0.05f, buttonSize),
+                scale: new Vector3(size, 0.05f, size),
                 material: menuMaterial,
-                labelText: "=",
+                labelText: "≡",
                 labelScale: new Vector3(0.2f, 0.2f, 0.2f),
                 fontSize: 24,
                 characterSize: 1f,

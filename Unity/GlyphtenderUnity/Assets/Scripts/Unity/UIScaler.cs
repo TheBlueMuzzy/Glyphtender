@@ -138,7 +138,9 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
-        /// Gets scale factor for UI elements in landscape, scaling up for wider screens.
+        /// Gets scale factor for UI elements in landscape.
+        /// Narrower landscapes (16:9) get larger elements for better touch targets.
+        /// Wider landscapes (21:9) get slightly smaller elements.
         /// </summary>
         public float GetLandscapeElementScale()
         {
@@ -148,8 +150,9 @@ namespace Glyphtender.Unity
             }
             else
             {
-                float scale = Aspect / referenceAspect;
-                return Mathf.Clamp(scale, 0.8f, 2.5f);
+                // Invert: narrower aspect = larger scale
+                float scale = referenceAspect / Aspect;
+                return Mathf.Clamp(scale, 0.8f, 2.0f);
             }
         }
 
