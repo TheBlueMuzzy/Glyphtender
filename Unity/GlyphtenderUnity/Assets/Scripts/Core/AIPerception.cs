@@ -23,10 +23,6 @@ namespace Glyphtender.Core
         private List<int> _myRecentScores = new List<int>();
         private List<int> _opponentRecentScores = new List<int>();
 
-        private const int MomentumWindow = 5;
-        private const float ConfidenceDecay = 0.05f;
-        private const float DriftRange = 3f;
-
         private Random _random;
 
         public ScorePerception(int? seed = null)
@@ -41,11 +37,11 @@ namespace Glyphtender.Core
         {
             MyEstimate += points;
             _myRecentScores.Add(points);
-            if (_myRecentScores.Count > MomentumWindow)
+            if (_myRecentScores.Count > AIConstants.MomentumWindow)
                 _myRecentScores.RemoveAt(0);
 
             // Boost confidence when scoring
-            Confidence = Math.Min(1f, Confidence + 0.1f);
+            Confidence = Math.Min(AIConstants.ConfidenceMax, Confidence + AIConstants.ConfidenceBoostOnScore);
         }
 
         /// <summary>
@@ -56,11 +52,11 @@ namespace Glyphtender.Core
             OpponentEstimate += points;
             LastOpponentScore = points;  // Track for morale
             _opponentRecentScores.Add(points);
-            if (_opponentRecentScores.Count > MomentumWindow)
+            if (_opponentRecentScores.Count > AIConstants.MomentumWindow)
                 _opponentRecentScores.RemoveAt(0);
 
             // Boost confidence (we saw it happen)
-            Confidence = Math.Min(1f, Confidence + 0.08f);
+            Confidence = Math.Min(AIConstants.ConfidenceMax, Confidence + AIConstants.ConfidenceBoostOnObserve);
         }
 
         /// <summary>
@@ -69,11 +65,11 @@ namespace Glyphtender.Core
         public void EndTurn()
         {
             // Confidence decays
-            Confidence = Math.Max(0.1f, Confidence - ConfidenceDecay);
+            Confidence = Math.Max(AIConstants.ConfidenceMin, Confidence - AIConstants.ConfidenceDecay);
 
             // Estimates drift randomly based on uncertainty
             float uncertainty = 1f - Confidence;
-            float drift = (float)(_random.NextDouble() * 2 - 1) * DriftRange * uncertainty;
+            float drift = (float)(_random.NextDouble() * 2 - 1) * AIConstants.ScoreDriftRange * uncertainty;
 
             MyEstimate = Math.Max(0, MyEstimate + drift * 0.5f);
             OpponentEstimate = Math.Max(0, OpponentEstimate + drift * 0.5f);
@@ -88,7 +84,7 @@ namespace Glyphtender.Core
             float baseLead = MyEstimate - OpponentEstimate;
 
             // Add noise inversely proportional to confidence
-            float noiseRange = 20f * (1f - Confidence);
+            float noiseRange = AIConstants.PerceivedLeadNoiseMultiplier * (1f - Confidence);
             float noise = (float)(_random.NextDouble() * 2 - 1) * noiseRange;
 
             return baseLead + noise;
@@ -107,7 +103,7 @@ namespace Glyphtender.Core
             foreach (var s in _opponentRecentScores) oppRecent += s;
 
             float diff = myRecent - oppRecent;
-            return Math.Max(-5f, Math.Min(5f, diff / 10f));
+            return Math.Max(-AIConstants.MomentumMax, Math.Min(AIConstants.MomentumMax, diff / AIConstants.MomentumDivisor));
         }
 
         /// <summary>
@@ -144,7 +140,7 @@ namespace Glyphtender.Core
             if (hand == null || hand.Count == 0)
                 return 0f;
 
-            float score = 5f;  // Baseline
+            float score = AIConstants.HandQualityBaseline;
 
             // Count vowels and consonants
             int vowelCount = 0;
@@ -155,14 +151,14 @@ namespace Glyphtender.Core
             }
             int consonantCount = hand.Count - vowelCount;
 
-            // Vowel/consonant balance (ideal ~3 vowels, ~5 consonants for 8-tile hand)
-            if (vowelCount < 2)
-                score -= 1.5f;  // Too few vowels
-            else if (vowelCount > 4)
-                score -= 1f;    // Too many vowels
+            // Vowel/consonant balance
+            if (vowelCount < AIConstants.VowelMinimum)
+                score -= AIConstants.TooFewVowelsPenalty;
+            else if (vowelCount > AIConstants.VowelMaximum)
+                score -= AIConstants.TooManyVowelsPenalty;
 
-            if (consonantCount < 3)
-                score -= 1.5f;  // Too few consonants
+            if (consonantCount < AIConstants.ConsonantMinimum)
+                score -= AIConstants.TooFewConsonantsPenalty;
 
             // Common letters boost
             int commonCount = 0;
@@ -171,7 +167,7 @@ namespace Glyphtender.Core
                 if (CommonLetters.Contains(char.ToUpper(c)))
                     commonCount++;
             }
-            score += commonCount * 0.25f;
+            score += commonCount * AIConstants.CommonLetterBonus;
 
             // Duplicates penalty
             Dictionary<char, int> counts = new Dictionary<char, int>();
@@ -185,9 +181,9 @@ namespace Glyphtender.Core
             foreach (var kvp in counts)
             {
                 if (kvp.Value >= 3)
-                    score -= 1f;
+                    score -= AIConstants.TripleDuplicatePenalty;
                 else if (kvp.Value == 2)
-                    score -= 0.3f;
+                    score -= AIConstants.DoubleDuplicatePenalty;
             }
 
             // Hard letters penalty
@@ -197,7 +193,7 @@ namespace Glyphtender.Core
                 if (HardLetters.Contains(char.ToUpper(c)))
                     hardCount++;
             }
-            score -= hardCount * 0.4f;
+            score -= hardCount * AIConstants.HardLetterPenalty;
 
             // Word starters bonus
             int starterCount = 0;
@@ -206,7 +202,7 @@ namespace Glyphtender.Core
                 if (WordStarters.Contains(char.ToUpper(c)))
                     starterCount++;
             }
-            score += starterCount * 0.15f;
+            score += starterCount * AIConstants.WordStarterBonus;
 
             // Word enders bonus
             int enderCount = 0;
@@ -215,10 +211,10 @@ namespace Glyphtender.Core
                 if (WordEnders.Contains(char.ToUpper(c)))
                     enderCount++;
             }
-            score += enderCount * 0.15f;
+            score += enderCount * AIConstants.WordEnderBonus;
 
             // Clamp to 0-10
-            return Math.Max(0f, Math.Min(10f, score));
+            return Math.Max(0f, Math.Min(AIConstants.TraitMax, score));
         }
     }
 
@@ -246,7 +242,7 @@ namespace Glyphtender.Core
             // Hard letters are always somewhat junky
             if (HardLetters.Contains(upper))
             {
-                junkScore += 3f;
+                junkScore += AIConstants.JunkHardLetterBase;
 
                 // Q without U is extra junky
                 if (upper == 'Q')
@@ -262,7 +258,7 @@ namespace Glyphtender.Core
                     }
                     if (!hasU)
                     {
-                        junkScore += 4f;
+                        junkScore += AIConstants.JunkQWithoutU;
                     }
                 }
             }
@@ -278,11 +274,11 @@ namespace Glyphtender.Core
             // 3+ of same letter = extra copies are junk
             if (duplicates >= 3)
             {
-                junkScore += 3f;
+                junkScore += AIConstants.JunkTripleDuplicate;
             }
             else if (duplicates >= 2)
             {
-                junkScore += 1f;
+                junkScore += AIConstants.JunkDoubleDuplicate;
             }
 
             // Check vowel/consonant balance
@@ -292,26 +288,25 @@ namespace Glyphtender.Core
                 if (Vowels.Contains(char.ToUpper(c)))
                     vowelCount++;
             }
-            int consonantCount = hand.Count - vowelCount;
             bool isVowel = Vowels.Contains(upper);
 
-            // Too many vowels (5+) = extra vowels are junk
-            if (isVowel && vowelCount >= 5)
+            // Too many vowels = extra vowels are junk
+            if (isVowel && vowelCount >= AIConstants.VowelExcessThreshold)
             {
-                junkScore += 2f;
+                junkScore += AIConstants.JunkExcessVowel;
             }
-            // Too few vowels (1 or less) = consonants are somewhat junky
-            else if (!isVowel && vowelCount <= 1)
+            // Too few vowels = consonants are somewhat junky
+            else if (!isVowel && vowelCount <= AIConstants.VowelStarvedThreshold)
             {
-                junkScore += 1.5f;
+                junkScore += AIConstants.JunkVowelStarvedConsonant;
             }
             // No vowels = consonants are very junky
             else if (!isVowel && vowelCount == 0)
             {
-                junkScore += 3f;
+                junkScore += AIConstants.JunkNoVowelConsonant;
             }
 
-            return Math.Min(10f, junkScore);
+            return Math.Min(AIConstants.TraitMax, junkScore);
         }
     }
 
@@ -332,33 +327,29 @@ namespace Glyphtender.Core
             float pressure = 0f;
 
             // Count blocked directions (0-6)
-            int blockedDirections = 0;
             var validMoves = GameRules.GetValidMoves(state, glyphling);
 
             // If no valid moves, glyphling is tangled (max pressure)
             if (validMoves.Count == 0)
-                return 10f;
+                return AIConstants.TraitMax;
 
             // Fewer escape routes = more pressure
-            // A glyphling with moves in all 6 directions has 0 pressure from blocking
-            // Count unique directions that have at least one valid move
             HashSet<int> openDirections = new HashSet<int>();
             foreach (var move in validMoves)
             {
-                // Determine which direction this move is in
                 int dir = GetDirection(glyphling.Position, move);
                 if (dir >= 0)
                     openDirections.Add(dir);
             }
 
-            blockedDirections = 6 - openDirections.Count;
-            pressure += blockedDirections * 1.5f;
+            int blockedDirections = AIConstants.HexDirections - openDirections.Count;
+            pressure += blockedDirections * AIConstants.PressurePerBlockedDirection;
 
             // Few escape routes penalty
             if (openDirections.Count <= 1)
-                pressure += 2f;
+                pressure += AIConstants.PressureSingleEscapePenalty;
             else if (openDirections.Count <= 2)
-                pressure += 1f;
+                pressure += AIConstants.PressureDoubleEscapePenalty;
 
             // Check if opponent glyphlings are nearby
             Player opponent = aiPlayer == Player.Yellow ? Player.Blue : Player.Yellow;
@@ -368,12 +359,12 @@ namespace Glyphtender.Core
 
                 int distance = HexDistance(glyphling.Position, g.Position);
                 if (distance == 1)
-                    pressure += 1.5f;  // Adjacent opponent
+                    pressure += AIConstants.PressureAdjacentOpponent;
                 else if (distance == 2)
-                    pressure += 0.5f;  // Opponent 2 away
+                    pressure += AIConstants.PressureNearbyOpponent;
             }
 
-            return Math.Min(10f, pressure);
+            return Math.Min(AIConstants.TraitMax, pressure);
         }
 
         /// <summary>
@@ -511,7 +502,7 @@ namespace Glyphtender.Core
         public void Reset()
         {
             ScorePerception.Reset();
-            HandQuality = 5f;
+            HandQuality = AIConstants.HandQualityBaseline;
             MyMaxPressure = 0f;
             OpponentMaxPressure = 0f;
         }

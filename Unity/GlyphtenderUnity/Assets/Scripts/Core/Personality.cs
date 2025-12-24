@@ -36,12 +36,12 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Shifts both bounds by an amount, clamped to 1-10.
+        /// Shifts both bounds by an amount, clamped to trait bounds.
         /// </summary>
         public void Shift(float amount)
         {
-            Min = Clamp(Min + amount, 1f, 10f);
-            Max = Clamp(Max + amount, 1f, 10f);
+            Min = Clamp(Min + amount, AIConstants.TraitMin, AIConstants.TraitMax);
+            Max = Clamp(Max + amount, AIConstants.TraitMin, AIConstants.TraitMax);
 
             // Ensure min <= max
             if (Min > Max)
@@ -57,7 +57,7 @@ namespace Glyphtender.Core
         /// </summary>
         public void ShiftMin(float amount)
         {
-            Min = Clamp(Min + amount, 1f, 10f);
+            Min = Clamp(Min + amount, AIConstants.TraitMin, AIConstants.TraitMax);
             if (Min > Max) Min = Max;
         }
 
@@ -66,7 +66,7 @@ namespace Glyphtender.Core
         /// </summary>
         public void ShiftMax(float amount)
         {
-            Max = Clamp(Max + amount, 1f, 10f);
+            Max = Clamp(Max + amount, AIConstants.TraitMin, AIConstants.TraitMax);
             if (Max < Min) Max = Min;
         }
 
@@ -81,22 +81,20 @@ namespace Glyphtender.Core
             switch (difficulty)
             {
                 case AIDifficulty.Apprentice:
-                    // Wider range (×1.5), much lower center (-2)
-                    halfRange *= 1.5f;
-                    center -= 2f;
+                    halfRange *= AIConstants.ApprenticeRangeMultiplier;
+                    center += AIConstants.ApprenticeCenterShift;
                     break;
                 case AIDifficulty.FirstClass:
                     // No change
                     break;
                 case AIDifficulty.Archmage:
-                    // Tighter range (×0.5), much higher center (+2)
-                    halfRange *= 0.5f;
-                    center += 2f;
+                    halfRange *= AIConstants.ArchmageRangeMultiplier;
+                    center += AIConstants.ArchmageCenterShift;
                     break;
             }
 
-            Min = Clamp(center - halfRange, 1f, 10f);
-            Max = Clamp(center + halfRange, 1f, 10f);
+            Min = Clamp(center - halfRange, AIConstants.TraitMin, AIConstants.TraitMax);
+            Max = Clamp(center + halfRange, AIConstants.TraitMin, AIConstants.TraitMax);
 
             if (Min > Max)
             {
@@ -150,19 +148,22 @@ namespace Glyphtender.Core
         public PersonalityTraitRanges()
         {
             // Default: balanced ranges centered on 5
-            Aggression = new TraitRange(4, 6);
-            Greed = new TraitRange(4, 6);
-            Protectiveness = new TraitRange(4, 6);
-            Patience = new TraitRange(4, 6);
-            Spite = new TraitRange(4, 6);
-            Positional = new TraitRange(4, 6);
-            Cleverness = new TraitRange(4, 6);
-            Verbosity = new TraitRange(4, 6);
-            Opportunism = new TraitRange(4, 6);
-            RiskTolerance = new TraitRange(4, 6);
-            TrapFocus = new TraitRange(4, 6);
-            DenialFocus = new TraitRange(4, 6);
-            SetupFocus = new TraitRange(4, 6);
+            float min = AIConstants.DefaultTraitRangeMin;
+            float max = AIConstants.DefaultTraitRangeMax;
+
+            Aggression = new TraitRange(min, max);
+            Greed = new TraitRange(min, max);
+            Protectiveness = new TraitRange(min, max);
+            Patience = new TraitRange(min, max);
+            Spite = new TraitRange(min, max);
+            Positional = new TraitRange(min, max);
+            Cleverness = new TraitRange(min, max);
+            Verbosity = new TraitRange(min, max);
+            Opportunism = new TraitRange(min, max);
+            RiskTolerance = new TraitRange(min, max);
+            TrapFocus = new TraitRange(min, max);
+            DenialFocus = new TraitRange(min, max);
+            SetupFocus = new TraitRange(min, max);
         }
 
         /// <summary>
@@ -318,14 +319,12 @@ namespace Glyphtender.Core
         /// </summary>
         private float GetMoraleMultiplier(int lastOpponentScore)
         {
-            // 3-7: no shift
-            // 8-11: minor shift (×0.5)
-            // 12-16: full shift (×1.0)
-            // 17+: amplified shift (×1.5)
-
-            if (lastOpponentScore >= 17) return 1.5f;
-            if (lastOpponentScore >= 12) return 1.0f;
-            if (lastOpponentScore >= 8) return 0.5f;
+            if (lastOpponentScore >= AIConstants.MoraleScoreAmplified)
+                return AIConstants.MoraleMultiplierAmplified;
+            if (lastOpponentScore >= AIConstants.MoraleScoreFull)
+                return AIConstants.MoraleMultiplierFull;
+            if (lastOpponentScore >= AIConstants.MoraleScoreMinor)
+                return AIConstants.MoraleMultiplierMinor;
             return 0f;
         }
 
@@ -338,10 +337,6 @@ namespace Glyphtender.Core
                 return;
 
             float shift = moraleMultiplier * SubTraits.MoraleSensitivity * SubTraits.MoraleDirection;
-
-            // Morale shifts bounds based on direction
-            // Positive direction (rallies): raise both bounds when opponent does well
-            // Negative direction (demoralizes): lower both bounds when opponent does well
             range.Shift(shift);
         }
 
@@ -387,110 +382,110 @@ namespace Glyphtender.Core
 
             // Calculate endgame multiplier (0 at start, 1 at 80%+ fill)
             float endgameMultiplier = 0f;
-            if (boardFillPercent > 0.4f)
+            if (boardFillPercent > AIConstants.BoardFillEndgameStart)
             {
-                endgameMultiplier = (boardFillPercent - 0.4f) / 0.4f;  // 0 to 1
-                endgameMultiplier *= SubTraits.EndgameAwareness;       // Scaled by awareness
+                endgameMultiplier = (boardFillPercent - AIConstants.BoardFillEndgameStart) / AIConstants.BoardFillEndgameStart;
+                endgameMultiplier *= SubTraits.EndgameAwareness;
             }
 
             // --- Score differential shifts ---
-            if (perceivedLead < -20)
+            if (perceivedLead < AIConstants.LeadWayBehind)
             {
                 // Way behind: desperation shifts everything aggressive/risky
-                shifted.Aggression.Shift(2);
-                shifted.RiskTolerance.Shift(2);
-                shifted.Patience.Shift(-2);
-                shifted.Greed.ShiftMin(1);  // At least try for points
+                shifted.Aggression.Shift(AIConstants.ShiftLarge);
+                shifted.RiskTolerance.Shift(AIConstants.ShiftLarge);
+                shifted.Patience.Shift(-AIConstants.ShiftLarge);
+                shifted.Greed.ShiftMin(AIConstants.ShiftStandard);
             }
-            else if (perceivedLead < -10)
+            else if (perceivedLead < AIConstants.LeadBehind)
             {
-                shifted.Aggression.Shift(1);
-                shifted.RiskTolerance.Shift(1);
+                shifted.Aggression.Shift(AIConstants.ShiftStandard);
+                shifted.RiskTolerance.Shift(AIConstants.ShiftStandard);
             }
-            else if (perceivedLead > 20)
+            else if (perceivedLead > AIConstants.LeadWayAhead)
             {
                 // Way ahead: can afford to be aggressive OR protective
-                shifted.Protectiveness.ShiftMin(1);
-                shifted.Aggression.ShiftMax(1);  // Can hunt if we want
-                shifted.RiskTolerance.Shift(-1);  // Less need to gamble
+                shifted.Protectiveness.ShiftMin(AIConstants.ShiftStandard);
+                shifted.Aggression.ShiftMax(AIConstants.ShiftStandard);
+                shifted.RiskTolerance.Shift(-AIConstants.ShiftStandard);
             }
-            else if (perceivedLead > 10)
+            else if (perceivedLead > AIConstants.LeadAhead)
             {
-                shifted.Protectiveness.ShiftMin(0.5f);
+                shifted.Protectiveness.ShiftMin(AIConstants.ShiftSmall);
             }
 
             // --- My glyphling pressure shifts ---
-            if (myPressure >= 7)
+            if (myPressure >= AIConstants.PressureCritical)
             {
                 // In danger: survival mode
-                float urgency = 1 + endgameMultiplier;  // More urgent in endgame
-                shifted.Protectiveness.Shift(2 * urgency);
-                shifted.Aggression.ShiftMax(-1 * urgency);
-                shifted.Positional.Shift(1.5f * urgency);
+                float urgency = 1 + endgameMultiplier;
+                shifted.Protectiveness.Shift(AIConstants.ShiftLarge * urgency);
+                shifted.Aggression.ShiftMax(-AIConstants.ShiftStandard * urgency);
+                shifted.Positional.Shift(AIConstants.ShiftMedium * urgency);
             }
-            else if (myPressure >= 5)
+            else if (myPressure >= AIConstants.PressureElevated)
             {
-                shifted.Protectiveness.Shift(1);
-                shifted.Aggression.ShiftMax(-0.5f);
+                shifted.Protectiveness.Shift(AIConstants.ShiftStandard);
+                shifted.Aggression.ShiftMax(-AIConstants.ShiftSmall);
             }
 
             // --- Opponent glyphling pressure shifts ---
-            if (opponentPressure >= 7)
+            if (opponentPressure >= AIConstants.PressureCritical)
             {
                 // They're nearly tangled: opportunity to finish
                 float killInstinct = 1 + endgameMultiplier;
-                shifted.Aggression.Shift(1.5f * killInstinct);
-                shifted.Opportunism.ShiftMin(1);
-                shifted.Greed.ShiftMax(-1);  // Points matter less than the kill
+                shifted.Aggression.Shift(AIConstants.ShiftMedium * killInstinct);
+                shifted.Opportunism.ShiftMin(AIConstants.ShiftStandard);
+                shifted.Greed.ShiftMax(-AIConstants.ShiftStandard);
             }
-            else if (opponentPressure >= 5)
+            else if (opponentPressure >= AIConstants.PressureElevated)
             {
-                shifted.Aggression.ShiftMin(0.5f);
+                shifted.Aggression.ShiftMin(AIConstants.ShiftSmall);
             }
 
             // --- Hand quality shifts ---
-            if (handQuality < 3)
+            if (handQuality < AIConstants.HandQualityBad)
             {
                 // Bad hand: lower expectations, focus on tangling instead
-                shifted.Patience.Shift(-1.5f);
-                shifted.Verbosity.ShiftMax(-1);
-                shifted.Greed.ShiftMax(-1);
-                shifted.TrapFocus.ShiftMin(1.5f);  // Prioritize tangling
-                shifted.Aggression.ShiftMin(1f);   // Get aggressive
+                shifted.Patience.Shift(-AIConstants.ShiftMedium);
+                shifted.Verbosity.ShiftMax(-AIConstants.ShiftStandard);
+                shifted.Greed.ShiftMax(-AIConstants.ShiftStandard);
+                shifted.TrapFocus.ShiftMin(AIConstants.ShiftMedium);
+                shifted.Aggression.ShiftMin(AIConstants.ShiftStandard);
             }
-            else if (handQuality < 5)
+            else if (handQuality < AIConstants.HandQualityMediocre)
             {
                 // Mediocre hand: slight tangle boost
-                shifted.TrapFocus.ShiftMin(0.5f);
+                shifted.TrapFocus.ShiftMin(AIConstants.ShiftSmall);
             }
-            else if (handQuality > 7)
+            else if (handQuality > AIConstants.HandQualityGreat)
             {
                 // Great hand: raise expectations
-                shifted.Verbosity.ShiftMin(1);
-                shifted.Cleverness.ShiftMin(0.5f);
-                shifted.Greed.ShiftMin(0.5f);
+                shifted.Verbosity.ShiftMin(AIConstants.ShiftStandard);
+                shifted.Cleverness.ShiftMin(AIConstants.ShiftSmall);
+                shifted.Greed.ShiftMin(AIConstants.ShiftSmall);
             }
 
             // --- Momentum shifts (scaled by sensitivity) ---
             float momEffect = SubTraits.MomentumSensitivity;
-            if (momentum > 2)
+            if (momentum > AIConstants.MomentumHot)
             {
                 // On a roll
-                shifted.Aggression.ShiftMin(1 * momEffect);
-                shifted.RiskTolerance.ShiftMin(0.5f * momEffect);
+                shifted.Aggression.ShiftMin(AIConstants.ShiftStandard * momEffect);
+                shifted.RiskTolerance.ShiftMin(AIConstants.ShiftSmall * momEffect);
             }
-            else if (momentum < -2)
+            else if (momentum < AIConstants.MomentumCold)
             {
                 // They're rolling
-                shifted.Protectiveness.ShiftMin(1 * momEffect);
-                shifted.Spite.ShiftMin(0.5f * momEffect);
+                shifted.Protectiveness.ShiftMin(AIConstants.ShiftStandard * momEffect);
+                shifted.Spite.ShiftMin(AIConstants.ShiftSmall * momEffect);
             }
 
             // --- Endgame shifts ---
-            if (boardFillPercent > 0.6f)
+            if (boardFillPercent > AIConstants.BoardFillLateGame)
             {
-                shifted.Positional.Shift(1.5f * endgameMultiplier);
-                shifted.Aggression.ShiftMin(1 * endgameMultiplier);
+                shifted.Positional.Shift(AIConstants.ShiftMedium * endgameMultiplier);
+                shifted.Aggression.ShiftMin(AIConstants.ShiftStandard * endgameMultiplier);
             }
 
             // --- Roll from shifted ranges ---
