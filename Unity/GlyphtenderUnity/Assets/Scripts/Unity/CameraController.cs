@@ -8,6 +8,8 @@ namespace Glyphtender.Unity
     /// </summary>
     public class CameraController : MonoBehaviour
     {
+        public static CameraController Instance { get; private set; }
+
         [Header("Board Bounds")]
         public Vector2 boardCenter = new Vector2(7.5f, 8.5f);
         public float boardWidth = 16f;
@@ -56,6 +58,16 @@ namespace Glyphtender.Unity
         public float BaseCameraSize => _baseCameraSize;
         public bool IsAnimating => _isAnimating;
         public Camera Camera => _camera;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
 
         private void Start()
         {

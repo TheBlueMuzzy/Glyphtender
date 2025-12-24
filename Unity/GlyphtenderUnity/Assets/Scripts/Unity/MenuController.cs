@@ -53,7 +53,6 @@ namespace Glyphtender.Unity
 
         [Header("References")]
         public Camera uiCamera;
-        public HandController handController;
 
         [Header("Appearance")]
         public Material panelMaterial;
@@ -97,11 +96,6 @@ namespace Glyphtender.Unity
             {
                 var camObj = GameObject.Find("UICamera");
                 if (camObj != null) uiCamera = camObj.GetComponent<Camera>();
-            }
-
-            if (handController == null)
-            {
-                handController = FindObjectOfType<HandController>();
             }
 
             CreateMenu();
@@ -640,7 +634,7 @@ namespace Glyphtender.Unity
             UpdateRowStates();
 
             // Hide hand elements
-            handController?.HideHand();
+            HandController.Instance?.HideHand();
 
             _animationStartScale = Vector3.zero;
             _animationEndScale = Vector3.one;
@@ -656,7 +650,7 @@ namespace Glyphtender.Unity
             _isOpen = false;
 
             // Show hand elements
-            handController?.ShowHand();
+            HandController.Instance?.ShowHand();
 
             _animationStartScale = Vector3.one;
             _animationEndScale = Vector3.zero;

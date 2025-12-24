@@ -10,6 +10,8 @@ namespace Glyphtender.Unity
     /// </summary>
     public class WordHighlighter : MonoBehaviour
     {
+        public static WordHighlighter Instance { get; private set; }
+
         [Header("Outline Settings")]
         public Color outlineColor = new Color(1f, 0.4f, 0.7f, 0.8f);  // Pink
         public float outlineWidth = 1.5f;
@@ -21,6 +23,16 @@ namespace Glyphtender.Unity
         // Generated pill texture
         private Texture2D _pillTexture;
         private Material _outlineMaterial;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
 
         private void Start()
         {

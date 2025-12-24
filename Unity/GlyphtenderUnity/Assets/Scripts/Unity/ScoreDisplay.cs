@@ -10,6 +10,8 @@ namespace Glyphtender.Unity
     /// </summary>
     public class ScoreDisplay : MonoBehaviour
     {
+        public static ScoreDisplay Instance { get; private set; }
+
         [Header("Camera")]
         public Camera uiCamera;
 
@@ -45,6 +47,16 @@ namespace Glyphtender.Unity
         private TextMesh _blueWinnerText;
 
         private float _handDistance = 6f;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
 
         private void Start()
         {

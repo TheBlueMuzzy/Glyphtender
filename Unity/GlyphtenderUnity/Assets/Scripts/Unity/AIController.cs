@@ -24,10 +24,6 @@ namespace Glyphtender.Unity
 
         private float _speedMultiplier = 1f;
 
-        [Header("References")]
-        [SerializeField] private GameManager _gameManager;
-        [SerializeField] private BoardRenderer _boardRenderer;
-
         private AIBrain _brain;
         private bool _isThinking;
         private WordScorer _wordScorer;
@@ -36,14 +32,6 @@ namespace Glyphtender.Unity
         public string PersonalityName => _personalityName;
         public Player AIPlayer => _aiPlayer;
         public AIDifficulty Difficulty => _difficulty;
-
-        private void Awake()
-        {
-            if (_gameManager == null)
-                _gameManager = FindObjectOfType<GameManager>();
-            if (_boardRenderer == null)
-                _boardRenderer = FindObjectOfType<BoardRenderer>();
-        }
 
         /// <summary>
         /// Initializes the AI with the given WordScorer.
@@ -212,10 +200,9 @@ namespace Glyphtender.Unity
             }
 
             // Exit cycle mode through HandController
-            var handController = FindObjectOfType<HandController>();
-            if (handController != null)
+            if (HandController.Instance != null)
             {
-                handController.ConfirmCycleDiscard();
+                HandController.Instance.ConfirmCycleDiscard();
             }
             else
             {
@@ -223,9 +210,9 @@ namespace Glyphtender.Unity
                 _brain.EndTurn();
                 GameRules.EndTurn(state);
 
-                if (_gameManager != null)
+                if (GameManager.Instance != null)
                 {
-                    _gameManager.OnTurnComplete();
+                    GameManager.Instance.OnTurnComplete();
                 }
             }
 
@@ -304,24 +291,24 @@ namespace Glyphtender.Unity
             // Step 1: Move the glyphling
             actualGlyphling.Position = move.Destination;
 
-            if (_boardRenderer != null)
+            if (BoardRenderer.Instance != null)
             {
-                _boardRenderer.RefreshBoard();
+                BoardRenderer.Instance.RefreshBoard();
             }
 
             yield return new WaitForSeconds(ScaledWait(0.6f));
 
             // Step 2: Place the tile
-            if (_gameManager != null)
+            if (GameManager.Instance != null)
             {
-                _gameManager.SetLastCastOrigin(move.Destination);
+                GameManager.Instance.SetLastCastOrigin(move.Destination);
             }
             state.Hands[_aiPlayer].Remove(move.Letter);
             state.Tiles[move.CastPosition] = new Tile(move.Letter, _aiPlayer, move.CastPosition);
 
-            if (_boardRenderer != null)
+            if (BoardRenderer.Instance != null)
             {
-                _boardRenderer.RefreshBoard();
+                BoardRenderer.Instance.RefreshBoard();
             }
 
             yield return new WaitForSeconds(ScaledWait(0.5f));
@@ -338,24 +325,22 @@ namespace Glyphtender.Unity
                 Debug.Log($"AI formed: {word.Letters} for {points} points");
             }
 
-            var scoreDisplay = FindObjectOfType<ScoreDisplay>();
-            if (scoreDisplay != null && totalPoints > 0)
+            if (ScoreDisplay.Instance != null && totalPoints > 0)
             {
-                scoreDisplay.ShowPreview(totalPoints);
+                ScoreDisplay.Instance.ShowPreview(totalPoints);
             }
 
-            var wordHighlighter = FindObjectOfType<WordHighlighter>();
-            if (wordHighlighter != null)
+            if (WordHighlighter.Instance != null)
             {
-                wordHighlighter.HighlightWordsAt(move.CastPosition, move.Letter);
+                WordHighlighter.Instance.HighlightWordsAt(move.CastPosition, move.Letter);
             }
 
             yield return new WaitForSeconds(ScaledWait(1.0f));
 
             // Step 4: Clear highlights and finalize score
-            if (wordHighlighter != null)
+            if (WordHighlighter.Instance != null)
             {
-                wordHighlighter.ClearHighlights();
+                WordHighlighter.Instance.ClearHighlights();
             }
 
             _brain.OnScore(totalPoints);
@@ -363,9 +348,9 @@ namespace Glyphtender.Unity
 
             GameRules.DrawTile(state, _aiPlayer);
 
-            if (_boardRenderer != null)
+            if (BoardRenderer.Instance != null)
             {
-                _boardRenderer.RefreshBoard();
+                BoardRenderer.Instance.RefreshBoard();
             }
 
             yield return new WaitForSeconds(ScaledWait(0.3f));
@@ -374,9 +359,9 @@ namespace Glyphtender.Unity
             _brain.EndTurn();
             GameRules.EndTurn(state);
 
-            if (_gameManager != null)
+            if (GameManager.Instance != null)
             {
-                _gameManager.OnTurnComplete();
+                GameManager.Instance.OnTurnComplete();
             }
 
             Debug.Log($"AI turn complete. Next player: {state.CurrentPlayer}");
@@ -414,15 +399,15 @@ namespace Glyphtender.Unity
             GameRules.EndTurn(state);
 
             // Notify game manager that AI turn is complete
-            if (_gameManager != null)
+            if (GameManager.Instance != null)
             {
-                _gameManager.OnTurnComplete();
+                GameManager.Instance.OnTurnComplete();
             }
 
             // Refresh and notify
-            if (_boardRenderer != null)
+            if (BoardRenderer.Instance != null)
             {
-                _boardRenderer.RefreshBoard();
+                BoardRenderer.Instance.RefreshBoard();
             }
         }
 

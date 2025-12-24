@@ -15,7 +15,6 @@ namespace Glyphtender.Unity
         public float doubleTapTime = 0.3f;        // Seconds between taps for double-tap
 
         [Header("References")]
-        public CameraController cameraController;
         public Camera uiCamera;  // Reference to UI camera for raycasting UI elements
 
         // Touch tracking
@@ -50,11 +49,6 @@ namespace Glyphtender.Unity
             if (_mainCamera == null)
                 _mainCamera = Camera.main;
 
-            if (cameraController == null)
-            {
-                cameraController = FindObjectOfType<CameraController>();
-            }
-
             // Find UI camera if not set
             if (uiCamera == null)
             {
@@ -69,7 +63,7 @@ namespace Glyphtender.Unity
         private void Update()
         {
             // Skip if no camera controller
-            if (cameraController == null) return;
+            if (CameraController.Instance == null) return;
 
             // Skip board input when menu is open
             if (MenuController.Instance != null && MenuController.Instance.IsOpen) return;
@@ -192,7 +186,7 @@ namespace Glyphtender.Unity
                     Input.GetTouch(0).position,
                     Input.GetTouch(1).position
                 );
-                _pinchZoomStart = cameraController.CurrentZoom;
+                _pinchZoomStart = CameraController.Instance.CurrentZoom;
             }
         }
 
@@ -256,20 +250,20 @@ namespace Glyphtender.Unity
         private void HandleSingleFingerPan(Vector2 previousScreenPos, Vector2 currentScreenPos)
         {
             // Don't pan while animating
-            if (cameraController.IsAnimating) return;
+            if (CameraController.Instance.IsAnimating) return;
 
             // Convert screen positions to world positions
-            Vector3 worldBefore = cameraController.ScreenToWorldOnBoard(previousScreenPos);
-            Vector3 worldAfter = cameraController.ScreenToWorldOnBoard(currentScreenPos);
+            Vector3 worldBefore = CameraController.Instance.ScreenToWorldOnBoard(previousScreenPos);
+            Vector3 worldAfter = CameraController.Instance.ScreenToWorldOnBoard(currentScreenPos);
             Vector2 worldDelta = new Vector2(worldAfter.x - worldBefore.x, worldAfter.z - worldBefore.z);
 
-            cameraController.AddPan(worldDelta);
+            CameraController.Instance.AddPan(worldDelta);
         }
 
         private void HandlePinchZoom()
         {
             // Don't zoom while animating
-            if (cameraController.IsAnimating) return;
+            if (CameraController.Instance.IsAnimating) return;
 
             Touch touch0 = Input.GetTouch(0);
             Touch touch1 = Input.GetTouch(1);
@@ -284,21 +278,21 @@ namespace Glyphtender.Unity
 
                 // Get midpoint for focus
                 Vector2 midpoint = (touch0.position + touch1.position) / 2f;
-                Vector3 worldMidpoint = cameraController.ScreenToWorldOnBoard(midpoint);
+                Vector3 worldMidpoint = CameraController.Instance.ScreenToWorldOnBoard(midpoint);
                 Vector2 worldFocus = new Vector2(worldMidpoint.x, worldMidpoint.z);
 
                 // Calculate delta from current zoom
-                float delta = targetZoom - cameraController.CurrentZoom;
-                cameraController.AddZoom(delta, worldFocus);
+                float delta = targetZoom - CameraController.Instance.CurrentZoom;
+                CameraController.Instance.AddZoom(delta, worldFocus);
             }
         }
 
         private void OnDoubleTap(Vector2 screenPosition)
         {
-            Vector3 worldPos = cameraController.ScreenToWorldOnBoard(screenPosition);
+            Vector3 worldPos = CameraController.Instance.ScreenToWorldOnBoard(screenPosition);
             Vector2 worldPoint = new Vector2(worldPos.x, worldPos.z);
 
-            cameraController.ToggleZoom(worldPoint);
+            CameraController.Instance.ToggleZoom(worldPoint);
 
             Debug.Log($"Double tap at world position: {worldPoint}");
         }
@@ -397,9 +391,9 @@ namespace Glyphtender.Unity
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if (Mathf.Abs(scroll) > 0.001f)
             {
-                Vector3 worldPos = cameraController.ScreenToWorldOnBoard(Input.mousePosition);
+                Vector3 worldPos = CameraController.Instance.ScreenToWorldOnBoard(Input.mousePosition);
                 Vector2 worldFocus = new Vector2(worldPos.x, worldPos.z);
-                cameraController.AddZoom(scroll * 2f, worldFocus);
+                CameraController.Instance.AddZoom(scroll * 2f, worldFocus);
             }
 
             // Left click handling for double-click zoom test
