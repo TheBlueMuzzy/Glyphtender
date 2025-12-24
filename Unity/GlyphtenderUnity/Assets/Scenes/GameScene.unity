@@ -610,6 +610,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _personalityName: Balanced
+  _difficulty: 0
   _aiPlayer: 1
   _minThinkTime: 0.5
   _maxThinkTime: 2
@@ -663,8 +664,8 @@ MonoBehaviour:
   handController: {fileID: 0}
   panelMaterial: {fileID: 0}
   buttonMaterial: {fileID: 0}
-  panelWidth: 6
-  panelHeight: 8
+  panelWidth: 5
+  panelHeight: 6
   menuZ: 5
   openDuration: 0.15
   closeDuration: 0.1

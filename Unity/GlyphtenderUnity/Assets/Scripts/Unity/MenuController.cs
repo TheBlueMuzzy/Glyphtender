@@ -58,8 +58,8 @@ namespace Glyphtender.Unity
         [Header("Appearance")]
         public Material panelMaterial;
         public Material buttonMaterial;
-        public float panelWidth = 3.2f;
-        public float panelHeight = 4.2f;
+        public float panelWidth = 6.0f;
+        public float panelHeight =84.0f;
         public float menuZ = 5f;
 
         [Header("Animation")]
@@ -83,6 +83,9 @@ namespace Glyphtender.Unity
         private float _animationTime;
         private Vector3 _animationStartScale;
         private Vector3 _animationEndScale;
+
+        // Flag to prevent background close when button is clicked
+        private bool _clickConsumedThisFrame;
 
         public bool IsOpen => _isOpen;
 
@@ -138,6 +141,28 @@ namespace Glyphtender.Unity
             }
         }
 
+        private void LateUpdate()
+        {
+            // Clear click consumed flag at end of frame
+            _clickConsumedThisFrame = false;
+        }
+
+        /// <summary>
+        /// Call this when a menu button is clicked to prevent background from closing menu.
+        /// </summary>
+        public void ConsumeClick()
+        {
+            _clickConsumedThisFrame = true;
+        }
+
+        /// <summary>
+        /// Returns true if a button already consumed the click this frame.
+        /// </summary>
+        public bool IsClickConsumed()
+        {
+            return _clickConsumedThisFrame;
+        }
+
         private void CreateMenu()
         {
             _menuRoot = new GameObject("MenuPanel");
@@ -149,9 +174,15 @@ namespace Glyphtender.Unity
             CreatePanelBackground();
             CreateTitle();
 
-            // Menu rows
-            float yPos = 1.5f;
-            float rowSpacing = 0.45f;
+            // Menu rows - position relative to panel size
+            // Panel spans from -panelHeight/2 to +panelHeight/2
+            float elementScale = panelHeight / 4.0f;
+            float contentTop = (panelHeight / 2f) - (0.8f * elementScale);  // Below title with buffer
+            float contentBottom = -(panelHeight / 2f) + (0.3f * elementScale);  // Above bottom edge
+            float contentHeight = contentTop - contentBottom;
+            float rowSpacing = contentHeight / 8f;  // 8 rows total (7 settings + restart)
+
+            float yPos = contentTop;
 
             string[] aiOptions = { "Off", "Bully", "Scholar", "Builder", "Balanced" };
 
@@ -424,7 +455,7 @@ namespace Glyphtender.Unity
             GameObject panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
             panel.name = "PanelBackground";
             panel.transform.SetParent(_menuRoot.transform);
-            panel.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            panel.transform.localPosition = new Vector3(0f, 0f, 0f);
             panel.transform.localRotation = Quaternion.identity;
             panel.transform.localScale = new Vector3(panelWidth, panelHeight, 0.05f);
             panel.layer = LayerMask.NameToLayer("UI3D");
@@ -440,16 +471,24 @@ namespace Glyphtender.Unity
             }
             renderer.shadowCastingMode = ShadowCastingMode.Off;
 
-            Destroy(panel.GetComponent<Collider>());
+            // Add click handler to consume clicks on panel (prevents background from closing menu)
+            var panelHandler = panel.AddComponent<MenuButtonClickHandler>();
+            panelHandler.MenuController = this;
+            panelHandler.OnClick = () => { }; // Do nothing, just consume
         }
 
         private void CreateTitle()
         {
+            // Scale factor based on panel height
+            float elementScale = panelHeight / 4.0f;
+
             GameObject titleObj = new GameObject("Title");
             titleObj.transform.SetParent(_menuRoot.transform);
-            titleObj.transform.localPosition = new Vector3(0f, 1.3f, -0.1f);
+            // Position title near top of panel with buffer
+            float titleY = (panelHeight / 2f) - (0.35f * elementScale);
+            titleObj.transform.localPosition = new Vector3(0f, titleY, -0.1f);
             titleObj.transform.localRotation = Quaternion.identity;
-            titleObj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+            titleObj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f) * elementScale;
             titleObj.layer = LayerMask.NameToLayer("UI3D");
 
             var textMesh = titleObj.AddComponent<TextMesh>();
@@ -464,12 +503,15 @@ namespace Glyphtender.Unity
         {
             var row = new MenuRow();
 
+            // Scale factor based on panel height (reference: 4.0)
+            float elementScale = panelHeight / 4.0f;
+
             // Feature label (left side)
             GameObject labelObj = new GameObject($"Label_{label}");
             labelObj.transform.SetParent(_menuRoot.transform);
-            labelObj.transform.localPosition = new Vector3(-1.3f, yPos, -0.1f);
+            labelObj.transform.localPosition = new Vector3(-1.3f * elementScale, yPos, -0.1f);
             labelObj.transform.localRotation = Quaternion.identity;
-            labelObj.transform.localScale = new Vector3(0.055f, 0.055f, 0.055f);
+            labelObj.transform.localScale = new Vector3(0.055f, 0.055f, 0.055f) * elementScale;
             labelObj.layer = LayerMask.NameToLayer("UI3D");
 
             var labelText = labelObj.AddComponent<TextMesh>();
@@ -484,9 +526,9 @@ namespace Glyphtender.Unity
             GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
             btn.name = $"Toggle_{label}";
             btn.transform.SetParent(_menuRoot.transform);
-            btn.transform.localPosition = new Vector3(0.85f, yPos, -0.08f);
+            btn.transform.localPosition = new Vector3(0.85f * elementScale, yPos, -0.08f);
             btn.transform.localRotation = Quaternion.identity;
-            btn.transform.localScale = new Vector3(1.1f, 0.35f, 0.05f);
+            btn.transform.localScale = new Vector3(1.1f, 0.35f, 0.05f) * elementScale;
             btn.layer = LayerMask.NameToLayer("UI3D");
             row.Button = btn;
 
@@ -522,6 +564,7 @@ namespace Glyphtender.Unity
 
             // Click handler
             var handler = btn.AddComponent<MenuButtonClickHandler>();
+            handler.MenuController = this;
             handler.OnClick = () => {
                 valueText.text = onToggle();
             };
@@ -534,12 +577,15 @@ namespace Glyphtender.Unity
 
         private void CreateActionButton(string text, float yPos, Action onClick)
         {
+            // Scale factor based on panel height (reference: 4.0)
+            float elementScale = panelHeight / 4.0f;
+
             GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
             btn.name = $"Button_{text}";
             btn.transform.SetParent(_menuRoot.transform);
             btn.transform.localPosition = new Vector3(0f, yPos, -0.08f);
             btn.transform.localRotation = Quaternion.identity;
-            btn.transform.localScale = new Vector3(2f, 0.4f, 0.05f);
+            btn.transform.localScale = new Vector3(2f, 0.4f, 0.05f) * elementScale;
             btn.layer = LayerMask.NameToLayer("UI3D");
 
             var renderer = btn.GetComponent<Renderer>();
@@ -570,6 +616,7 @@ namespace Glyphtender.Unity
 
             // Click handler
             var handler = btn.AddComponent<MenuButtonClickHandler>();
+            handler.MenuController = this;
             handler.OnClick = onClick;
 
             _menuItems.Add(btn);
@@ -626,7 +673,11 @@ namespace Glyphtender.Unity
 
         private void OnMouseDown()
         {
-            MenuController?.CloseMenu();
+            // Only close if no button consumed the click
+            if (MenuController != null && !MenuController.IsClickConsumed())
+            {
+                MenuController.CloseMenu();
+            }
         }
     }
 
@@ -634,9 +685,16 @@ namespace Glyphtender.Unity
     {
         public Action OnClick { get; set; }
         public bool IsEnabled { get; set; } = true;
+        public MenuController MenuController { get; set; }
 
         private void OnMouseDown()
         {
+            // Consume the click so background doesn't close menu
+            if (MenuController != null)
+            {
+                MenuController.ConsumeClick();
+            }
+
             if (IsEnabled)
             {
                 OnClick?.Invoke();
