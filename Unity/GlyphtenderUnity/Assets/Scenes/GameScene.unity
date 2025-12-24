@@ -393,7 +393,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tapDistanceThreshold: 20
   doubleTapTime: 0.3
-  cameraController: {fileID: 886909321}
   uiCamera: {fileID: 1446835203}
   _boardLayerMask:
     serializedVersion: 2
@@ -507,9 +506,11 @@ MonoBehaviour:
   marginFromSide: 2.5
   marginFromTop: 1.75
   previewOffsetY: 10
-  winnerOffsetY: 1
+  winnerOffsetY: 2
+  winnerScoreScale: 1.25
   fontSize: 12
   previewFontSize: 8
+  winnerFontSize: 8
   baseTextScale: 0.1
   landscapeScaleBoost: 1.5
 --- !u!114 &1446835206
@@ -614,8 +615,6 @@ MonoBehaviour:
   _aiPlayer: 1
   _minThinkTime: 0.5
   _maxThinkTime: 2
-  _gameManager: {fileID: 2117352145}
-  _boardRenderer: {fileID: 1732899553}
 --- !u!4 &1594369718
 Transform:
   m_ObjectHideFlags: 0
@@ -661,7 +660,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiCamera: {fileID: 1446835203}
-  handController: {fileID: 0}
   panelMaterial: {fileID: 2100000, guid: 3bd03c902d3afc741bfa23bd74d2dab8, type: 2}
   buttonMaterial: {fileID: 0}
   panelWidth: 6
