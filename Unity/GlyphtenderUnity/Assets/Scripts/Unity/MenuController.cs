@@ -59,7 +59,7 @@ namespace Glyphtender.Unity
         public Material panelMaterial;
         public Material buttonMaterial;
         public float panelWidth = 6.0f;
-        public float panelHeight =84.0f;
+        public float panelHeight = 8.0f;
         public float menuZ = 5f;
 
         [Header("Animation")]
@@ -83,9 +83,6 @@ namespace Glyphtender.Unity
         private float _animationTime;
         private Vector3 _animationStartScale;
         private Vector3 _animationEndScale;
-
-        // Flag to prevent background close when button is clicked
-        private bool _clickConsumedThisFrame;
 
         public bool IsOpen => _isOpen;
 
@@ -119,6 +116,12 @@ namespace Glyphtender.Unity
                 ToggleMenu();
             }
 
+            // Handle menu clicks when open
+            if (_isOpen && !_isAnimating && Input.GetMouseButtonDown(0))
+            {
+                HandleMenuClick();
+            }
+
             if (_isAnimating)
             {
                 _animationTime += Time.deltaTime;
@@ -141,26 +144,42 @@ namespace Glyphtender.Unity
             }
         }
 
-        private void LateUpdate()
+        private void HandleMenuClick()
         {
-            // Clear click consumed flag at end of frame
-            _clickConsumedThisFrame = false;
-        }
+            Ray ray = uiCamera.ScreenPointToRay(Input.mousePosition);
 
-        /// <summary>
-        /// Call this when a menu button is clicked to prevent background from closing menu.
-        /// </summary>
-        public void ConsumeClick()
-        {
-            _clickConsumedThisFrame = true;
-        }
+            // Only raycast against UI3D layer
+            int ui3dLayer = LayerMask.GetMask("UI3D");
+            RaycastHit[] hits = Physics.RaycastAll(ray, 100f, ui3dLayer);
 
-        /// <summary>
-        /// Returns true if a button already consumed the click this frame.
-        /// </summary>
-        public bool IsClickConsumed()
-        {
-            return _clickConsumedThisFrame;
+            if (hits.Length == 0)
+            {
+                CloseMenu();
+                return;
+            }
+
+            // Find the closest hit
+            RaycastHit closestHit = hits[0];
+            foreach (var hit in hits)
+            {
+                if (hit.distance < closestHit.distance)
+                {
+                    closestHit = hit;
+                }
+            }
+
+            // Check what we hit
+            GameObject hitObj = closestHit.collider.gameObject;
+
+            // If hit the background blocker, close menu
+            if (hitObj == _backgroundBlocker)
+            {
+                CloseMenu();
+                return;
+            }
+
+            // If hit a button or panel, do nothing (let button handlers work)
+            // The button's OnMouseDown will fire separately
         }
 
         private void CreateMenu()
@@ -193,9 +212,10 @@ namespace Glyphtender.Unity
                     if (aiManager == null || aiManager.YellowAI == null) return "Off";
 
                     var ai = aiManager.YellowAI;
-                    string current = ai.enabled ? ai.PersonalityName : "Off";
+                    string currentName = ai.enabled ? ai.PersonalityName : "Off";
+                    if (string.IsNullOrEmpty(currentName)) currentName = "Off";
 
-                    int currentIndex = System.Array.IndexOf(aiOptions, current);
+                    int currentIndex = System.Array.IndexOf(aiOptions, currentName);
                     if (currentIndex < 0) currentIndex = 0;
                     int nextIndex = (currentIndex + 1) % aiOptions.Length;
 
@@ -208,13 +228,6 @@ namespace Glyphtender.Unity
                     {
                         ai.enabled = true;
                         ai.SetPersonality(next);
-
-                        // If it's this AI's turn, take over
-                        if (GameManager.Instance.GameState.CurrentPlayer == Player.Yellow)
-                        {
-                            CloseMenu();
-                            ai.TakeOverTurn(GameManager.Instance.GameState);
-                        }
                     }
 
                     UpdateRowStates();
@@ -224,7 +237,8 @@ namespace Glyphtender.Unity
                     var aiManager = AIManager.Instance;
                     if (aiManager == null || aiManager.YellowAI == null || !aiManager.YellowAI.enabled)
                         return "Off";
-                    return aiManager.YellowAI.PersonalityName;
+                    string name = aiManager.YellowAI.PersonalityName;
+                    return string.IsNullOrEmpty(name) ? "Off" : name;
                 }
             );
             yPos -= rowSpacing;
@@ -257,9 +271,10 @@ namespace Glyphtender.Unity
                     if (aiManager == null || aiManager.BlueAI == null) return "Off";
 
                     var ai = aiManager.BlueAI;
-                    string current = ai.enabled ? ai.PersonalityName : "Off";
+                    string currentName = ai.enabled ? ai.PersonalityName : "Off";
+                    if (string.IsNullOrEmpty(currentName)) currentName = "Off";
 
-                    int currentIndex = System.Array.IndexOf(aiOptions, current);
+                    int currentIndex = System.Array.IndexOf(aiOptions, currentName);
                     if (currentIndex < 0) currentIndex = 0;
                     int nextIndex = (currentIndex + 1) % aiOptions.Length;
 
@@ -272,13 +287,6 @@ namespace Glyphtender.Unity
                     {
                         ai.enabled = true;
                         ai.SetPersonality(next);
-
-                        // If it's this AI's turn, take over
-                        if (GameManager.Instance.GameState.CurrentPlayer == Player.Blue)
-                        {
-                            CloseMenu();
-                            ai.TakeOverTurn(GameManager.Instance.GameState);
-                        }
                     }
 
                     UpdateRowStates();
@@ -288,7 +296,8 @@ namespace Glyphtender.Unity
                     var aiManager = AIManager.Instance;
                     if (aiManager == null || aiManager.BlueAI == null || !aiManager.BlueAI.enabled)
                         return "Off";
-                    return aiManager.BlueAI.PersonalityName;
+                    string name = aiManager.BlueAI.PersonalityName;
+                    return string.IsNullOrEmpty(name) ? "Off" : name;
                 }
             );
             yPos -= rowSpacing;
@@ -444,8 +453,8 @@ namespace Glyphtender.Unity
             renderer.material = invisMat;
             renderer.shadowCastingMode = ShadowCastingMode.Off;
 
-            var handler = _backgroundBlocker.AddComponent<MenuBackgroundClickHandler>();
-            handler.MenuController = this;
+            // Add component to identify this as the background blocker
+            _backgroundBlocker.AddComponent<MenuBackgroundClickHandler>();
 
             _backgroundBlocker.SetActive(false);
         }
@@ -473,8 +482,7 @@ namespace Glyphtender.Unity
 
             // Add click handler to consume clicks on panel (prevents background from closing menu)
             var panelHandler = panel.AddComponent<MenuButtonClickHandler>();
-            panelHandler.MenuController = this;
-            panelHandler.OnClick = () => { }; // Do nothing, just consume
+            panelHandler.OnClick = () => { }; // Do nothing, just block clicks
         }
 
         private void CreateTitle()
@@ -564,7 +572,6 @@ namespace Glyphtender.Unity
 
             // Click handler
             var handler = btn.AddComponent<MenuButtonClickHandler>();
-            handler.MenuController = this;
             handler.OnClick = () => {
                 valueText.text = onToggle();
             };
@@ -616,7 +623,6 @@ namespace Glyphtender.Unity
 
             // Click handler
             var handler = btn.AddComponent<MenuButtonClickHandler>();
-            handler.MenuController = this;
             handler.OnClick = onClick;
 
             _menuItems.Add(btn);
@@ -656,6 +662,30 @@ namespace Glyphtender.Unity
             _animationEndScale = Vector3.zero;
             _animationTime = 0f;
             _isAnimating = true;
+
+            // After closing, check if AI should take turn
+            TriggerAIIfNeeded();
+        }
+
+        /// <summary>
+        /// Triggers AI turn if current player is AI-controlled and not already thinking.
+        /// Called when menu closes to "unpause" AI.
+        /// </summary>
+        private void TriggerAIIfNeeded()
+        {
+            if (GameManager.Instance?.GameState == null) return;
+
+            var aiManager = AIManager.Instance;
+            if (aiManager == null) return;
+
+            var currentPlayer = GameManager.Instance.GameState.CurrentPlayer;
+            var currentAI = aiManager.GetAIForPlayer(currentPlayer);
+
+            // Only trigger if AI exists and isn't already thinking
+            if (currentAI != null && !currentAI.IsThinking)
+            {
+                currentAI.TakeTurn(GameManager.Instance.GameState);
+            }
         }
 
         public void ToggleMenu()
@@ -669,32 +699,17 @@ namespace Glyphtender.Unity
 
     public class MenuBackgroundClickHandler : MonoBehaviour
     {
-        public MenuController MenuController { get; set; }
-
-        private void OnMouseDown()
-        {
-            // Only close if no button consumed the click
-            if (MenuController != null && !MenuController.IsClickConsumed())
-            {
-                MenuController.CloseMenu();
-            }
-        }
+        // This class exists to identify the background blocker
+        // Click handling is done centrally in MenuController.HandleMenuClick()
     }
 
     public class MenuButtonClickHandler : MonoBehaviour
     {
         public Action OnClick { get; set; }
         public bool IsEnabled { get; set; } = true;
-        public MenuController MenuController { get; set; }
 
         private void OnMouseDown()
         {
-            // Consume the click so background doesn't close menu
-            if (MenuController != null)
-            {
-                MenuController.ConsumeClick();
-            }
-
             if (IsEnabled)
             {
                 OnClick?.Invoke();

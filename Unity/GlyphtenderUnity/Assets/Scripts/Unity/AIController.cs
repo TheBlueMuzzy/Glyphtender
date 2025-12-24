@@ -136,6 +136,12 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            // Don't start if menu is open (paused)
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+            {
+                return;
+            }
+
             StartCoroutine(ThinkAndMove(state));
         }
 
@@ -153,6 +159,12 @@ namespace Glyphtender.Unity
             if (_isThinking)
             {
                 Debug.LogWarning("AI is already thinking!");
+                return;
+            }
+
+            // Don't start if menu is open (paused)
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+            {
                 return;
             }
 
@@ -249,26 +261,18 @@ namespace Glyphtender.Unity
             // Execute the move
             if (chosenMove != null)
             {
-                ExecuteMove(chosenMove, state);
+                yield return StartCoroutine(ExecuteMoveAnimated(chosenMove, state));
             }
             else
             {
                 Debug.LogWarning("AI found no valid moves!");
                 // No valid moves - go to cycle mode
-                ExecuteCycle(state);
+                yield return StartCoroutine(ExecuteCycleAnimated(state));
             }
 
             Debug.Log($"AI turn complete. Next player: {state.CurrentPlayer}");
 
             _isThinking = false;
-        }
-
-        /// <summary>
-        /// Executes the AI's chosen move through the game systems.
-        /// </summary>
-        private void ExecuteMove(AIMove move, GameState state)
-        {
-            StartCoroutine(ExecuteMoveAnimated(move, state));
         }
 
         /// <summary>
@@ -381,9 +385,11 @@ namespace Glyphtender.Unity
         /// <summary>
         /// Executes cycle mode when AI has no valid word moves.
         /// </summary>
-        private void ExecuteCycle(GameState state)
+        private IEnumerator ExecuteCycleAnimated(GameState state)
         {
             Debug.Log("AI entering cycle mode (no valid moves)");
+
+            yield return new WaitForSeconds(ScaledWait(0.3f));
 
             var discards = _brain.ChooseDiscards(state);
 

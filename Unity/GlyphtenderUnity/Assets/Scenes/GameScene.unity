@@ -662,11 +662,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiCamera: {fileID: 1446835203}
   handController: {fileID: 0}
-  panelMaterial: {fileID: 0}
+  panelMaterial: {fileID: 2100000, guid: 3bd03c902d3afc741bfa23bd74d2dab8, type: 2}
   buttonMaterial: {fileID: 0}
-  panelWidth: 5
-  panelHeight: 6
-  menuZ: 5
+  panelWidth: 6
+  panelHeight: 8
+  menuZ: 20
   openDuration: 0.15
   closeDuration: 0.1
 --- !u!4 &1713144603

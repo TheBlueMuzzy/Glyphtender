@@ -55,7 +55,7 @@ namespace Glyphtender.Unity
                 blueObj.transform.SetParent(transform);
                 _blueAI = blueObj.AddComponent<AIController>();
                 _blueAI.SetAIPlayer(Player.Blue);
-                _blueAI.enabled = true; // Default: AI plays Blue
+                _blueAI.enabled = false; // Default: human plays Blue (changed from true)
             }
         }
 
