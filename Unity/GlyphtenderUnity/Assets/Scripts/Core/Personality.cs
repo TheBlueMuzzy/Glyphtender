@@ -81,17 +81,17 @@ namespace Glyphtender.Core
             switch (difficulty)
             {
                 case AIDifficulty.Apprentice:
-                    // Wider range (×1.3), lower center (-1)
-                    halfRange *= 1.3f;
-                    center -= 1f;
+                    // Wider range (×1.5), much lower center (-2)
+                    halfRange *= 1.5f;
+                    center -= 2f;
                     break;
                 case AIDifficulty.FirstClass:
                     // No change
                     break;
                 case AIDifficulty.Archmage:
-                    // Tighter range (×0.7), higher center (+1)
-                    halfRange *= 0.7f;
-                    center += 1f;
+                    // Tighter range (×0.5), much higher center (+2)
+                    halfRange *= 0.5f;
+                    center += 2f;
                     break;
             }
 
@@ -513,18 +513,18 @@ namespace Glyphtender.Core
         {
             return new Personality(
                 "Bully",
-                "Aggressive disruptor. Blocks and traps over scoring.",
+                "Aggressive disruptor. Blocks and traps while scoring.",
                 new PersonalityTraitRanges
                 {
                     Aggression = new TraitRange(8, 10),
-                    Greed = new TraitRange(2, 4),
+                    Greed = new TraitRange(4, 6),
                     Protectiveness = new TraitRange(2, 4),
                     Patience = new TraitRange(1, 3),
                     Spite = new TraitRange(7, 9),
-                    Positional = new TraitRange(4, 6),
-                    Cleverness = new TraitRange(3, 5),
+                    Positional = new TraitRange(5, 7),
+                    Cleverness = new TraitRange(5, 7),
                     Verbosity = new TraitRange(2, 4),
-                    Opportunism = new TraitRange(5, 7),
+                    Opportunism = new TraitRange(6, 8),
                     RiskTolerance = new TraitRange(6, 8),
                     TrapFocus = new TraitRange(7, 10)
                 },
