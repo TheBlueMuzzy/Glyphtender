@@ -25,7 +25,7 @@ namespace Glyphtender.Unity
 
         [Header("Winner Layout")]
         [Tooltip("How far below the main score the winner text appears")]
-        public float winnerOffsetY = 1.0f;
+        public float winnerOffsetY = 1.8f;
 
         [Header("Text Settings")]
         public int fontSize = 48;
@@ -400,6 +400,10 @@ namespace Glyphtender.Unity
 
             // Refresh scores to show 0
             RefreshScores();
+
+            // Hide scores until game ends
+            _yellowScoreText.gameObject.SetActive(false);
+            _blueScoreText.gameObject.SetActive(false);
         }
     }
 }
