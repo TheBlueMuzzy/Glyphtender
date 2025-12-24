@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Glyphtender.Core
@@ -44,6 +44,8 @@ namespace Glyphtender.Core
         public bool StealsWord { get; set; }
         public float SelfTangleRisk { get; set; }
         public float PositionalValue { get; set; }
+        public float TrapScore { get; set; }
+        public bool HasKillShot { get; set; }
 
         // Final weighted score
         public float TotalScore { get; set; }
@@ -65,7 +67,8 @@ namespace Glyphtender.Core
             GameState state,
             EffectiveTraits traits,
             Player aiPlayer,
-            WordScorer wordScorer)
+            WordScorer wordScorer,
+            float perceivedLead = 0f)
         {
             var eval = new EvaluatedMove { Move = move };
 
@@ -138,8 +141,13 @@ namespace Glyphtender.Core
             // Check if this steals opponent's word
             eval.StealsWord = CheckIfSteals(move, state, aiPlayer);
 
+            // Evaluate trap value (movement restriction)
+            var trapEval = TrapDetector.Evaluate(state, move.CastPosition, move.Destination, aiPlayer);
+            eval.TrapScore = trapEval.TotalScore;
+            eval.HasKillShot = trapEval.HasKillShot;
+
             // Calculate weighted total score based on personality
-            eval.TotalScore = CalculateWeightedScore(eval, traits);
+            eval.TotalScore = CalculateWeightedScore(eval, traits, perceivedLead);
 
             // Build reasoning string
             eval.Reasoning = BuildReasoning(eval);
@@ -248,7 +256,7 @@ namespace Glyphtender.Core
                 {
                     if (tile.Owner == opponent)
                     {
-                        // There's an opponent tile adjacent � this might be a steal
+                        // There's an opponent tile adjacent � this might be a steal
                         return true;
                     }
                 }
@@ -260,7 +268,7 @@ namespace Glyphtender.Core
         /// <summary>
         /// Calculates the final weighted score based on personality traits.
         /// </summary>
-        private static float CalculateWeightedScore(EvaluatedMove eval, EffectiveTraits traits)
+        private static float CalculateWeightedScore(EvaluatedMove eval, EffectiveTraits traits, float perceivedLead)
         {
             float score = 0f;
 
@@ -288,6 +296,31 @@ namespace Glyphtender.Core
 
             // Positional value weighted by Positional trait
             score += eval.PositionalValue * (traits.Positional / 5f);
+
+            // Trap score weighted by TrapFocus
+            score += eval.TrapScore * (traits.TrapFocus / 5f);
+
+            // Kill shot evaluation — ending the game when losing = bad
+            // Uses perceived lead (fuzzy), not actual score
+            if (eval.HasKillShot)
+            {
+                if (perceivedLead > 10)
+                {
+                    // Feels comfortably ahead — go for the kill
+                    score += 20f;
+                }
+                else if (perceivedLead > 0)
+                {
+                    // Feels slightly ahead — kill shot is good but not urgent
+                    score += 10f;
+                }
+                else if (perceivedLead > -10)
+                {
+                    // Feels close or slightly behind — risky, small bonus
+                    score += 3f;
+                }
+                // If feels way behind (perceivedLead <= -10), no bonus
+            }
 
             return score;
         }
@@ -319,6 +352,11 @@ namespace Glyphtender.Core
 
             if (eval.BlocksOpponent > 1)
                 parts.Add("block");
+
+            if (eval.HasKillShot)
+                parts.Add("KILL");
+            else if (eval.TrapScore > 5)
+                parts.Add("trap");
 
             return string.Join(",", parts);
         }

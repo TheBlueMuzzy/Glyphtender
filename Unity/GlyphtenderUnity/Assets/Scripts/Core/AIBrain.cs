@@ -59,9 +59,12 @@ namespace Glyphtender.Core
             // Calculate board fill for endgame awareness
             float boardFill = (float)state.Tiles.Count / state.Board.HexCount;
 
+            // Get perceived lead for this turn
+            float perceivedLead = Perception.GetPerceivedLead();
+
             // Roll effective traits for this turn (with difficulty and morale)
             Personality.RollEffectiveTraits(
-                Perception.GetPerceivedLead(),
+                perceivedLead,
                 Perception.MyMaxPressure,
                 Perception.OpponentMaxPressure,
                 Perception.HandQuality,
@@ -82,7 +85,7 @@ namespace Glyphtender.Core
             foreach (var move in candidates)
             {
                 var eval = AIMoveEvaluator.Evaluate(
-                    move, state, Personality.EffectiveTraits, AIPlayer, _wordScorer);
+                    move, state, Personality.EffectiveTraits, AIPlayer, _wordScorer, perceivedLead);
                 evaluated.Add(eval);
             }
 

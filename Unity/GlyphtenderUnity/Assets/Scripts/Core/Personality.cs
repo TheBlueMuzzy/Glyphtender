@@ -143,6 +143,7 @@ namespace Glyphtender.Core
         public TraitRange Verbosity { get; set; }
         public TraitRange Opportunism { get; set; }
         public TraitRange RiskTolerance { get; set; }
+        public TraitRange TrapFocus { get; set; }
 
         public PersonalityTraitRanges()
         {
@@ -157,6 +158,7 @@ namespace Glyphtender.Core
             Verbosity = new TraitRange(4, 6);
             Opportunism = new TraitRange(4, 6);
             RiskTolerance = new TraitRange(4, 6);
+            TrapFocus = new TraitRange(4, 6);
         }
 
         /// <summary>
@@ -175,7 +177,8 @@ namespace Glyphtender.Core
                 Cleverness = Cleverness.Clone(),
                 Verbosity = Verbosity.Clone(),
                 Opportunism = Opportunism.Clone(),
-                RiskTolerance = RiskTolerance.Clone()
+                RiskTolerance = RiskTolerance.Clone(),
+                TrapFocus = TrapFocus.Clone()
             };
         }
 
@@ -194,6 +197,7 @@ namespace Glyphtender.Core
             Verbosity.ApplyDifficulty(difficulty);
             Opportunism.ApplyDifficulty(difficulty);
             RiskTolerance.ApplyDifficulty(difficulty);
+            TrapFocus.ApplyDifficulty(difficulty);
         }
     }
 
@@ -213,6 +217,7 @@ namespace Glyphtender.Core
         public float Verbosity { get; set; }
         public float Opportunism { get; set; }
         public float RiskTolerance { get; set; }
+        public float TrapFocus { get; set; }
     }
 
     /// <summary>
@@ -366,6 +371,7 @@ namespace Glyphtender.Core
             ApplyMorale(shifted.Verbosity, moraleMultiplier);
             ApplyMorale(shifted.Opportunism, moraleMultiplier);
             ApplyMorale(shifted.RiskTolerance, moraleMultiplier);
+            ApplyMorale(shifted.TrapFocus, moraleMultiplier);
 
             // Calculate endgame multiplier (0 at start, 1 at 80%+ fill)
             float endgameMultiplier = 0f;
@@ -479,6 +485,7 @@ namespace Glyphtender.Core
             EffectiveTraits.Verbosity = shifted.Verbosity.Roll(_random);
             EffectiveTraits.Opportunism = shifted.Opportunism.Roll(_random);
             EffectiveTraits.RiskTolerance = shifted.RiskTolerance.Roll(_random);
+            EffectiveTraits.TrapFocus = shifted.TrapFocus.Roll(_random);
         }
 
         /// <summary>
@@ -518,7 +525,8 @@ namespace Glyphtender.Core
                     Cleverness = new TraitRange(3, 5),
                     Verbosity = new TraitRange(2, 4),
                     Opportunism = new TraitRange(5, 7),
-                    RiskTolerance = new TraitRange(6, 8)
+                    RiskTolerance = new TraitRange(6, 8),
+                    TrapFocus = new TraitRange(7, 10)
                 },
                 new SubTraits
                 {
@@ -555,7 +563,8 @@ namespace Glyphtender.Core
                     Cleverness = new TraitRange(4, 6),
                     Verbosity = new TraitRange(8, 10),
                     Opportunism = new TraitRange(4, 6),
-                    RiskTolerance = new TraitRange(3, 5)
+                    RiskTolerance = new TraitRange(3, 5),
+                    TrapFocus = new TraitRange(1, 3)
                 },
                 new SubTraits
                 {
@@ -592,7 +601,8 @@ namespace Glyphtender.Core
                     Cleverness = new TraitRange(6, 8),
                     Verbosity = new TraitRange(7, 9),
                     Opportunism = new TraitRange(3, 5),
-                    RiskTolerance = new TraitRange(3, 5)
+                    RiskTolerance = new TraitRange(3, 5),
+                    TrapFocus = new TraitRange(2, 4)
                 },
                 new SubTraits
                 {
@@ -629,7 +639,8 @@ namespace Glyphtender.Core
                     Cleverness = new TraitRange(4, 6),
                     Verbosity = new TraitRange(4, 6),
                     Opportunism = new TraitRange(4, 6),
-                    RiskTolerance = new TraitRange(4, 6)
+                    RiskTolerance = new TraitRange(4, 6),
+                    TrapFocus = new TraitRange(4, 6)
                 },
                 new SubTraits
                 {
