@@ -85,7 +85,8 @@ namespace Glyphtender.Core
             foreach (var move in candidates)
             {
                 var eval = AIMoveEvaluator.Evaluate(
-                    move, state, Personality.EffectiveTraits, AIPlayer, _wordScorer, perceivedLead);
+                    move, state, Personality.EffectiveTraits, AIPlayer, _wordScorer,
+                    perceivedLead, Perception.HandQuality);
                 evaluated.Add(eval);
             }
 

@@ -451,10 +451,17 @@ namespace Glyphtender.Core
             // --- Hand quality shifts ---
             if (handQuality < 3)
             {
-                // Bad hand: lower expectations
+                // Bad hand: lower expectations, focus on tangling instead
                 shifted.Patience.Shift(-1.5f);
                 shifted.Verbosity.ShiftMax(-1);
                 shifted.Greed.ShiftMax(-1);
+                shifted.TrapFocus.ShiftMin(1.5f);  // Prioritize tangling
+                shifted.Aggression.ShiftMin(1f);   // Get aggressive
+            }
+            else if (handQuality < 5)
+            {
+                // Mediocre hand: slight tangle boost
+                shifted.TrapFocus.ShiftMin(0.5f);
             }
             else if (handQuality > 7)
             {
@@ -611,18 +618,18 @@ namespace Glyphtender.Core
                 new PersonalityTraitRanges
                 {
                     Aggression = new TraitRange(2, 4),
-                    Greed = new TraitRange(6, 8),
+                    Greed = new TraitRange(3, 5),
                     Protectiveness = new TraitRange(3, 5),
                     Patience = new TraitRange(8, 10),
                     Spite = new TraitRange(1, 3),
-                    Positional = new TraitRange(7, 9),
+                    Positional = new TraitRange(8, 10),
                     Cleverness = new TraitRange(6, 8),
-                    Verbosity = new TraitRange(7, 9),
-                    Opportunism = new TraitRange(3, 5),
+                    Verbosity = new TraitRange(5, 7),
+                    Opportunism = new TraitRange(2, 4),
                     RiskTolerance = new TraitRange(3, 5),
                     TrapFocus = new TraitRange(2, 4),
                     DenialFocus = new TraitRange(1, 3),
-                    SetupFocus = new TraitRange(7, 10)
+                    SetupFocus = new TraitRange(8, 10)
                 },
                 new SubTraits
                 {

@@ -18,6 +18,7 @@ namespace Glyphtender.Core
             public int GapsCreated { get; set; }
             public int ExtensionPaths { get; set; }
             public int LeylineCrossings { get; set; }
+            public float SpacingBonus { get; set; }
         }
 
         /// <summary>
@@ -46,6 +47,9 @@ namespace Glyphtender.Core
 
             // 3. Count leyline crossings (position touches multiple tile chains)
             eval.LeylineCrossings = CountLeylineCrossings(state, castPosition);
+
+            // 4. Calculate spacing bonus (reward loose placements with room to grow)
+            eval.SpacingBonus = CalculateSpacingBonus(state, castPosition);
 
             // Restore state
             if (hadTile)
@@ -257,6 +261,59 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
+        /// Calculates spacing bonus - rewards loose placements with room to grow.
+        /// Best positions: 1-2 tile neighbors, 4-5 empty neighbors (connected but spacious).
+        /// </summary>
+        private static float CalculateSpacingBonus(GameState state, HexCoord castPosition)
+        {
+            int emptyNeighbors = 0;
+            int tileNeighbors = 0;
+
+            for (int dir = 0; dir < 6; dir++)
+            {
+                var neighbor = castPosition.GetNeighbor(dir);
+                if (!state.Board.IsBoardHex(neighbor)) continue;
+
+                if (state.Tiles.ContainsKey(neighbor))
+                {
+                    tileNeighbors++;
+                }
+                else
+                {
+                    emptyNeighbors++;
+                }
+            }
+
+            // Not connected to anything = useless placement
+            if (tileNeighbors == 0) return 0f;
+
+            // Too clustered (3+ tile neighbors) = filling in, not building out
+            if (tileNeighbors >= 3) return -2.0f;
+
+            // Sweet spot: 1-2 tile neighbors with lots of empty space
+            float bonus = 0f;
+
+            if (tileNeighbors == 1 && emptyNeighbors >= 4)
+            {
+                bonus = 4.0f; // Extending outward, lots of room
+            }
+            else if (tileNeighbors == 2 && emptyNeighbors >= 3)
+            {
+                bonus = 3.0f; // Bridging with room
+            }
+            else if (emptyNeighbors >= 4)
+            {
+                bonus = 2.0f; // Good spacing
+            }
+            else if (emptyNeighbors >= 3)
+            {
+                bonus = 1.0f; // Decent spacing
+            }
+
+            return bonus;
+        }
+
+        /// <summary>
         /// Calculates total setup value from components.
         /// </summary>
         private static float CalculateTotalValue(SetupEvaluation eval)
@@ -267,17 +324,20 @@ namespace Glyphtender.Core
             value += eval.GapsCreated * 3.0f;
 
             // Extension paths show room to grow
-            value += eval.ExtensionPaths * 1.5f;
+            value += eval.ExtensionPaths * 2.0f;
 
             // Leyline crossings enable multi-word plays
             if (eval.LeylineCrossings >= 3)
             {
-                value += 4.0f; // Excellent intersection
+                value += 5.0f; // Excellent intersection
             }
             else if (eval.LeylineCrossings >= 2)
             {
-                value += 2.0f; // Good intersection
+                value += 3.0f; // Good intersection
             }
+
+            // Spacing bonus - more empty neighbors = looser grid = better for Builder
+            value += eval.SpacingBonus;
 
             return value;
         }

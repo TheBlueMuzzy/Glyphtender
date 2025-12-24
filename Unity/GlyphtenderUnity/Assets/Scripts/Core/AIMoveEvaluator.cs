@@ -48,6 +48,7 @@ namespace Glyphtender.Core
         public bool HasKillShot { get; set; }
         public float DenialValue { get; set; }
         public float SetupValue { get; set; }
+        public float JunkLetterBonus { get; set; }
 
         // Final weighted score
         public float TotalScore { get; set; }
@@ -70,7 +71,8 @@ namespace Glyphtender.Core
             EffectiveTraits traits,
             Player aiPlayer,
             WordScorer wordScorer,
-            float perceivedLead = 0f)
+            float perceivedLead = 0f,
+            float handQuality = 5f)
         {
             var eval = new EvaluatedMove { Move = move };
 
@@ -155,8 +157,12 @@ namespace Glyphtender.Core
             var setupEval = SetupDetector.Evaluate(state, move.CastPosition, move.Letter, aiPlayer, wordScorer);
             eval.SetupValue = setupEval.TotalValue;
 
+            // Evaluate junk letter bonus (prefer casting letters that hurt the hand)
+            var hand = state.Hands[aiPlayer];
+            eval.JunkLetterBonus = LetterJunkAssessor.Assess(move.Letter, hand);
+
             // Calculate weighted total score based on personality
-            eval.TotalScore = CalculateWeightedScore(eval, traits, perceivedLead);
+            eval.TotalScore = CalculateWeightedScore(eval, traits, perceivedLead, handQuality);
 
             // Build reasoning string
             eval.Reasoning = BuildReasoning(eval);
@@ -277,7 +283,7 @@ namespace Glyphtender.Core
         /// <summary>
         /// Calculates the final weighted score based on personality traits.
         /// </summary>
-        private static float CalculateWeightedScore(EvaluatedMove eval, EffectiveTraits traits, float perceivedLead)
+        private static float CalculateWeightedScore(EvaluatedMove eval, EffectiveTraits traits, float perceivedLead, float handQuality)
         {
             float score = 0f;
 
@@ -309,11 +315,16 @@ namespace Glyphtender.Core
             // Trap score weighted by TrapFocus
             score += eval.TrapScore * (traits.TrapFocus / 5f);
 
-            // Denial value weighted by DenialFocus (Vulture behavior)
+            // Denial value weighted by DenialFocus
             score += eval.DenialValue * (traits.DenialFocus / 5f);
 
             // Setup value weighted by SetupFocus (Builder behavior)
             score += eval.SetupValue * (traits.SetupFocus / 5f);
+
+            // Junk letter bonus — stronger when hand is bad
+            // HandQuality 0-10: bad hand (0-4) = high multiplier, good hand (6-10) = low multiplier
+            float junkMultiplier = Math.Max(0f, (6f - handQuality) / 3f);  // 0 to 2
+            score += eval.JunkLetterBonus * junkMultiplier;
 
             // Kill shot evaluation — ending the game when losing = bad
             // Uses perceived lead (fuzzy), not actual score
@@ -378,6 +389,9 @@ namespace Glyphtender.Core
 
             if (eval.SetupValue > 4)
                 parts.Add("setup");
+
+            if (eval.JunkLetterBonus > 4)
+                parts.Add("dump");
 
             return string.Join(",", parts);
         }

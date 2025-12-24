@@ -223,6 +223,99 @@ namespace Glyphtender.Core
     }
 
     /// <summary>
+    /// Assesses how "junk" a specific letter is within a hand.
+    /// Higher = AI wants to dump this letter more.
+    /// </summary>
+    public static class LetterJunkAssessor
+    {
+        private static readonly HashSet<char> Vowels = new HashSet<char> { 'A', 'E', 'I', 'O', 'U' };
+        private static readonly HashSet<char> HardLetters = new HashSet<char> { 'Q', 'X', 'Z', 'J', 'V' };
+
+        /// <summary>
+        /// Evaluates how much the AI wants to get rid of this letter (0-10).
+        /// Considers: hard letters, duplicates, vowel/consonant balance.
+        /// </summary>
+        public static float Assess(char letter, List<char> hand)
+        {
+            if (hand == null || hand.Count == 0)
+                return 0f;
+
+            char upper = char.ToUpper(letter);
+            float junkScore = 0f;
+
+            // Hard letters are always somewhat junky
+            if (HardLetters.Contains(upper))
+            {
+                junkScore += 3f;
+
+                // Q without U is extra junky
+                if (upper == 'Q')
+                {
+                    bool hasU = false;
+                    foreach (var c in hand)
+                    {
+                        if (char.ToUpper(c) == 'U')
+                        {
+                            hasU = true;
+                            break;
+                        }
+                    }
+                    if (!hasU)
+                    {
+                        junkScore += 4f;
+                    }
+                }
+            }
+
+            // Count duplicates of this letter
+            int duplicates = 0;
+            foreach (var c in hand)
+            {
+                if (char.ToUpper(c) == upper)
+                    duplicates++;
+            }
+
+            // 3+ of same letter = extra copies are junk
+            if (duplicates >= 3)
+            {
+                junkScore += 3f;
+            }
+            else if (duplicates >= 2)
+            {
+                junkScore += 1f;
+            }
+
+            // Check vowel/consonant balance
+            int vowelCount = 0;
+            foreach (var c in hand)
+            {
+                if (Vowels.Contains(char.ToUpper(c)))
+                    vowelCount++;
+            }
+            int consonantCount = hand.Count - vowelCount;
+            bool isVowel = Vowels.Contains(upper);
+
+            // Too many vowels (5+) = extra vowels are junk
+            if (isVowel && vowelCount >= 5)
+            {
+                junkScore += 2f;
+            }
+            // Too few vowels (1 or less) = consonants are somewhat junky
+            else if (!isVowel && vowelCount <= 1)
+            {
+                junkScore += 1.5f;
+            }
+            // No vowels = consonants are very junky
+            else if (!isVowel && vowelCount == 0)
+            {
+                junkScore += 3f;
+            }
+
+            return Math.Min(10f, junkScore);
+        }
+    }
+
+    /// <summary>
     /// Assesses how much pressure (tangle danger) a glyphling is under.
     /// Returns 0-10 score. High = close to being tangled.
     /// </summary>
