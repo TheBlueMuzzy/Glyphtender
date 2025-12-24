@@ -145,6 +145,7 @@ namespace Glyphtender.Core
         public TraitRange RiskTolerance { get; set; }
         public TraitRange TrapFocus { get; set; }
         public TraitRange DenialFocus { get; set; }
+        public TraitRange SetupFocus { get; set; }
 
         public PersonalityTraitRanges()
         {
@@ -161,6 +162,7 @@ namespace Glyphtender.Core
             RiskTolerance = new TraitRange(4, 6);
             TrapFocus = new TraitRange(4, 6);
             DenialFocus = new TraitRange(4, 6);
+            SetupFocus = new TraitRange(4, 6);
         }
 
         /// <summary>
@@ -181,7 +183,8 @@ namespace Glyphtender.Core
                 Opportunism = Opportunism.Clone(),
                 RiskTolerance = RiskTolerance.Clone(),
                 TrapFocus = TrapFocus.Clone(),
-                DenialFocus = DenialFocus.Clone()
+                DenialFocus = DenialFocus.Clone(),
+                SetupFocus = SetupFocus.Clone()
             };
         }
 
@@ -202,6 +205,7 @@ namespace Glyphtender.Core
             RiskTolerance.ApplyDifficulty(difficulty);
             TrapFocus.ApplyDifficulty(difficulty);
             DenialFocus.ApplyDifficulty(difficulty);
+            SetupFocus.ApplyDifficulty(difficulty);
         }
     }
 
@@ -223,6 +227,7 @@ namespace Glyphtender.Core
         public float RiskTolerance { get; set; }
         public float TrapFocus { get; set; }
         public float DenialFocus { get; set; }
+        public float SetupFocus { get; set; }
     }
 
     /// <summary>
@@ -378,6 +383,7 @@ namespace Glyphtender.Core
             ApplyMorale(shifted.RiskTolerance, moraleMultiplier);
             ApplyMorale(shifted.TrapFocus, moraleMultiplier);
             ApplyMorale(shifted.DenialFocus, moraleMultiplier);
+            ApplyMorale(shifted.SetupFocus, moraleMultiplier);
 
             // Calculate endgame multiplier (0 at start, 1 at 80%+ fill)
             float endgameMultiplier = 0f;
@@ -493,6 +499,7 @@ namespace Glyphtender.Core
             EffectiveTraits.RiskTolerance = shifted.RiskTolerance.Roll(_random);
             EffectiveTraits.TrapFocus = shifted.TrapFocus.Roll(_random);
             EffectiveTraits.DenialFocus = shifted.DenialFocus.Roll(_random);
+            EffectiveTraits.SetupFocus = shifted.SetupFocus.Roll(_random);
         }
 
         /// <summary>
@@ -534,7 +541,8 @@ namespace Glyphtender.Core
                     Opportunism = new TraitRange(6, 8),
                     RiskTolerance = new TraitRange(6, 8),
                     TrapFocus = new TraitRange(7, 10),
-                    DenialFocus = new TraitRange(5, 7)
+                    DenialFocus = new TraitRange(5, 7),
+                    SetupFocus = new TraitRange(2, 4)
                 },
                 new SubTraits
                 {
@@ -573,7 +581,8 @@ namespace Glyphtender.Core
                     Opportunism = new TraitRange(4, 6),
                     RiskTolerance = new TraitRange(3, 5),
                     TrapFocus = new TraitRange(1, 3),
-                    DenialFocus = new TraitRange(1, 3)
+                    DenialFocus = new TraitRange(1, 3),
+                    SetupFocus = new TraitRange(3, 5)
                 },
                 new SubTraits
                 {
@@ -589,8 +598,8 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Builder: Extends existing words into longer chains.
-        /// Pro: Continuously builds words (ART → TART → START).
+        /// Builder: Creates setups for future high-scoring plays.
+        /// Pro: Leaves strategic gaps, builds pillars for multi-word potential.
         /// Con: Tunnel vision on own builds, misses opponent threats.
         /// Morale: Demoralizes when builds are disrupted.
         /// </summary>
@@ -598,7 +607,7 @@ namespace Glyphtender.Core
         {
             return new Personality(
                 "Builder",
-                "Patient architect. Extends words into longer chains.",
+                "Patient architect. Creates gaps and pillars for future plays.",
                 new PersonalityTraitRanges
                 {
                     Aggression = new TraitRange(2, 4),
@@ -612,7 +621,8 @@ namespace Glyphtender.Core
                     Opportunism = new TraitRange(3, 5),
                     RiskTolerance = new TraitRange(3, 5),
                     TrapFocus = new TraitRange(2, 4),
-                    DenialFocus = new TraitRange(1, 3)
+                    DenialFocus = new TraitRange(1, 3),
+                    SetupFocus = new TraitRange(7, 10)
                 },
                 new SubTraits
                 {
@@ -651,7 +661,8 @@ namespace Glyphtender.Core
                     Opportunism = new TraitRange(4, 6),
                     RiskTolerance = new TraitRange(4, 6),
                     TrapFocus = new TraitRange(4, 6),
-                    DenialFocus = new TraitRange(3, 5)
+                    DenialFocus = new TraitRange(3, 5),
+                    SetupFocus = new TraitRange(4, 6)
                 },
                 new SubTraits
                 {
