@@ -2,9 +2,47 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System;
 using System.Collections.Generic;
+using Glyphtender.Core;
 
 namespace Glyphtender.Unity
 {
+    /// <summary>
+    /// Tracks a menu row's components for enable/disable functionality.
+    /// </summary>
+    public class MenuRow
+    {
+        public GameObject Button;
+        public Renderer ButtonRenderer;
+        public TextMesh ValueText;
+        public TextMesh LabelText;
+        public MenuButtonClickHandler ClickHandler;
+        public Color EnabledButtonColor;
+        public Color EnabledTextColor;
+        public bool IsEnabled = true;
+
+        private static readonly Color DisabledButtonColor = new Color(0.2f, 0.2f, 0.22f);
+        private static readonly Color DisabledTextColor = new Color(0.4f, 0.4f, 0.45f);
+
+        public void SetEnabled(bool enabled)
+        {
+            IsEnabled = enabled;
+            ClickHandler.IsEnabled = enabled;
+
+            if (enabled)
+            {
+                ButtonRenderer.material.color = EnabledButtonColor;
+                ValueText.color = EnabledTextColor;
+                if (LabelText != null) LabelText.color = Color.white;
+            }
+            else
+            {
+                ButtonRenderer.material.color = DisabledButtonColor;
+                ValueText.color = DisabledTextColor;
+                if (LabelText != null) LabelText.color = DisabledTextColor;
+            }
+        }
+    }
+
     /// <summary>
     /// Controls the in-game menu panel.
     /// 3D menu rendered by UICamera.
@@ -21,7 +59,7 @@ namespace Glyphtender.Unity
         public Material panelMaterial;
         public Material buttonMaterial;
         public float panelWidth = 3.2f;
-        public float panelHeight = 2.5f;
+        public float panelHeight = 2.8f;
         public float menuZ = 5f;
 
         [Header("Animation")]
@@ -33,6 +71,10 @@ namespace Glyphtender.Unity
         private GameObject _menuRoot;
         private GameObject _backgroundBlocker;
         private List<GameObject> _menuItems = new List<GameObject>();
+
+        // Tracked rows for enable/disable
+        private MenuRow _dragOffsetRow;
+        private MenuRow _difficultyRow;
 
         // Animation
         private bool _isAnimating;
@@ -100,8 +142,8 @@ namespace Glyphtender.Unity
             CreateTitle();
 
             // Menu rows
-            float yPos = 0.6f;
-            float rowSpacing = 0.55f;
+            float yPos = 0.8f;
+            float rowSpacing = 0.5f;
 
             // Input Mode toggle
             CreateMenuRow("Input Mode", yPos,
@@ -110,6 +152,7 @@ namespace Glyphtender.Unity
                         ? GameManager.InputMode.Drag
                         : GameManager.InputMode.Tap;
                     GameManager.Instance.SetInputMode(newMode);
+                    UpdateRowStates();
                     return newMode.ToString();
                 },
                 () => GameManager.Instance.CurrentInputMode.ToString()
@@ -117,7 +160,7 @@ namespace Glyphtender.Unity
             yPos -= rowSpacing;
 
             // Drag Offset toggle (0, 1, 2)
-            CreateMenuRow("Drag Offset", yPos,
+            _dragOffsetRow = CreateMenuRow("Drag Offset", yPos,
                 () => {
                     int current = Mathf.RoundToInt(GameSettings.DragOffset);
                     int next = (current + 1) % 3;
@@ -134,7 +177,7 @@ namespace Glyphtender.Unity
                     var aiController = FindObjectOfType<AIController>();
                     if (aiController == null) return "Off";
 
-                    string[] options = { "Off", "Timid", "Bully", "Builder", "Opportunist", "Balanced", "Chaotic", "Scholar", "Shark" };
+                    string[] options = { "Off", "Bully", "Scholar", "Builder", "Balanced" };
                     string current = aiController.enabled ? aiController.PersonalityName : "Off";
 
                     int currentIndex = System.Array.IndexOf(options, current);
@@ -159,12 +202,46 @@ namespace Glyphtender.Unity
                         }
                     }
 
+                    UpdateRowStates();
                     return next;
                 },
                 () => {
                     var aiController = FindObjectOfType<AIController>();
                     if (aiController == null || !aiController.enabled) return "Off";
                     return aiController.PersonalityName;
+                }
+            );
+            yPos -= rowSpacing;
+
+            // AI Difficulty toggle
+            _difficultyRow = CreateMenuRow("Difficulty", yPos,
+                () => {
+                    var aiController = FindObjectOfType<AIController>();
+                    if (aiController == null || !aiController.enabled) return "Apprentice";
+
+                    AIDifficulty current = aiController.Difficulty;
+                    AIDifficulty next;
+
+                    switch (current)
+                    {
+                        case AIDifficulty.Apprentice:
+                            next = AIDifficulty.FirstClass;
+                            break;
+                        case AIDifficulty.FirstClass:
+                            next = AIDifficulty.Archmage;
+                            break;
+                        default:
+                            next = AIDifficulty.Apprentice;
+                            break;
+                    }
+
+                    aiController.SetDifficulty(next);
+                    return GetDifficultyDisplayName(next);
+                },
+                () => {
+                    var aiController = FindObjectOfType<AIController>();
+                    if (aiController == null) return "Apprentice";
+                    return GetDifficultyDisplayName(aiController.Difficulty);
                 }
             );
             yPos -= rowSpacing;
@@ -176,6 +253,38 @@ namespace Glyphtender.Unity
                     GameManager.Instance.InitializeGame();
                 }
             );
+
+            // Set initial row states
+            UpdateRowStates();
+        }
+
+        private string GetDifficultyDisplayName(AIDifficulty difficulty)
+        {
+            switch (difficulty)
+            {
+                case AIDifficulty.Apprentice: return "Apprentice";
+                case AIDifficulty.FirstClass: return "1st Class";
+                case AIDifficulty.Archmage: return "Archmage";
+                default: return "Apprentice";
+            }
+        }
+
+        private void UpdateRowStates()
+        {
+            // Drag Offset: disabled when Input Mode = Tap
+            if (_dragOffsetRow != null)
+            {
+                bool dragEnabled = GameManager.Instance.CurrentInputMode == GameManager.InputMode.Drag;
+                _dragOffsetRow.SetEnabled(dragEnabled);
+            }
+
+            // Difficulty: disabled when AI = Off
+            if (_difficultyRow != null)
+            {
+                var aiController = FindObjectOfType<AIController>();
+                bool difficultyEnabled = aiController != null && aiController.enabled;
+                _difficultyRow.SetEnabled(difficultyEnabled);
+            }
         }
 
         private void CreateBackgroundBlocker()
@@ -212,7 +321,7 @@ namespace Glyphtender.Unity
             GameObject panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
             panel.name = "PanelBackground";
             panel.transform.SetParent(_menuRoot.transform);
-            panel.transform.localPosition = new Vector3(0f, 0.2f, 0f);
+            panel.transform.localPosition = new Vector3(0f, 0.15f, 0f);
             panel.transform.localRotation = Quaternion.identity;
             panel.transform.localScale = new Vector3(panelWidth, panelHeight, 0.05f);
             panel.layer = LayerMask.NameToLayer("UI3D");
@@ -235,7 +344,7 @@ namespace Glyphtender.Unity
         {
             GameObject titleObj = new GameObject("Title");
             titleObj.transform.SetParent(_menuRoot.transform);
-            titleObj.transform.localPosition = new Vector3(0f, 1.2f, -0.1f);
+            titleObj.transform.localPosition = new Vector3(0f, 1.3f, -0.1f);
             titleObj.transform.localRotation = Quaternion.identity;
             titleObj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
             titleObj.layer = LayerMask.NameToLayer("UI3D");
@@ -248,8 +357,10 @@ namespace Glyphtender.Unity
             textMesh.color = Color.white;
         }
 
-        private void CreateMenuRow(string label, float yPos, Func<string> onToggle, Func<string> getValue)
+        private MenuRow CreateMenuRow(string label, float yPos, Func<string> onToggle, Func<string> getValue)
         {
+            var row = new MenuRow();
+
             // Feature label (left side)
             GameObject labelObj = new GameObject($"Label_{label}");
             labelObj.transform.SetParent(_menuRoot.transform);
@@ -264,6 +375,7 @@ namespace Glyphtender.Unity
             labelText.alignment = TextAlignment.Left;
             labelText.anchor = TextAnchor.MiddleLeft;
             labelText.color = Color.white;
+            row.LabelText = labelText;
 
             // Toggle button (right side)
             GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -273,6 +385,7 @@ namespace Glyphtender.Unity
             btn.transform.localRotation = Quaternion.identity;
             btn.transform.localScale = new Vector3(1.1f, 0.35f, 0.05f);
             btn.layer = LayerMask.NameToLayer("UI3D");
+            row.Button = btn;
 
             var renderer = btn.GetComponent<Renderer>();
             if (buttonMaterial != null)
@@ -284,6 +397,8 @@ namespace Glyphtender.Unity
                 renderer.material.color = new Color(0.3f, 0.3f, 0.35f);
             }
             renderer.shadowCastingMode = ShadowCastingMode.Off;
+            row.ButtonRenderer = renderer;
+            row.EnabledButtonColor = renderer.material.color;
 
             // Value text on button (smaller than label)
             GameObject valueObj = new GameObject("Value");
@@ -299,14 +414,19 @@ namespace Glyphtender.Unity
             valueText.alignment = TextAlignment.Center;
             valueText.anchor = TextAnchor.MiddleCenter;
             valueText.color = new Color(0.85f, 0.9f, 1f);
+            row.ValueText = valueText;
+            row.EnabledTextColor = valueText.color;
 
             // Click handler
             var handler = btn.AddComponent<MenuButtonClickHandler>();
             handler.OnClick = () => {
                 valueText.text = onToggle();
             };
+            row.ClickHandler = handler;
 
             _menuItems.Add(btn);
+
+            return row;
         }
 
         private void CreateActionButton(string text, float yPos, Action onClick)
@@ -360,6 +480,9 @@ namespace Glyphtender.Unity
             _menuRoot.SetActive(true);
             _backgroundBlocker.SetActive(true);
 
+            // Update row states when opening
+            UpdateRowStates();
+
             // Hide hand elements
             handController?.HideHand();
 
@@ -407,10 +530,14 @@ namespace Glyphtender.Unity
     public class MenuButtonClickHandler : MonoBehaviour
     {
         public Action OnClick { get; set; }
+        public bool IsEnabled { get; set; } = true;
 
         private void OnMouseDown()
         {
-            OnClick?.Invoke();
+            if (IsEnabled)
+            {
+                OnClick?.Invoke();
+            }
         }
     }
 }

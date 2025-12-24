@@ -13,6 +13,7 @@ namespace Glyphtender.Core
         public Personality Personality { get; private set; }
         public AIPerception Perception { get; private set; }
         public Player AIPlayer { get; private set; }
+        public AIDifficulty Difficulty { get; private set; }
 
         private WordScorer _wordScorer;
         private Random _random;
@@ -28,13 +29,22 @@ namespace Glyphtender.Core
             {'J', 0}, {'X', 0}, {'Z', 0}, {'Q', 0}
         };
 
-        public AIBrain(Player aiPlayer, Personality personality, WordScorer wordScorer, int? seed = null)
+        public AIBrain(Player aiPlayer, Personality personality, WordScorer wordScorer, AIDifficulty difficulty = AIDifficulty.Apprentice, int? seed = null)
         {
             AIPlayer = aiPlayer;
             Personality = personality;
+            Difficulty = difficulty;
             _wordScorer = wordScorer;
             _random = seed.HasValue ? new Random(seed.Value) : new Random();
             Perception = new AIPerception(aiPlayer, seed);
+        }
+
+        /// <summary>
+        /// Changes the AI difficulty.
+        /// </summary>
+        public void SetDifficulty(AIDifficulty difficulty)
+        {
+            Difficulty = difficulty;
         }
 
         /// <summary>
@@ -49,14 +59,16 @@ namespace Glyphtender.Core
             // Calculate board fill for endgame awareness
             float boardFill = (float)state.Tiles.Count / state.Board.HexCount;
 
-            // Roll effective traits for this turn
+            // Roll effective traits for this turn (with difficulty and morale)
             Personality.RollEffectiveTraits(
                 Perception.GetPerceivedLead(),
                 Perception.MyMaxPressure,
                 Perception.OpponentMaxPressure,
                 Perception.HandQuality,
                 Perception.GetMomentum(),
-                boardFill
+                boardFill,
+                Difficulty,
+                Perception.GetLastOpponentScore()
             );
 
             // Generate candidate moves

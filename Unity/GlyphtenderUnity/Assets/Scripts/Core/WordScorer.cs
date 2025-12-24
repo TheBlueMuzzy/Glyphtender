@@ -11,25 +11,45 @@ namespace Glyphtender.Core
     public class WordScorer
     {
         private readonly HashSet<string> _dictionary;
+        private readonly Dictionary<string, float> _wordFrequencies;
 
         public int WordCount => _dictionary.Count;
 
         public WordScorer()
         {
             _dictionary = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _wordFrequencies = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
-        /// Loads dictionary from a list of words.
+        /// Loads dictionary from CSV lines (WORD,ZIPF_SCORE).
         /// </summary>
-        public void LoadDictionary(IEnumerable<string> words)
+        public void LoadDictionary(IEnumerable<string> lines)
         {
             _dictionary.Clear();
-            foreach (var word in words)
+            _wordFrequencies.Clear();
+
+            foreach (var line in lines)
             {
-                if (!string.IsNullOrWhiteSpace(word) && word.Length >= 2)
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                // Parse CSV: WORD,SCORE
+                var parts = line.Split(',');
+                string word = parts[0].Trim().ToUpperInvariant();
+
+                if (word.Length >= 2)
                 {
-                    _dictionary.Add(word.Trim().ToUpperInvariant());
+                    _dictionary.Add(word);
+
+                    // Parse frequency score if present
+                    if (parts.Length > 1 && float.TryParse(parts[1], out float score))
+                    {
+                        _wordFrequencies[word] = score;
+                    }
+                    else
+                    {
+                        _wordFrequencies[word] = 0f; // Unknown frequency
+                    }
                 }
             }
         }
@@ -40,6 +60,42 @@ namespace Glyphtender.Core
         public bool IsValidWord(string word)
         {
             return _dictionary.Contains(word.ToUpperInvariant());
+        }
+
+        /// <summary>
+        /// Gets the Zipf frequency score for a word.
+        /// Higher = more common. Returns 0 if unknown.
+        /// </summary>
+        public float GetWordFrequency(string word)
+        {
+            string upper = word.ToUpperInvariant();
+            return _wordFrequencies.TryGetValue(upper, out float score) ? score : 0f;
+        }
+
+        /// <summary>
+        /// Checks if a word meets the minimum frequency for a given Verbosity.
+        /// </summary>
+        public bool IsWordAllowedForVerbosity(string word, float verbosity)
+        {
+            float minFreq = GetMinFrequencyForVerbosity(verbosity);
+            float wordFreq = GetWordFrequency(word);
+            return wordFreq >= minFreq;
+        }
+
+        /// <summary>
+        /// Gets the minimum Zipf score for a given Verbosity trait (1-10).
+        /// </summary>
+        public static float GetMinFrequencyForVerbosity(float verbosity)
+        {
+            // Verbosity 1-3: Only very common words (Zipf >= 5.0)
+            // Verbosity 4-6: Common words (Zipf >= 4.0)
+            // Verbosity 7-9: Include uncommon (Zipf >= 3.0)
+            // Verbosity 10: Full dictionary (no filter)
+
+            if (verbosity >= 10) return 0f;
+            if (verbosity >= 7) return 3.0f;
+            if (verbosity >= 4) return 4.0f;
+            return 5.0f;
         }
 
         /// <summary>

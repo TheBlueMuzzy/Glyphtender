@@ -14,6 +14,11 @@ namespace Glyphtender.Core
         public float OpponentEstimate { get; private set; } = 0f;
         public float Confidence { get; private set; } = 0.5f;
 
+        /// <summary>
+        /// The opponent's most recent score (for morale calculations).
+        /// </summary>
+        public int LastOpponentScore { get; private set; } = 0;
+
         // Recent scores for momentum tracking
         private List<int> _myRecentScores = new List<int>();
         private List<int> _opponentRecentScores = new List<int>();
@@ -49,6 +54,7 @@ namespace Glyphtender.Core
         public void ObserveOpponentScore(int points)
         {
             OpponentEstimate += points;
+            LastOpponentScore = points;  // Track for morale
             _opponentRecentScores.Add(points);
             if (_opponentRecentScores.Count > MomentumWindow)
                 _opponentRecentScores.RemoveAt(0);
@@ -112,6 +118,7 @@ namespace Glyphtender.Core
             MyEstimate = 0;
             OpponentEstimate = 0;
             Confidence = 0.5f;
+            LastOpponentScore = 0;
             _myRecentScores.Clear();
             _opponentRecentScores.Clear();
         }
@@ -395,6 +402,14 @@ namespace Glyphtender.Core
         public float GetMomentum()
         {
             return ScorePerception.GetMomentum();
+        }
+
+        /// <summary>
+        /// Gets the opponent's last score (for morale calculations).
+        /// </summary>
+        public int GetLastOpponentScore()
+        {
+            return ScorePerception.LastOpponentScore;
         }
 
         /// <summary>

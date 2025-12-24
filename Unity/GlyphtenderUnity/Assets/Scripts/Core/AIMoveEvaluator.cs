@@ -99,11 +99,21 @@ namespace Glyphtender.Core
             // Calculate word score using WordScorer
             var wordsFound = wordScorer.FindWordsAt(simState, move.CastPosition, move.Letter);
 
-            eval.WordCount = wordsFound.Count;
+            // Filter words by Verbosity - AI only "knows" words within its vocabulary level
+            var allowedWords = new List<WordResult>();
+            foreach (var word in wordsFound)
+            {
+                if (wordScorer.IsWordAllowedForVerbosity(word.Letters, traits.Verbosity))
+                {
+                    allowedWords.Add(word);
+                }
+            }
+
+            eval.WordCount = allowedWords.Count;
             eval.WordPoints = 0;
             eval.LongestWordLength = 0;
 
-            foreach (var word in wordsFound)
+            foreach (var word in allowedWords)
             {
                 // Use the Glyphtender scoring: length + ownership bonus
                 int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, simState, aiPlayer);

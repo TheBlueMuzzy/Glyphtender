@@ -13,6 +13,7 @@ namespace Glyphtender.Unity
     {
         [Header("AI Settings")]
         [SerializeField] private string _personalityName = "Balanced";
+        [SerializeField] private AIDifficulty _difficulty = AIDifficulty.Apprentice;
         [SerializeField] private Player _aiPlayer = Player.Blue;
 
         [Header("Think Time")]
@@ -32,6 +33,7 @@ namespace Glyphtender.Unity
         public bool IsThinking => _isThinking;
         public string PersonalityName => _personalityName;
         public Player AIPlayer => _aiPlayer;
+        public AIDifficulty Difficulty => _difficulty;
 
         private void Awake()
         {
@@ -50,9 +52,9 @@ namespace Glyphtender.Unity
             _wordScorer = wordScorer;
 
             var personality = PersonalityPresets.GetByName(_personalityName);
-            _brain = new AIBrain(_aiPlayer, personality, _wordScorer);
+            _brain = new AIBrain(_aiPlayer, personality, _wordScorer, _difficulty);
 
-            Debug.Log($"AI initialized: {personality.Name} - {personality.Description}");
+            Debug.Log($"AI initialized: {personality.Name} ({_difficulty}) - {personality.Description}");
         }
 
         /// <summary>
@@ -65,8 +67,22 @@ namespace Glyphtender.Unity
             if (_wordScorer != null)
             {
                 var personality = PersonalityPresets.GetByName(_personalityName);
-                _brain = new AIBrain(_aiPlayer, personality, _wordScorer);
-                Debug.Log($"AI personality changed to: {personality.Name}");
+                _brain = new AIBrain(_aiPlayer, personality, _wordScorer, _difficulty);
+                Debug.Log($"AI personality changed to: {personality.Name} ({_difficulty})");
+            }
+        }
+
+        /// <summary>
+        /// Changes the AI difficulty mid-game.
+        /// </summary>
+        public void SetDifficulty(AIDifficulty difficulty)
+        {
+            _difficulty = difficulty;
+
+            if (_wordScorer != null && _brain != null)
+            {
+                _brain.SetDifficulty(difficulty);
+                Debug.Log($"AI difficulty changed to: {difficulty}");
             }
         }
 
@@ -80,7 +96,7 @@ namespace Glyphtender.Unity
             if (_brain != null && _wordScorer != null)
             {
                 var personality = PersonalityPresets.GetByName(_personalityName);
-                _brain = new AIBrain(_aiPlayer, personality, _wordScorer);
+                _brain = new AIBrain(_aiPlayer, personality, _wordScorer, _difficulty);
             }
         }
 
@@ -414,6 +430,14 @@ namespace Glyphtender.Unity
         public static string[] GetAvailablePersonalities()
         {
             return PersonalityPresets.GetAllNames();
+        }
+
+        /// <summary>
+        /// Gets all available difficulty names for UI.
+        /// </summary>
+        public static string[] GetAvailableDifficulties()
+        {
+            return new string[] { "Apprentice", "1st Class", "Archmage" };
         }
     }
 }

@@ -1,7 +1,17 @@
-using System;
+﻿using System;
 
 namespace Glyphtender.Core
 {
+    /// <summary>
+    /// AI difficulty levels affecting trait consistency and power.
+    /// </summary>
+    public enum AIDifficulty
+    {
+        Apprentice,  // Easy - wider ranges, lower average
+        FirstClass,  // Medium - baseline
+        Archmage     // Hard - tighter ranges, higher average
+    }
+
     /// <summary>
     /// A trait with a range of possible values.
     /// Each turn, the AI rolls within this range (after situational shifts).
@@ -61,6 +71,42 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
+        /// Applies difficulty scaling to this range.
+        /// </summary>
+        public void ApplyDifficulty(AIDifficulty difficulty)
+        {
+            float center = (Min + Max) / 2f;
+            float halfRange = (Max - Min) / 2f;
+
+            switch (difficulty)
+            {
+                case AIDifficulty.Apprentice:
+                    // Wider range (×1.3), lower center (-1)
+                    halfRange *= 1.3f;
+                    center -= 1f;
+                    break;
+                case AIDifficulty.FirstClass:
+                    // No change
+                    break;
+                case AIDifficulty.Archmage:
+                    // Tighter range (×0.7), higher center (+1)
+                    halfRange *= 0.7f;
+                    center += 1f;
+                    break;
+            }
+
+            Min = Clamp(center - halfRange, 1f, 10f);
+            Max = Clamp(center + halfRange, 1f, 10f);
+
+            if (Min > Max)
+            {
+                float temp = Min;
+                Min = Max;
+                Max = temp;
+            }
+        }
+
+        /// <summary>
         /// Rolls a value within this range.
         /// </summary>
         public float Roll(Random random)
@@ -83,7 +129,7 @@ namespace Glyphtender.Core
 
     /// <summary>
     /// Base personality traits as ranges.
-    /// These define the personality's tendencies � the space of possibility.
+    /// These define the personality's tendencies — the space of possibility.
     /// </summary>
     public class PersonalityTraitRanges
     {
@@ -131,6 +177,23 @@ namespace Glyphtender.Core
                 Opportunism = Opportunism.Clone(),
                 RiskTolerance = RiskTolerance.Clone()
             };
+        }
+
+        /// <summary>
+        /// Applies difficulty scaling to all trait ranges.
+        /// </summary>
+        public void ApplyDifficulty(AIDifficulty difficulty)
+        {
+            Aggression.ApplyDifficulty(difficulty);
+            Greed.ApplyDifficulty(difficulty);
+            Protectiveness.ApplyDifficulty(difficulty);
+            Patience.ApplyDifficulty(difficulty);
+            Spite.ApplyDifficulty(difficulty);
+            Positional.ApplyDifficulty(difficulty);
+            Cleverness.ApplyDifficulty(difficulty);
+            Verbosity.ApplyDifficulty(difficulty);
+            Opportunism.ApplyDifficulty(difficulty);
+            RiskTolerance.ApplyDifficulty(difficulty);
         }
     }
 
@@ -184,6 +247,18 @@ namespace Glyphtender.Core
         /// How much recent scoring trends affect behavior (0-1).
         /// </summary>
         public float MomentumSensitivity { get; set; } = 0.5f;
+
+        /// <summary>
+        /// How AI reacts to opponent's good plays.
+        /// -1 = demoralizes (lowers bounds), +1 = rallies (raises bounds), 0 = stoic
+        /// </summary>
+        public float MoraleDirection { get; set; } = 0f;
+
+        /// <summary>
+        /// How strongly morale affects trait bounds (0-1).
+        /// 0 = stoic (no effect), 1 = volatile (big swings)
+        /// </summary>
+        public float MoraleSensitivity { get; set; } = 0.5f;
     }
 
     /// <summary>
@@ -224,11 +299,43 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
+        /// Gets the morale multiplier based on opponent's last score.
+        /// </summary>
+        private float GetMoraleMultiplier(int lastOpponentScore)
+        {
+            // 3-7: no shift
+            // 8-11: minor shift (×0.5)
+            // 12-16: full shift (×1.0)
+            // 17+: amplified shift (×1.5)
+
+            if (lastOpponentScore >= 17) return 1.5f;
+            if (lastOpponentScore >= 12) return 1.0f;
+            if (lastOpponentScore >= 8) return 0.5f;
+            return 0f;
+        }
+
+        /// <summary>
+        /// Applies morale shift to a trait range.
+        /// </summary>
+        private void ApplyMorale(TraitRange range, float moraleMultiplier)
+        {
+            if (moraleMultiplier == 0f || SubTraits.MoraleSensitivity == 0f)
+                return;
+
+            float shift = moraleMultiplier * SubTraits.MoraleSensitivity * SubTraits.MoraleDirection;
+
+            // Morale shifts bounds based on direction
+            // Positive direction (rallies): raise both bounds when opponent does well
+            // Negative direction (demoralizes): lower both bounds when opponent does well
+            range.Shift(shift);
+        }
+
+        /// <summary>
         /// Rolls new effective traits for this turn.
         /// Call at the start of each AI turn.
         /// 
         /// Situational factors shift the trait ranges before rolling.
-        /// Endgame has escalating influence � the closer to game end,
+        /// Endgame has escalating influence — the closer to game end,
         /// the more survival pressure overrides base personality.
         /// </summary>
         public void RollEffectiveTraits(
@@ -237,10 +344,28 @@ namespace Glyphtender.Core
             float opponentPressure,
             float handQuality,
             float momentum,
-            float boardFillPercent)
+            float boardFillPercent,
+            AIDifficulty difficulty = AIDifficulty.FirstClass,
+            int lastOpponentScore = 0)
         {
             // Start with a copy of base ranges
             var shifted = BaseRanges.Clone();
+
+            // Apply difficulty scaling first
+            shifted.ApplyDifficulty(difficulty);
+
+            // Apply morale shifts
+            float moraleMultiplier = GetMoraleMultiplier(lastOpponentScore);
+            ApplyMorale(shifted.Aggression, moraleMultiplier);
+            ApplyMorale(shifted.Greed, moraleMultiplier);
+            ApplyMorale(shifted.Protectiveness, moraleMultiplier);
+            ApplyMorale(shifted.Patience, moraleMultiplier);
+            ApplyMorale(shifted.Spite, moraleMultiplier);
+            ApplyMorale(shifted.Positional, moraleMultiplier);
+            ApplyMorale(shifted.Cleverness, moraleMultiplier);
+            ApplyMorale(shifted.Verbosity, moraleMultiplier);
+            ApplyMorale(shifted.Opportunism, moraleMultiplier);
+            ApplyMorale(shifted.RiskTolerance, moraleMultiplier);
 
             // Calculate endgame multiplier (0 at start, 1 at 80%+ fill)
             float endgameMultiplier = 0f;
@@ -372,43 +497,10 @@ namespace Glyphtender.Core
     public static class PersonalityPresets
     {
         /// <summary>
-        /// Timid: Consistently cautious. Tight ranges, always defensive.
-        /// Weakness: Predictable, doesn't pressure.
-        /// Counter: Aggressive play.
-        /// </summary>
-        public static Personality CreateTimid()
-        {
-            return new Personality(
-                "Timid",
-                "Cautious and defensive. Tight ranges, rarely takes risks.",
-                new PersonalityTraitRanges
-                {
-                    Aggression = new TraitRange(1, 3),
-                    Greed = new TraitRange(2, 4),
-                    Protectiveness = new TraitRange(8, 10),
-                    Patience = new TraitRange(3, 5),
-                    Spite = new TraitRange(1, 2),
-                    Positional = new TraitRange(6, 8),
-                    Cleverness = new TraitRange(3, 5),
-                    Verbosity = new TraitRange(3, 5),
-                    Opportunism = new TraitRange(2, 4),
-                    RiskTolerance = new TraitRange(1, 3)
-                },
-                new SubTraits
-                {
-                    PlanningHorizon = 1,
-                    Flexibility = 0.7f,
-                    HandOptimism = 0.6f,
-                    EndgameAwareness = 0.3f,
-                    MomentumSensitivity = 0.4f
-                }
-            );
-        }
-
-        /// <summary>
         /// Bully: Aggressive disruptor. Focused on blocking and trapping.
-        /// Weakness: Ignores own scoring.
-        /// Counter: Solid defense while outscoring.
+        /// Pro: Tries to trap you with difficult letter placements.
+        /// Con: Values scoring much lower than others.
+        /// Morale: Rallies when challenged.
         /// </summary>
         public static Personality CreateBully()
         {
@@ -418,7 +510,7 @@ namespace Glyphtender.Core
                 new PersonalityTraitRanges
                 {
                     Aggression = new TraitRange(8, 10),
-                    Greed = new TraitRange(3, 5),
+                    Greed = new TraitRange(2, 4),
                     Protectiveness = new TraitRange(2, 4),
                     Patience = new TraitRange(1, 3),
                     Spite = new TraitRange(7, 9),
@@ -434,26 +526,66 @@ namespace Glyphtender.Core
                     Flexibility = 0.4f,
                     HandOptimism = 0.5f,
                     EndgameAwareness = 0.7f,
-                    MomentumSensitivity = 0.6f
+                    MomentumSensitivity = 0.6f,
+                    MoraleDirection = 1f,
+                    MoraleSensitivity = 0.7f
                 }
             );
         }
 
         /// <summary>
-        /// Builder: Patient architect. Tight ranges, commits to plans.
-        /// Weakness: Slow start, vulnerable to disruption.
-        /// Counter: Steal their setups.
+        /// Scholar: Word perfectionist. Seeks longer, rarer words.
+        /// Pro: Uses more rare/impressive words.
+        /// Con: Avoids seeking 2-letter words (may happen incidentally).
+        /// Morale: Demoralizes when outplayed.
+        /// </summary>
+        public static Personality CreateScholar()
+        {
+            return new Personality(
+                "Scholar",
+                "Word perfectionist. Seeks impressive long words.",
+                new PersonalityTraitRanges
+                {
+                    Aggression = new TraitRange(3, 5),
+                    Greed = new TraitRange(5, 7),
+                    Protectiveness = new TraitRange(4, 6),
+                    Patience = new TraitRange(6, 8),
+                    Spite = new TraitRange(2, 4),
+                    Positional = new TraitRange(3, 5),
+                    Cleverness = new TraitRange(4, 6),
+                    Verbosity = new TraitRange(8, 10),
+                    Opportunism = new TraitRange(4, 6),
+                    RiskTolerance = new TraitRange(3, 5)
+                },
+                new SubTraits
+                {
+                    PlanningHorizon = 2,
+                    Flexibility = 0.4f,
+                    HandOptimism = 0.3f,
+                    EndgameAwareness = 0.4f,
+                    MomentumSensitivity = 0.3f,
+                    MoraleDirection = -1f,
+                    MoraleSensitivity = 0.4f
+                }
+            );
+        }
+
+        /// <summary>
+        /// Builder: Extends existing words into longer chains.
+        /// Pro: Continuously builds words (ART → TART → START).
+        /// Con: Tunnel vision on own builds, misses opponent threats.
+        /// Morale: Demoralizes when builds are disrupted.
         /// </summary>
         public static Personality CreateBuilder()
         {
             return new Personality(
                 "Builder",
-                "Patient architect. Tight ranges, commits to elaborate setups.",
+                "Patient architect. Extends words into longer chains.",
                 new PersonalityTraitRanges
                 {
                     Aggression = new TraitRange(2, 4),
                     Greed = new TraitRange(6, 8),
-                    Protectiveness = new TraitRange(5, 7),
+                    Protectiveness = new TraitRange(3, 5),
                     Patience = new TraitRange(8, 10),
                     Spite = new TraitRange(1, 3),
                     Positional = new TraitRange(7, 9),
@@ -465,52 +597,21 @@ namespace Glyphtender.Core
                 new SubTraits
                 {
                     PlanningHorizon = 2,
-                    Flexibility = 0.3f,  // Commits to plans
+                    Flexibility = 0.3f,
                     HandOptimism = 0.4f,
                     EndgameAwareness = 0.5f,
-                    MomentumSensitivity = 0.3f
+                    MomentumSensitivity = 0.3f,
+                    MoraleDirection = -1f,
+                    MoraleSensitivity = 0.5f
                 }
             );
         }
 
         /// <summary>
-        /// Opportunist: Reactive scavenger. Wide ranges, highly adaptable.
-        /// Weakness: No long-term plan.
-        /// Counter: Tight play that doesn't leave openings.
-        /// </summary>
-        public static Personality CreateOpportunist()
-        {
-            return new Personality(
-                "Opportunist",
-                "Reactive scavenger. Wide ranges, pounces on openings.",
-                new PersonalityTraitRanges
-                {
-                    Aggression = new TraitRange(4, 8),
-                    Greed = new TraitRange(6, 10),
-                    Protectiveness = new TraitRange(3, 7),
-                    Patience = new TraitRange(1, 5),
-                    Spite = new TraitRange(4, 8),
-                    Positional = new TraitRange(2, 6),
-                    Cleverness = new TraitRange(4, 8),
-                    Verbosity = new TraitRange(3, 7),
-                    Opportunism = new TraitRange(8, 10),
-                    RiskTolerance = new TraitRange(4, 8)
-                },
-                new SubTraits
-                {
-                    PlanningHorizon = 1,
-                    Flexibility = 0.9f,  // Very adaptable
-                    HandOptimism = 0.6f,
-                    EndgameAwareness = 0.5f,
-                    MomentumSensitivity = 0.7f
-                }
-            );
-        }
-
-        /// <summary>
-        /// Balanced: Jack of all trades. Medium ranges centered at 5.
-        /// Weakness: No standout strength.
-        /// Counter: Any focused strategy.
+        /// Balanced: Jack of all trades. No standout strengths or weaknesses.
+        /// Pro: Adapts to any situation.
+        /// Con: No extreme capabilities.
+        /// Morale: Stoic - unaffected by opponent's plays.
         /// </summary>
         public static Personality CreateBalanced()
         {
@@ -536,109 +637,9 @@ namespace Glyphtender.Core
                     Flexibility = 0.5f,
                     HandOptimism = 0.5f,
                     EndgameAwareness = 0.5f,
-                    MomentumSensitivity = 0.5f
-                }
-            );
-        }
-
-        /// <summary>
-        /// Chaotic: Unpredictable wildcard. Very wide ranges.
-        /// Weakness: Inconsistent, self-destructs.
-        /// Counter: Steady play; let them beat themselves.
-        /// </summary>
-        public static Personality CreateChaotic()
-        {
-            return new Personality(
-                "Chaotic",
-                "Unpredictable wildcard. Very wide ranges, anything can happen.",
-                new PersonalityTraitRanges
-                {
-                    Aggression = new TraitRange(3, 10),
-                    Greed = new TraitRange(2, 10),
-                    Protectiveness = new TraitRange(1, 6),
-                    Patience = new TraitRange(1, 4),
-                    Spite = new TraitRange(3, 10),
-                    Positional = new TraitRange(1, 5),
-                    Cleverness = new TraitRange(2, 8),
-                    Verbosity = new TraitRange(1, 8),
-                    Opportunism = new TraitRange(4, 10),
-                    RiskTolerance = new TraitRange(6, 10)
-                },
-                new SubTraits
-                {
-                    PlanningHorizon = 1,
-                    Flexibility = 0.9f,
-                    HandOptimism = 0.7f,
-                    EndgameAwareness = 0.3f,
-                    MomentumSensitivity = 0.8f
-                }
-            );
-        }
-
-        /// <summary>
-        /// Scholar: Word perfectionist. Tight high ranges for word skills.
-        /// Weakness: Overthinks, misses simple moves.
-        /// Counter: Fast simple plays.
-        /// </summary>
-        public static Personality CreateScholar()
-        {
-            return new Personality(
-                "Scholar",
-                "Word perfectionist. Seeks impressive long words and combos.",
-                new PersonalityTraitRanges
-                {
-                    Aggression = new TraitRange(3, 5),
-                    Greed = new TraitRange(5, 7),
-                    Protectiveness = new TraitRange(4, 6),
-                    Patience = new TraitRange(6, 8),
-                    Spite = new TraitRange(2, 4),
-                    Positional = new TraitRange(3, 5),
-                    Cleverness = new TraitRange(8, 10),
-                    Verbosity = new TraitRange(8, 10),
-                    Opportunism = new TraitRange(4, 6),
-                    RiskTolerance = new TraitRange(3, 5)
-                },
-                new SubTraits
-                {
-                    PlanningHorizon = 2,
-                    Flexibility = 0.4f,
-                    HandOptimism = 0.3f,  // Very picky
-                    EndgameAwareness = 0.4f,
-                    MomentumSensitivity = 0.3f
-                }
-            );
-        }
-
-        /// <summary>
-        /// Shark: Ruthless closer. Escalates as opponent weakens.
-        /// Weakness: Overcommits to aggression.
-        /// Counter: Bait into overextension.
-        /// </summary>
-        public static Personality CreateShark()
-        {
-            return new Personality(
-                "Shark",
-                "Ruthless closer. Smells blood and goes for the kill.",
-                new PersonalityTraitRanges
-                {
-                    Aggression = new TraitRange(6, 9),
-                    Greed = new TraitRange(5, 8),
-                    Protectiveness = new TraitRange(3, 5),
-                    Patience = new TraitRange(4, 6),
-                    Spite = new TraitRange(5, 8),
-                    Positional = new TraitRange(5, 7),
-                    Cleverness = new TraitRange(5, 7),
-                    Verbosity = new TraitRange(5, 7),
-                    Opportunism = new TraitRange(7, 9),
-                    RiskTolerance = new TraitRange(5, 8)
-                },
-                new SubTraits
-                {
-                    PlanningHorizon = 2,
-                    Flexibility = 0.6f,
-                    HandOptimism = 0.5f,
-                    EndgameAwareness = 0.8f,  // Knows when to finish
-                    MomentumSensitivity = 0.7f
+                    MomentumSensitivity = 0.5f,
+                    MoraleDirection = 0f,
+                    MoraleSensitivity = 0f
                 }
             );
         }
@@ -651,14 +652,10 @@ namespace Glyphtender.Core
         {
             switch (name.ToLower())
             {
-                case "timid": return CreateTimid();
                 case "bully": return CreateBully();
-                case "builder": return CreateBuilder();
-                case "opportunist": return CreateOpportunist();
-                case "balanced": return CreateBalanced();
-                case "chaotic": return CreateChaotic();
                 case "scholar": return CreateScholar();
-                case "shark": return CreateShark();
+                case "builder": return CreateBuilder();
+                case "balanced": return CreateBalanced();
                 default: return CreateBalanced();
             }
         }
@@ -670,8 +667,7 @@ namespace Glyphtender.Core
         {
             return new string[]
             {
-                "Timid", "Bully", "Builder", "Opportunist",
-                "Balanced", "Chaotic", "Scholar", "Shark"
+                "Bully", "Scholar", "Builder", "Balanced"
             };
         }
     }
