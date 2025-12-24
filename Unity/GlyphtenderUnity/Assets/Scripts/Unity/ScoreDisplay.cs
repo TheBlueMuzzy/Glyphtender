@@ -274,34 +274,23 @@ namespace Glyphtender.Unity
                 var state = GameManager.Instance.GameState;
                 var currentPlayer = state.CurrentPlayer;
 
-                // Temporarily add the tile for scoring calculation
-                bool hadTile = state.Tiles.ContainsKey(pendingCastPosition.Value);
-                Tile oldTile = hadTile ? state.Tiles[pendingCastPosition.Value] : null;
-                state.Tiles[pendingCastPosition.Value] = new Tile(
+                // Create simulation state for preview calculation (never mutate live state)
+                var simState = state.Clone();
+                simState.Tiles[pendingCastPosition.Value] = new Tile(
                     pendingLetter.Value,
                     currentPlayer,
                     pendingCastPosition.Value);
 
                 var words = GameManager.Instance.WordScorer.FindWordsAt(
-                    state,
+                    simState,
                     pendingCastPosition.Value,
                     pendingLetter.Value);
 
                 int totalScore = 0;
                 foreach (var word in words)
                 {
-                    int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, state, currentPlayer);
+                    int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, simState, currentPlayer);
                     totalScore += wordScore;
-                }
-
-                // Restore original state
-                if (hadTile)
-                {
-                    state.Tiles[pendingCastPosition.Value] = oldTile;
-                }
-                else
-                {
-                    state.Tiles.Remove(pendingCastPosition.Value);
                 }
 
                 if (totalScore > 0)
