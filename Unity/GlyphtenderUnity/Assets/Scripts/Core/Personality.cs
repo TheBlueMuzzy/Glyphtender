@@ -667,45 +667,6 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Vulture: Opportunistic denier. Steals opponent's word setups.
-        /// Pro: Prioritizes positions opponent wants, denies their plans.
-        /// Con: Reactive rather than building own strategy.
-        /// Morale: Rallies when stealing opportunities appear.
-        /// </summary>
-        public static Personality CreateVulture()
-        {
-            return new Personality(
-                "Vulture",
-                "Opportunistic denier. Steals opponent's word setups.",
-                new PersonalityTraitRanges
-                {
-                    Aggression = new TraitRange(5, 7),
-                    Greed = new TraitRange(5, 7),
-                    Protectiveness = new TraitRange(3, 5),
-                    Patience = new TraitRange(2, 4),
-                    Spite = new TraitRange(6, 8),
-                    Positional = new TraitRange(4, 6),
-                    Cleverness = new TraitRange(5, 7),
-                    Verbosity = new TraitRange(4, 6),
-                    Opportunism = new TraitRange(8, 10),
-                    RiskTolerance = new TraitRange(5, 7),
-                    TrapFocus = new TraitRange(3, 5),
-                    DenialFocus = new TraitRange(8, 10)
-                },
-                new SubTraits
-                {
-                    PlanningHorizon = 1,
-                    Flexibility = 0.8f,
-                    HandOptimism = 0.5f,
-                    EndgameAwareness = 0.6f,
-                    MomentumSensitivity = 0.5f,
-                    MoraleDirection = 1f,
-                    MoraleSensitivity = 0.5f
-                }
-            );
-        }
-
-        /// <summary>
         /// Gets a personality by name (case-insensitive).
         /// Returns Balanced if name not found.
         /// </summary>
@@ -717,7 +678,6 @@ namespace Glyphtender.Core
                 case "scholar": return CreateScholar();
                 case "builder": return CreateBuilder();
                 case "balanced": return CreateBalanced();
-                case "vulture": return CreateVulture();
                 default: return CreateBalanced();
             }
         }
@@ -729,7 +689,7 @@ namespace Glyphtender.Core
         {
             return new string[]
             {
-                "Bully", "Scholar", "Builder", "Balanced", "Vulture"
+                "Bully", "Scholar", "Builder", "Balanced"
             };
         }
     }
