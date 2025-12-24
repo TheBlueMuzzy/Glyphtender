@@ -142,6 +142,7 @@ namespace Glyphtender.Unity
         {
 
             TweenManager.EnsureExists();
+            InputStateManager.EnsureExists();
 
             if (GameManager.Instance != null)
             {
@@ -720,8 +721,18 @@ namespace Glyphtender.Unity
         private Camera _mainCamera;
         private int _dragFingerId = -1;  // Track which finger started the drag
 
-        private static bool _isAnyDragging;
-        public static bool IsDraggingGlyphling => _isAnyDragging;
+        /// <summary>
+        /// True if any glyphling is currently being dragged.
+        /// Used by TouchInputController to disable panning.
+        /// </summary>
+        public static bool IsDraggingGlyphling
+        {
+            get
+            {
+                if (InputStateManager.Instance == null) return false;
+                return InputStateManager.Instance.IsGlyphlingDragging;
+            }
+        }
 
         private void Start()
         {
@@ -792,7 +803,7 @@ namespace Glyphtender.Unity
                     _draggedObject.transform.position = _originalPosition;
 
                     _isDragging = true;
-                    _isAnyDragging = true;
+                    InputStateManager.Instance.IsGlyphlingDragging = true;
 
                     // Select this glyphling
                     GameManager.Instance.SelectGlyphling(glyphlingHere);
@@ -905,7 +916,10 @@ namespace Glyphtender.Unity
         private void EndDrag()
         {
             _isDragging = false;
-            _isAnyDragging = false;
+            if (InputStateManager.Instance != null)
+            {
+                InputStateManager.Instance.IsGlyphlingDragging = false;
+            }
             BoardRenderer.ClearHoverHighlight();
 
             // Check if dropped on valid hex

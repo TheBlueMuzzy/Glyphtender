@@ -22,30 +22,35 @@ namespace Glyphtender.Unity
         private int _originalLayer;
         private Color _originalColor;
         private Camera _mainCamera;
-        private BoardRenderer _boardRenderer;
         private HexCoord? _hoveredHex;
         private Renderer _renderer;
         private int _dragFingerId = -1;  // Track which finger started the drag
-
-        private static HandTileDragHandler _currentlyPlacedTile;
-        private static bool _isDraggingAny;
 
         /// <summary>
         /// True if any hand tile is currently being dragged.
         /// Used by TouchInputController to disable panning.
         /// </summary>
-        public static bool IsDraggingTile => _isDraggingAny;
+        public static bool IsDraggingTile
+        {
+            get
+            {
+                if (InputStateManager.Instance == null) return false;
+                return InputStateManager.Instance.IsTileDragging;
+            }
+        }
 
         private void Start()
         {
             _mainCamera = Camera.main;
-            _boardRenderer = FindObjectOfType<BoardRenderer>();
             _renderer = GetComponent<Renderer>();
             if (_renderer != null)
             {
                 _originalColor = _renderer.material.color;
             }
             _originalLayer = gameObject.layer;
+
+            // Ensure InputStateManager exists
+            InputStateManager.EnsureExists();
         }
 
         private void OnMouseDown()
@@ -68,9 +73,10 @@ namespace Glyphtender.Unity
             }
 
             // If another tile is already placed (and it's not this one), return it to hand first
-            if (_currentlyPlacedTile != null && _currentlyPlacedTile != this && !_isPlaced)
+            var currentlyPlaced = InputStateManager.Instance.CurrentlyPlacedTile;
+            if (currentlyPlaced != null && currentlyPlaced != this && !_isPlaced)
             {
-                _currentlyPlacedTile.ReturnToHand();
+                currentlyPlaced.ReturnToHand();
             }
 
             // If this tile isn't already placed, save original position
@@ -99,7 +105,7 @@ namespace Glyphtender.Unity
             }
 
             _isDragging = true;
-            _isDraggingAny = true;
+            InputStateManager.Instance.IsTileDragging = true;
 
             // Capture which finger started this drag
             _dragFingerId = -1;  // -1 means mouse
@@ -213,8 +219,10 @@ namespace Glyphtender.Unity
 
         private void UpdateHoverHighlight(Vector3 mouseWorldPos)
         {
+            if (BoardRenderer.Instance == null) return;
+
             // Check which hex we're hovering over
-            HexCoord? newHoveredHex = _boardRenderer.WorldToHex(mouseWorldPos);
+            HexCoord? newHoveredHex = BoardRenderer.Instance.WorldToHex(mouseWorldPos);
 
             if (newHoveredHex != _hoveredHex)
             {
@@ -223,11 +231,11 @@ namespace Glyphtender.Unity
                 // Show highlight if over a valid cast position
                 if (_hoveredHex != null && GameManager.Instance.ValidCasts.Contains(_hoveredHex.Value))
                 {
-                    _boardRenderer.SetHoverHighlight(_hoveredHex.Value);
+                    BoardRenderer.Instance.SetHoverHighlight(_hoveredHex.Value);
                 }
                 else
                 {
-                    _boardRenderer.ClearHoverHighlight();
+                    BoardRenderer.Instance.ClearHoverHighlight();
                 }
             }
         }
@@ -235,8 +243,8 @@ namespace Glyphtender.Unity
         private void EndDrag()
         {
             _isDragging = false;
-            _isDraggingAny = false;
-            _boardRenderer.ClearHoverHighlight();
+            InputStateManager.Instance.IsTileDragging = false;
+            BoardRenderer.Instance?.ClearHoverHighlight();
 
             // Check if dropped on valid hex
             if (_hoveredHex != null && GameManager.Instance.ValidCasts.Contains(_hoveredHex.Value))
@@ -245,7 +253,7 @@ namespace Glyphtender.Unity
                 GameManager.Instance.SelectCastPosition(_hoveredHex.Value);
 
                 // Position tile on the board
-                Vector3 boardPos = _boardRenderer.HexToWorld(_hoveredHex.Value) + Vector3.up * 0.2f;
+                Vector3 boardPos = BoardRenderer.Instance.HexToWorld(_hoveredHex.Value) + Vector3.up * 0.2f;
                 transform.position = boardPos;
                 transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
                 transform.rotation = Quaternion.Euler(0f, 0f, 0f);
@@ -256,7 +264,7 @@ namespace Glyphtender.Unity
 
                 // Mark as placed
                 _isPlaced = true;
-                _currentlyPlacedTile = this;
+                InputStateManager.Instance.CurrentlyPlacedTile = this;
 
                 // Show confirm button
                 Controller.ShowConfirmButton();
@@ -290,9 +298,9 @@ namespace Glyphtender.Unity
             _isPlaced = false;
             _isDragging = false;
 
-            if (_currentlyPlacedTile == this)
+            if (InputStateManager.Instance != null && InputStateManager.Instance.CurrentlyPlacedTile == this)
             {
-                _currentlyPlacedTile = null;
+                InputStateManager.Instance.CurrentlyPlacedTile = null;
             }
 
             GameManager.Instance.ClearPendingLetter();
@@ -311,7 +319,11 @@ namespace Glyphtender.Unity
                 // Hide this tile - the real tile will be created by BoardRenderer
                 gameObject.SetActive(false);
                 _isPlaced = false;
-                _currentlyPlacedTile = null;
+
+                if (InputStateManager.Instance != null && InputStateManager.Instance.CurrentlyPlacedTile == this)
+                {
+                    InputStateManager.Instance.CurrentlyPlacedTile = null;
+                }
             }
         }
 
@@ -336,9 +348,9 @@ namespace Glyphtender.Unity
             SetGhostAppearance(false);
             _isPlaced = false;
 
-            if (_currentlyPlacedTile == this)
+            if (InputStateManager.Instance != null && InputStateManager.Instance.CurrentlyPlacedTile == this)
             {
-                _currentlyPlacedTile = null;
+                InputStateManager.Instance.CurrentlyPlacedTile = null;
             }
         }
 
@@ -396,9 +408,9 @@ namespace Glyphtender.Unity
         /// </summary>
         public static void ReturnCurrentlyPlacedTile()
         {
-            if (_currentlyPlacedTile != null)
+            if (InputStateManager.Instance != null && InputStateManager.Instance.CurrentlyPlacedTile != null)
             {
-                _currentlyPlacedTile.ReturnToHand();
+                InputStateManager.Instance.CurrentlyPlacedTile.ReturnToHand();
             }
         }
     }
