@@ -46,6 +46,7 @@ namespace Glyphtender.Core
         public float PositionalValue { get; set; }
         public float TrapScore { get; set; }
         public bool HasKillShot { get; set; }
+        public float DenialValue { get; set; }
 
         // Final weighted score
         public float TotalScore { get; set; }
@@ -145,6 +146,9 @@ namespace Glyphtender.Core
             var trapEval = TrapDetector.Evaluate(state, move.CastPosition, move.Destination, aiPlayer);
             eval.TrapScore = trapEval.TotalScore;
             eval.HasKillShot = trapEval.HasKillShot;
+
+            // Evaluate denial value (contested positions opponent wants)
+            eval.DenialValue = ContestDetector.GetDenialValue(state, move.CastPosition, aiPlayer, wordScorer);
 
             // Calculate weighted total score based on personality
             eval.TotalScore = CalculateWeightedScore(eval, traits, perceivedLead);
@@ -300,6 +304,9 @@ namespace Glyphtender.Core
             // Trap score weighted by TrapFocus
             score += eval.TrapScore * (traits.TrapFocus / 5f);
 
+            // Denial value weighted by DenialFocus (Vulture behavior)
+            score += eval.DenialValue * (traits.DenialFocus / 5f);
+
             // Kill shot evaluation — ending the game when losing = bad
             // Uses perceived lead (fuzzy), not actual score
             if (eval.HasKillShot)
@@ -357,6 +364,9 @@ namespace Glyphtender.Core
                 parts.Add("KILL");
             else if (eval.TrapScore > 5)
                 parts.Add("trap");
+
+            if (eval.DenialValue > 2)
+                parts.Add("deny");
 
             return string.Join(",", parts);
         }

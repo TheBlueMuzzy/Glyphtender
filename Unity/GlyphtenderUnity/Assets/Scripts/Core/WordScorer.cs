@@ -230,8 +230,11 @@ namespace Glyphtender.Core
 
                     foreach (var word in wordsInLine)
                     {
-                        // Only add if we haven't found this exact word already
-                        string wordKey = $"{word.Letters}_{word.Positions[0]}";
+                        // Create unique key using explicit coordinates (start AND end position)
+                        var startPos = word.Positions[0];
+                        var endPos = word.Positions[word.Positions.Count - 1];
+                        string wordKey = $"{word.Letters}_{startPos.Column},{startPos.Row}_{endPos.Column},{endPos.Row}";
+
                         if (!foundWords.Contains(wordKey))
                         {
                             foundWords.Add(wordKey);

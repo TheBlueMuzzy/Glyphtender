@@ -144,6 +144,7 @@ namespace Glyphtender.Core
         public TraitRange Opportunism { get; set; }
         public TraitRange RiskTolerance { get; set; }
         public TraitRange TrapFocus { get; set; }
+        public TraitRange DenialFocus { get; set; }
 
         public PersonalityTraitRanges()
         {
@@ -159,6 +160,7 @@ namespace Glyphtender.Core
             Opportunism = new TraitRange(4, 6);
             RiskTolerance = new TraitRange(4, 6);
             TrapFocus = new TraitRange(4, 6);
+            DenialFocus = new TraitRange(4, 6);
         }
 
         /// <summary>
@@ -178,7 +180,8 @@ namespace Glyphtender.Core
                 Verbosity = Verbosity.Clone(),
                 Opportunism = Opportunism.Clone(),
                 RiskTolerance = RiskTolerance.Clone(),
-                TrapFocus = TrapFocus.Clone()
+                TrapFocus = TrapFocus.Clone(),
+                DenialFocus = DenialFocus.Clone()
             };
         }
 
@@ -198,6 +201,7 @@ namespace Glyphtender.Core
             Opportunism.ApplyDifficulty(difficulty);
             RiskTolerance.ApplyDifficulty(difficulty);
             TrapFocus.ApplyDifficulty(difficulty);
+            DenialFocus.ApplyDifficulty(difficulty);
         }
     }
 
@@ -218,6 +222,7 @@ namespace Glyphtender.Core
         public float Opportunism { get; set; }
         public float RiskTolerance { get; set; }
         public float TrapFocus { get; set; }
+        public float DenialFocus { get; set; }
     }
 
     /// <summary>
@@ -372,6 +377,7 @@ namespace Glyphtender.Core
             ApplyMorale(shifted.Opportunism, moraleMultiplier);
             ApplyMorale(shifted.RiskTolerance, moraleMultiplier);
             ApplyMorale(shifted.TrapFocus, moraleMultiplier);
+            ApplyMorale(shifted.DenialFocus, moraleMultiplier);
 
             // Calculate endgame multiplier (0 at start, 1 at 80%+ fill)
             float endgameMultiplier = 0f;
@@ -486,6 +492,7 @@ namespace Glyphtender.Core
             EffectiveTraits.Opportunism = shifted.Opportunism.Roll(_random);
             EffectiveTraits.RiskTolerance = shifted.RiskTolerance.Roll(_random);
             EffectiveTraits.TrapFocus = shifted.TrapFocus.Roll(_random);
+            EffectiveTraits.DenialFocus = shifted.DenialFocus.Roll(_random);
         }
 
         /// <summary>
@@ -526,7 +533,8 @@ namespace Glyphtender.Core
                     Verbosity = new TraitRange(2, 4),
                     Opportunism = new TraitRange(6, 8),
                     RiskTolerance = new TraitRange(6, 8),
-                    TrapFocus = new TraitRange(7, 10)
+                    TrapFocus = new TraitRange(7, 10),
+                    DenialFocus = new TraitRange(5, 7)
                 },
                 new SubTraits
                 {
@@ -564,7 +572,8 @@ namespace Glyphtender.Core
                     Verbosity = new TraitRange(8, 10),
                     Opportunism = new TraitRange(4, 6),
                     RiskTolerance = new TraitRange(3, 5),
-                    TrapFocus = new TraitRange(1, 3)
+                    TrapFocus = new TraitRange(1, 3),
+                    DenialFocus = new TraitRange(1, 3)
                 },
                 new SubTraits
                 {
@@ -602,7 +611,8 @@ namespace Glyphtender.Core
                     Verbosity = new TraitRange(7, 9),
                     Opportunism = new TraitRange(3, 5),
                     RiskTolerance = new TraitRange(3, 5),
-                    TrapFocus = new TraitRange(2, 4)
+                    TrapFocus = new TraitRange(2, 4),
+                    DenialFocus = new TraitRange(1, 3)
                 },
                 new SubTraits
                 {
@@ -640,7 +650,8 @@ namespace Glyphtender.Core
                     Verbosity = new TraitRange(4, 6),
                     Opportunism = new TraitRange(4, 6),
                     RiskTolerance = new TraitRange(4, 6),
-                    TrapFocus = new TraitRange(4, 6)
+                    TrapFocus = new TraitRange(4, 6),
+                    DenialFocus = new TraitRange(3, 5)
                 },
                 new SubTraits
                 {
@@ -651,6 +662,45 @@ namespace Glyphtender.Core
                     MomentumSensitivity = 0.5f,
                     MoraleDirection = 0f,
                     MoraleSensitivity = 0f
+                }
+            );
+        }
+
+        /// <summary>
+        /// Vulture: Opportunistic denier. Steals opponent's word setups.
+        /// Pro: Prioritizes positions opponent wants, denies their plans.
+        /// Con: Reactive rather than building own strategy.
+        /// Morale: Rallies when stealing opportunities appear.
+        /// </summary>
+        public static Personality CreateVulture()
+        {
+            return new Personality(
+                "Vulture",
+                "Opportunistic denier. Steals opponent's word setups.",
+                new PersonalityTraitRanges
+                {
+                    Aggression = new TraitRange(5, 7),
+                    Greed = new TraitRange(5, 7),
+                    Protectiveness = new TraitRange(3, 5),
+                    Patience = new TraitRange(2, 4),
+                    Spite = new TraitRange(6, 8),
+                    Positional = new TraitRange(4, 6),
+                    Cleverness = new TraitRange(5, 7),
+                    Verbosity = new TraitRange(4, 6),
+                    Opportunism = new TraitRange(8, 10),
+                    RiskTolerance = new TraitRange(5, 7),
+                    TrapFocus = new TraitRange(3, 5),
+                    DenialFocus = new TraitRange(8, 10)
+                },
+                new SubTraits
+                {
+                    PlanningHorizon = 1,
+                    Flexibility = 0.8f,
+                    HandOptimism = 0.5f,
+                    EndgameAwareness = 0.6f,
+                    MomentumSensitivity = 0.5f,
+                    MoraleDirection = 1f,
+                    MoraleSensitivity = 0.5f
                 }
             );
         }
@@ -667,6 +717,7 @@ namespace Glyphtender.Core
                 case "scholar": return CreateScholar();
                 case "builder": return CreateBuilder();
                 case "balanced": return CreateBalanced();
+                case "vulture": return CreateVulture();
                 default: return CreateBalanced();
             }
         }
@@ -678,7 +729,7 @@ namespace Glyphtender.Core
         {
             return new string[]
             {
-                "Bully", "Scholar", "Builder", "Balanced"
+                "Bully", "Scholar", "Builder", "Balanced", "Vulture"
             };
         }
     }

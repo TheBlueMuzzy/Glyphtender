@@ -177,7 +177,7 @@ namespace Glyphtender.Unity
                     var aiController = FindObjectOfType<AIController>();
                     if (aiController == null) return "Off";
 
-                    string[] options = { "Off", "Bully", "Scholar", "Builder", "Balanced" };
+                    string[] options = { "Off", "Bully", "Scholar", "Builder", "Balanced", "Vulture" };
                     string current = aiController.enabled ? aiController.PersonalityName : "Off";
 
                     int currentIndex = System.Array.IndexOf(options, current);
