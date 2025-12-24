@@ -59,7 +59,7 @@ namespace Glyphtender.Unity
         public Material panelMaterial;
         public Material buttonMaterial;
         public float panelWidth = 3.2f;
-        public float panelHeight = 2.8f;
+        public float panelHeight = 4.2f;
         public float menuZ = 5f;
 
         [Header("Animation")]
@@ -74,7 +74,9 @@ namespace Glyphtender.Unity
 
         // Tracked rows for enable/disable
         private MenuRow _dragOffsetRow;
-        private MenuRow _difficultyRow;
+        private MenuRow _yellowDifficultyRow;
+        private MenuRow _blueDifficultyRow;
+        private MenuRow _speedRow;
 
         // Animation
         private bool _isAnimating;
@@ -108,6 +110,12 @@ namespace Glyphtender.Unity
 
         private void Update()
         {
+            // Q key always opens menu (escape hatch for AI vs AI)
+            if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.Escape))
+            {
+                ToggleMenu();
+            }
+
             if (_isAnimating)
             {
                 _animationTime += Time.deltaTime;
@@ -142,10 +150,155 @@ namespace Glyphtender.Unity
             CreateTitle();
 
             // Menu rows
-            float yPos = 0.8f;
-            float rowSpacing = 0.5f;
+            float yPos = 1.5f;
+            float rowSpacing = 0.45f;
 
-            // Input Mode toggle
+            string[] aiOptions = { "Off", "Bully", "Scholar", "Builder", "Balanced" };
+
+            // --- Yellow Player AI ---
+            CreateMenuRow("Yellow", yPos,
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null || aiManager.YellowAI == null) return "Off";
+
+                    var ai = aiManager.YellowAI;
+                    string current = ai.enabled ? ai.PersonalityName : "Off";
+
+                    int currentIndex = System.Array.IndexOf(aiOptions, current);
+                    if (currentIndex < 0) currentIndex = 0;
+                    int nextIndex = (currentIndex + 1) % aiOptions.Length;
+
+                    string next = aiOptions[nextIndex];
+                    if (next == "Off")
+                    {
+                        ai.enabled = false;
+                    }
+                    else
+                    {
+                        ai.enabled = true;
+                        ai.SetPersonality(next);
+
+                        // If it's this AI's turn, take over
+                        if (GameManager.Instance.GameState.CurrentPlayer == Player.Yellow)
+                        {
+                            CloseMenu();
+                            ai.TakeOverTurn(GameManager.Instance.GameState);
+                        }
+                    }
+
+                    UpdateRowStates();
+                    return next;
+                },
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null || aiManager.YellowAI == null || !aiManager.YellowAI.enabled)
+                        return "Off";
+                    return aiManager.YellowAI.PersonalityName;
+                }
+            );
+            yPos -= rowSpacing;
+
+            // Yellow Difficulty
+            _yellowDifficultyRow = CreateMenuRow("Y Difficulty", yPos,
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null || aiManager.YellowAI == null || !aiManager.YellowAI.enabled)
+                        return "Apprentice";
+
+                    var ai = aiManager.YellowAI;
+                    AIDifficulty next = CycleDifficulty(ai.Difficulty);
+                    ai.SetDifficulty(next);
+                    return GetDifficultyDisplayName(next);
+                },
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null || aiManager.YellowAI == null)
+                        return "Apprentice";
+                    return GetDifficultyDisplayName(aiManager.YellowAI.Difficulty);
+                }
+            );
+            yPos -= rowSpacing;
+
+            // --- Blue Player AI ---
+            CreateMenuRow("Blue", yPos,
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null || aiManager.BlueAI == null) return "Off";
+
+                    var ai = aiManager.BlueAI;
+                    string current = ai.enabled ? ai.PersonalityName : "Off";
+
+                    int currentIndex = System.Array.IndexOf(aiOptions, current);
+                    if (currentIndex < 0) currentIndex = 0;
+                    int nextIndex = (currentIndex + 1) % aiOptions.Length;
+
+                    string next = aiOptions[nextIndex];
+                    if (next == "Off")
+                    {
+                        ai.enabled = false;
+                    }
+                    else
+                    {
+                        ai.enabled = true;
+                        ai.SetPersonality(next);
+
+                        // If it's this AI's turn, take over
+                        if (GameManager.Instance.GameState.CurrentPlayer == Player.Blue)
+                        {
+                            CloseMenu();
+                            ai.TakeOverTurn(GameManager.Instance.GameState);
+                        }
+                    }
+
+                    UpdateRowStates();
+                    return next;
+                },
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null || aiManager.BlueAI == null || !aiManager.BlueAI.enabled)
+                        return "Off";
+                    return aiManager.BlueAI.PersonalityName;
+                }
+            );
+            yPos -= rowSpacing;
+
+            // Blue Difficulty
+            _blueDifficultyRow = CreateMenuRow("B Difficulty", yPos,
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null || aiManager.BlueAI == null || !aiManager.BlueAI.enabled)
+                        return "Apprentice";
+
+                    var ai = aiManager.BlueAI;
+                    AIDifficulty next = CycleDifficulty(ai.Difficulty);
+                    ai.SetDifficulty(next);
+                    return GetDifficultyDisplayName(next);
+                },
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null || aiManager.BlueAI == null)
+                        return "Apprentice";
+                    return GetDifficultyDisplayName(aiManager.BlueAI.Difficulty);
+                }
+            );
+            yPos -= rowSpacing;
+
+            // --- AI Speed (only visible in AI vs AI) ---
+            _speedRow = CreateMenuRow("AI Speed", yPos,
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null) return "Normal";
+                    return aiManager.CycleSpeed();
+                },
+                () => {
+                    var aiManager = AIManager.Instance;
+                    if (aiManager == null) return "Normal";
+                    return aiManager.GetSpeedName();
+                }
+            );
+            yPos -= rowSpacing;
+
+            // --- Input Mode toggle ---
             CreateMenuRow("Input Mode", yPos,
                 () => {
                     var newMode = GameManager.Instance.CurrentInputMode == GameManager.InputMode.Tap
@@ -171,81 +324,6 @@ namespace Glyphtender.Unity
             );
             yPos -= rowSpacing;
 
-            // AI Personality toggle
-            CreateMenuRow("AI", yPos,
-                () => {
-                    var aiController = FindObjectOfType<AIController>();
-                    if (aiController == null) return "Off";
-
-                    string[] options = { "Off", "Bully", "Scholar", "Builder", "Balanced" };
-                    string current = aiController.enabled ? aiController.PersonalityName : "Off";
-
-                    int currentIndex = System.Array.IndexOf(options, current);
-                    if (currentIndex < 0) currentIndex = 0;
-                    int nextIndex = (currentIndex + 1) % options.Length;
-
-                    string next = options[nextIndex];
-                    if (next == "Off")
-                    {
-                        aiController.enabled = false;
-                    }
-                    else
-                    {
-                        aiController.enabled = true;
-                        aiController.SetPersonality(next);
-
-                        // If it's AI's turn, take over immediately
-                        if (GameManager.Instance.GameState.CurrentPlayer == aiController.AIPlayer)
-                        {
-                            CloseMenu();
-                            aiController.TakeOverTurn(GameManager.Instance.GameState);
-                        }
-                    }
-
-                    UpdateRowStates();
-                    return next;
-                },
-                () => {
-                    var aiController = FindObjectOfType<AIController>();
-                    if (aiController == null || !aiController.enabled) return "Off";
-                    return aiController.PersonalityName;
-                }
-            );
-            yPos -= rowSpacing;
-
-            // AI Difficulty toggle
-            _difficultyRow = CreateMenuRow("Difficulty", yPos,
-                () => {
-                    var aiController = FindObjectOfType<AIController>();
-                    if (aiController == null || !aiController.enabled) return "Apprentice";
-
-                    AIDifficulty current = aiController.Difficulty;
-                    AIDifficulty next;
-
-                    switch (current)
-                    {
-                        case AIDifficulty.Apprentice:
-                            next = AIDifficulty.FirstClass;
-                            break;
-                        case AIDifficulty.FirstClass:
-                            next = AIDifficulty.Archmage;
-                            break;
-                        default:
-                            next = AIDifficulty.Apprentice;
-                            break;
-                    }
-
-                    aiController.SetDifficulty(next);
-                    return GetDifficultyDisplayName(next);
-                },
-                () => {
-                    var aiController = FindObjectOfType<AIController>();
-                    if (aiController == null) return "Apprentice";
-                    return GetDifficultyDisplayName(aiController.Difficulty);
-                }
-            );
-            yPos -= rowSpacing;
-
             // Restart button (centered, no label)
             CreateActionButton("Restart", yPos,
                 () => {
@@ -256,6 +334,16 @@ namespace Glyphtender.Unity
 
             // Set initial row states
             UpdateRowStates();
+        }
+
+        private AIDifficulty CycleDifficulty(AIDifficulty current)
+        {
+            switch (current)
+            {
+                case AIDifficulty.Apprentice: return AIDifficulty.FirstClass;
+                case AIDifficulty.FirstClass: return AIDifficulty.Archmage;
+                default: return AIDifficulty.Apprentice;
+            }
         }
 
         private string GetDifficultyDisplayName(AIDifficulty difficulty)
@@ -271,6 +359,8 @@ namespace Glyphtender.Unity
 
         private void UpdateRowStates()
         {
+            var aiManager = AIManager.Instance;
+
             // Drag Offset: disabled when Input Mode = Tap
             if (_dragOffsetRow != null)
             {
@@ -278,12 +368,25 @@ namespace Glyphtender.Unity
                 _dragOffsetRow.SetEnabled(dragEnabled);
             }
 
-            // Difficulty: disabled when AI = Off
-            if (_difficultyRow != null)
+            // Yellow Difficulty: disabled when Yellow AI = Off
+            if (_yellowDifficultyRow != null)
             {
-                var aiController = FindObjectOfType<AIController>();
-                bool difficultyEnabled = aiController != null && aiController.enabled;
-                _difficultyRow.SetEnabled(difficultyEnabled);
+                bool yellowEnabled = aiManager != null && aiManager.YellowAI != null && aiManager.YellowAI.enabled;
+                _yellowDifficultyRow.SetEnabled(yellowEnabled);
+            }
+
+            // Blue Difficulty: disabled when Blue AI = Off
+            if (_blueDifficultyRow != null)
+            {
+                bool blueEnabled = aiManager != null && aiManager.BlueAI != null && aiManager.BlueAI.enabled;
+                _blueDifficultyRow.SetEnabled(blueEnabled);
+            }
+
+            // Speed: only enabled when at least one AI is active
+            if (_speedRow != null)
+            {
+                bool hasAI = aiManager != null && aiManager.HasAnyAI;
+                _speedRow.SetEnabled(hasAI);
             }
         }
 

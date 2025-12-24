@@ -37,9 +37,11 @@ namespace Glyphtender.Unity
         public bool IsResetting { get; set; }
         public HexCoord? LastCastOrigin { get; private set; }
         public char? PendingLetter { get; private set; }
-        private AIController _aiController;
+        private AIManager _aiManager;
+        public AIManager AIManager => _aiManager;
 
         public bool IsInCycleMode => CurrentTurnState == GameTurnState.CycleMode;
+        public bool IsCurrentPlayerAI => _aiManager != null && _aiManager.IsPlayerAI(GameState.CurrentPlayer);
         public GameTurnState CurrentTurnState { get; private set; } = GameTurnState.Idle;
         public enum InputMode { Tap, Drag }
         public InputMode CurrentInputMode { get; private set; } = InputMode.Drag;
@@ -110,12 +112,23 @@ namespace Glyphtender.Unity
             OnGameStateChanged?.Invoke();
             OnGameRestarted?.Invoke();
 
-            // Initialize AI if present
-            _aiController = FindObjectOfType<AIController>();
-            if (_aiController != null)
+            // Initialize AI manager
+            _aiManager = FindObjectOfType<AIManager>();
+            if (_aiManager == null)
             {
-                _aiController.Initialize(WordScorer);
-                Debug.Log("AI opponent ready.");
+                // Create AIManager if it doesn't exist
+                var aiManagerObj = new GameObject("AIManager");
+                _aiManager = aiManagerObj.AddComponent<AIManager>();
+            }
+            _aiManager.Initialize(WordScorer);
+            _aiManager.ResetForNewGame();
+            Debug.Log("AI system ready.");
+
+            // Check if it's AI's turn at start
+            var currentAI = _aiManager.GetAIForPlayer(GameState.CurrentPlayer);
+            if (currentAI != null)
+            {
+                currentAI.TakeTurn(GameState);
             }
         }
 
@@ -139,6 +152,13 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectGlyphling(Glyphling glyphling)
         {
+            // Block input during AI turn
+            if (IsCurrentPlayerAI)
+            {
+                Debug.Log("AI is playing - input blocked");
+                return;
+            }
+
             // Only allow selection in Idle state (or if re-selecting before confirming)
             if (CurrentTurnState != GameTurnState.Idle &&
                 CurrentTurnState != GameTurnState.GlyphlingSelected &&
@@ -183,6 +203,12 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectDestination(HexCoord destination)
         {
+            // Block input during AI turn
+            if (IsCurrentPlayerAI)
+            {
+                return;
+            }
+
             // Only allow destination selection after glyphling is selected
             if (CurrentTurnState != GameTurnState.GlyphlingSelected)
             {
@@ -219,6 +245,12 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SelectCastPosition(HexCoord castPosition)
         {
+            // Block input during AI turn
+            if (IsCurrentPlayerAI)
+            {
+                return;
+            }
+
             // Only allow cast selection after move is pending
             if (CurrentTurnState != GameTurnState.MovePending &&
                 CurrentTurnState != GameTurnState.ReadyToConfirm)
@@ -408,9 +440,10 @@ namespace Glyphtender.Unity
             OnTurnEnded?.Invoke();
 
             // Check if it's AI's turn
-            if (_aiController != null && _aiController.enabled && GameState.CurrentPlayer == _aiController.AIPlayer)
+            var currentAI = _aiManager?.GetAIForPlayer(GameState.CurrentPlayer);
+            if (currentAI != null)
             {
-                _aiController.TakeTurn(GameState);
+                currentAI.TakeTurn(GameState);
             }
 
             OnGameStateChanged?.Invoke();
@@ -482,9 +515,10 @@ namespace Glyphtender.Unity
             OnTurnEnded?.Invoke();
 
             // Check if it's AI's turn
-            if (_aiController != null && _aiController.enabled && GameState.CurrentPlayer == _aiController.AIPlayer)
+            var currentAI = _aiManager?.GetAIForPlayer(GameState.CurrentPlayer);
+            if (currentAI != null)
             {
-                _aiController.TakeTurn(GameState);
+                currentAI.TakeTurn(GameState);
             }
 
             OnGameStateChanged?.Invoke();
@@ -522,10 +556,11 @@ namespace Glyphtender.Unity
             OnTurnEnded?.Invoke();
             OnGameStateChanged?.Invoke();
 
-            // Check if it's AI's turn again
-            if (_aiController != null && _aiController.enabled && GameState.CurrentPlayer == _aiController.AIPlayer)
+            // Check if it's AI's turn (for AI vs AI)
+            var currentAI = _aiManager?.GetAIForPlayer(GameState.CurrentPlayer);
+            if (currentAI != null)
             {
-                _aiController.TakeTurn(GameState);
+                currentAI.TakeTurn(GameState);
             }
         }
 

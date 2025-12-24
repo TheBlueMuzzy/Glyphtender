@@ -22,6 +22,8 @@ namespace Glyphtender.Unity
         [Tooltip("Maximum think time")]
         [SerializeField] private float _maxThinkTime = 2f;
 
+        private float _speedMultiplier = 1f;
+
         [Header("References")]
         [SerializeField] private GameManager _gameManager;
         [SerializeField] private BoardRenderer _boardRenderer;
@@ -101,6 +103,23 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Sets the speed multiplier for AI animations.
+        /// Higher = faster animations.
+        /// </summary>
+        public void SetSpeedMultiplier(float multiplier)
+        {
+            _speedMultiplier = Mathf.Max(0.1f, multiplier);
+        }
+
+        /// <summary>
+        /// Helper to get scaled wait time.
+        /// </summary>
+        private float ScaledWait(float baseTime)
+        {
+            return baseTime / _speedMultiplier;
+        }
+
+        /// <summary>
         /// Call this when it becomes the AI's turn.
         /// </summary>
         public void TakeTurn(GameState state)
@@ -159,7 +178,7 @@ namespace Glyphtender.Unity
         {
             _isThinking = true;
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(ScaledWait(0.5f));
 
             // Choose discards using AI logic
             var discards = _brain.ChooseDiscards(state);
@@ -208,8 +227,8 @@ namespace Glyphtender.Unity
         {
             _isThinking = true;
 
-            // Random think time for natural feel
-            float thinkTime = Random.Range(_minThinkTime, _maxThinkTime);
+            // Random think time for natural feel (scaled by speed)
+            float thinkTime = Random.Range(_minThinkTime, _maxThinkTime) / _speedMultiplier;
 
             // Start thinking (this is synchronous but fast)
             AIMove chosenMove = null;
@@ -286,7 +305,7 @@ namespace Glyphtender.Unity
                 _boardRenderer.RefreshBoard();
             }
 
-            yield return new WaitForSeconds(0.6f);
+            yield return new WaitForSeconds(ScaledWait(0.6f));
 
             // Step 2: Place the tile
             if (_gameManager != null)
@@ -301,7 +320,7 @@ namespace Glyphtender.Unity
                 _boardRenderer.RefreshBoard();
             }
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(ScaledWait(0.5f));
 
             // Step 3: Show preview score and word highlights
             var words = _wordScorer.FindWordsAt(state, move.CastPosition, move.Letter);
@@ -327,7 +346,7 @@ namespace Glyphtender.Unity
                 wordHighlighter.HighlightWordsAt(move.CastPosition, move.Letter);
             }
 
-            yield return new WaitForSeconds(1.0f);
+            yield return new WaitForSeconds(ScaledWait(1.0f));
 
             // Step 4: Clear highlights and finalize score
             if (wordHighlighter != null)
@@ -345,7 +364,7 @@ namespace Glyphtender.Unity
                 _boardRenderer.RefreshBoard();
             }
 
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(ScaledWait(0.3f));
 
             // Step 5: End turn
             _brain.EndTurn();
