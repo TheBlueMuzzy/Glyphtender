@@ -27,6 +27,10 @@ namespace Glyphtender.Unity
         [Tooltip("Max tiles the hand can hold (for width calculation)")]
         public int maxHandSize = 8;
 
+        [Header("Portrait Offset")]
+        [Tooltip("Additional Y offset for hand in portrait mode (positive = higher on screen)")]
+        public float portraitYOffset = 2f;
+
         [Header("Animation")]
         public float toggleDuration = 0.2f;
 
@@ -76,7 +80,7 @@ namespace Glyphtender.Unity
         private Coroutine _handScaleCoroutine;
         private float _responsiveScale = 1f;
 
-        private float _handDistance = 6f;
+        private float _handDistance = 12f;
 
         private void Awake()
         {
@@ -196,9 +200,17 @@ namespace Glyphtender.Unity
         private void ApplyHandPosition()
         {
             float halfHeight = UIScaler.Instance != null ? UIScaler.Instance.HalfHeight : 5f;
+            bool isPortrait = UIScaler.Instance != null && UIScaler.Instance.IsPortrait;
 
             // Hand anchor is rotated 180° on X, so negative Y appears at bottom
             float bottomY = -(halfHeight - 1f);  // Near bottom edge
+
+            // Apply portrait offset (positive = higher on screen = less negative Y)
+            if (isPortrait)
+            {
+                bottomY += portraitYOffset;
+            }
+
             _handUpPosition = new Vector3(0f, bottomY, _handDistance);
             _handDownPosition = new Vector3(0f, -(halfHeight + 2f), _handDistance);
             _handRotation = Quaternion.Euler(180f, 0f, 0f);

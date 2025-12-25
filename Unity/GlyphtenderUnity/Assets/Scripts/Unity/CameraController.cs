@@ -11,14 +11,14 @@ namespace Glyphtender.Unity
         public static CameraController Instance { get; private set; }
 
         [Header("Board Bounds")]
-        public Vector2 boardCenter = new Vector2(7.5f, 8.5f);
+        public Vector2 boardCenter = new Vector2(7.5f, 6f);
         public float boardWidth = 16f;
         public float boardHeight = 18f;
 
         [Header("Camera Angle")]
         [Tooltip("Camera tilt angle (90 = top-down, 60 = angled)")]
         [Range(30f, 90f)]
-        public float cameraAngle = 60f;
+        public float cameraAngle = 90f;
 
         [Header("Padding")]
         public float paddingPercent = 0.1f;
