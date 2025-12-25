@@ -59,7 +59,6 @@ namespace Glyphtender.Unity
         // Buttons
         private GameObject _confirmButton;
         private GameObject _cancelButton;
-        private GameObject _replayButton;
         private GameObject _menuButton;
         private TextMesh _menuButtonText;
 
@@ -125,7 +124,6 @@ namespace Glyphtender.Unity
             // Create UI elements
             CreateConfirmButton();
             CreateCancelButton();
-            CreateReplayButton();
             CreateMenuButton();
             CreateCyclePrompt();
 
@@ -237,12 +235,6 @@ namespace Glyphtender.Unity
                 float cancelScreenY = confirmScreenY - confirmRadius - cancelMarginAboveConfirm - cancelRadius;
                 _cancelButton.transform.localPosition = new Vector3(cancelScreenX / scaleFactor, cancelScreenY / scaleFactor, 0f);
             }
-
-            // Replay button: center of screen
-            if (_replayButton != null)
-            {
-                _replayButton.transform.localPosition = new Vector3(0f, 0f, 0f);
-            }
         }
 
         /// <summary>
@@ -287,23 +279,6 @@ namespace Glyphtender.Unity
                 out _
             );
             _cancelButton.SetActive(false);
-        }
-
-        private void CreateReplayButton()
-        {
-            _replayButton = CreateButton(
-                _uiAnchor,
-                "ReplayButton",
-                new Vector3(1.5f, 0.1f, 1.5f),
-                confirmMaterial,
-                labelText: "Play Again",
-                labelScale: new Vector3(0.08f, 0.08f, 0.08f),
-                fontSize: 32,
-                characterSize: 1f,
-                onClick: OnReplayClicked,
-                out _
-            );
-            _replayButton.SetActive(false);
         }
 
         private void CreateMenuButton()
@@ -453,12 +428,6 @@ namespace Glyphtender.Unity
             GameManager.Instance.ResetMove();
         }
 
-        private void OnReplayClicked()
-        {
-            _replayButton.SetActive(false);
-            GameManager.Instance.InitializeGame();
-        }
-
         private void OnMenuClicked()
         {
             if (MenuController.Instance != null)
@@ -514,12 +483,11 @@ namespace Glyphtender.Unity
         {
             HideConfirmButton();
             HideCancelButton();
-            _replayButton.SetActive(true);
+            // Play Again button now handled by EndGameScreen
         }
 
         private void OnGameRestarted()
         {
-            _replayButton.SetActive(false);
             HideCyclePrompt();
         }
 

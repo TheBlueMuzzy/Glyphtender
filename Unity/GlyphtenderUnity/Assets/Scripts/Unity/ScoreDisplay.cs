@@ -4,9 +4,9 @@ using Glyphtender.Core;
 namespace Glyphtender.Unity
 {
     /// <summary>
-    /// Displays player scores in 3D space, parented to UI camera.
-    /// Yellow score in top left, Blue score in top right.
-    /// Shows preview of points being added below the score.
+    /// Displays score preview in 3D space, parented to UI camera.
+    /// Shows preview of points being added during move selection.
+    /// Score display and winner text now handled by EndGameScreen.
     /// </summary>
     public class ScoreDisplay : MonoBehaviour
     {
@@ -16,26 +16,11 @@ namespace Glyphtender.Unity
         public Camera uiCamera;
 
         [Header("Layout")]
-        public Vector3 yellowScorePosition = new Vector3(-4f, 3f, 6f);
-        public Vector3 blueScorePosition = new Vector3(4f, 3f, 6f);
         public float marginFromSide = 1.5f;
         public float marginFromTop = 1.5f;
 
-        [Header("Preview Layout")]
-        [Tooltip("How far below the main score the preview appears")]
-        public float previewOffsetY = 10f;
-
-        [Header("Winner Layout")]
-        [Tooltip("How far below the main score the winner text appears")]
-        public float winnerOffsetY = 10f;
-
-        [Tooltip("Scale multiplier for winning score")]
-        public float winnerScoreScale = 1.25f;
-
-        [Header("Text Settings")]
-        public int fontSize = 12;
+        [Header("Preview Settings")]
         public int previewFontSize = 8;
-        public int winnerFontSize = 8;
         public float baseTextScale = 0.1f;
 
         [Tooltip("Additional multiplier for landscape mode")]
@@ -44,20 +29,16 @@ namespace Glyphtender.Unity
         [Tooltip("Side margin multiplier for landscape mode")]
         public float landscapeSideMarginMultiplier = 1.0f;
 
-        // Score display objects
+        // Preview display objects
         private Transform _displayAnchor;
-        private TextMesh _yellowScoreText;
-        private TextMesh _blueScoreText;
         private TextMesh _yellowPreviewText;
         private TextMesh _bluePreviewText;
-        private TextMesh _yellowWinnerText;
-        private TextMesh _blueWinnerText;
+
+        // Calculated positions (for preview placement)
+        private Vector3 _yellowPosition;
+        private Vector3 _bluePosition;
 
         private float _handDistance = 6f;
-
-        // Track if winner is currently shown (for live updates)
-        private bool _winnerShown;
-        private Player? _currentWinner;
 
         private void Awake()
         {
@@ -98,21 +79,19 @@ namespace Glyphtender.Unity
             _displayAnchor.localPosition = Vector3.zero;
             _displayAnchor.localRotation = Quaternion.identity;
 
-            CreateScoreTexts();
+            CreatePreviewTexts();
 
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.OnGameStateChanged += RefreshScores;
                 GameManager.Instance.OnSelectionChanged += RefreshPreviews;
-                GameManager.Instance.OnGameEnded += ShowWinner;
+                GameManager.Instance.OnGameStateChanged += OnGameStateChanged;
                 GameManager.Instance.OnGameRestarted += OnGameRestarted;
-                RefreshScores();
             }
 
             // Subscribe to UIScaler layout changes
             if (UIScaler.Instance != null)
             {
-                UIScaler.Instance.OnLayoutChanged += RepositionScores;
+                UIScaler.Instance.OnLayoutChanged += RepositionPreviews;
             }
         }
 
@@ -120,15 +99,14 @@ namespace Glyphtender.Unity
         {
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.OnGameStateChanged -= RefreshScores;
                 GameManager.Instance.OnSelectionChanged -= RefreshPreviews;
-                GameManager.Instance.OnGameEnded -= ShowWinner;
+                GameManager.Instance.OnGameStateChanged -= OnGameStateChanged;
                 GameManager.Instance.OnGameRestarted -= OnGameRestarted;
             }
 
             if (UIScaler.Instance != null)
             {
-                UIScaler.Instance.OnLayoutChanged -= RepositionScores;
+                UIScaler.Instance.OnLayoutChanged -= RepositionPreviews;
             }
         }
 
@@ -138,17 +116,8 @@ namespace Glyphtender.Unity
         /// </summary>
         private void OnValidate()
         {
-            // Only update if playing and initialized
             if (!Application.isPlaying || _displayAnchor == null) return;
-
-            // Reposition all elements
-            RepositionScores();
-
-            // If winner is shown, update winner text positioning
-            if (_winnerShown)
-            {
-                UpdateWinnerTextPositions();
-            }
+            RepositionPreviews();
         }
 #endif
 
@@ -169,39 +138,32 @@ namespace Glyphtender.Unity
             return scale;
         }
 
-        private void CreateScoreTexts()
+        private void CreatePreviewTexts()
         {
             if (UIScaler.Instance == null) return;
 
-            // Calculate top corners using UIScaler
+            CalculatePositions();
+            float responsiveScale = GetResponsiveScale();
+
+            // Yellow preview (top left)
+            _yellowPreviewText = CreateTextMesh("YellowPreview", _yellowPosition, previewFontSize, new Color(1f, 0.9f, 0.2f), responsiveScale);
+            _yellowPreviewText.gameObject.SetActive(false);
+
+            // Blue preview (top right)
+            _bluePreviewText = CreateTextMesh("BluePreview", _bluePosition, previewFontSize, new Color(0.2f, 0.6f, 1f), responsiveScale);
+            _bluePreviewText.gameObject.SetActive(false);
+        }
+
+        private void CalculatePositions()
+        {
+            if (UIScaler.Instance == null) return;
+
             float topOffset = UIScaler.Instance.GetTopEdge(marginFromTop);
             float effectiveMargin = UIScaler.Instance.IsPortrait ? marginFromSide : marginFromSide * landscapeSideMarginMultiplier;
             float sideOffset = UIScaler.Instance.HalfWidth - effectiveMargin;
-            float responsiveScale = GetResponsiveScale();
 
-            // Yellow score (top left)
-            Vector3 yellowPos = new Vector3(-sideOffset, topOffset, _handDistance);
-            yellowScorePosition = yellowPos;
-            _yellowScoreText = CreateTextMesh("YellowScore", yellowPos, fontSize, new Color(1f, 0.9f, 0.2f), responsiveScale);
-
-            // Yellow preview (below yellow score)
-            Vector3 yellowPreviewPos = yellowPos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
-            _yellowPreviewText = CreateTextMesh("YellowPreview", yellowPreviewPos, previewFontSize, new Color(1f, 0.9f, 0.2f), responsiveScale);
-            _yellowPreviewText.gameObject.SetActive(false);
-
-            // Blue score (top right)
-            Vector3 bluePos = new Vector3(sideOffset, topOffset, _handDistance);
-            blueScorePosition = bluePos;
-            _blueScoreText = CreateTextMesh("BlueScore", bluePos, fontSize, new Color(0.2f, 0.6f, 1f), responsiveScale);
-
-            // Blue preview (below blue score)
-            Vector3 bluePreviewPos = bluePos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
-            _bluePreviewText = CreateTextMesh("BluePreview", bluePreviewPos, previewFontSize, new Color(0.2f, 0.6f, 1f), responsiveScale);
-            _bluePreviewText.gameObject.SetActive(false);
-
-            // Hide scores until game ends
-            _yellowScoreText.gameObject.SetActive(false);
-            _blueScoreText.gameObject.SetActive(false);
+            _yellowPosition = new Vector3(-sideOffset, topOffset, _handDistance);
+            _bluePosition = new Vector3(sideOffset, topOffset, _handDistance);
         }
 
         private TextMesh CreateTextMesh(string name, Vector3 localPosition, int size, Color color, float scale)
@@ -223,112 +185,23 @@ namespace Glyphtender.Unity
             textMesh.alignment = TextAlignment.Center;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.color = color;
-            textMesh.text = "0";
+            textMesh.text = "";
 
             return textMesh;
         }
 
-        private void RepositionScores()
+        private void RepositionPreviews()
         {
             if (UIScaler.Instance == null) return;
 
-            // Calculate top corners using UIScaler
-            float topOffset = UIScaler.Instance.GetTopEdge(marginFromTop);
-            float effectiveMargin = UIScaler.Instance.IsPortrait ? marginFromSide : marginFromSide * landscapeSideMarginMultiplier;
-            float sideOffset = UIScaler.Instance.HalfWidth - effectiveMargin;
+            CalculatePositions();
             float responsiveScale = GetResponsiveScale();
 
-            // Yellow score (top left)
-            Vector3 yellowPos = new Vector3(-sideOffset, topOffset, _handDistance);
-            _yellowScoreText.transform.localPosition = yellowPos;
-
-            // Apply winner scale if winner is shown and yellow won
-            if (_winnerShown && _currentWinner == Player.Yellow)
-            {
-                _yellowScoreText.transform.localScale = Vector3.one * responsiveScale * winnerScoreScale;
-            }
-            else
-            {
-                _yellowScoreText.transform.localScale = Vector3.one * responsiveScale;
-            }
-
-            _yellowPreviewText.transform.localPosition = yellowPos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
+            _yellowPreviewText.transform.localPosition = _yellowPosition;
             _yellowPreviewText.transform.localScale = Vector3.one * responsiveScale;
 
-            // Blue score (top right)
-            Vector3 bluePos = new Vector3(sideOffset, topOffset, _handDistance);
-            _blueScoreText.transform.localPosition = bluePos;
-
-            // Apply winner scale if winner is shown and blue won
-            if (_winnerShown && _currentWinner == Player.Blue)
-            {
-                _blueScoreText.transform.localScale = Vector3.one * responsiveScale * winnerScoreScale;
-            }
-            else
-            {
-                _blueScoreText.transform.localScale = Vector3.one * responsiveScale;
-            }
-
-            _bluePreviewText.transform.localPosition = bluePos + new Vector3(0f, -previewOffsetY * responsiveScale, 0f);
+            _bluePreviewText.transform.localPosition = _bluePosition;
             _bluePreviewText.transform.localScale = Vector3.one * responsiveScale;
-
-            // Update stored positions for winner text placement
-            yellowScorePosition = yellowPos;
-            blueScorePosition = bluePos;
-
-            // Update winner text positions if shown (handles orientation changes)
-            if (_winnerShown)
-            {
-                UpdateWinnerTextPositions();
-            }
-        }
-
-        /// <summary>
-        /// Updates winner text positions for live tweaking and orientation changes.
-        /// </summary>
-        private void UpdateWinnerTextPositions()
-        {
-            float responsiveScale = GetResponsiveScale();
-
-            if (_yellowWinnerText != null)
-            {
-                _yellowWinnerText.transform.localPosition = yellowScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f);
-                _yellowWinnerText.transform.localScale = Vector3.one * responsiveScale;
-                _yellowWinnerText.characterSize = winnerFontSize * 0.1f;
-            }
-
-            if (_blueWinnerText != null)
-            {
-                _blueWinnerText.transform.localPosition = blueScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f);
-                _blueWinnerText.transform.localScale = Vector3.one * responsiveScale;
-                _blueWinnerText.characterSize = winnerFontSize * 0.1f;
-            }
-
-            // Update score scales
-            if (_currentWinner == Player.Yellow)
-            {
-                _yellowScoreText.transform.localScale = Vector3.one * responsiveScale * winnerScoreScale;
-            }
-            else if (_currentWinner == Player.Blue)
-            {
-                _blueScoreText.transform.localScale = Vector3.one * responsiveScale * winnerScoreScale;
-            }
-        }
-
-        /// <summary>
-        /// Updates the score displays from game state.
-        /// </summary>
-        public void RefreshScores()
-        {
-            if (GameManager.Instance?.GameState == null) return;
-
-            var state = GameManager.Instance.GameState;
-
-            _yellowScoreText.text = state.Scores[Player.Yellow].ToString();
-            _blueScoreText.text = state.Scores[Player.Blue].ToString();
-
-            // Hide previews when scores update (turn ended)
-            HidePreview();
         }
 
         /// <summary>
@@ -357,8 +230,19 @@ namespace Glyphtender.Unity
         /// </summary>
         public void HidePreview()
         {
-            _yellowPreviewText.gameObject.SetActive(false);
-            _bluePreviewText.gameObject.SetActive(false);
+            if (_yellowPreviewText != null)
+                _yellowPreviewText.gameObject.SetActive(false);
+            if (_bluePreviewText != null)
+                _bluePreviewText.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Called when game state changes - hide preview after scoring.
+        /// </summary>
+        private void OnGameStateChanged()
+        {
+            // Hide preview when turn ends (scores updated)
+            HidePreview();
         }
 
         /// <summary>
@@ -411,99 +295,9 @@ namespace Glyphtender.Unity
             }
         }
 
-        /// <summary>
-        /// Shows the winner display when game ends.
-        /// </summary>
-        private void ShowWinner(Player? winner)
-        {
-            // Hide previews
-            HidePreview();
-
-            // Show scores at game end
-            _yellowScoreText.gameObject.SetActive(true);
-            _blueScoreText.gameObject.SetActive(true);
-
-            float responsiveScale = GetResponsiveScale();
-
-            // Track winner state for live updates
-            _winnerShown = true;
-            _currentWinner = winner;
-
-            if (winner == Player.Yellow)
-            {
-                // Enlarge yellow score
-                _yellowScoreText.transform.localScale = Vector3.one * responsiveScale * winnerScoreScale;
-
-                // Add winner text below
-                _yellowWinnerText = CreateTextMesh("YellowWinner",
-                    yellowScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f),
-                    winnerFontSize,
-                    new Color(1f, 0.9f, 0.2f),
-                    responsiveScale);
-                _yellowWinnerText.text = "WINNER";
-            }
-            else if (winner == Player.Blue)
-            {
-                // Enlarge blue score
-                _blueScoreText.transform.localScale = Vector3.one * responsiveScale * winnerScoreScale;
-
-                // Add winner text below
-                _blueWinnerText = CreateTextMesh("BlueWinner",
-                    blueScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f),
-                    winnerFontSize,
-                    new Color(0.2f, 0.6f, 1f),
-                    responsiveScale);
-                _blueWinnerText.text = "WINNER";
-            }
-            else
-            {
-                // Tie - show both
-                _yellowWinnerText = CreateTextMesh("YellowTie",
-                    yellowScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f),
-                    winnerFontSize,
-                    new Color(1f, 0.9f, 0.2f),
-                    responsiveScale);
-                _yellowWinnerText.text = "TIE";
-
-                _blueWinnerText = CreateTextMesh("BlueTie",
-                    blueScorePosition + new Vector3(0f, -winnerOffsetY * responsiveScale, 0f),
-                    winnerFontSize,
-                    new Color(0.2f, 0.6f, 1f),
-                    responsiveScale);
-                _blueWinnerText.text = "TIE";
-            }
-        }
-
         private void OnGameRestarted()
         {
-            float responsiveScale = GetResponsiveScale();
-
-            // Reset winner tracking
-            _winnerShown = false;
-            _currentWinner = null;
-
-            // Reset score text scale
-            _yellowScoreText.transform.localScale = Vector3.one * responsiveScale;
-            _blueScoreText.transform.localScale = Vector3.one * responsiveScale;
-
-            // Remove winner texts if they exist
-            if (_yellowWinnerText != null)
-            {
-                Destroy(_yellowWinnerText.gameObject);
-                _yellowWinnerText = null;
-            }
-            if (_blueWinnerText != null)
-            {
-                Destroy(_blueWinnerText.gameObject);
-                _blueWinnerText = null;
-            }
-
-            // Refresh scores to show 0
-            RefreshScores();
-
-            // Hide scores until game ends
-            _yellowScoreText.gameObject.SetActive(false);
-            _blueScoreText.gameObject.SetActive(false);
+            HidePreview();
         }
     }
 }
