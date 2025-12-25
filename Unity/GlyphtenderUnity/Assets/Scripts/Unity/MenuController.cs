@@ -41,6 +41,14 @@ namespace Glyphtender.Unity
                 if (LabelText != null) LabelText.color = DisabledTextColor;
             }
         }
+
+        public void SetVisible(bool visible)
+        {
+            if (Button != null)
+                Button.SetActive(visible);
+            if (LabelText != null)
+                LabelText.gameObject.SetActive(visible);
+        }
     }
 
     /// <summary>
@@ -73,8 +81,6 @@ namespace Glyphtender.Unity
 
         // Tracked rows for enable/disable
         private MenuRow _dragOffsetRow;
-        private MenuRow _yellowDifficultyRow;
-        private MenuRow _blueDifficultyRow;
         private MenuRow _speedRow;
 
         // Animation
@@ -188,136 +194,13 @@ namespace Glyphtender.Unity
             CreateTitle();
 
             // Menu rows - position relative to panel size
-            // Panel spans from -panelHeight/2 to +panelHeight/2
             float elementScale = panelHeight / 4.0f;
-            float contentTop = (panelHeight / 2f) - (0.8f * elementScale);  // Below title with buffer
-            float contentBottom = -(panelHeight / 2f) + (0.3f * elementScale);  // Above bottom edge
-            float contentHeight = contentTop - contentBottom;
-            float rowSpacing = contentHeight / 8f;  // 8 rows total (7 settings + restart)
+            float contentTop = (panelHeight / 2f) - (0.8f * elementScale);
+            float rowSpacing = 0.55f * elementScale;
 
             float yPos = contentTop;
 
-            string[] aiOptions = { "Off", "Bully", "Scholar", "Builder", "Balanced" };
-
-            // --- Yellow Player AI ---
-            CreateMenuRow("Yellow", yPos,
-                () => {
-                    var aiManager = AIManager.Instance;
-                    if (aiManager == null || aiManager.YellowAI == null) return "Off";
-
-                    var ai = aiManager.YellowAI;
-                    string currentName = ai.enabled ? ai.PersonalityName : "Off";
-                    if (string.IsNullOrEmpty(currentName)) currentName = "Off";
-
-                    int currentIndex = System.Array.IndexOf(aiOptions, currentName);
-                    if (currentIndex < 0) currentIndex = 0;
-                    int nextIndex = (currentIndex + 1) % aiOptions.Length;
-
-                    string next = aiOptions[nextIndex];
-                    if (next == "Off")
-                    {
-                        ai.enabled = false;
-                    }
-                    else
-                    {
-                        ai.enabled = true;
-                        ai.SetPersonality(next);
-                    }
-
-                    UpdateRowStates();
-                    return next;
-                },
-                () => {
-                    var aiManager = AIManager.Instance;
-                    if (aiManager == null || aiManager.YellowAI == null || !aiManager.YellowAI.enabled)
-                        return "Off";
-                    string name = aiManager.YellowAI.PersonalityName;
-                    return string.IsNullOrEmpty(name) ? "Off" : name;
-                }
-            );
-            yPos -= rowSpacing;
-
-            // Yellow Difficulty
-            _yellowDifficultyRow = CreateMenuRow("Y Difficulty", yPos,
-                () => {
-                    var aiManager = AIManager.Instance;
-                    if (aiManager == null || aiManager.YellowAI == null || !aiManager.YellowAI.enabled)
-                        return "Apprentice";
-
-                    var ai = aiManager.YellowAI;
-                    AIDifficulty next = CycleDifficulty(ai.Difficulty);
-                    ai.SetDifficulty(next);
-                    return GetDifficultyDisplayName(next);
-                },
-                () => {
-                    var aiManager = AIManager.Instance;
-                    if (aiManager == null || aiManager.YellowAI == null)
-                        return "Apprentice";
-                    return GetDifficultyDisplayName(aiManager.YellowAI.Difficulty);
-                }
-            );
-            yPos -= rowSpacing;
-
-            // --- Blue Player AI ---
-            CreateMenuRow("Blue", yPos,
-                () => {
-                    var aiManager = AIManager.Instance;
-                    if (aiManager == null || aiManager.BlueAI == null) return "Off";
-
-                    var ai = aiManager.BlueAI;
-                    string currentName = ai.enabled ? ai.PersonalityName : "Off";
-                    if (string.IsNullOrEmpty(currentName)) currentName = "Off";
-
-                    int currentIndex = System.Array.IndexOf(aiOptions, currentName);
-                    if (currentIndex < 0) currentIndex = 0;
-                    int nextIndex = (currentIndex + 1) % aiOptions.Length;
-
-                    string next = aiOptions[nextIndex];
-                    if (next == "Off")
-                    {
-                        ai.enabled = false;
-                    }
-                    else
-                    {
-                        ai.enabled = true;
-                        ai.SetPersonality(next);
-                    }
-
-                    UpdateRowStates();
-                    return next;
-                },
-                () => {
-                    var aiManager = AIManager.Instance;
-                    if (aiManager == null || aiManager.BlueAI == null || !aiManager.BlueAI.enabled)
-                        return "Off";
-                    string name = aiManager.BlueAI.PersonalityName;
-                    return string.IsNullOrEmpty(name) ? "Off" : name;
-                }
-            );
-            yPos -= rowSpacing;
-
-            // Blue Difficulty
-            _blueDifficultyRow = CreateMenuRow("B Difficulty", yPos,
-                () => {
-                    var aiManager = AIManager.Instance;
-                    if (aiManager == null || aiManager.BlueAI == null || !aiManager.BlueAI.enabled)
-                        return "Apprentice";
-
-                    var ai = aiManager.BlueAI;
-                    AIDifficulty next = CycleDifficulty(ai.Difficulty);
-                    ai.SetDifficulty(next);
-                    return GetDifficultyDisplayName(next);
-                },
-                () => {
-                    var aiManager = AIManager.Instance;
-                    if (aiManager == null || aiManager.BlueAI == null)
-                        return "Apprentice";
-                    return GetDifficultyDisplayName(aiManager.BlueAI.Difficulty);
-                }
-            );
-            yPos -= rowSpacing;
-
-            // --- AI Speed (only visible in AI vs AI) ---
+            // --- AI Speed (only enabled when AI is active) ---
             _speedRow = CreateMenuRow("AI Speed", yPos,
                 () => {
                     var aiManager = AIManager.Instance;
@@ -346,7 +229,7 @@ namespace Glyphtender.Unity
             );
             yPos -= rowSpacing;
 
-            // Drag Offset toggle (0, 1, 2)
+            // Drag Offset toggle (0, 1, 2) - hidden when Input Mode is Tap
             _dragOffsetRow = CreateMenuRow("Drag Offset", yPos,
                 () => {
                     int current = Mathf.RoundToInt(GameSettings.DragOffset);
@@ -356,38 +239,106 @@ namespace Glyphtender.Unity
                 },
                 () => Mathf.RoundToInt(GameSettings.DragOffset).ToString()
             );
-            yPos -= rowSpacing;
 
-            // Restart button (centered, no label)
-            CreateActionButton("Restart", yPos,
-                () => {
-                    CloseMenu();
-                    GameManager.Instance.InitializeGame();
-                }
-            );
+            // Two buttons at bottom (like EndGameScreen)
+            float buttonY = -(panelHeight / 2f) + (0.4f * elementScale);
+            CreateBottomButtons(buttonY, elementScale);
 
             // Set initial row states
             UpdateRowStates();
         }
 
-        private AIDifficulty CycleDifficulty(AIDifficulty current)
+        private void CreateBottomButtons(float yPos, float scale)
         {
-            switch (current)
-            {
-                case AIDifficulty.Apprentice: return AIDifficulty.FirstClass;
-                case AIDifficulty.FirstClass: return AIDifficulty.Archmage;
-                default: return AIDifficulty.Apprentice;
-            }
+            // Restart button (left)
+            GameObject restartBtn = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            restartBtn.name = "RestartButton";
+            restartBtn.transform.SetParent(_menuRoot.transform);
+            restartBtn.transform.localPosition = new Vector3(-0.7f * scale, yPos, -0.08f);
+            restartBtn.transform.localRotation = Quaternion.identity;
+            restartBtn.transform.localScale = new Vector3(1.2f * scale, 0.35f * scale, 0.05f);
+            restartBtn.layer = LayerMask.NameToLayer("UI3D");
+
+            var restartRenderer = restartBtn.GetComponent<Renderer>();
+            if (buttonMaterial != null)
+                restartRenderer.material = buttonMaterial;
+            else
+                restartRenderer.material.color = new Color(0.3f, 0.3f, 0.35f);
+            restartRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+            GameObject restartText = new GameObject("Text");
+            restartText.transform.SetParent(restartBtn.transform);
+            restartText.transform.localPosition = new Vector3(0f, 0f, -1.5f);
+            restartText.transform.localRotation = Quaternion.identity;
+            restartText.transform.localScale = new Vector3(0.04f, 0.12f, 1f);
+            restartText.layer = LayerMask.NameToLayer("UI3D");
+
+            var restartTextMesh = restartText.AddComponent<TextMesh>();
+            restartTextMesh.text = "Restart";
+            restartTextMesh.fontSize = 36;
+            restartTextMesh.alignment = TextAlignment.Center;
+            restartTextMesh.anchor = TextAnchor.MiddleCenter;
+            restartTextMesh.color = Color.white;
+
+            var restartHandler = restartBtn.AddComponent<MenuButtonClickHandler>();
+            restartHandler.OnClick = () => {
+                CloseMenu();
+                GameManager.Instance.InitializeGame();
+            };
+
+            _menuItems.Add(restartBtn);
+
+            // Quit button (right)
+            GameObject quitBtn = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            quitBtn.name = "QuitButton";
+            quitBtn.transform.SetParent(_menuRoot.transform);
+            quitBtn.transform.localPosition = new Vector3(0.7f * scale, yPos, -0.08f);
+            quitBtn.transform.localRotation = Quaternion.identity;
+            quitBtn.transform.localScale = new Vector3(1.2f * scale, 0.35f * scale, 0.05f);
+            quitBtn.layer = LayerMask.NameToLayer("UI3D");
+
+            var quitRenderer = quitBtn.GetComponent<Renderer>();
+            if (buttonMaterial != null)
+                quitRenderer.material = buttonMaterial;
+            else
+                quitRenderer.material.color = new Color(0.3f, 0.3f, 0.35f);
+            quitRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+            GameObject quitText = new GameObject("Text");
+            quitText.transform.SetParent(quitBtn.transform);
+            quitText.transform.localPosition = new Vector3(0f, 0f, -1.5f);
+            quitText.transform.localRotation = Quaternion.identity;
+            quitText.transform.localScale = new Vector3(0.04f, 0.12f, 1f);
+            quitText.layer = LayerMask.NameToLayer("UI3D");
+
+            var quitTextMesh = quitText.AddComponent<TextMesh>();
+            quitTextMesh.text = "Quit";
+            quitTextMesh.fontSize = 36;
+            quitTextMesh.alignment = TextAlignment.Center;
+            quitTextMesh.anchor = TextAnchor.MiddleCenter;
+            quitTextMesh.color = Color.white;
+
+            var quitHandler = quitBtn.AddComponent<MenuButtonClickHandler>();
+            quitHandler.OnClick = () => {
+                CloseMenu();
+                ReturnToMainMenu();
+            };
+
+            _menuItems.Add(quitBtn);
         }
 
-        private string GetDifficultyDisplayName(AIDifficulty difficulty)
+        private void ReturnToMainMenu()
         {
-            switch (difficulty)
+            // Set flag so game waits for main menu
+            if (GameManager.Instance != null)
             {
-                case AIDifficulty.Apprentice: return "Apprentice";
-                case AIDifficulty.FirstClass: return "1st Class";
-                case AIDifficulty.Archmage: return "Archmage";
-                default: return "Apprentice";
+                GameManager.Instance.WaitingForMainMenu = true;
+            }
+
+            // Show main menu
+            if (MainMenuScreen.Instance != null)
+            {
+                MainMenuScreen.Instance.Show();
             }
         }
 
@@ -395,25 +346,11 @@ namespace Glyphtender.Unity
         {
             var aiManager = AIManager.Instance;
 
-            // Drag Offset: disabled when Input Mode = Tap
+            // Drag Offset: hidden when Input Mode = Tap
             if (_dragOffsetRow != null)
             {
                 bool dragEnabled = GameManager.Instance.CurrentInputMode == GameManager.InputMode.Drag;
-                _dragOffsetRow.SetEnabled(dragEnabled);
-            }
-
-            // Yellow Difficulty: disabled when Yellow AI = Off
-            if (_yellowDifficultyRow != null)
-            {
-                bool yellowEnabled = aiManager != null && aiManager.YellowAI != null && aiManager.YellowAI.enabled;
-                _yellowDifficultyRow.SetEnabled(yellowEnabled);
-            }
-
-            // Blue Difficulty: disabled when Blue AI = Off
-            if (_blueDifficultyRow != null)
-            {
-                bool blueEnabled = aiManager != null && aiManager.BlueAI != null && aiManager.BlueAI.enabled;
-                _blueDifficultyRow.SetEnabled(blueEnabled);
+                _dragOffsetRow.SetVisible(dragEnabled);
             }
 
             // Speed: only enabled when at least one AI is active

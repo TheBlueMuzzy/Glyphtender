@@ -88,6 +88,9 @@ namespace Glyphtender.Unity
 
         private void Update()
         {
+            // Don't process if game hasn't started yet
+            if (GameManager.Instance?.GameState == null) return;
+
             // Pulse trapped glyphlings
             foreach (var glyphling in _glyphlingObjects.Keys)
             {
@@ -135,37 +138,54 @@ namespace Glyphtender.Unity
 
         private void Start()
         {
-            // Delay initialization to ensure GameManager is ready
-            Invoke("Initialize", 0.1f);
-        }
-
-        private void Initialize()
-        {
             TweenManager.EnsureExists();
             InputStateManager.EnsureExists();
 
             if (GameManager.Instance != null)
             {
+                // Subscribe to game initialized event (for main menu flow)
+                GameManager.Instance.OnGameInitialized += OnGameInitialized;
                 GameManager.Instance.OnGameStateChanged += RefreshBoard;
                 GameManager.Instance.OnSelectionChanged += RefreshHighlights;
                 GameManager.Instance.OnGameRestarted += OnGameRestarted;
 
-                // Initial render
-                CreateBoard();
-                RefreshBoard();
-
-                Debug.Log("BoardRenderer initialized.");
+                // If game is already initialized (no main menu), initialize now
+                if (!GameManager.Instance.WaitingForMainMenu && GameManager.Instance.GameState != null)
+                {
+                    Initialize();
+                }
             }
             else
             {
-                Debug.LogError("GameManager.Instance is null!");
+                Debug.LogError("GameManager.Instance is null in BoardRenderer.Start!");
             }
+        }
+
+        private void OnGameInitialized()
+        {
+            Initialize();
+        }
+
+        private void Initialize()
+        {
+            if (GameManager.Instance?.GameState == null)
+            {
+                Debug.LogError("Cannot initialize BoardRenderer - GameState is null!");
+                return;
+            }
+
+            // Initial render
+            CreateBoard();
+            RefreshBoard();
+
+            Debug.Log("BoardRenderer initialized.");
         }
 
         private void OnDestroy()
         {
             if (GameManager.Instance != null)
             {
+                GameManager.Instance.OnGameInitialized -= OnGameInitialized;
                 GameManager.Instance.OnGameStateChanged -= RefreshBoard;
                 GameManager.Instance.OnSelectionChanged -= RefreshHighlights;
                 GameManager.Instance.OnGameRestarted -= OnGameRestarted;

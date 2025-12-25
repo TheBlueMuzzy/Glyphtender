@@ -502,6 +502,62 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1352294188
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1352294190}
+  - component: {fileID: 1352294189}
+  m_Layer: 0
+  m_Name: MainMenuScreen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1352294189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1352294188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe0be669eb0f4234caa464f0a43b3974, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiCamera: {fileID: 0}
+  panelMaterial: {fileID: 0}
+  buttonMaterial: {fileID: 0}
+  panelWidth: 6
+  panelHeight: 7
+  menuZ: 5
+  titleColor: {r: 0.9, g: 0.85, b: 0.7, a: 1}
+  labelColor: {r: 0.7, g: 0.7, b: 0.75, a: 1}
+  valueColor: {r: 0.85, g: 0.9, b: 1, a: 1}
+  playButtonColor: {r: 0.3, g: 0.5, b: 0.3, a: 1}
+  openDuration: 0.2
+  closeDuration: 0.15
+--- !u!4 &1352294190
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1352294188}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.0333633, y: 9.834359, z: 3.4067419}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1446835201
 GameObject:
   m_ObjectHideFlags: 0
@@ -602,16 +658,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiCamera: {fileID: 0}
-  yellowScorePosition: {x: -4, y: 3, z: 6}
-  blueScorePosition: {x: 4, y: 3, z: 6}
   marginFromSide: 1.5
   marginFromTop: 1.5
-  previewOffsetY: 10
-  winnerOffsetY: 10
-  winnerScoreScale: 1.25
-  fontSize: 12
   previewFontSize: 8
-  winnerFontSize: 8
   baseTextScale: 0.1
   landscapeScaleBoost: 1
   landscapeSideMarginMultiplier: 3
@@ -904,3 +953,4 @@ SceneRoots:
   - {fileID: 1594369718}
   - {fileID: 927198189}
   - {fileID: 294620516}
+  - {fileID: 1352294190}

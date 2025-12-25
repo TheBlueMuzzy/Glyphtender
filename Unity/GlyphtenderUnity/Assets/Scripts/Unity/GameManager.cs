@@ -68,12 +68,16 @@ namespace Glyphtender.Unity
         private List<WordResult> _lastTurnWords;
         private int _lastTurnScore;
 
+        // Main menu gate - when true, game waits for MainMenuScreen to call InitializeGame
+        public bool WaitingForMainMenu { get; set; } = true;
+
         // Events for UI/rendering updates
         public event System.Action OnGameStateChanged;
         public event System.Action OnSelectionChanged;
         public event System.Action OnTurnEnded;
         public event System.Action<Player?> OnGameEnded;
         public event System.Action OnGameRestarted;
+        public event System.Action OnGameInitialized;
         public event System.Action OnInputModeChanged;
         public event System.Action<GameTurnState> OnTurnStateChanged;
 
@@ -92,6 +96,13 @@ namespace Glyphtender.Unity
 
         private void Start()
         {
+            // If waiting for main menu, don't initialize yet
+            if (WaitingForMainMenu)
+            {
+                Debug.Log("Waiting for MainMenuScreen to start game...");
+                return;
+            }
+
             InitializeGame();
         }
 
@@ -146,6 +157,10 @@ namespace Glyphtender.Unity
             {
                 currentAI.TakeTurn(GameState);
             }
+
+            // Notify listeners that game has initialized
+            WaitingForMainMenu = false;
+            OnGameInitialized?.Invoke();
         }
 
         /// <summary>
