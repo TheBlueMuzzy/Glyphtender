@@ -326,7 +326,8 @@ namespace Glyphtender.Unity
 
             _menuItems.Add(quitBtn);
 
-            // Close button (below, centered) - exits app
+            // Quit button (below, centered) - exits app (hidden in WebGL)
+#if !UNITY_WEBGL
             float closeY = yPos - (0.5f * scale);
             GameObject closeBtn = GameObject.CreatePrimitive(PrimitiveType.Cube);
             closeBtn.name = "CloseButton";
@@ -351,7 +352,7 @@ namespace Glyphtender.Unity
             closeText.layer = LayerMask.NameToLayer("UI3D");
 
             var closeTextMesh = closeText.AddComponent<TextMesh>();
-            closeTextMesh.text = "Close";
+            closeTextMesh.text = "Quit";
             closeTextMesh.fontSize = 36;
             closeTextMesh.alignment = TextAlignment.Center;
             closeTextMesh.anchor = TextAnchor.MiddleCenter;
@@ -366,6 +367,7 @@ namespace Glyphtender.Unity
             };
 
             _menuItems.Add(closeBtn);
+#endif
         }
 
         private void ReturnToMainMenu()

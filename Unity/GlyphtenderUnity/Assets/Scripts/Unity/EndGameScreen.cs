@@ -205,6 +205,12 @@ namespace Glyphtender.Unity
                 _animationTime = 0f;
                 _isAnimating = true;
 
+                // Hide background blocker to show board
+                if (_backgroundBlocker != null)
+                {
+                    _backgroundBlocker.SetActive(false);
+                }
+
                 // Change button text
                 if (_viewButtonText != null)
                 {
@@ -221,6 +227,12 @@ namespace Glyphtender.Unity
                 _statsPanel.transform.localScale = _animationStartScale;
                 _animationTime = 0f;
                 _isAnimating = true;
+
+                // Show background blocker
+                if (_backgroundBlocker != null)
+                {
+                    _backgroundBlocker.SetActive(true);
+                }
 
                 // Change button text
                 if (_viewButtonText != null)
@@ -247,8 +259,8 @@ namespace Glyphtender.Unity
         {
             _backgroundBlocker = GameObject.CreatePrimitive(PrimitiveType.Quad);
             _backgroundBlocker.name = "BackgroundBlocker";
-            _backgroundBlocker.transform.SetParent(uiCamera.transform);
-            _backgroundBlocker.transform.localPosition = new Vector3(0f, 0f, menuZ + 0.5f);
+            _backgroundBlocker.transform.SetParent(_screenRoot.transform);
+            _backgroundBlocker.transform.localPosition = new Vector3(0f, 0f, 0.5f);
             _backgroundBlocker.transform.localRotation = Quaternion.identity;
             _backgroundBlocker.transform.localScale = new Vector3(50f, 50f, 1f);
             _backgroundBlocker.layer = LayerMask.NameToLayer("UI3D");

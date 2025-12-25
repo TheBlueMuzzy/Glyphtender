@@ -313,9 +313,11 @@ namespace Glyphtender.Unity
             float buttonY = -(panelHeight / 2f) + (0.7f * elementScale);
             CreatePlayButton(buttonY, elementScale);
 
-            // Close button below Play
+            // Quit button below Play (hidden in WebGL)
+#if !UNITY_WEBGL
             float closeY = buttonY - (0.5f * elementScale);
             CreateCloseButton(closeY, elementScale);
+#endif
 
             // Update visibility based on initial play mode
             UpdateRowVisibility();
@@ -510,6 +512,7 @@ namespace Glyphtender.Unity
             _menuItems.Add(btn);
         }
 
+#if !UNITY_WEBGL
         private void CreateCloseButton(float yPos, float scale)
         {
             GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -552,6 +555,7 @@ namespace Glyphtender.Unity
 
             _menuItems.Add(btn);
         }
+#endif
 
         private void CyclePlayMode()
         {
