@@ -1,5 +1,7 @@
 using UnityEngine;
 using Glyphtender.Core;
+using Glyphtender.Core.Stats;
+using Glyphtender.Unity.Stats;
 using System.Collections.Generic;
 
 namespace Glyphtender.Unity
@@ -59,6 +61,13 @@ namespace Glyphtender.Unity
         public List<HexCoord> ValidMoves { get; private set; }
         public List<HexCoord> ValidCasts { get; private set; }
 
+        // Cycle mode tracking for stats
+        private int _tilesCycledThisTurn;
+        private bool _enteredCycleMode;
+        private Player _cycleModeTurnPlayer;
+        private List<WordResult> _lastTurnWords;
+        private int _lastTurnScore;
+
         // Events for UI/rendering updates
         public event System.Action OnGameStateChanged;
         public event System.Action OnSelectionChanged;
@@ -101,6 +110,10 @@ namespace Glyphtender.Unity
             // Reset all state
             LastTurnWordCount = 0;
             _originalPosition = null;
+            _tilesCycledThisTurn = 0;
+            _enteredCycleMode = false;
+            _lastTurnWords = null;
+            _lastTurnScore = 0;
 
             Debug.Log($"Game initialized. Board has {GameState.Board.HexCount} hexes.");
             Debug.Log($"Dictionary loaded with {WordScorer.WordCount} words.");
@@ -124,12 +137,54 @@ namespace Glyphtender.Unity
             _aiManager.ResetForNewGame();
             Debug.Log("AI system ready.");
 
+            // Start game history tracking
+            StartGameHistory();
+
             // Check if it's AI's turn at start
             var currentAI = _aiManager.GetAIForPlayer(GameState.CurrentPlayer);
             if (currentAI != null)
             {
                 currentAI.TakeTurn(GameState);
             }
+        }
+
+        /// <summary>
+        /// Starts tracking game history for stats.
+        /// </summary>
+        private void StartGameHistory()
+        {
+            if (GameHistoryManager.Instance == null)
+            {
+                Debug.LogWarning("GameHistoryManager not found - stats will not be tracked");
+                return;
+            }
+
+            // Create player info
+            PlayerInfo yellowPlayer;
+            PlayerInfo bluePlayer;
+
+            var yellowAI = _aiManager?.GetAIForPlayer(Player.Yellow);
+            var blueAI = _aiManager?.GetAIForPlayer(Player.Blue);
+
+            if (yellowAI != null)
+            {
+                yellowPlayer = PlayerInfo.CreateAI(yellowAI.PersonalityName);
+            }
+            else
+            {
+                yellowPlayer = PlayerInfo.CreateLocalPlayer("Player");
+            }
+
+            if (blueAI != null)
+            {
+                bluePlayer = PlayerInfo.CreateAI(blueAI.PersonalityName);
+            }
+            else
+            {
+                bluePlayer = PlayerInfo.CreateLocalPlayer("Player");
+            }
+
+            GameHistoryManager.Instance.StartNewGame(yellowPlayer, bluePlayer, GameState);
         }
 
         private void LoadDictionary()
@@ -192,6 +247,9 @@ namespace Glyphtender.Unity
             ValidMoves = GameRules.GetValidMoves(GameState, glyphling);
             ValidCasts.Clear();
 
+            // Begin move tracking for stats
+            GameHistoryManager.Instance?.BeginMove(glyphling, GameState);
+
             Debug.Log($"Selected glyphling at {glyphling.Position}. {ValidMoves.Count} valid moves.");
 
             UpdateTurnState();
@@ -228,6 +286,9 @@ namespace Glyphtender.Unity
             // Move glyphling (preview)
             PendingDestination = destination;
             SelectedGlyphling.Position = destination;
+
+            // Track destination for stats
+            GameHistoryManager.Instance?.SetMoveDestination(destination);
 
             // Calculate valid cast positions from new location
             ValidCasts = GameRules.GetValidCastPositions(GameState, SelectedGlyphling);
@@ -380,11 +441,14 @@ namespace Glyphtender.Unity
                 BoardRenderer.Instance.HideGhostTile();
             }
 
+            // Store current player before any state changes
+            Player currentPlayer = GameState.CurrentPlayer;
+
             // Place tile
-            GameState.Hands[GameState.CurrentPlayer].Remove(PendingLetter.Value);
+            GameState.Hands[currentPlayer].Remove(PendingLetter.Value);
             GameState.Tiles[PendingCastPosition.Value] = new Tile(
                 PendingLetter.Value,
-                GameState.CurrentPlayer,
+                currentPlayer,
                 PendingCastPosition.Value);
 
             // Score words formed by the new tile
@@ -392,29 +456,39 @@ namespace Glyphtender.Unity
             int turnScore = 0;
             foreach (var word in newWords)
             {
-                int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, GameState, GameState.CurrentPlayer);
+                int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, GameState, currentPlayer);
                 turnScore += wordScore;
                 Debug.Log($"Scored word: {word.Letters} (+{wordScore})");
             }
-            GameState.Scores[GameState.CurrentPlayer] += turnScore;
-            Debug.Log($"Turn score: {turnScore}. Total: {GameState.Scores[GameState.CurrentPlayer]}");
+            GameState.Scores[currentPlayer] += turnScore;
+            Debug.Log($"Turn score: {turnScore}. Total: {GameState.Scores[currentPlayer]}");
 
             // Track how many words were formed
             LastTurnWordCount = newWords.Count;
+
+            // Store for stats recording
+            _lastTurnWords = newWords;
+            _lastTurnScore = turnScore;
 
             // If no words formed, enter cycle mode instead of ending turn
             if (newWords.Count == 0)
             {
                 Debug.Log("No words formed! Entering cycle mode.");
                 CurrentTurnState = GameTurnState.CycleMode;
+                _enteredCycleMode = true;
+                _tilesCycledThisTurn = 0;
+                _cycleModeTurnPlayer = currentPlayer;
                 ClearSelection();
                 OnSelectionChanged?.Invoke();
                 OnGameStateChanged?.Invoke();
                 return;  // Don't end turn yet, don't draw tile
             }
 
+            // Record move for stats (normal case - words formed)
+            RecordMoveForStats(currentPlayer, newWords, turnScore, false, 0);
+
             // Draw new tile
-            GameRules.DrawTile(GameState, GameState.CurrentPlayer);
+            GameRules.DrawTile(GameState, currentPlayer);
 
             // Check for tangles
             var tangled = TangleChecker.GetTangledGlyphlings(GameState);
@@ -447,6 +521,34 @@ namespace Glyphtender.Unity
             }
 
             OnGameStateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Called when a tile is discarded during cycle mode.
+        /// </summary>
+        public void OnTileCycled()
+        {
+            _tilesCycledThisTurn++;
+        }
+
+        /// <summary>
+        /// Records the move to game history for stats tracking.
+        /// </summary>
+        private void RecordMoveForStats(Player player, List<WordResult> words, int score, bool cycleMode, int tilesCycled)
+        {
+            if (GameHistoryManager.Instance == null) return;
+            if (PendingCastPosition == null || PendingLetter == null) return;
+
+            GameHistoryManager.Instance.RecordMove(
+                GameState,
+                player,
+                PendingCastPosition.Value,
+                PendingLetter.Value,
+                words,
+                score,
+                cycleMode,
+                tilesCycled
+            );
         }
 
         /// <summary>
@@ -490,6 +592,13 @@ namespace Glyphtender.Unity
         /// </summary>
         public void EndCycleMode()
         {
+            // Record move for stats (cycle mode case)
+            if (_enteredCycleMode)
+            {
+                RecordMoveForStats(_cycleModeTurnPlayer, _lastTurnWords, _lastTurnScore, true, _tilesCycledThisTurn);
+                _enteredCycleMode = false;
+            }
+
             // Check for tangles
             var tangled = TangleChecker.GetTangledGlyphlings(GameState);
             foreach (var g in tangled)
@@ -598,6 +707,22 @@ namespace Glyphtender.Unity
             else
             {
                 Debug.Log("It's a tie!");
+            }
+
+            // Record game end for stats
+            if (GameHistoryManager.Instance != null)
+            {
+                var result = new GameResult
+                {
+                    Winner = winner,
+                    YellowFinalScore = GameState.Scores[Player.Yellow],
+                    BlueFinalScore = GameState.Scores[Player.Blue],
+                    YellowTanglePoints = tanglePoints[Player.Yellow],
+                    BlueTanglePoints = tanglePoints[Player.Blue],
+                    TotalTurns = GameState.TurnNumber,
+                    WasForfeited = false
+                };
+                GameHistoryManager.Instance.EndGame(result);
             }
 
             ClearSelection();

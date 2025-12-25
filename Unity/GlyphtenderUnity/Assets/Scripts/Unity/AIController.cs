@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Glyphtender.Core;
+using Glyphtender.Unity.Stats;
 
 namespace Glyphtender.Unity
 {
@@ -182,6 +183,7 @@ namespace Glyphtender.Unity
 
             // Choose discards using AI logic
             var discards = _brain.ChooseDiscards(state);
+            int tilesCycled = 0;
 
             if (discards.Count > 0)
             {
@@ -192,6 +194,7 @@ namespace Glyphtender.Unity
                 {
                     hand.Remove(letter);
                     GameRules.DrawTile(state, _aiPlayer);
+                    tilesCycled++;
                 }
             }
             else
@@ -288,8 +291,15 @@ namespace Glyphtender.Unity
                 yield break;
             }
 
+            // Begin move tracking for stats
+            HexCoord fromPosition = actualGlyphling.Position;
+            GameHistoryManager.Instance?.BeginMove(actualGlyphling, state);
+
             // Step 1: Move the glyphling
             actualGlyphling.Position = move.Destination;
+
+            // Track destination for stats
+            GameHistoryManager.Instance?.SetMoveDestination(move.Destination);
 
             if (BoardRenderer.Instance != null)
             {
@@ -346,6 +356,9 @@ namespace Glyphtender.Unity
             _brain.OnScore(totalPoints);
             state.Scores[_aiPlayer] += totalPoints;
 
+            // Record move for stats (normal case - words formed)
+            RecordAIMove(state, move.CastPosition, move.Letter, words, totalPoints, false, 0);
+
             GameRules.DrawTile(state, _aiPlayer);
 
             if (BoardRenderer.Instance != null)
@@ -368,6 +381,26 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Records an AI move for stats tracking.
+        /// </summary>
+        private void RecordAIMove(GameState state, HexCoord castPosition, char letter,
+            List<WordResult> words, int score, bool cycleMode, int tilesCycled)
+        {
+            if (GameHistoryManager.Instance == null) return;
+
+            GameHistoryManager.Instance.RecordMove(
+                state,
+                _aiPlayer,
+                castPosition,
+                letter,
+                words,
+                score,
+                cycleMode,
+                tilesCycled
+            );
+        }
+
+        /// <summary>
         /// Executes cycle mode when AI has no valid word moves.
         /// </summary>
         private IEnumerator ExecuteCycleAnimated(GameState state)
@@ -377,6 +410,7 @@ namespace Glyphtender.Unity
             yield return new WaitForSeconds(ScaledWait(0.3f));
 
             var discards = _brain.ChooseDiscards(state);
+            int tilesCycled = 0;
 
             if (discards.Count > 0)
             {
@@ -387,12 +421,19 @@ namespace Glyphtender.Unity
                 {
                     hand.Remove(letter);
                     GameRules.DrawTile(state, _aiPlayer);
+                    tilesCycled++;
                 }
             }
             else
             {
                 Debug.Log("AI keeps hand (no discards)");
             }
+
+            // Note: For AI cycle mode, we don't have a proper move to record
+            // because the AI didn't actually place a tile. The cycle mode stats
+            // will be tracked when the AI eventually makes a real move.
+            // This matches how human cycle mode works - the move is recorded
+            // when EndCycleMode is called, not during the cycle itself.
 
             // End turn
             _brain.EndTurn();
