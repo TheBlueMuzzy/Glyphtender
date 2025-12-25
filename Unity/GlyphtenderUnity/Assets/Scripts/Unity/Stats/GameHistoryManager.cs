@@ -106,8 +106,30 @@ namespace Glyphtender.Unity.Stats
             // Calculate stats
             LastGameStats = GameStatsCalculator.Calculate(CurrentHistory);
 
+            // Fix WasVsAI based on current AI state (not what was recorded at game start)
+            // This handles cases where player enables AI mid-game via menu
+            bool hasAI = AIManager.Instance != null && AIManager.Instance.HasAnyAI;
+            LastGameStats.WasVsAI = hasAI;
+            if (hasAI && AIManager.Instance != null)
+            {
+                var blueAI = AIManager.Instance.BlueAI;
+                var yellowAI = AIManager.Instance.YellowAI;
+                if (blueAI != null && blueAI.enabled)
+                    LastGameStats.AIPersonality = blueAI.PersonalityName;
+                else if (yellowAI != null && yellowAI.enabled)
+                    LastGameStats.AIPersonality = yellowAI.PersonalityName;
+            }
+
             // Update lifetime stats for local player
-            Player localColor = CurrentHistory.YellowPlayer.IsAI ? Player.Blue : Player.Yellow;
+            // Determine local player: whichever one is NOT AI (or Yellow if both human)
+            Player localColor = Player.Yellow;
+            if (AIManager.Instance != null)
+            {
+                if (AIManager.Instance.IsPlayerAI(Player.Yellow) && !AIManager.Instance.IsPlayerAI(Player.Blue))
+                    localColor = Player.Blue;
+                else if (!AIManager.Instance.IsPlayerAI(Player.Yellow))
+                    localColor = Player.Yellow;
+            }
             LifetimeStatsUpdater.UpdateFromGame(LocalPlayerStats, LastGameStats, localColor);
 
             // Save everything
