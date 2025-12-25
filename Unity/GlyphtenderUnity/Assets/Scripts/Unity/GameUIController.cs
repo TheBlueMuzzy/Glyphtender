@@ -25,35 +25,35 @@ namespace Glyphtender.Unity
         public float buttonGroupScale = 1.0f;
 
         [Tooltip("Additional multiplier for landscape mode")]
-        public float landscapeScaleBoost = 1.0f;
+        public float landscapeScaleBoost = 1.5f;
 
         [Header("Menu Button")]
         [Tooltip("Size multiplier for menu button")]
-        public float menuSize = 1.0f;
+        public float menuSize = 1.25f;
         [Tooltip("Margin from right edge")]
         public float menuMarginRight = 0.5f;
         [Tooltip("Margin from top edge")]
-        public float menuMarginTop = 0.5f;
+        public float menuMarginTop = 0.25f;
 
         [Header("Confirm Button")]
         [Tooltip("Size multiplier for confirm button")]
-        public float confirmSize = 1.0f;
+        public float confirmSize = 1.5f;
         [Tooltip("Margin from right edge")]
-        public float confirmMarginRight = 0.5f;
+        public float confirmMarginRight = 1f;
         [Tooltip("Margin from bottom edge")]
-        public float confirmMarginBottom = 0.5f;
+        public float confirmMarginBottom = 2.5f;
 
         [Header("Cancel Button")]
         [Tooltip("Size multiplier for cancel button")]
-        public float cancelSize = 1.0f;
+        public float cancelSize = 1.5f;
         [Tooltip("Margin from right edge")]
         public float cancelMarginRight = 0.5f;
         [Tooltip("Margin from bottom edge (stacks above confirm)")]
-        public float cancelMarginAboveConfirm = 0.3f;
+        public float cancelMarginAboveConfirm = 0f;
 
         // UI Anchor
         private Transform _uiAnchor;
-        private float _uiDistance = 6f;
+        private float _uiDistance = 8f;  // Further back than menus (z=5-6)
         private float _baseButtonSize = 0.75f;  // Internal base size
 
         // Buttons
@@ -295,6 +295,12 @@ namespace Glyphtender.Unity
                 onClick: OnMenuClicked,
                 out _menuButtonText
             );
+
+            // Hide if main menu is currently visible
+            if (MainMenuScreen.Instance != null && MainMenuScreen.Instance.IsVisible)
+            {
+                _menuButton.SetActive(false);
+            }
         }
 
         private void CreateCyclePrompt()
@@ -397,6 +403,18 @@ namespace Glyphtender.Unity
             _cyclePromptText.SetActive(false);
         }
 
+        public void ShowMenuButton()
+        {
+            if (_menuButton != null)
+                _menuButton.SetActive(true);
+        }
+
+        public void HideMenuButton()
+        {
+            if (_menuButton != null)
+                _menuButton.SetActive(false);
+        }
+
         #endregion
 
         #region Button Click Handlers
@@ -448,8 +466,10 @@ namespace Glyphtender.Unity
         /// <summary>
         /// Updates confirm/cancel button visibility based on current turn state.
         /// </summary>
-        private void UpdateButtonVisibility()
+        public void UpdateButtonVisibility()
         {
+            if (GameManager.Instance == null) return;
+
             // Check if HandController is in cycle mode
             if (HandController.Instance != null && HandController.Instance.IsInCycleMode)
             {

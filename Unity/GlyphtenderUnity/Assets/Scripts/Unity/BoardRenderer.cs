@@ -665,6 +665,43 @@ namespace Glyphtender.Unity
             RefreshBoard();
         }
 
+        /// <summary>
+        /// Clears all board visuals (hexes, tiles, glyphlings).
+        /// Called when returning to main menu.
+        /// </summary>
+        public void ClearBoard()
+        {
+            // Clear all hexes
+            foreach (var hex in _hexObjects.Values)
+            {
+                Destroy(hex);
+            }
+            _hexObjects.Clear();
+
+            // Clear all tiles
+            foreach (var tile in _tileObjects.Values)
+            {
+                Destroy(tile);
+            }
+            _tileObjects.Clear();
+
+            // Clear all glyphlings
+            foreach (var obj in _glyphlingObjects.Values)
+            {
+                Destroy(obj);
+            }
+            _glyphlingObjects.Clear();
+            _glyphlingTargets.Clear();
+
+            // Clear trapped state
+            _trappedPulseTime.Clear();
+
+            // Hide ghost tile if showing
+            HideGhostTile();
+
+            Debug.Log("Board cleared for main menu.");
+        }
+
         #endregion
     }
 }

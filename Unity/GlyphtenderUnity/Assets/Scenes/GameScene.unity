@@ -533,11 +533,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiCamera: {fileID: 0}
-  panelMaterial: {fileID: 0}
+  panelMaterial: {fileID: 2100000, guid: 3bd03c902d3afc741bfa23bd74d2dab8, type: 2}
   buttonMaterial: {fileID: 0}
-  panelWidth: 6
-  panelHeight: 7
-  menuZ: 5
+  panelWidth: 8
+  panelHeight: 10
+  menuZ: 20
   titleColor: {r: 0.9, g: 0.85, b: 0.7, a: 1}
   labelColor: {r: 0.7, g: 0.7, b: 0.75, a: 1}
   valueColor: {r: 0.85, g: 0.9, b: 1, a: 1}
@@ -712,7 +712,7 @@ MonoBehaviour:
   menuMarginTop: 0.25
   confirmSize: 1.5
   confirmMarginRight: 1
-  confirmMarginBottom: 2
+  confirmMarginBottom: 3.75
   cancelSize: 1.5
   cancelMarginRight: 0.5
   cancelMarginAboveConfirm: 0

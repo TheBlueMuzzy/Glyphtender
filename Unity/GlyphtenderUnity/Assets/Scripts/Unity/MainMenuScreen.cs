@@ -157,8 +157,9 @@ namespace Glyphtender.Unity
 
             CreateMenu();
 
-            // Hide hand while menu is open
+            // Hide hand and menu button while main menu is open
             HandController.Instance?.HideHand();
+            GameUIController.Instance?.HideMenuButton();
 
             // Animate in
             _menuRoot.SetActive(true);
@@ -185,8 +186,9 @@ namespace Glyphtender.Unity
             _animationTime = 0f;
             _isAnimating = true;
 
-            // Show hand
+            // Show hand and menu button
             HandController.Instance?.ShowHand();
+            GameUIController.Instance?.ShowMenuButton();
         }
 
         private void CreateMenu()
@@ -308,8 +310,12 @@ namespace Glyphtender.Unity
                 out _yellowDifficultyText);
 
             // Play button at bottom
-            float buttonY = -(panelHeight / 2f) + (0.5f * elementScale);
+            float buttonY = -(panelHeight / 2f) + (0.7f * elementScale);
             CreatePlayButton(buttonY, elementScale);
+
+            // Close button below Play
+            float closeY = buttonY - (0.5f * elementScale);
+            CreateCloseButton(closeY, elementScale);
 
             // Update visibility based on initial play mode
             UpdateRowVisibility();
@@ -500,6 +506,49 @@ namespace Glyphtender.Unity
 
             var handler = btn.AddComponent<MenuButtonClickHandler>();
             handler.OnClick = OnPlayClicked;
+
+            _menuItems.Add(btn);
+        }
+
+        private void CreateCloseButton(float yPos, float scale)
+        {
+            GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            btn.name = "CloseButton";
+            btn.transform.SetParent(_menuRoot.transform);
+            btn.transform.localPosition = new Vector3(0f, yPos, -0.08f);
+            btn.transform.localRotation = Quaternion.identity;
+            btn.transform.localScale = new Vector3(1.2f * scale, 0.35f * scale, 0.05f);
+            btn.layer = LayerMask.NameToLayer("UI3D");
+
+            var renderer = btn.GetComponent<Renderer>();
+            if (buttonMaterial != null)
+                renderer.material = buttonMaterial;
+            else
+                renderer.material.color = new Color(0.3f, 0.3f, 0.35f);
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+
+            // Button text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(btn.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0f, -1.5f);
+            textObj.transform.localRotation = Quaternion.identity;
+            textObj.transform.localScale = new Vector3(0.04f, 0.12f, 1f);
+            textObj.layer = LayerMask.NameToLayer("UI3D");
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = "Quit";
+            textMesh.fontSize = 36;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.white;
+
+            var handler = btn.AddComponent<MenuButtonClickHandler>();
+            handler.OnClick = () => {
+                Application.Quit();
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#endif
+            };
 
             _menuItems.Add(btn);
         }

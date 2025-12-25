@@ -312,7 +312,7 @@ namespace Glyphtender.Unity
             quitText.layer = LayerMask.NameToLayer("UI3D");
 
             var quitTextMesh = quitText.AddComponent<TextMesh>();
-            quitTextMesh.text = "Quit";
+            quitTextMesh.text = "Menu";
             quitTextMesh.fontSize = 36;
             quitTextMesh.alignment = TextAlignment.Center;
             quitTextMesh.anchor = TextAnchor.MiddleCenter;
@@ -325,6 +325,47 @@ namespace Glyphtender.Unity
             };
 
             _menuItems.Add(quitBtn);
+
+            // Close button (below, centered) - exits app
+            float closeY = yPos - (0.5f * scale);
+            GameObject closeBtn = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            closeBtn.name = "CloseButton";
+            closeBtn.transform.SetParent(_menuRoot.transform);
+            closeBtn.transform.localPosition = new Vector3(0f, closeY, -0.08f);
+            closeBtn.transform.localRotation = Quaternion.identity;
+            closeBtn.transform.localScale = new Vector3(1.2f * scale, 0.35f * scale, 0.05f);
+            closeBtn.layer = LayerMask.NameToLayer("UI3D");
+
+            var closeRenderer = closeBtn.GetComponent<Renderer>();
+            if (buttonMaterial != null)
+                closeRenderer.material = buttonMaterial;
+            else
+                closeRenderer.material.color = new Color(0.3f, 0.3f, 0.35f);
+            closeRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+            GameObject closeText = new GameObject("Text");
+            closeText.transform.SetParent(closeBtn.transform);
+            closeText.transform.localPosition = new Vector3(0f, 0f, -1.5f);
+            closeText.transform.localRotation = Quaternion.identity;
+            closeText.transform.localScale = new Vector3(0.04f, 0.12f, 1f);
+            closeText.layer = LayerMask.NameToLayer("UI3D");
+
+            var closeTextMesh = closeText.AddComponent<TextMesh>();
+            closeTextMesh.text = "Close";
+            closeTextMesh.fontSize = 36;
+            closeTextMesh.alignment = TextAlignment.Center;
+            closeTextMesh.anchor = TextAnchor.MiddleCenter;
+            closeTextMesh.color = Color.white;
+
+            var closeHandler = closeBtn.AddComponent<MenuButtonClickHandler>();
+            closeHandler.OnClick = () => {
+                Application.Quit();
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#endif
+            };
+
+            _menuItems.Add(closeBtn);
         }
 
         private void ReturnToMainMenu()
@@ -333,6 +374,19 @@ namespace Glyphtender.Unity
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.WaitingForMainMenu = true;
+            }
+
+            // Clear the board
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.ClearBoard();
+            }
+
+            // Hide confirm/cancel buttons
+            if (GameUIController.Instance != null)
+            {
+                GameUIController.Instance.HideConfirmButton();
+                GameUIController.Instance.HideCancelButton();
             }
 
             // Show main menu
@@ -570,8 +624,10 @@ namespace Glyphtender.Unity
             // Update row states when opening
             UpdateRowStates();
 
-            // Hide hand elements
+            // Hide hand elements and buttons
             HandController.Instance?.HideHand();
+            GameUIController.Instance?.HideConfirmButton();
+            GameUIController.Instance?.HideCancelButton();
 
             _animationStartScale = Vector3.zero;
             _animationEndScale = Vector3.one;
@@ -586,8 +642,9 @@ namespace Glyphtender.Unity
 
             _isOpen = false;
 
-            // Show hand elements
+            // Show hand elements and restore button visibility
             HandController.Instance?.ShowHand();
+            GameUIController.Instance?.UpdateButtonVisibility();
 
             _animationStartScale = Vector3.one;
             _animationEndScale = Vector3.zero;
