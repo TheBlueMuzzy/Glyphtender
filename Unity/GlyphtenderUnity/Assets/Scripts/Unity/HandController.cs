@@ -6,26 +6,6 @@ using UnityEngine.Rendering;
 
 namespace Glyphtender.Unity
 {
-    public enum DockPosition
-    {
-        Bottom,
-        Left,
-        Right
-    }
-
-    /// <summary>
-    /// Configuration for a specific dock position and orientation.
-    /// </summary>
-    public struct DockConfig
-    {
-        public Vector3 handUpPosition;
-        public Vector3 handDownPosition;
-        public Quaternion handRotation;
-        public float tileSize;
-        public float tileSpacing;
-        public bool isVerticalLayout;
-    }
-
     /// <summary>
     /// Manages the player's hand of tiles in 3D space.
     /// Attached to UI camera so it stays fixed during board zoom/pan.
@@ -36,9 +16,6 @@ namespace Glyphtender.Unity
 
         [Header("Camera")]
         public Camera uiCamera;
-
-        [Header("Dock Settings")]
-        public DockPosition currentDock = DockPosition.Bottom;
 
         [Header("Layout")]
         [Tooltip("Distance between tile centers")]
@@ -69,8 +46,10 @@ namespace Glyphtender.Unity
         // Public state for GameUIController
         public bool IsInCycleMode => _isInCycleMode;
 
-        // Dock configurations
-        private DockConfig _currentConfig;
+        // Hand position (bottom dock only)
+        private Vector3 _handUpPosition;
+        private Vector3 _handDownPosition;
+        private Quaternion _handRotation;
 
         // State
         private bool _isUp = true;
@@ -154,7 +133,7 @@ namespace Glyphtender.Unity
 
             CreateCyclePrompt();
 
-            ApplyDockConfig();
+            ApplyHandPosition();
 
             // Initialize responsive scaling
             _handIsActive = false;
@@ -182,23 +161,6 @@ namespace Glyphtender.Unity
                     _isLerping = false;
                 }
             }
-
-            // Debug: Press D to cycle dock positions
-            if (Input.GetKeyDown(KeyCode.D))
-            {
-                switch (currentDock)
-                {
-                    case DockPosition.Bottom:
-                        SetDockPosition(DockPosition.Left);
-                        break;
-                    case DockPosition.Left:
-                        SetDockPosition(DockPosition.Right);
-                        break;
-                    case DockPosition.Right:
-                        SetDockPosition(DockPosition.Bottom);
-                        break;
-                }
-            }
         }
 
         private void OnDestroy()
@@ -222,61 +184,27 @@ namespace Glyphtender.Unity
         /// </summary>
         private void OnLayoutChanged()
         {
-            ApplyDockConfig();
+            ApplyHandPosition();
             RefreshResponsiveScale();
         }
 
-        #region Dock Positioning
+        #region Hand Positioning
 
-        private void ApplyDockConfig()
+        /// <summary>
+        /// Calculates and applies hand position at bottom of screen.
+        /// </summary>
+        private void ApplyHandPosition()
         {
-            _currentConfig = GetDockConfig(currentDock);
-
-            _handAnchor.localPosition = _isUp ? _currentConfig.handUpPosition : _currentConfig.handDownPosition;
-            _handAnchor.localRotation = _currentConfig.handRotation;
-        }
-
-        public void SetDockPosition(DockPosition newDock)
-        {
-            currentDock = newDock;
-            ApplyDockConfig();
-            RefreshHand();
-        }
-
-        private DockConfig GetDockConfig(DockPosition dock)
-        {
-            DockConfig config = new DockConfig();
-
             float halfHeight = UIScaler.Instance != null ? UIScaler.Instance.HalfHeight : 5f;
-            float halfWidth = UIScaler.Instance != null ? UIScaler.Instance.HalfWidth : 8f;
 
-            // Note: Hand anchor is rotated 180° on X, so negative Y appears at bottom
-            switch (dock)
-            {
-                case DockPosition.Bottom:
-                    float bottomY = -(halfHeight - 1f);  // Near bottom edge
-                    config.handUpPosition = new Vector3(0f, bottomY, _handDistance);
-                    config.handDownPosition = new Vector3(0f, -(halfHeight + 2f), _handDistance);
-                    config.handRotation = Quaternion.Euler(180f, 0f, 0f);
-                    config.isVerticalLayout = false;
-                    break;
+            // Hand anchor is rotated 180° on X, so negative Y appears at bottom
+            float bottomY = -(halfHeight - 1f);  // Near bottom edge
+            _handUpPosition = new Vector3(0f, bottomY, _handDistance);
+            _handDownPosition = new Vector3(0f, -(halfHeight + 2f), _handDistance);
+            _handRotation = Quaternion.Euler(180f, 0f, 0f);
 
-                case DockPosition.Left:
-                    config.handUpPosition = new Vector3(-halfWidth + 1f, 0f, _handDistance);
-                    config.handDownPosition = new Vector3(-halfWidth - 2f, 0f, _handDistance);
-                    config.handRotation = Quaternion.Euler(180f, 0f, -90f);
-                    config.isVerticalLayout = true;
-                    break;
-
-                case DockPosition.Right:
-                    config.handUpPosition = new Vector3(halfWidth - 1f, 0f, _handDistance);
-                    config.handDownPosition = new Vector3(halfWidth + 2f, 0f, _handDistance);
-                    config.handRotation = Quaternion.Euler(180f, 0f, 90f);
-                    config.isVerticalLayout = true;
-                    break;
-            }
-
-            return config;
+            _handAnchor.localPosition = _isUp ? _handUpPosition : _handDownPosition;
+            _handAnchor.localRotation = _handRotation;
         }
 
         #endregion
@@ -337,7 +265,7 @@ namespace Glyphtender.Unity
         {
             _isUp = !_isUp;
             _lerpStart = _handAnchor.localPosition;
-            _lerpTarget = _isUp ? _currentConfig.handUpPosition : _currentConfig.handDownPosition;
+            _lerpTarget = _isUp ? _handUpPosition : _handDownPosition;
             _lerpTime = 0f;
             _isLerping = true;
         }
