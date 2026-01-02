@@ -22,7 +22,8 @@ namespace Glyphtender.Core
 
             foreach (var glyphling in state.GetPlayerGlyphlings(opponent))
             {
-                if (IsOnGlyphlingLeyline(state.Board, glyphling.Position, position))
+                if (!glyphling.IsPlaced) continue;
+                if (IsOnGlyphlingLeyline(state.Board, glyphling.Position.Value, position))
                 {
                     return true;
                 }
@@ -63,7 +64,8 @@ namespace Glyphtender.Core
 
             foreach (var glyphling in state.GetPlayerGlyphlings(opponent))
             {
-                if (IsOnGlyphlingLeyline(state.Board, glyphling.Position, position))
+                if (!glyphling.IsPlaced) continue;
+                if (IsOnGlyphlingLeyline(state.Board, glyphling.Position.Value, position))
                 {
                     blocked.Add(glyphling);
                 }
@@ -83,10 +85,11 @@ namespace Glyphtender.Core
 
             foreach (var glyphling in state.GetPlayerGlyphlings(opponent))
             {
+                if (!glyphling.IsPlaced) continue;
                 // Count each direction separately - a position could block multiple leylines from same glyphling
                 for (int dir = 0; dir < 6; dir++)
                 {
-                    var leyline = state.Board.GetLeyline(glyphling.Position, dir);
+                    var leyline = state.Board.GetLeyline(glyphling.Position.Value, dir);
                     foreach (var hex in leyline)
                     {
                         if (hex == position)

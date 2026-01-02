@@ -24,7 +24,7 @@ namespace Glyphtender.Core
         };
 
         /// <summary>
-        /// Creates a new game with initial setup.
+        /// Creates a new game with initial setup (no draft, backward compatible).
         /// </summary>
         public static GameState CreateNewGame(Random random = null)
         {
@@ -32,7 +32,7 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Creates a new game with specified board size and player count.
+        /// Creates a new game with specified board size and player count (no draft).
         /// </summary>
         public static GameState CreateNewGame(BoardSize boardSize, int playerCount = 2, Random random = null)
         {
@@ -44,6 +44,26 @@ namespace Glyphtender.Core
             PlaceStartingGlyphlings(state);
             DealInitialHands(state);
 
+            state.Phase = GamePhase.Play;
+            return state;
+        }
+
+        /// <summary>
+        /// Creates a new game with draft phase enabled.
+        /// Glyphlings start unplaced, hands are dealt after draft completes.
+        /// </summary>
+        public static GameState CreateNewGameWithDraft(BoardSize boardSize, int playerCount = 2, Random random = null)
+        {
+            random = random ?? new Random();
+            var board = new Board(boardSize);
+            var state = new GameState(board, playerCount);
+
+            InitializeTileBag(state, random);
+            CreateUnplacedGlyphlings(state);
+            // Don't deal hands yet - that happens after draft
+
+            state.Phase = GamePhase.Draft;
+            state.DraftPickNumber = 0;
             return state;
         }
 
@@ -64,6 +84,20 @@ namespace Glyphtender.Core
                 char temp = state.TileBag[i];
                 state.TileBag[i] = state.TileBag[j];
                 state.TileBag[j] = temp;
+            }
+        }
+
+        /// <summary>
+        /// Creates glyphlings without placing them (for draft mode).
+        /// </summary>
+        private static void CreateUnplacedGlyphlings(GameState state)
+        {
+            foreach (var player in state.ActivePlayers)
+            {
+                for (int g = 0; g < GlyphlingsPerPlayer; g++)
+                {
+                    state.Glyphlings.Add(new Glyphling(player, g, null));
+                }
             }
         }
 
@@ -136,6 +170,7 @@ namespace Glyphtender.Core
 
             return (yellow1, yellow2, blue1, blue2);
         }
+
         /// <summary>
         /// Gets starting positions for all players based on player count.
         /// Distributes glyphlings around the board symmetrically.
@@ -250,6 +285,7 @@ namespace Glyphtender.Core
             while (angle < -Math.PI) angle += 2 * Math.PI;
             return angle;
         }
+
         private static void DealInitialHands(GameState state)
         {
             for (int i = 0; i < HandSize; i++)
@@ -276,10 +312,14 @@ namespace Glyphtender.Core
         {
             var validMoves = new List<HexCoord>();
 
+            // Can't move if not placed
+            if (!glyphling.IsPlaced)
+                return validMoves;
+
             // Check all 6 directions
             for (int dir = 0; dir < 6; dir++)
             {
-                var current = glyphling.Position;
+                var current = glyphling.Position.Value;
 
                 while (true)
                 {
@@ -310,10 +350,14 @@ namespace Glyphtender.Core
         {
             var validCasts = new List<HexCoord>();
 
+            // Can't cast if not placed
+            if (!glyphling.IsPlaced)
+                return validCasts;
+
             // Check all 6 directions along leylines
             for (int dir = 0; dir < 6; dir++)
             {
-                var current = glyphling.Position;
+                var current = glyphling.Position.Value;
 
                 while (true)
                 {
@@ -349,6 +393,83 @@ namespace Glyphtender.Core
             }
 
             return validCasts;
+        }
+
+        /// <summary>
+        /// Gets valid draft placement positions.
+        /// Valid = interior hex (not edge), not adjacent to any placed glyphling.
+        /// </summary>
+        public static List<HexCoord> GetValidDraftPlacements(GameState state)
+        {
+            var validPlacements = new List<HexCoord>();
+
+            foreach (var hex in state.Board.InteriorHexes)
+            {
+                // Skip if there's already a glyphling here
+                if (state.HasGlyphling(hex))
+                    continue;
+
+                // Skip if adjacent to any placed glyphling
+                bool adjacentToGlyphling = false;
+                foreach (var neighbor in hex.GetAllNeighbors())
+                {
+                    if (state.HasGlyphling(neighbor))
+                    {
+                        adjacentToGlyphling = true;
+                        break;
+                    }
+                }
+
+                if (!adjacentToGlyphling)
+                {
+                    validPlacements.Add(hex);
+                }
+            }
+
+            return validPlacements;
+        }
+
+        /// <summary>
+        /// Places a glyphling during draft phase.
+        /// Returns true if successful.
+        /// </summary>
+        public static bool PlaceDraftGlyphling(GameState state, HexCoord position)
+        {
+            if (state.Phase != GamePhase.Draft)
+                return false;
+
+            var validPlacements = GetValidDraftPlacements(state);
+            if (!validPlacements.Contains(position))
+                return false;
+
+            // Find the next unplaced glyphling for the current drafter
+            var glyphling = state.GetNextUnplacedGlyphling(state.CurrentDrafter);
+            if (glyphling == null)
+                return false;
+
+            // Place it
+            glyphling.Position = position;
+
+            // Advance draft
+            state.DraftPickNumber++;
+
+            // Check if draft is complete
+            if (state.AllGlyphlingsPlaced)
+            {
+                CompleteDraft(state);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Called when draft phase completes. Deals hands and transitions to Play phase.
+        /// </summary>
+        private static void CompleteDraft(GameState state)
+        {
+            DealInitialHands(state);
+            state.Phase = GamePhase.Play;
+            state.CurrentPlayer = Player.Yellow;  // Yellow always goes first in play phase
         }
 
         public static bool ExecuteMove(GameState state, Glyphling glyphling,

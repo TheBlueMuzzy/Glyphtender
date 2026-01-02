@@ -262,6 +262,9 @@ namespace Glyphtender.Unity.Stats
             var tangledAfter = TangleChecker.GetTangledGlyphlings(state);
             foreach (var tangled in tangledAfter)
             {
+                // Skip unplaced glyphlings (shouldn't happen, but be safe)
+                if (!tangled.IsPlaced) continue;
+
                 // Check if this is a NEW tangle (wasn't tangled before)
                 bool wasAlreadyTangled = false;
                 if (_tangledBeforeMove != null)
@@ -282,7 +285,7 @@ namespace Glyphtender.Unity.Stats
                     {
                         TangledPlayer = tangled.Owner,
                         GlyphlingIndex = tangled.Index,
-                        Position = tangled.Position,
+                        Position = tangled.Position.Value,
                         IsSelfTangle = (tangled.Owner == player) // You tangled your own glyphling
                     };
                     record.TangleEvents.Add(tangleEvent);

@@ -58,7 +58,7 @@ namespace Glyphtender.Core
             var opponentGlyphlings = new List<Glyphling>();
             foreach (var g in state.Glyphlings)
             {
-                if (g.Owner == opponent)
+                if (g.Owner == opponent && g.IsPlaced)
                 {
                     opponentGlyphlings.Add(g);
                 }
@@ -94,6 +94,12 @@ namespace Glyphtender.Core
         {
             var result = new TrapResult { Target = target };
 
+            // Target must be placed
+            if (!target.IsPlaced)
+            {
+                return result;
+            }
+
             // Count moves BEFORE the play
             result.MovesBefore = CountValidMoves(state, target);
 
@@ -104,14 +110,14 @@ namespace Glyphtender.Core
 
             // Find and temporarily move our glyphling
             Glyphling ourGlyphling = null;
-            HexCoord originalPos = default;
+            HexCoord? originalPos = null;
             foreach (var g in state.Glyphlings)
             {
-                if (g.Owner == aiPlayer)
+                if (g.Owner == aiPlayer && g.IsPlaced)
                 {
                     // Find which glyphling is making this move (closest to destination)
                     var moves = GameRules.GetValidMoves(state, g);
-                    if (moves.Contains(glyphlingDestination) || g.Position == glyphlingDestination)
+                    if (moves.Contains(glyphlingDestination) || g.Position.Value == glyphlingDestination)
                     {
                         ourGlyphling = g;
                         originalPos = g.Position;
@@ -125,13 +131,13 @@ namespace Glyphtender.Core
             result.MovesAfter = CountValidMoves(state, target);
 
             // Calculate leyline blocks
-            result.LeylineBlocks = CountLeylineBlocks(target.Position, castPosition, glyphlingDestination);
+            result.LeylineBlocks = CountLeylineBlocks(target.Position.Value, castPosition, glyphlingDestination);
 
             // Calculate wall synergy
             result.WallSynergyBonus = CalculateWallSynergy(state, target, castPosition, glyphlingDestination);
 
             // Calculate triangle bonus
-            result.TriangleBonus = CalculateTriangleBonus(target.Position, castPosition, glyphlingDestination);
+            result.TriangleBonus = CalculateTriangleBonus(target.Position.Value, castPosition, glyphlingDestination);
 
             // Restore state
             if (hadTile)
@@ -210,13 +216,16 @@ namespace Glyphtender.Core
             HexCoord castPos,
             HexCoord glyphlingPos)
         {
+            if (!target.IsPlaced)
+                return 0f;
+
             float bonus = 0f;
 
             // Count how many directions from target lead off the board
             int wallDirections = 0;
             for (int dir = 0; dir < 6; dir++)
             {
-                var neighbor = target.Position.GetNeighbor(dir);
+                var neighbor = target.Position.Value.GetNeighbor(dir);
                 if (!state.Board.IsBoardHex(neighbor))
                 {
                     wallDirections++;
@@ -324,7 +333,6 @@ namespace Glyphtender.Core
 
         /// <summary>
         /// Quick check if an opponent is already in a vulnerable position (few moves).
-        /// Used for prioritizing targets.
         /// </summary>
         public static bool IsVulnerable(GameState state, Glyphling glyphling)
         {
@@ -343,7 +351,7 @@ namespace Glyphtender.Core
 
             foreach (var g in state.Glyphlings)
             {
-                if (g.Owner == opponent)
+                if (g.Owner == opponent && g.IsPlaced)
                 {
                     int moves = CountValidMoves(state, g);
                     if (moves < fewestMoves)

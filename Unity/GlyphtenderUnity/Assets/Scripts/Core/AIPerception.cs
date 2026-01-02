@@ -225,26 +225,22 @@ namespace Glyphtender.Core
     public static class LetterJunkAssessor
     {
         private static readonly HashSet<char> Vowels = new HashSet<char> { 'A', 'E', 'I', 'O', 'U' };
-        private static readonly HashSet<char> HardLetters = new HashSet<char> { 'Q', 'X', 'Z', 'J', 'V' };
+        private static readonly HashSet<char> HardLetters = new HashSet<char> { 'X', 'Z', 'J', 'V', 'Q' };
 
         /// <summary>
-        /// Evaluates how much the AI wants to get rid of this letter (0-10).
-        /// Considers: hard letters, duplicates, vowel/consonant balance.
+        /// How junky is this letter in this hand? 0-10.
         /// </summary>
         public static float Assess(char letter, List<char> hand)
         {
-            if (hand == null || hand.Count == 0)
-                return 0f;
-
-            char upper = char.ToUpper(letter);
             float junkScore = 0f;
+            char upper = char.ToUpper(letter);
 
-            // Hard letters are always somewhat junky
+            // Hard letters are inherently junky
             if (HardLetters.Contains(upper))
             {
                 junkScore += AIConstants.JunkHardLetterBase;
 
-                // Q without U is extra junky
+                // Q without U is extra bad
                 if (upper == 'Q')
                 {
                     bool hasU = false;
@@ -257,31 +253,23 @@ namespace Glyphtender.Core
                         }
                     }
                     if (!hasU)
-                    {
                         junkScore += AIConstants.JunkQWithoutU;
-                    }
                 }
             }
 
-            // Count duplicates of this letter
-            int duplicates = 0;
+            // Duplicates are junky
+            int dupeCount = 0;
             foreach (var c in hand)
             {
                 if (char.ToUpper(c) == upper)
-                    duplicates++;
+                    dupeCount++;
             }
-
-            // 3+ of same letter = extra copies are junk
-            if (duplicates >= 3)
-            {
+            if (dupeCount >= 3)
                 junkScore += AIConstants.JunkTripleDuplicate;
-            }
-            else if (duplicates >= 2)
-            {
+            else if (dupeCount == 2)
                 junkScore += AIConstants.JunkDoubleDuplicate;
-            }
 
-            // Check vowel/consonant balance
+            // Vowel balance
             int vowelCount = 0;
             foreach (var c in hand)
             {
@@ -324,6 +312,10 @@ namespace Glyphtender.Core
             Glyphling glyphling,
             Player aiPlayer)
         {
+            // Can't assess pressure on unplaced glyphlings
+            if (!glyphling.IsPlaced)
+                return 0f;
+
             float pressure = 0f;
 
             // Count blocked directions (0-6)
@@ -337,7 +329,7 @@ namespace Glyphtender.Core
             HashSet<int> openDirections = new HashSet<int>();
             foreach (var move in validMoves)
             {
-                int dir = GetDirection(glyphling.Position, move);
+                int dir = GetDirection(glyphling.Position.Value, move);
                 if (dir >= 0)
                     openDirections.Add(dir);
             }
@@ -356,8 +348,9 @@ namespace Glyphtender.Core
             foreach (var g in state.Glyphlings)
             {
                 if (g.Owner != opponent) continue;
+                if (!g.IsPlaced) continue;  // Skip unplaced glyphlings
 
-                int distance = HexDistance(glyphling.Position, g.Position);
+                int distance = HexDistance(glyphling.Position.Value, g.Position.Value);
                 if (distance == 1)
                     pressure += AIConstants.PressureAdjacentOpponent;
                 else if (distance == 2)

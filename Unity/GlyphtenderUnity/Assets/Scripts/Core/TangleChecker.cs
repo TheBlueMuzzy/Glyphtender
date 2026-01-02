@@ -16,6 +16,10 @@ namespace Glyphtender.Core
         /// </summary>
         public static bool IsTangled(GameState state, Glyphling glyphling)
         {
+            // Unplaced glyphlings can't be tangled
+            if (!glyphling.IsPlaced)
+                return false;
+
             var validMoves = GameRules.GetValidMoves(state, glyphling);
             return validMoves.Count == 0;
         }
@@ -54,10 +58,13 @@ namespace Glyphtender.Core
 
             foreach (var tangled in tangledGlyphlings)
             {
+                // Skip if somehow unplaced (shouldn't happen but be safe)
+                if (!tangled.IsPlaced) continue;
+
                 Player tangledOwner = tangled.Owner;
 
                 // Check all adjacent hexes
-                foreach (var neighborCoord in tangled.Position.GetAllNeighbors())
+                foreach (var neighborCoord in tangled.Position.Value.GetAllNeighbors())
                 {
                     if (!state.Board.IsBoardHex(neighborCoord)) continue;
 

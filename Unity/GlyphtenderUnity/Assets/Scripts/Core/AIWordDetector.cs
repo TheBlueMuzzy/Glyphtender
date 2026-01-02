@@ -280,10 +280,11 @@ namespace Glyphtender.Core
                 foreach (var glyphling in state.Glyphlings)
                 {
                     if (glyphling.Owner != aiPlayer) continue;
+                    if (!glyphling.IsPlaced) continue;  // Skip unplaced glyphlings
 
                     // Get all positions this glyphling can move to (including current)
                     var movePositions = GameRules.GetValidMoves(state, glyphling);
-                    movePositions.Add(glyphling.Position); // Can also stay put (or already there)
+                    movePositions.Add(glyphling.Position.Value); // Can also stay put (or already there)
 
                     foreach (var movePos in movePositions)
                     {

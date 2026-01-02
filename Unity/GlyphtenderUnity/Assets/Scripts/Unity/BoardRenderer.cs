@@ -384,7 +384,7 @@ namespace Glyphtender.Unity
                 }
 
                 var obj = _glyphlingObjects[glyphling];
-                Vector3 targetPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
+                Vector3 targetPos = HexToWorld(glyphling.Position.Value) + Vector3.up * 0.3f;
 
                 // Check if position changed (compare to current target, not current position)
                 if (!_glyphlingTargets.ContainsKey(glyphling) || _glyphlingTargets[glyphling] != targetPos)
@@ -405,14 +405,14 @@ namespace Glyphtender.Unity
 
             if (glyphlingPrefab != null)
             {
-                Vector3 spawnPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
+                Vector3 spawnPos = HexToWorld(glyphling.Position.Value) + Vector3.up * 0.3f;
                 obj = Instantiate(glyphlingPrefab, spawnPos, Quaternion.identity, transform);
             }
             else
             {
                 // Simple placeholder sphere
                 obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                Vector3 spawnPos = HexToWorld(glyphling.Position) + Vector3.up * 0.3f;
+                Vector3 spawnPos = HexToWorld(glyphling.Position.Value) + Vector3.up * 0.3f;
                 obj.transform.position = spawnPos;
                 obj.transform.localScale = new Vector3(hexSize * glyphlingSize, hexSize * glyphlingSize, hexSize * glyphlingSize);
                 obj.transform.SetParent(transform);

@@ -292,7 +292,7 @@ namespace Glyphtender.Unity
             }
 
             // Begin move tracking for stats
-            HexCoord fromPosition = actualGlyphling.Position;
+            HexCoord fromPosition = actualGlyphling.Position.Value;
             GameHistoryManager.Instance?.BeginMove(actualGlyphling, state);
 
             // Step 1: Move the glyphling

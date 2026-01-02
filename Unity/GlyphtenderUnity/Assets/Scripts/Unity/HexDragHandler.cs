@@ -63,7 +63,7 @@ namespace Glyphtender.Unity
             // Check if there's a current player's glyphling at this hex
             Glyphling glyphlingHere = BoardRenderer.GetGlyphlingAt(Coord);
 
-            if (glyphlingHere != null && glyphlingHere.Owner == state.CurrentPlayer)
+            if (glyphlingHere != null && glyphlingHere.Owner == state.CurrentPlayer && glyphlingHere.IsPlaced)
             {
                 // If we're mid-turn, reset the current move first
                 var turnState = GameManager.Instance.CurrentTurnState;
@@ -100,7 +100,7 @@ namespace Glyphtender.Unity
                 {
                     // Get original position from glyphling's DATA position, not visual
                     // This ensures we return to correct spot after ResetMove changes data
-                    _originalPosition = BoardRenderer.HexToWorld(glyphlingHere.Position) + Vector3.up * 0.3f;
+                    _originalPosition = BoardRenderer.HexToWorld(glyphlingHere.Position.Value) + Vector3.up * 0.3f;
 
                     // Also sync the visual to match data immediately
                     _draggedObject.transform.position = _originalPosition;

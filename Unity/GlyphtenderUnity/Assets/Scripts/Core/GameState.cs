@@ -11,6 +11,12 @@ namespace Glyphtender.Core
         Pink = 3
     }
 
+    public enum GamePhase
+    {
+        Draft,  // Players placing glyphlings
+        Play    // Normal gameplay
+    }
+
     /// <summary>
     /// A letter tile placed on the board.
     /// </summary>
@@ -34,10 +40,10 @@ namespace Glyphtender.Core
     public class Glyphling
     {
         public Player Owner { get; }
-        public HexCoord Position { get; set; }
+        public HexCoord? Position { get; set; }  // Nullable - null means "in hand" during draft
         public int Index { get; } // 0 or 1 (each player has 2)
 
-        public Glyphling(Player owner, int index, HexCoord startPosition)
+        public Glyphling(Player owner, int index, HexCoord? startPosition = null)
         {
             Owner = owner;
             Index = index;
@@ -51,6 +57,11 @@ namespace Glyphtender.Core
         {
             return new Glyphling(Owner, Index, Position);
         }
+
+        /// <summary>
+        /// Returns true if this glyphling has been placed on the board.
+        /// </summary>
+        public bool IsPlaced => Position.HasValue;
     }
 
     /// <summary>
@@ -65,10 +76,10 @@ namespace Glyphtender.Core
         // Tiles on the board (position -> tile)
         public Dictionary<HexCoord, Tile> Tiles { get; }
 
-        // All four glyphlings
+        // All glyphlings (2 per player)
         public List<Glyphling> Glyphlings { get; }
 
-        // Player hands (7 tiles each)
+        // Player hands (8 tiles each)
         public Dictionary<Player, List<char>> Hands { get; }
 
         // Tile bag
@@ -89,6 +100,13 @@ namespace Glyphtender.Core
         // Number of players in this game (2-4)
         public int PlayerCount { get; }
 
+        // Current game phase
+        public GamePhase Phase { get; set; }
+
+        // Draft state tracking
+        public int DraftPickNumber { get; set; }  // Which pick we're on (0 to totalPicks-1)
+        public int DraftDirection { get; set; }   // 1 = forward, -1 = backward (snake)
+
         /// <summary>
         /// Returns the players active in this game.
         /// </summary>
@@ -100,6 +118,33 @@ namespace Glyphtender.Core
                 {
                     yield return (Player)i;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gets the player whose turn it is to draft.
+        /// In snake draft: P1, P2, P3, P4, P4, P3, P2, P1, etc.
+        /// </summary>
+        public Player CurrentDrafter
+        {
+            get
+            {
+                int totalPicks = PlayerCount * 2;  // 2 glyphlings per player
+                int roundPosition = DraftPickNumber % (PlayerCount * 2);
+                int playerIndex;
+
+                if (roundPosition < PlayerCount)
+                {
+                    // Forward direction: 0, 1, 2, 3
+                    playerIndex = roundPosition;
+                }
+                else
+                {
+                    // Backward direction: 3, 2, 1, 0
+                    playerIndex = (PlayerCount * 2 - 1) - roundPosition;
+                }
+
+                return (Player)playerIndex;
             }
         }
 
@@ -123,6 +168,9 @@ namespace Glyphtender.Core
             CurrentPlayer = Player.Yellow;
             TurnNumber = 1;
             IsGameOver = false;
+            Phase = GamePhase.Play;  // Default to Play for backward compatibility
+            DraftPickNumber = 0;
+            DraftDirection = 1;
         }
 
         /// <summary>
@@ -178,6 +226,9 @@ namespace Glyphtender.Core
             clone.CurrentPlayer = CurrentPlayer;
             clone.TurnNumber = TurnNumber;
             clone.IsGameOver = IsGameOver;
+            clone.Phase = Phase;
+            clone.DraftPickNumber = DraftPickNumber;
+            clone.DraftDirection = DraftDirection;
 
             return clone;
         }
@@ -201,7 +252,7 @@ namespace Glyphtender.Core
         {
             foreach (var g in Glyphlings)
             {
-                if (g.Position == position)
+                if (g.Position.HasValue && g.Position.Value == position)
                     return g;
             }
             return null;
@@ -230,6 +281,34 @@ namespace Glyphtender.Core
         {
             return !HasTile(position) && !HasGlyphling(position);
         }
-    }
 
+        /// <summary>
+        /// Gets the next unplaced glyphling for a player, or null if all placed.
+        /// </summary>
+        public Glyphling GetNextUnplacedGlyphling(Player player)
+        {
+            foreach (var g in Glyphlings)
+            {
+                if (g.Owner == player && !g.IsPlaced)
+                    return g;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Returns true if all glyphlings have been placed.
+        /// </summary>
+        public bool AllGlyphlingsPlaced
+        {
+            get
+            {
+                foreach (var g in Glyphlings)
+                {
+                    if (!g.IsPlaced)
+                        return false;
+                }
+                return true;
+            }
+        }
+    }
 }

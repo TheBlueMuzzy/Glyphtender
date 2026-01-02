@@ -182,8 +182,9 @@ namespace Glyphtender.Core
             foreach (var g in state.Glyphlings)
             {
                 if (g.Owner != opponent) continue;
+                if (!g.IsPlaced) continue;
 
-                int distance = HexDistance(move.CastPosition, g.Position);
+                int distance = HexDistance(move.CastPosition, g.Position.Value);
                 if (distance == 1)
                     blocking += 2f;  // Adjacent to opponent
                 else if (distance == 2)
@@ -233,6 +234,9 @@ namespace Glyphtender.Core
         /// </summary>
         private static float CalculatePositionalValue(GameState simState, Glyphling glyphling)
         {
+            if (!glyphling.IsPlaced)
+                return 0f;
+
             var validMoves = GameRules.GetValidMoves(simState, glyphling);
 
             // More moves = better position
@@ -242,7 +246,7 @@ namespace Glyphtender.Core
             var directions = new HashSet<int>();
             foreach (var move in validMoves)
             {
-                int dir = GetDirection(glyphling.Position, move);
+                int dir = GetDirection(glyphling.Position.Value, move);
                 if (dir >= 0) directions.Add(dir);
             }
 
@@ -250,7 +254,7 @@ namespace Glyphtender.Core
             value += directions.Count * 0.5f;
 
             // Penalty for being near edges (fewer options)
-            if (IsNearEdge(glyphling.Position, simState.Board))
+            if (IsNearEdge(glyphling.Position.Value, simState.Board))
                 value -= 1f;
 
             return Math.Max(0f, value);
@@ -271,7 +275,7 @@ namespace Glyphtender.Core
                 {
                     if (tile.Owner == opponent)
                     {
-                        // There's an opponent tile adjacent � this might be a steal
+                        // There's an opponent tile adjacent — this might be a steal
                         return true;
                     }
                 }
