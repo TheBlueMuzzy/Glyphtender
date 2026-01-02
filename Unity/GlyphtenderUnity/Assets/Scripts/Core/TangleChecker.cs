@@ -44,38 +44,37 @@ namespace Glyphtender.Core
         /// </summary>
         public static Dictionary<Player, int> CalculateTanglePoints(GameState state)
         {
-            var points = new Dictionary<Player, int>
+            var points = new Dictionary<Player, int>();
+            foreach (var player in state.ActivePlayers)
             {
-                { Player.Yellow, 0 },
-                { Player.Blue, 0 }
-            };
+                points[player] = 0;
+            }
 
             var tangledGlyphlings = GetTangledGlyphlings(state);
 
             foreach (var tangled in tangledGlyphlings)
             {
-                Player enemy = tangled.Owner;
-                Player scorer = enemy == Player.Yellow ? Player.Blue : Player.Yellow;
+                Player tangledOwner = tangled.Owner;
 
                 // Check all adjacent hexes
                 foreach (var neighborCoord in tangled.Position.GetAllNeighbors())
                 {
                     if (!state.Board.IsBoardHex(neighborCoord)) continue;
 
-                    // Check for scorer's tile
+                    // Check for any player's tile (except the tangled glyphling's owner)
                     if (state.Tiles.TryGetValue(neighborCoord, out Tile tile))
                     {
-                        if (tile.Owner == scorer)
+                        if (tile.Owner != tangledOwner)
                         {
-                            points[scorer] += TanglePointsPerAdjacent;
+                            points[tile.Owner] += TanglePointsPerAdjacent;
                         }
                     }
 
-                    // Check for scorer's glyphling
+                    // Check for any player's glyphling (except the tangled glyphling's owner)
                     var adjacentGlyphling = state.GetGlyphlingAt(neighborCoord);
-                    if (adjacentGlyphling != null && adjacentGlyphling.Owner == scorer)
+                    if (adjacentGlyphling != null && adjacentGlyphling.Owner != tangledOwner)
                     {
-                        points[scorer] += TanglePointsPerAdjacent;
+                        points[adjacentGlyphling.Owner] += TanglePointsPerAdjacent;
                     }
                 }
             }

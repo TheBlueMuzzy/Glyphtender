@@ -5,8 +5,10 @@ namespace Glyphtender.Core
 {
     public enum Player
     {
-        Yellow,
-        Blue
+        Yellow = 0,
+        Blue = 1,
+        Purple = 2,
+        Pink = 3
     }
 
     /// <summary>
@@ -84,22 +86,40 @@ namespace Glyphtender.Core
         // Game over flag
         public bool IsGameOver { get; set; }
 
-        public GameState(Board board)
+        // Number of players in this game (2-4)
+        public int PlayerCount { get; }
+
+        /// <summary>
+        /// Returns the players active in this game.
+        /// </summary>
+        public IEnumerable<Player> ActivePlayers
+        {
+            get
+            {
+                for (int i = 0; i < PlayerCount; i++)
+                {
+                    yield return (Player)i;
+                }
+            }
+        }
+
+        public GameState(Board board, int playerCount = 2)
         {
             Board = board;
+            PlayerCount = playerCount;
             Tiles = new Dictionary<HexCoord, Tile>();
             Glyphlings = new List<Glyphling>();
-            Hands = new Dictionary<Player, List<char>>
+            Hands = new Dictionary<Player, List<char>>();
+            for (int i = 0; i < playerCount; i++)
             {
-                { Player.Yellow, new List<char>() },
-                { Player.Blue, new List<char>() }
-            };
+                Hands[(Player)i] = new List<char>();
+            }
             TileBag = new List<char>();
-            Scores = new Dictionary<Player, int>
+            Scores = new Dictionary<Player, int>();
+            for (int i = 0; i < playerCount; i++)
             {
-                { Player.Yellow, 0 },
-                { Player.Blue, 0 }
-            };
+                Scores[(Player)i] = 0;
+            }
             CurrentPlayer = Player.Yellow;
             TurnNumber = 1;
             IsGameOver = false;
@@ -108,9 +128,10 @@ namespace Glyphtender.Core
         /// <summary>
         /// Private constructor for cloning.
         /// </summary>
-        private GameState(Board board, bool forClone)
+        private GameState(Board board, int playerCount, bool forClone)
         {
             Board = board;
+            PlayerCount = playerCount;
             Tiles = new Dictionary<HexCoord, Tile>();
             Glyphlings = new List<Glyphling>();
             Hands = new Dictionary<Player, List<char>>();
@@ -124,7 +145,7 @@ namespace Glyphtender.Core
         /// </summary>
         public GameState Clone()
         {
-            var clone = new GameState(Board, forClone: true);
+            var clone = new GameState(Board, PlayerCount, forClone: true);
 
             // Copy tiles (Tile is immutable, so we can reuse the same objects)
             foreach (var kvp in Tiles)
@@ -139,15 +160,19 @@ namespace Glyphtender.Core
             }
 
             // Copy hands (need new lists)
-            clone.Hands[Player.Yellow] = new List<char>(Hands[Player.Yellow]);
-            clone.Hands[Player.Blue] = new List<char>(Hands[Player.Blue]);
+            foreach (var player in ActivePlayers)
+            {
+                clone.Hands[player] = new List<char>(Hands[player]);
+            }
 
             // Copy tile bag
             clone.TileBag.AddRange(TileBag);
 
             // Copy scores
-            clone.Scores[Player.Yellow] = Scores[Player.Yellow];
-            clone.Scores[Player.Blue] = Scores[Player.Blue];
+            foreach (var player in ActivePlayers)
+            {
+                clone.Scores[player] = Scores[player];
+            }
 
             // Copy value types
             clone.CurrentPlayer = CurrentPlayer;
@@ -206,4 +231,5 @@ namespace Glyphtender.Core
             return !HasTile(position) && !HasGlyphling(position);
         }
     }
+
 }

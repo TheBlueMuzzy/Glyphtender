@@ -57,18 +57,27 @@ namespace Glyphtender.Unity.Stats
         /// <summary>
         /// Starts tracking a new game.
         /// </summary>
-        public void StartNewGame(PlayerInfo yellowPlayer, PlayerInfo bluePlayer, GameState initialState, int randomSeed = 0)
+        public void StartNewGame(List<PlayerInfo> players, GameState initialState, int randomSeed = 0)
         {
+            // For now, map to existing 2-player structure (full N-player stats is future work)
+            var yellowPlayer = players.Count > 0 ? players[0] : PlayerInfo.CreateLocalPlayer("Player");
+            var bluePlayer = players.Count > 1 ? players[1] : PlayerInfo.CreateLocalPlayer("Player");
+
             CurrentHistory = GameHistory.Create(yellowPlayer, bluePlayer, randomSeed);
-            CurrentHistory.CaptureInitialHands(
-                new List<char>(initialState.Hands[Player.Yellow]),
-                new List<char>(initialState.Hands[Player.Blue])
-            );
+
+            // Capture initial hands for active players (Yellow/Blue for now)
+            var yellowHand = initialState.Hands.ContainsKey(Player.Yellow)
+                ? new List<char>(initialState.Hands[Player.Yellow])
+                : new List<char>();
+            var blueHand = initialState.Hands.ContainsKey(Player.Blue)
+                ? new List<char>(initialState.Hands[Player.Blue])
+                : new List<char>();
+            CurrentHistory.CaptureInitialHands(yellowHand, blueHand);
 
             // Save immediately
             StatsPersistence.SaveCurrentGame(CurrentHistory);
 
-            Debug.Log($"Started new game: {CurrentHistory.GameId}");
+            Debug.Log($"Started new game: {CurrentHistory.GameId} with {players.Count} players");
         }
 
         /// <summary>

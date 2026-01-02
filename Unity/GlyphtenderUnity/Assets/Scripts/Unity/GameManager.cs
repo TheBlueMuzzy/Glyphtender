@@ -187,32 +187,23 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // Create player info
-            PlayerInfo yellowPlayer;
-            PlayerInfo bluePlayer;
+            // Create player info for each active player
+            var playerInfos = new List<PlayerInfo>();
 
-            var yellowAI = _aiManager?.GetAIForPlayer(Player.Yellow);
-            var blueAI = _aiManager?.GetAIForPlayer(Player.Blue);
-
-            if (yellowAI != null)
+            foreach (var player in GameState.ActivePlayers)
             {
-                yellowPlayer = PlayerInfo.CreateAI(yellowAI.PersonalityName);
-            }
-            else
-            {
-                yellowPlayer = PlayerInfo.CreateLocalPlayer("Player");
-            }
-
-            if (blueAI != null)
-            {
-                bluePlayer = PlayerInfo.CreateAI(blueAI.PersonalityName);
-            }
-            else
-            {
-                bluePlayer = PlayerInfo.CreateLocalPlayer("Player");
+                var ai = _aiManager?.GetAIForPlayer(player);
+                if (ai != null)
+                {
+                    playerInfos.Add(PlayerInfo.CreateAI(ai.PersonalityName));
+                }
+                else
+                {
+                    playerInfos.Add(PlayerInfo.CreateLocalPlayer("Player"));
+                }
             }
 
-            GameHistoryManager.Instance.StartNewGame(yellowPlayer, bluePlayer, GameState);
+            GameHistoryManager.Instance.StartNewGame(playerInfos, GameState);
         }
 
         private void LoadDictionary()
@@ -710,21 +701,41 @@ namespace Glyphtender.Unity
 
             // Calculate and award tangle points
             var tanglePoints = TangleChecker.CalculateTanglePoints(GameState);
-            GameState.Scores[Player.Yellow] += tanglePoints[Player.Yellow];
-            GameState.Scores[Player.Blue] += tanglePoints[Player.Blue];
-
-            Debug.Log($"Tangle points - Yellow: +{tanglePoints[Player.Yellow]}, Blue: +{tanglePoints[Player.Blue]}");
-            Debug.Log($"Final scores - Yellow: {GameState.Scores[Player.Yellow]}, Blue: {GameState.Scores[Player.Blue]}");
-
-            // Determine winner
-            Player? winner = null;
-            if (GameState.Scores[Player.Yellow] > GameState.Scores[Player.Blue])
+            foreach (var player in GameState.ActivePlayers)
             {
-                winner = Player.Yellow;
+                GameState.Scores[player] += tanglePoints[player];
+                Debug.Log($"Tangle points - {player}: +{tanglePoints[player]}");
             }
-            else if (GameState.Scores[Player.Blue] > GameState.Scores[Player.Yellow])
+
+            // Log final scores
+            foreach (var player in GameState.ActivePlayers)
             {
-                winner = Player.Blue;
+                Debug.Log($"Final score - {player}: {GameState.Scores[player]}");
+            }
+
+            // Determine winner (highest score wins)
+            Player? winner = null;
+            int highestScore = -1;
+            bool isTie = false;
+
+            foreach (var player in GameState.ActivePlayers)
+            {
+                int score = GameState.Scores[player];
+                if (score > highestScore)
+                {
+                    highestScore = score;
+                    winner = player;
+                    isTie = false;
+                }
+                else if (score == highestScore)
+                {
+                    isTie = true;
+                }
+            }
+
+            if (isTie)
+            {
+                winner = null;
             }
             // If equal, winner stays null (tie)
 

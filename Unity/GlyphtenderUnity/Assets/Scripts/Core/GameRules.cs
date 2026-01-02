@@ -28,17 +28,17 @@ namespace Glyphtender.Core
         /// </summary>
         public static GameState CreateNewGame(Random random = null)
         {
-            return CreateNewGame(BoardSize.Medium, random);
+            return CreateNewGame(BoardSize.Medium, 2, random);
         }
 
         /// <summary>
-        /// Creates a new game with specified board size.
+        /// Creates a new game with specified board size and player count.
         /// </summary>
-        public static GameState CreateNewGame(BoardSize boardSize, Random random = null)
+        public static GameState CreateNewGame(BoardSize boardSize, int playerCount = 2, Random random = null)
         {
             random = random ?? new Random();
             var board = new Board(boardSize);
-            var state = new GameState(board);
+            var state = new GameState(board, playerCount);
 
             InitializeTileBag(state, random);
             PlaceStartingGlyphlings(state);
@@ -69,12 +69,17 @@ namespace Glyphtender.Core
 
         private static void PlaceStartingGlyphlings(GameState state)
         {
-            var positions = GetStartingPositions(state.Board);
+            var positions = GetStartingPositionsForPlayerCount(state.Board, state.PlayerCount);
 
-            state.Glyphlings.Add(new Glyphling(Player.Yellow, 0, positions.Yellow1));
-            state.Glyphlings.Add(new Glyphling(Player.Yellow, 1, positions.Yellow2));
-            state.Glyphlings.Add(new Glyphling(Player.Blue, 0, positions.Blue1));
-            state.Glyphlings.Add(new Glyphling(Player.Blue, 1, positions.Blue2));
+            int posIndex = 0;
+            foreach (var player in state.ActivePlayers)
+            {
+                for (int g = 0; g < GlyphlingsPerPlayer; g++)
+                {
+                    state.Glyphlings.Add(new Glyphling(player, g, positions[posIndex]));
+                    posIndex++;
+                }
+            }
         }
 
         /// <summary>
@@ -131,13 +136,128 @@ namespace Glyphtender.Core
 
             return (yellow1, yellow2, blue1, blue2);
         }
+        /// <summary>
+        /// Gets starting positions for all players based on player count.
+        /// Distributes glyphlings around the board symmetrically.
+        /// </summary>
+        public static List<HexCoord> GetStartingPositionsForPlayerCount(Board board, int playerCount)
+        {
+            // For 2 players, use the existing diagonal layout
+            if (playerCount == 2)
+            {
+                var pos = GetStartingPositions(board);
+                return new List<HexCoord> { pos.Yellow1, pos.Yellow2, pos.Blue1, pos.Blue2 };
+            }
 
+            // For 3-4 players, distribute around the board
+            var interiorHexes = board.InteriorHexes.ToList();
+            var positions = new List<HexCoord>();
+
+            // Calculate center from actual hex positions
+            float centerCol = 0f;
+            float centerRow = 0f;
+            foreach (var hex in interiorHexes)
+            {
+                centerCol += hex.Column;
+                centerRow += hex.Row;
+            }
+            centerCol /= interiorHexes.Count;
+            centerRow /= interiorHexes.Count;
+
+            // Calculate angle and distance for each hex
+            var hexData = new List<HexAngleData>();
+            foreach (var hex in interiorHexes)
+            {
+                float dCol = hex.Column - centerCol;
+                float dRow = hex.Row - centerRow;
+                double angle = Math.Atan2(dRow, dCol);
+                double distance = Math.Sqrt(dCol * dCol + dRow * dRow);
+                hexData.Add(new HexAngleData(hex, angle, distance));
+            }
+
+            // Each player gets 2 glyphlings in their "sector" of the board
+            for (int p = 0; p < playerCount; p++)
+            {
+                // First glyphling: in player's "home" angle
+                double angle1 = (2 * Math.PI * p / playerCount) - Math.PI;
+                // Second glyphling: offset within same general area
+                double angle2 = angle1 + (Math.PI / playerCount / 2);
+
+                var pos1 = FindBestHexNearAngle(hexData, angle1, positions);
+                positions.Add(pos1);
+
+                var pos2 = FindBestHexNearAngle(hexData, angle2, positions);
+                positions.Add(pos2);
+            }
+
+            return positions;
+        }
+
+        /// <summary>
+        /// Helper struct to store hex position data for placement calculations.
+        /// </summary>
+        private struct HexAngleData
+        {
+            public HexCoord Hex;
+            public double Angle;
+            public double Distance;
+
+            public HexAngleData(HexCoord hex, double angle, double distance)
+            {
+                Hex = hex;
+                Angle = angle;
+                Distance = distance;
+            }
+        }
+
+        /// <summary>
+        /// Finds the best hex near a target angle that isn't already taken.
+        /// Prefers hexes at moderate distance from center.
+        /// </summary>
+        private static HexCoord FindBestHexNearAngle(
+            List<HexAngleData> hexData,
+            double targetAngle,
+            List<HexCoord> takenPositions)
+        {
+            // Normalize target angle to [-PI, PI]
+            targetAngle = NormalizeAngle(targetAngle);
+
+            HexCoord bestHex = hexData[0].Hex;
+            double bestScore = double.MaxValue;
+
+            foreach (var data in hexData)
+            {
+                if (takenPositions.Contains(data.Hex))
+                    continue;
+
+                double angleDiff = Math.Abs(NormalizeAngle(data.Angle - targetAngle));
+                // Score: balance angle match and moderate distance (prefer ~3 units from center)
+                double score = angleDiff * 2 + Math.Abs(data.Distance - 3);
+
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestHex = data.Hex;
+                }
+            }
+
+            return bestHex;
+        }
+
+        private static double NormalizeAngle(double angle)
+        {
+            while (angle > Math.PI) angle -= 2 * Math.PI;
+            while (angle < -Math.PI) angle += 2 * Math.PI;
+            return angle;
+        }
         private static void DealInitialHands(GameState state)
         {
             for (int i = 0; i < HandSize; i++)
             {
-                DrawTile(state, Player.Yellow);
-                DrawTile(state, Player.Blue);
+                foreach (var player in state.ActivePlayers)
+                {
+                    DrawTile(state, player);
+                }
             }
         }
 
@@ -259,11 +379,12 @@ namespace Glyphtender.Core
 
         public static void EndTurn(GameState state)
         {
-            state.CurrentPlayer = state.CurrentPlayer == Player.Yellow
-                ? Player.Blue
-                : Player.Yellow;
+            int currentIndex = (int)state.CurrentPlayer;
+            int nextIndex = (currentIndex + 1) % state.PlayerCount;
+            state.CurrentPlayer = (Player)nextIndex;
 
-            if (state.CurrentPlayer == Player.Yellow)
+            // Increment turn number when we wrap back to first player
+            if (nextIndex == 0)
                 state.TurnNumber++;
         }
     }

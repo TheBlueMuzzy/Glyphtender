@@ -489,15 +489,19 @@ namespace Glyphtender.Unity
             }
             _highlightedCastPosition = null;
 
-            // Reset all hexes to default
+            // Reset all hexes to default (skip hovered hex)
             foreach (var kvp in _hexObjects)
             {
+                if (_hoverHighlightedHex != null && kvp.Key == _hoverHighlightedHex.Value)
+                    continue;
                 SetHexMaterial(kvp.Key, hexDefaultMaterial);
             }
 
-            // Highlight valid moves
+            // Highlight valid moves (skip hovered hex)
             foreach (var coord in GameManager.Instance.ValidMoves)
             {
+                if (_hoverHighlightedHex != null && coord == _hoverHighlightedHex.Value)
+                    continue;
                 SetHexMaterial(coord, hexValidMoveMaterial);
             }
 
@@ -519,6 +523,7 @@ namespace Glyphtender.Unity
                 _highlightedCastPosition = pendingCast;
                 hexObj.transform.localScale = _originalHexScale * 1.3f;
             }
+
         }
 
         /// <summary>
@@ -526,6 +531,8 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SetHoverHighlight(HexCoord coord)
         {
+            Debug.Log($"SetHoverHighlight({coord}), current material: {(_hexObjects.TryGetValue(coord, out var h) ? h.GetComponent<Renderer>()?.material?.name : "null")}");
+
             // Clear previous hover
             ClearHoverHighlight();
 
@@ -553,13 +560,36 @@ namespace Glyphtender.Unity
             if (_hoverHighlightedHex != null && _hexObjects.TryGetValue(_hoverHighlightedHex.Value, out var hexObj))
             {
                 var renderer = hexObj.GetComponent<Renderer>();
-                if (renderer != null && _originalHoverMaterial != null)
+                if (renderer != null)
                 {
-                    renderer.material = _originalHoverMaterial;
+                    // Calculate what material this hex SHOULD have based on current state
+                    renderer.material = GetHexBaseMaterial(_hoverHighlightedHex.Value);
                 }
             }
             _hoverHighlightedHex = null;
             _originalHoverMaterial = null;
+        }
+
+        /// <summary>
+        /// Determines what material a hex should have based on current game state.
+        /// </summary>
+        private Material GetHexBaseMaterial(HexCoord coord)
+        {
+            if (GameManager.Instance == null) return hexDefaultMaterial;
+
+            if (GameManager.Instance.ValidCasts.Contains(coord))
+            {
+                return GameManager.Instance.GameState.CurrentPlayer == Player.Yellow
+                    ? (yellowCastMaterial ?? hexValidCastMaterial)
+                    : (blueCastMaterial ?? hexValidCastMaterial);
+            }
+
+            if (GameManager.Instance.ValidMoves.Contains(coord))
+            {
+                return hexValidMoveMaterial;
+            }
+
+            return hexDefaultMaterial;
         }
 
         private void SetHexMaterial(HexCoord coord, Material material)
