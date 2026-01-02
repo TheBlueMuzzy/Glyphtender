@@ -16,6 +16,7 @@ namespace Glyphtender.Unity
         public int BlueDifficultyIndex = 0;
         public int YellowPersonalityIndex = 0;
         public int YellowDifficultyIndex = 0;
+        public bool Allow2LetterWords = true; // Whether 2-letter words are allowed
 
         // In-Game Menu Settings
         public int AISpeedIndex = 1;          // 0=Slow, 1=Normal, 2=Fast, 3=Instant
@@ -164,6 +165,20 @@ namespace Glyphtender.Unity
                 if (_settings.YellowDifficultyIndex != value)
                 {
                     _settings.YellowDifficultyIndex = value;
+                    Save();
+                    OnSettingsChanged?.Invoke();
+                }
+            }
+        }
+
+        public bool Allow2LetterWords
+        {
+            get => _settings.Allow2LetterWords;
+            set
+            {
+                if (_settings.Allow2LetterWords != value)
+                {
+                    _settings.Allow2LetterWords = value;
                     Save();
                     OnSettingsChanged?.Invoke();
                 }

@@ -13,6 +13,12 @@ namespace Glyphtender.Core
         private readonly HashSet<string> _dictionary;
         private readonly Dictionary<string, float> _wordFrequencies;
 
+        /// <summary>
+        /// Minimum word length for valid words (2 or 3).
+        /// Set by game settings before game starts.
+        /// </summary>
+        public int MinimumWordLength { get; set; } = 2;
+
         public int WordCount => _dictionary.Count;
 
         public WordScorer()
@@ -37,6 +43,8 @@ namespace Glyphtender.Core
                 var parts = line.Split(',');
                 string word = parts[0].Trim().ToUpperInvariant();
 
+                // Always load words of length 2+ into dictionary
+                // MinimumWordLength filtering happens at validation time
                 if (word.Length >= 2)
                 {
                     _dictionary.Add(word);
@@ -55,11 +63,12 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Checks if a word is valid.
+        /// Checks if a word is valid (in dictionary AND meets minimum length).
         /// </summary>
         public bool IsValidWord(string word)
         {
-            return _dictionary.Contains(word.ToUpperInvariant());
+            string upper = word.ToUpperInvariant();
+            return upper.Length >= MinimumWordLength && _dictionary.Contains(upper);
         }
 
         /// <summary>
@@ -139,7 +148,7 @@ namespace Glyphtender.Core
                 {
                     var word = ExtractWord(state, pos, dir);
 
-                    if (word.Letters.Length >= 2)
+                    if (word.Letters.Length >= MinimumWordLength)
                     {
                         // Create unique key for this line
                         string key = $"{word.Positions[0]}-{dir}";
@@ -223,7 +232,7 @@ namespace Glyphtender.Core
                 // Get the full line of letters through this position
                 var fullLine = ExtractWord(state, position, dir);
 
-                if (fullLine.Letters.Length >= 2)
+                if (fullLine.Letters.Length >= MinimumWordLength)
                 {
                     // Find all valid words within this line
                     var wordsInLine = FindWordsInLine(fullLine.Letters, fullLine.Positions, position);
@@ -276,7 +285,7 @@ namespace Glyphtender.Core
                 for (int end = placedIndex; end < letters.Length; end++)
                 {
                     int length = end - start + 1;
-                    if (length >= 2)
+                    if (length >= MinimumWordLength)
                     {
                         string substring = letters.Substring(start, length);
 

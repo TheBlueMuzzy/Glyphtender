@@ -115,6 +115,12 @@ namespace Glyphtender.Unity
                 LoadDictionary();
             }
 
+            // Apply minimum word length setting
+            if (SettingsManager.Instance != null)
+            {
+                WordScorer.MinimumWordLength = SettingsManager.Instance.Allow2LetterWords ? 2 : 3;
+            }
+
             // Create new game
             GameState = GameRules.CreateNewGame();
 

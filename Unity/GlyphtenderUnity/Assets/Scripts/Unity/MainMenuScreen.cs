@@ -31,7 +31,7 @@ namespace Glyphtender.Unity
         public Material panelMaterial;
         public Material buttonMaterial;
         public float panelWidth = 6.0f;
-        public float panelHeight = 7.0f;
+        public float panelHeight = 9.0f;
         public float menuZ = 5f;
 
         [Header("Colors")]
@@ -59,11 +59,13 @@ namespace Glyphtender.Unity
         private GameObject _blueDifficultyRow;
         private GameObject _yellowPersonalityRow;
         private GameObject _yellowDifficultyRow;
+        private GameObject _twoLetterWordsRow;
         private TextMesh _playModeText;
         private TextMesh _bluePersonalityText;
         private TextMesh _blueDifficultyText;
         private TextMesh _yellowPersonalityText;
         private TextMesh _yellowDifficultyText;
+        private TextMesh _twoLetterWordsText;
 
         // Animation
         private bool _isAnimating;
@@ -102,6 +104,12 @@ namespace Glyphtender.Unity
         {
             get => SettingsManager.Instance?.YellowDifficultyIndex ?? 0;
             set { if (SettingsManager.Instance != null) SettingsManager.Instance.YellowDifficultyIndex = value; }
+        }
+
+        private bool Allow2LetterWords
+        {
+            get => SettingsManager.Instance?.Allow2LetterWords ?? true;
+            set { if (SettingsManager.Instance != null) SettingsManager.Instance.Allow2LetterWords = value; }
         }
 
         private void Awake()
@@ -296,6 +304,16 @@ namespace Glyphtender.Unity
             CreatePlayModeRow(yPos, elementScale);
             yPos -= rowSpacing;
 
+            // 2-Letter Words toggle (always visible, game rule setting)
+            _twoLetterWordsRow = CreateSettingRow("2-Letter", yPos, elementScale,
+                () => {
+                    Allow2LetterWords = !Allow2LetterWords;
+                    return Allow2LetterWords ? "Allowed" : "Disabled";
+                },
+                () => Allow2LetterWords ? "Allowed" : "Disabled",
+                out _twoLetterWordsText);
+            yPos -= rowSpacing;
+
             // Blue AI Personality row (visible in VsAI and AIvsAI)
             _bluePersonalityRow = CreateSettingRow("Blue AI", yPos, elementScale,
                 () => {
@@ -334,9 +352,10 @@ namespace Glyphtender.Unity
                 },
                 () => _difficulties[YellowDifficultyIndex],
                 out _yellowDifficultyText);
+            yPos -= rowSpacing;
 
-            // Play button at bottom
-            float buttonY = -(panelHeight / 2f) + (0.7f * elementScale);
+            // Play button after last row
+            float buttonY = yPos - (0.2f * elementScale);
             CreatePlayButton(buttonY, elementScale);
 
             // Quit button below Play (hidden in WebGL)
