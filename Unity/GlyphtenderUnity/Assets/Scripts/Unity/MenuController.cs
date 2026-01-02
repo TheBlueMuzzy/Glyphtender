@@ -104,8 +104,22 @@ namespace Glyphtender.Unity
                 if (camObj != null) uiCamera = camObj.GetComponent<Camera>();
             }
 
+            // Apply saved input mode on startup
+            ApplySavedInputMode();
+
             CreateMenu();
             _menuRoot.SetActive(false);
+        }
+
+        /// <summary>
+        /// Applies the saved input mode from SettingsManager to GameManager.
+        /// </summary>
+        private void ApplySavedInputMode()
+        {
+            if (SettingsManager.Instance != null && GameManager.Instance != null)
+            {
+                GameManager.Instance.SetInputMode(SettingsManager.Instance.InputMode);
+            }
         }
 
         private void Update()
@@ -205,7 +219,11 @@ namespace Glyphtender.Unity
                 () => {
                     var aiManager = AIManager.Instance;
                     if (aiManager == null) return "Normal";
-                    return aiManager.CycleSpeed();
+                    string newSpeed = aiManager.CycleSpeed();
+                    // Save to settings
+                    if (SettingsManager.Instance != null)
+                        SettingsManager.Instance.AISpeedIndex = aiManager.CurrentSpeedIndex;
+                    return newSpeed;
                 },
                 () => {
                     var aiManager = AIManager.Instance;
@@ -222,6 +240,9 @@ namespace Glyphtender.Unity
                         ? GameManager.InputMode.Drag
                         : GameManager.InputMode.Tap;
                     GameManager.Instance.SetInputMode(newMode);
+                    // Save to settings
+                    if (SettingsManager.Instance != null)
+                        SettingsManager.Instance.InputMode = newMode;
                     UpdateRowStates();
                     return newMode.ToString();
                 },
@@ -235,6 +256,7 @@ namespace Glyphtender.Unity
                     int current = Mathf.RoundToInt(GameSettings.DragOffset);
                     int next = (current + 1) % 3;
                     GameSettings.DragOffset = next;
+                    // Note: GameSettings.DragOffset setter already saves via SettingsManager
                     return next.ToString();
                 },
                 () => Mathf.RoundToInt(GameSettings.DragOffset).ToString()

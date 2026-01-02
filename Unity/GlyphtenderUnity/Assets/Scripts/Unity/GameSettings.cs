@@ -4,7 +4,7 @@ namespace Glyphtender.Unity
 {
     /// <summary>
     /// Centralized game settings that can be modified at runtime.
-    /// These will be exposed in the game menu.
+    /// Persisted via SettingsManager.
     /// </summary>
     public static class GameSettings
     {
@@ -13,7 +13,25 @@ namespace Glyphtender.Unity
         /// Multiplied by base offset to get actual world units.
         /// 0 = no offset, 1 = small offset, 2 = large offset.
         /// </summary>
-        public static float DragOffset { get; set; } = 2f;
+        public static float DragOffset
+        {
+            get
+            {
+                if (SettingsManager.Instance != null)
+                    return SettingsManager.Instance.DragOffset;
+                return _fallbackDragOffset;
+            }
+            set
+            {
+                if (SettingsManager.Instance != null)
+                    SettingsManager.Instance.DragOffset = (int)value;
+                else
+                    _fallbackDragOffset = value;
+            }
+        }
+
+        // Fallback value used before SettingsManager initializes
+        private static float _fallbackDragOffset = 2f;
 
         /// <summary>
         /// Base offset distance in world units (multiplied by DragOffset).

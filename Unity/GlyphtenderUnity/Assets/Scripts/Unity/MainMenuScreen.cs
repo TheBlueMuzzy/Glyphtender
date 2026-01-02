@@ -50,14 +50,9 @@ namespace Glyphtender.Unity
         private GameObject _backgroundBlocker;
         private List<GameObject> _menuItems = new List<GameObject>();
 
-        // Current settings
-        private PlayMode _currentPlayMode = PlayMode.VsAI;
+        // Options arrays
         private string[] _personalities = { "Bully", "Scholar", "Builder", "Balanced" };
         private string[] _difficulties = { "Apprentice", "1st Class", "Archmage" };
-        private int _bluePersonalityIndex = 0;
-        private int _blueDifficultyIndex = 0;
-        private int _yellowPersonalityIndex = 0;
-        private int _yellowDifficultyIndex = 0;
 
         // UI element references for show/hide
         private GameObject _bluePersonalityRow;
@@ -77,6 +72,37 @@ namespace Glyphtender.Unity
         private Vector3 _animationEndScale;
 
         public bool IsVisible => _isVisible;
+
+        // Settings accessors (delegate to SettingsManager)
+        private PlayMode CurrentPlayMode
+        {
+            get => SettingsManager.Instance?.PlayMode ?? PlayMode.VsAI;
+            set { if (SettingsManager.Instance != null) SettingsManager.Instance.PlayMode = value; }
+        }
+
+        private int BluePersonalityIndex
+        {
+            get => SettingsManager.Instance?.BluePersonalityIndex ?? 0;
+            set { if (SettingsManager.Instance != null) SettingsManager.Instance.BluePersonalityIndex = value; }
+        }
+
+        private int BlueDifficultyIndex
+        {
+            get => SettingsManager.Instance?.BlueDifficultyIndex ?? 0;
+            set { if (SettingsManager.Instance != null) SettingsManager.Instance.BlueDifficultyIndex = value; }
+        }
+
+        private int YellowPersonalityIndex
+        {
+            get => SettingsManager.Instance?.YellowPersonalityIndex ?? 0;
+            set { if (SettingsManager.Instance != null) SettingsManager.Instance.YellowPersonalityIndex = value; }
+        }
+
+        private int YellowDifficultyIndex
+        {
+            get => SettingsManager.Instance?.YellowDifficultyIndex ?? 0;
+            set { if (SettingsManager.Instance != null) SettingsManager.Instance.YellowDifficultyIndex = value; }
+        }
 
         private void Awake()
         {
@@ -273,40 +299,40 @@ namespace Glyphtender.Unity
             // Blue AI Personality row (visible in VsAI and AIvsAI)
             _bluePersonalityRow = CreateSettingRow("Blue AI", yPos, elementScale,
                 () => {
-                    _bluePersonalityIndex = (_bluePersonalityIndex + 1) % _personalities.Length;
-                    return _personalities[_bluePersonalityIndex];
+                    BluePersonalityIndex = (BluePersonalityIndex + 1) % _personalities.Length;
+                    return _personalities[BluePersonalityIndex];
                 },
-                () => _personalities[_bluePersonalityIndex],
+                () => _personalities[BluePersonalityIndex],
                 out _bluePersonalityText);
             yPos -= rowSpacing;
 
             // Blue AI Difficulty row
             _blueDifficultyRow = CreateSettingRow("Blue Lvl", yPos, elementScale,
                 () => {
-                    _blueDifficultyIndex = (_blueDifficultyIndex + 1) % _difficulties.Length;
-                    return _difficulties[_blueDifficultyIndex];
+                    BlueDifficultyIndex = (BlueDifficultyIndex + 1) % _difficulties.Length;
+                    return _difficulties[BlueDifficultyIndex];
                 },
-                () => _difficulties[_blueDifficultyIndex],
+                () => _difficulties[BlueDifficultyIndex],
                 out _blueDifficultyText);
             yPos -= rowSpacing;
 
             // Yellow AI Personality row (visible only in AIvsAI)
             _yellowPersonalityRow = CreateSettingRow("Yellow AI", yPos, elementScale,
                 () => {
-                    _yellowPersonalityIndex = (_yellowPersonalityIndex + 1) % _personalities.Length;
-                    return _personalities[_yellowPersonalityIndex];
+                    YellowPersonalityIndex = (YellowPersonalityIndex + 1) % _personalities.Length;
+                    return _personalities[YellowPersonalityIndex];
                 },
-                () => _personalities[_yellowPersonalityIndex],
+                () => _personalities[YellowPersonalityIndex],
                 out _yellowPersonalityText);
             yPos -= rowSpacing;
 
             // Yellow AI Difficulty row
             _yellowDifficultyRow = CreateSettingRow("Yellow Lvl", yPos, elementScale,
                 () => {
-                    _yellowDifficultyIndex = (_yellowDifficultyIndex + 1) % _difficulties.Length;
-                    return _difficulties[_yellowDifficultyIndex];
+                    YellowDifficultyIndex = (YellowDifficultyIndex + 1) % _difficulties.Length;
+                    return _difficulties[YellowDifficultyIndex];
                 },
-                () => _difficulties[_yellowDifficultyIndex],
+                () => _difficulties[YellowDifficultyIndex],
                 out _yellowDifficultyText);
 
             // Play button at bottom
@@ -559,23 +585,23 @@ namespace Glyphtender.Unity
 
         private void CyclePlayMode()
         {
-            switch (_currentPlayMode)
+            switch (CurrentPlayMode)
             {
                 case PlayMode.Local2P:
-                    _currentPlayMode = PlayMode.VsAI;
+                    CurrentPlayMode = PlayMode.VsAI;
                     break;
                 case PlayMode.VsAI:
-                    _currentPlayMode = PlayMode.AIvsAI;
+                    CurrentPlayMode = PlayMode.AIvsAI;
                     break;
                 case PlayMode.AIvsAI:
-                    _currentPlayMode = PlayMode.Local2P;
+                    CurrentPlayMode = PlayMode.Local2P;
                     break;
             }
         }
 
         private string GetPlayModeText()
         {
-            switch (_currentPlayMode)
+            switch (CurrentPlayMode)
             {
                 case PlayMode.Local2P: return "Local 2P";
                 case PlayMode.VsAI: return "vs AI";
@@ -586,8 +612,8 @@ namespace Glyphtender.Unity
 
         private void UpdateRowVisibility()
         {
-            bool showBlueAI = _currentPlayMode == PlayMode.VsAI || _currentPlayMode == PlayMode.AIvsAI;
-            bool showYellowAI = _currentPlayMode == PlayMode.AIvsAI;
+            bool showBlueAI = CurrentPlayMode == PlayMode.VsAI || CurrentPlayMode == PlayMode.AIvsAI;
+            bool showYellowAI = CurrentPlayMode == PlayMode.AIvsAI;
 
             if (_bluePersonalityRow != null)
                 _bluePersonalityRow.SetActive(showBlueAI);
@@ -642,13 +668,13 @@ namespace Glyphtender.Unity
         private void ApplyAISettings(AIManager aiManager)
         {
             // Yellow AI
-            if (_currentPlayMode == PlayMode.AIvsAI)
+            if (CurrentPlayMode == PlayMode.AIvsAI)
             {
                 if (aiManager.YellowAI != null)
                 {
                     aiManager.YellowAI.enabled = true;
-                    aiManager.YellowAI.SetPersonality(_personalities[_yellowPersonalityIndex]);
-                    aiManager.YellowAI.SetDifficulty(GetDifficulty(_yellowDifficultyIndex));
+                    aiManager.YellowAI.SetPersonality(_personalities[YellowPersonalityIndex]);
+                    aiManager.YellowAI.SetDifficulty(GetDifficulty(YellowDifficultyIndex));
                 }
             }
             else
@@ -660,13 +686,13 @@ namespace Glyphtender.Unity
             }
 
             // Blue AI
-            if (_currentPlayMode == PlayMode.VsAI || _currentPlayMode == PlayMode.AIvsAI)
+            if (CurrentPlayMode == PlayMode.VsAI || CurrentPlayMode == PlayMode.AIvsAI)
             {
                 if (aiManager.BlueAI != null)
                 {
                     aiManager.BlueAI.enabled = true;
-                    aiManager.BlueAI.SetPersonality(_personalities[_bluePersonalityIndex]);
-                    aiManager.BlueAI.SetDifficulty(GetDifficulty(_blueDifficultyIndex));
+                    aiManager.BlueAI.SetPersonality(_personalities[BluePersonalityIndex]);
+                    aiManager.BlueAI.SetDifficulty(GetDifficulty(BlueDifficultyIndex));
                 }
             }
             else
