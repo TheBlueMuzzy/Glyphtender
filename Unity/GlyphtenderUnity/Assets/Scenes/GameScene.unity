@@ -470,9 +470,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e614501e8ff4aa344abcef76ad956ed2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boardCenter: {x: 7.5, y: 7.5}
-  boardWidth: 16
-  boardHeight: 18
   portraitBoardCenterYOffset: -2.5
   cameraAngle: 90
   paddingPercent: 0.1
@@ -576,7 +573,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe0be669eb0f4234caa464f0a43b3974, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiCamera: {fileID: 0}
+  uiCamera: {fileID: 1446835203}
   panelMaterial: {fileID: 2100000, guid: 3bd03c902d3afc741bfa23bd74d2dab8, type: 2}
   buttonMaterial: {fileID: 0}
   panelWidth: 8
@@ -860,7 +857,7 @@ MonoBehaviour:
   buttonMaterial: {fileID: 0}
   panelWidth: 6
   panelHeight: 8
-  menuZ: 20
+  menuZ: 5
   openDuration: 0.15
   closeDuration: 0.1
 --- !u!4 &1713144603

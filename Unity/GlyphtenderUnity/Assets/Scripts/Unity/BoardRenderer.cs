@@ -640,6 +640,13 @@ namespace Glyphtender.Unity
 
         private void OnGameRestarted()
         {
+            // Clear all hexes (board size may have changed)
+            foreach (var hex in _hexObjects.Values)
+            {
+                Destroy(hex);
+            }
+            _hexObjects.Clear();
+
             // Clear all tiles from board
             foreach (var tile in _tileObjects.Values)
             {
@@ -657,6 +664,9 @@ namespace Glyphtender.Unity
 
             // Clear trapped state
             _trappedPulseTime.Clear();
+
+            // Recreate board with new size
+            CreateBoard();
 
             // Reset highlights
             RefreshHighlights();

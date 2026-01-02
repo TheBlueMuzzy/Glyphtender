@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Glyphtender.Core
 {
@@ -22,28 +23,21 @@ namespace Glyphtender.Core
             {'Y', 2}, {'Z', 1}
         };
 
-        // Starting positions
-        // Yellow: C4-8 and C8-3
-        // Blue: C4-3 and C8-8
-        public static readonly HexCoord[] YellowStartPositions =
-        {
-            new HexCoord(3, 7),   // C4-8
-            new HexCoord(7, 2)    // C8-3
-        };
-
-        public static readonly HexCoord[] BlueStartPositions =
-        {
-            new HexCoord(3, 2),   // C4-3
-            new HexCoord(7, 7)    // C8-8
-        };
-
         /// <summary>
         /// Creates a new game with initial setup.
         /// </summary>
         public static GameState CreateNewGame(Random random = null)
         {
+            return CreateNewGame(BoardSize.Medium, random);
+        }
+
+        /// <summary>
+        /// Creates a new game with specified board size.
+        /// </summary>
+        public static GameState CreateNewGame(BoardSize boardSize, Random random = null)
+        {
             random = random ?? new Random();
-            var board = new Board();
+            var board = new Board(boardSize);
             var state = new GameState(board);
 
             InitializeTileBag(state, random);
@@ -75,10 +69,67 @@ namespace Glyphtender.Core
 
         private static void PlaceStartingGlyphlings(GameState state)
         {
-            state.Glyphlings.Add(new Glyphling(Player.Yellow, 0, YellowStartPositions[0]));
-            state.Glyphlings.Add(new Glyphling(Player.Yellow, 1, YellowStartPositions[1]));
-            state.Glyphlings.Add(new Glyphling(Player.Blue, 0, BlueStartPositions[0]));
-            state.Glyphlings.Add(new Glyphling(Player.Blue, 1, BlueStartPositions[1]));
+            var positions = GetStartingPositions(state.Board);
+
+            state.Glyphlings.Add(new Glyphling(Player.Yellow, 0, positions.Yellow1));
+            state.Glyphlings.Add(new Glyphling(Player.Yellow, 1, positions.Yellow2));
+            state.Glyphlings.Add(new Glyphling(Player.Blue, 0, positions.Blue1));
+            state.Glyphlings.Add(new Glyphling(Player.Blue, 1, positions.Blue2));
+        }
+
+        /// <summary>
+        /// Calculates starting positions based on board size.
+        /// Positions are symmetric: Yellow diagonal from top-left to bottom-right,
+        /// Blue diagonal from bottom-left to top-right.
+        /// </summary>
+        public static (HexCoord Yellow1, HexCoord Yellow2, HexCoord Blue1, HexCoord Blue2) GetStartingPositions(Board board)
+        {
+            // Get interior hexes sorted by column then row
+            var interiorHexes = board.InteriorHexes.ToList();
+
+            // Find columns at roughly 1/4 and 3/4 of board width
+            int leftCol = board.Columns / 4;
+            int rightCol = board.Columns - 1 - (board.Columns / 4);
+
+            // Get interior hexes in those columns
+            var leftColumnHexes = interiorHexes
+                .Where(h => h.Column == leftCol)
+                .OrderBy(h => h.Row)
+                .ToList();
+
+            var rightColumnHexes = interiorHexes
+                .Where(h => h.Column == rightCol)
+                .OrderBy(h => h.Row)
+                .ToList();
+
+            // If columns don't have enough interior hexes, adjust
+            if (leftColumnHexes.Count < 2)
+            {
+                leftCol++;
+                leftColumnHexes = interiorHexes
+                    .Where(h => h.Column == leftCol)
+                    .OrderBy(h => h.Row)
+                    .ToList();
+            }
+
+            if (rightColumnHexes.Count < 2)
+            {
+                rightCol--;
+                rightColumnHexes = interiorHexes
+                    .Where(h => h.Column == rightCol)
+                    .OrderBy(h => h.Row)
+                    .ToList();
+            }
+
+            // Pick positions near top and bottom of each column
+            // Yellow: top-left and bottom-right
+            // Blue: bottom-left and top-right
+            var yellow1 = leftColumnHexes[leftColumnHexes.Count - 1];  // Top of left column
+            var yellow2 = rightColumnHexes[0];                         // Bottom of right column
+            var blue1 = leftColumnHexes[0];                            // Bottom of left column
+            var blue2 = rightColumnHexes[rightColumnHexes.Count - 1];  // Top of right column
+
+            return (yellow1, yellow2, blue1, blue2);
         }
 
         private static void DealInitialHands(GameState state)

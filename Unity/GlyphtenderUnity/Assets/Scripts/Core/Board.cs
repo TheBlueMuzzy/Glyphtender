@@ -105,39 +105,127 @@ namespace Glyphtender.Core
     }
 
     /// <summary>
-    /// The 92-hex game board with flat-top hexagonal grid.
+    /// Board size options.
+    /// </summary>
+    public enum BoardSize
+    {
+        Small,   // 9 columns, 61 hexes
+        Medium,  // 11 columns, 85 hexes (default)
+        Large    // 13 columns, 106 hexes
+    }
+
+    /// <summary>
+    /// Configuration data for a board size.
+    /// </summary>
+    public class BoardConfig
+    {
+        public int Columns { get; }
+        public int[] ColumnHeights { get; }
+        public int[] StartRows { get; }
+
+        public BoardConfig(int columns, int[] columnHeights, int[] startRows)
+        {
+            Columns = columns;
+            ColumnHeights = columnHeights;
+            StartRows = startRows;
+        }
+
+        // Board configurations
+        // Heights represent number of hexes in each column
+        // StartRows represent the row offset for each column (0 = bottom)
+
+        public static readonly BoardConfig Small = new BoardConfig(
+            columns: 9,
+            columnHeights: new[] { 5, 6, 7, 8, 9, 8, 7, 6, 5 },
+            startRows: new[] { 3, 2, 2, 1, 1, 1, 2, 2, 3 }
+        );
+
+        public static readonly BoardConfig Medium = new BoardConfig(
+            columns: 11,
+            columnHeights: new[] { 4, 7, 8, 9, 10, 9, 10, 9, 8, 7, 4 },
+            startRows: new[] { 4, 2, 2, 1, 1, 1, 1, 1, 2, 2, 4 }
+        );
+
+        public static readonly BoardConfig Large = new BoardConfig(
+            columns: 13,
+            columnHeights: new[] { 5, 8, 9, 10, 11, 10, 11, 10, 11, 10, 9, 8, 5 },
+            startRows: new[] { 4, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 4 }
+        );
+
+        public static BoardConfig GetConfig(BoardSize size)
+        {
+            switch (size)
+            {
+                case BoardSize.Small: return Small;
+                case BoardSize.Large: return Large;
+                case BoardSize.Medium:
+                default: return Medium;
+            }
+        }
+    }
+
+    /// <summary>
+    /// The game board with flat-top hexagonal grid.
     /// Handles board shape, valid positions, and leyline detection.
     /// </summary>
     public class Board
     {
         private readonly HashSet<HexCoord> _boardHexes;
+        private readonly HashSet<HexCoord> _perimeterHexes;
 
-        // Board dimensions (13 columns x variable rows = 92 hexes)
-        public const int Columns = 11;
+        public BoardSize Size { get; }
+        public int Columns { get; }
 
-        public Board()
+        public Board() : this(BoardSize.Medium) { }
+
+        public Board(BoardSize size)
         {
+            Size = size;
             _boardHexes = new HashSet<HexCoord>();
-            InitializeBoard();
+            _perimeterHexes = new HashSet<HexCoord>();
+
+            var config = BoardConfig.GetConfig(size);
+            Columns = config.Columns;
+            InitializeBoard(config);
         }
 
-        private void InitializeBoard()
+        private void InitializeBoard(BoardConfig config)
         {
-            // Column heights: 5,8,9,10,9,10,9,10,9,8,5
-            // StartRows: where each column begins (row 0 = bottom)
-            int[] columnHeights = { 5, 8, 9, 10, 9, 10, 9, 10, 9, 8, 5 };
-            int[] startRows = { 3, 1, 1, 0, 1, 0, 1, 0, 1, 1, 3 };
-
-            for (int col = 0; col < Columns; col++)
+            // First pass: add all hexes
+            for (int col = 0; col < config.Columns; col++)
             {
-                int height = columnHeights[col];
-                int rStart = startRows[col];
+                int height = config.ColumnHeights[col];
+                int rStart = config.StartRows[col];
 
                 for (int row = 0; row < height; row++)
                 {
                     _boardHexes.Add(new HexCoord(col, rStart + row));
                 }
             }
+
+            // Second pass: identify perimeter hexes
+            foreach (var hex in _boardHexes)
+            {
+                if (IsOnPerimeter(hex))
+                {
+                    _perimeterHexes.Add(hex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks if a hex is on the perimeter (has at least one neighbor off the board).
+        /// </summary>
+        private bool IsOnPerimeter(HexCoord coord)
+        {
+            foreach (var neighbor in coord.GetAllNeighbors())
+            {
+                if (!_boardHexes.Contains(neighbor))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public bool IsBoardHex(HexCoord coord)
@@ -145,9 +233,48 @@ namespace Glyphtender.Core
             return _boardHexes.Contains(coord);
         }
 
+        /// <summary>
+        /// Checks if a hex is on the perimeter (edge of board).
+        /// </summary>
+        public bool IsPerimeterHex(HexCoord coord)
+        {
+            return _perimeterHexes.Contains(coord);
+        }
+
+        /// <summary>
+        /// Checks if a hex is an interior hex (not on perimeter).
+        /// </summary>
+        public bool IsInteriorHex(HexCoord coord)
+        {
+            return _boardHexes.Contains(coord) && !_perimeterHexes.Contains(coord);
+        }
+
         public IEnumerable<HexCoord> BoardHexes => _boardHexes;
 
+        public IEnumerable<HexCoord> PerimeterHexes => _perimeterHexes;
+
+        public IEnumerable<HexCoord> InteriorHexes
+        {
+            get
+            {
+                foreach (var hex in _boardHexes)
+                {
+                    if (!_perimeterHexes.Contains(hex))
+                    {
+                        yield return hex;
+                    }
+                }
+            }
+        }
+
         public int HexCount => _boardHexes.Count;
+
+        public int InteriorHexCount => _boardHexes.Count - _perimeterHexes.Count;
+
+        /// <summary>
+        /// Gets the center column of the board.
+        /// </summary>
+        public int CenterColumn => Columns / 2;
 
         /// <summary>
         /// Gets valid neighbors (only those within board bounds).

@@ -60,12 +60,14 @@ namespace Glyphtender.Unity
         private GameObject _yellowPersonalityRow;
         private GameObject _yellowDifficultyRow;
         private GameObject _twoLetterWordsRow;
+        private GameObject _boardSizeRow;
         private TextMesh _playModeText;
         private TextMesh _bluePersonalityText;
         private TextMesh _blueDifficultyText;
         private TextMesh _yellowPersonalityText;
         private TextMesh _yellowDifficultyText;
         private TextMesh _twoLetterWordsText;
+        private TextMesh _boardSizeText;
 
         // Animation
         private bool _isAnimating;
@@ -111,6 +113,14 @@ namespace Glyphtender.Unity
             get => SettingsManager.Instance?.Allow2LetterWords ?? true;
             set { if (SettingsManager.Instance != null) SettingsManager.Instance.Allow2LetterWords = value; }
         }
+
+        private int BoardSizeIndex
+        {
+            get => SettingsManager.Instance?.BoardSizeIndex ?? 1;
+            set { if (SettingsManager.Instance != null) SettingsManager.Instance.BoardSizeIndex = value; }
+        }
+
+        private string[] _boardSizeNames = { "Small", "Medium", "Large" };
 
         private void Awake()
         {
@@ -312,6 +322,16 @@ namespace Glyphtender.Unity
                 },
                 () => Allow2LetterWords ? "Allowed" : "Disabled",
                 out _twoLetterWordsText);
+            yPos -= rowSpacing;
+
+            // Board Size toggle (always visible, game rule setting)
+            _boardSizeRow = CreateSettingRow("Board", yPos, elementScale,
+                () => {
+                    BoardSizeIndex = (BoardSizeIndex + 1) % _boardSizeNames.Length;
+                    return _boardSizeNames[BoardSizeIndex];
+                },
+                () => _boardSizeNames[BoardSizeIndex],
+                out _boardSizeText);
             yPos -= rowSpacing;
 
             // Blue AI Personality row (visible in VsAI and AIvsAI)

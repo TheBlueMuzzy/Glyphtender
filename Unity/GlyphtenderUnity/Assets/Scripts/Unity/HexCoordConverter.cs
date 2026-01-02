@@ -37,6 +37,7 @@ namespace Glyphtender.Unity
 
         /// <summary>
         /// Converts world position to nearest hex coordinate.
+        /// Caller should validate result against actual board bounds.
         /// </summary>
         /// <param name="worldPos">World position</param>
         /// <param name="hexSpacing">Distance between hex centers (default 1.0)</param>
@@ -47,12 +48,9 @@ namespace Glyphtender.Unity
             // x = hexSpacing * 1.5f * column
             // z = hexSpacing * sqrt(3) * row + offset
 
-            // First estimate column from x
+            // Estimate column from x
             float colFloat = worldPos.x / (hexSpacing * 1.5f);
             int col = Mathf.RoundToInt(colFloat);
-
-            // Clamp column to valid range
-            col = Mathf.Clamp(col, 0, Board.Columns - 1);
 
             // Calculate z offset for this column
             float zOffset = (col % 2 == 1) ? hexSpacing * Mathf.Sqrt(3f) / 2f : 0f;

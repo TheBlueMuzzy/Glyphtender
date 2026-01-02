@@ -1,4 +1,5 @@
 using UnityEngine;
+using Glyphtender.Core;
 
 namespace Glyphtender.Unity
 {
@@ -9,11 +10,6 @@ namespace Glyphtender.Unity
     public class CameraController : MonoBehaviour
     {
         public static CameraController Instance { get; private set; }
-
-        [Header("Board Bounds")]
-        public Vector2 boardCenter = new Vector2(7.5f, 7.5f);
-        public float boardWidth = 16f;
-        public float boardHeight = 18f;
 
         [Header("Portrait Offset")]
         [Tooltip("Y offset for board center in portrait mode (negative = camera sees higher on board)")]
@@ -26,6 +22,11 @@ namespace Glyphtender.Unity
 
         [Header("Padding")]
         public float paddingPercent = 0.1f;
+
+        // Board bounds (calculated from actual board)
+        private Vector2 _boardCenter = new Vector2(7.5f, 7.5f);
+        private float _boardWidth = 16f;
+        private float _boardHeight = 18f;
 
         [Header("Zoom Settings")]
         public float minZoom = 1.0f;   // 100% = full board visible
@@ -76,8 +77,75 @@ namespace Glyphtender.Unity
         private void Start()
         {
             _camera = GetComponent<Camera>();
+
+            // Subscribe to game events
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnGameInitialized += OnGameInitialized;
+                GameManager.Instance.OnGameRestarted += OnGameRestarted;
+            }
+
             CalculateBaseCameraSize();
             ApplyCameraState();
+        }
+
+        private void OnDestroy()
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnGameInitialized -= OnGameInitialized;
+                GameManager.Instance.OnGameRestarted -= OnGameRestarted;
+            }
+        }
+
+        private void OnGameInitialized()
+        {
+            UpdateBoardBounds();
+            ResetView();
+        }
+
+        private void OnGameRestarted()
+        {
+            UpdateBoardBounds();
+            ResetView();
+        }
+
+        /// <summary>
+        /// Updates board bounds from the current game board.
+        /// </summary>
+        private void UpdateBoardBounds()
+        {
+            if (GameManager.Instance?.GameState?.Board == null) return;
+
+            var board = GameManager.Instance.GameState.Board;
+
+            // Calculate actual board bounds from hex positions
+            float minX = float.MaxValue, maxX = float.MinValue;
+            float minZ = float.MaxValue, maxZ = float.MinValue;
+
+            foreach (var hex in board.BoardHexes)
+            {
+                Vector3 worldPos = HexCoordConverter.HexToWorld(hex);
+                minX = Mathf.Min(minX, worldPos.x);
+                maxX = Mathf.Max(maxX, worldPos.x);
+                minZ = Mathf.Min(minZ, worldPos.z);
+                maxZ = Mathf.Max(maxZ, worldPos.z);
+            }
+
+            // Add hex radius to bounds
+            float hexRadius = HexCoordConverter.DefaultHexSpacing * 0.9f;
+            minX -= hexRadius;
+            maxX += hexRadius;
+            minZ -= hexRadius;
+            maxZ += hexRadius;
+
+            _boardWidth = maxX - minX;
+            _boardHeight = maxZ - minZ;
+            _boardCenter = new Vector2((minX + maxX) / 2f, (minZ + maxZ) / 2f);
+
+            Debug.Log($"Board bounds updated for {board.Size}: Center={_boardCenter}, Width={_boardWidth:F1}, Height={_boardHeight:F1}");
+
+            CalculateBaseCameraSize();
         }
 
         private void Update()
@@ -125,8 +193,8 @@ namespace Glyphtender.Unity
             _lastAspect = _camera.aspect;
             _lastOrientation = Screen.orientation;
 
-            float paddedWidth = boardWidth * (1f + paddingPercent);
-            float paddedHeight = boardHeight * (1f + paddingPercent);
+            float paddedWidth = _boardWidth * (1f + paddingPercent);
+            float paddedHeight = _boardHeight * (1f + paddingPercent);
 
             float verticalSize = paddedHeight / 2f;
             float horizontalSize = paddedWidth / (2f * _camera.aspect);
@@ -165,8 +233,8 @@ namespace Glyphtender.Unity
         /// </summary>
         private void ApplyCameraPosition()
         {
-            float camX = boardCenter.x + _panOffset.x;
-            float camZ = boardCenter.y + _panOffset.y;
+            float camX = _boardCenter.x + _panOffset.x;
+            float camZ = _boardCenter.y + _panOffset.y;
 
             // Apply portrait offset
             if (Screen.height > Screen.width)
@@ -194,8 +262,8 @@ namespace Glyphtender.Unity
             float viewHeight = currentSize * 2f;
 
             // How much can we pan before board edge hits screen edge?
-            float maxPanX = Mathf.Max(0f, (boardWidth - viewWidth) / 2f);
-            float maxPanY = Mathf.Max(0f, (boardHeight - viewHeight) / 2f);
+            float maxPanX = Mathf.Max(0f, (_boardWidth - viewWidth) / 2f);
+            float maxPanY = Mathf.Max(0f, (_boardHeight - viewHeight) / 2f);
 
             return new Vector2(
                 Mathf.Clamp(pan.x, -maxPanX, maxPanX),
@@ -212,8 +280,8 @@ namespace Glyphtender.Unity
             float viewWidth = sizeAtZoom * 2f * _camera.aspect;
             float viewHeight = sizeAtZoom * 2f;
 
-            float maxPanX = Mathf.Max(0f, (boardWidth - viewWidth) / 2f);
-            float maxPanY = Mathf.Max(0f, (boardHeight - viewHeight) / 2f);
+            float maxPanX = Mathf.Max(0f, (_boardWidth - viewWidth) / 2f);
+            float maxPanY = Mathf.Max(0f, (_boardHeight - viewHeight) / 2f);
 
             return new Vector2(
                 Mathf.Clamp(pan.x, -maxPanX, maxPanX),
@@ -242,7 +310,7 @@ namespace Glyphtender.Unity
 
             // Adjust pan to keep focus point stationary
             // This makes pinch feel natural - the point between fingers stays put
-            Vector2 focusOffset = worldFocusPoint - boardCenter - _panOffset;
+            Vector2 focusOffset = worldFocusPoint - _boardCenter - _panOffset;
             float zoomRatio = _currentZoom / oldZoom;
             Vector2 newFocusOffset = focusOffset * zoomRatio;
             _panOffset += focusOffset - newFocusOffset;
@@ -274,7 +342,7 @@ namespace Glyphtender.Unity
             {
                 // Zooming in: calculate target pan to center on focus point
                 // Then clamp it at the TARGET zoom level
-                Vector2 desiredPan = focusWorldPoint.Value - boardCenter;
+                Vector2 desiredPan = focusWorldPoint.Value - _boardCenter;
                 _panTarget = ClampPanOffsetForZoom(desiredPan, targetZoom);
             }
             else

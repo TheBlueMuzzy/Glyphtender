@@ -121,8 +121,15 @@ namespace Glyphtender.Unity
                 WordScorer.MinimumWordLength = SettingsManager.Instance.Allow2LetterWords ? 2 : 3;
             }
 
-            // Create new game
-            GameState = GameRules.CreateNewGame();
+            // Get board size from settings
+            BoardSize boardSize = BoardSize.Medium;
+            if (SettingsManager.Instance != null)
+            {
+                boardSize = (BoardSize)SettingsManager.Instance.BoardSizeIndex;
+            }
+
+            // Create new game with selected board size
+            GameState = GameRules.CreateNewGame(boardSize);
 
             // Reset all state
             LastTurnWordCount = 0;

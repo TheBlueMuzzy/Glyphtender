@@ -17,6 +17,7 @@ namespace Glyphtender.Unity
         public int YellowPersonalityIndex = 0;
         public int YellowDifficultyIndex = 0;
         public bool Allow2LetterWords = true; // Whether 2-letter words are allowed
+        public int BoardSize = 1;             // 0=Small, 1=Medium, 2=Large
 
         // In-Game Menu Settings
         public int AISpeedIndex = 1;          // 0=Slow, 1=Normal, 2=Fast, 3=Instant
@@ -179,6 +180,20 @@ namespace Glyphtender.Unity
                 if (_settings.Allow2LetterWords != value)
                 {
                     _settings.Allow2LetterWords = value;
+                    Save();
+                    OnSettingsChanged?.Invoke();
+                }
+            }
+        }
+
+        public int BoardSizeIndex
+        {
+            get => _settings.BoardSize;
+            set
+            {
+                if (_settings.BoardSize != value)
+                {
+                    _settings.BoardSize = value;
                     Save();
                     OnSettingsChanged?.Invoke();
                 }
