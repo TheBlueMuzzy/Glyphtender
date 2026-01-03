@@ -155,10 +155,6 @@ namespace Glyphtender.Unity
                     Initialize();
                 }
             }
-            else
-            {
-                Debug.LogError("GameManager.Instance is null in BoardRenderer.Start!");
-            }
         }
 
         private void OnGameInitialized()
@@ -168,17 +164,9 @@ namespace Glyphtender.Unity
 
         private void Initialize()
         {
-            if (GameManager.Instance?.GameState == null)
-            {
-                Debug.LogError("Cannot initialize BoardRenderer - GameState is null!");
-                return;
-            }
-
             // Initial render
             CreateBoard();
             RefreshBoard();
-
-            Debug.Log("BoardRenderer initialized.");
         }
 
         private void OnDestroy()
@@ -229,8 +217,6 @@ namespace Glyphtender.Unity
             {
                 CreateHex(hex);
             }
-
-            Debug.Log($"Created {_hexObjects.Count} hex objects.");
         }
 
         private void CreateHex(HexCoord coord)
@@ -285,6 +271,19 @@ namespace Glyphtender.Unity
             RefreshTiles();
             RefreshGlyphlings();
             RefreshHighlights();
+
+            // Show ghost glyphling during draft if position is pending
+            if (GameManager.Instance.GameState.Phase == GamePhase.Draft &&
+                GameManager.Instance.PendingDraftPosition.HasValue)
+            {
+                ShowGhostGlyphling(
+                    GameManager.Instance.PendingDraftPosition.Value,
+                    GameManager.Instance.GameState.CurrentDrafter);
+            }
+            else
+            {
+                HideGhostGlyphling();
+            }
         }
 
         private void RefreshTiles()
@@ -375,9 +374,12 @@ namespace Glyphtender.Unity
         private void RefreshGlyphlings()
         {
             var state = GameManager.Instance.GameState;
-
             foreach (var glyphling in state.Glyphlings)
             {
+                // Skip unplaced glyphlings (draft phase)
+                if (!glyphling.IsPlaced)
+                    continue;
+
                 if (!_glyphlingObjects.ContainsKey(glyphling))
                 {
                     CreateGlyphling(glyphling);
@@ -490,11 +492,16 @@ namespace Glyphtender.Unity
             _highlightedCastPosition = null;
 
             // Reset all hexes to default (skip hovered hex)
+            int resetCount = 0;
             foreach (var kvp in _hexObjects)
             {
                 if (_hoverHighlightedHex != null && kvp.Key == _hoverHighlightedHex.Value)
+                {
                     continue;
+                }
+
                 SetHexMaterial(kvp.Key, hexDefaultMaterial);
+                resetCount++;
             }
 
             // Highlight valid moves (skip hovered hex)
@@ -502,16 +509,28 @@ namespace Glyphtender.Unity
             {
                 if (_hoverHighlightedHex != null && coord == _hoverHighlightedHex.Value)
                     continue;
+
                 SetHexMaterial(coord, hexValidMoveMaterial);
+            }
+
+            // Highlight valid draft placements (only when actively holding a glyphling to place)
+            if (GameManager.Instance.GameState.Phase == GamePhase.Draft &&
+                GameManager.Instance.SelectedDraftGlyphling != null &&
+                !GameManager.Instance.PendingDraftPosition.HasValue)
+            {
+                foreach (var coord in GameManager.Instance.ValidDraftPlacements)
+                {
+                    SetHexMaterial(coord, hexValidMoveMaterial);
+                }
             }
 
             // Highlight valid casts with player-specific color
             foreach (var coord in GameManager.Instance.ValidCasts)
             {
-                // Use player's cast color, fallback to generic if not set
                 Material castMat = GameManager.Instance.GameState.CurrentPlayer == Player.Yellow
                     ? (yellowCastMaterial ?? hexValidCastMaterial)
                     : (blueCastMaterial ?? hexValidCastMaterial);
+
                 SetHexMaterial(coord, castMat);
             }
 
@@ -523,16 +542,14 @@ namespace Glyphtender.Unity
                 _highlightedCastPosition = pendingCast;
                 hexObj.transform.localScale = _originalHexScale * 1.3f;
             }
-
         }
+
 
         /// <summary>
         /// Highlights a hex as the current hover/drop target.
         /// </summary>
         public void SetHoverHighlight(HexCoord coord)
         {
-            Debug.Log($"SetHoverHighlight({coord}), current material: {(_hexObjects.TryGetValue(coord, out var h) ? h.GetComponent<Renderer>()?.material?.name : "null")}");
-
             // Clear previous hover
             ClearHoverHighlight();
 
@@ -577,6 +594,13 @@ namespace Glyphtender.Unity
         {
             if (GameManager.Instance == null) return hexDefaultMaterial;
 
+            // Draft placement highlighting (only during draft phase)
+            if (GameManager.Instance.GameState.Phase == GamePhase.Draft &&
+                GameManager.Instance.ValidDraftPlacements.Contains(coord))
+            {
+                return hexValidMoveMaterial;
+            }
+
             if (GameManager.Instance.ValidCasts.Contains(coord))
             {
                 return GameManager.Instance.GameState.CurrentPlayer == Player.Yellow
@@ -599,6 +623,7 @@ namespace Glyphtender.Unity
                 var renderer = hexObj.GetComponent<Renderer>();
                 if (renderer != null)
                 {
+                    string oldMatName = renderer.material != null ? renderer.material.name : "null";
                     renderer.material = material;
                 }
             }
@@ -653,6 +678,55 @@ namespace Glyphtender.Unity
             textMesh.alignment = TextAlignment.Center;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.color = new Color(0f, 0f, 0f, 0.7f);
+        }
+
+        private GameObject _ghostGlyphling;
+
+        /// <summary>
+        /// Shows a ghost glyphling at the pending draft position.
+        /// </summary>
+        public void ShowGhostGlyphling(HexCoord position, Player owner)
+        {
+            HideGhostGlyphling();
+
+            Vector3 pos = HexToWorld(position) + Vector3.up * 0.3f;
+
+            _ghostGlyphling = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            _ghostGlyphling.transform.position = pos;
+            _ghostGlyphling.transform.localScale = new Vector3(hexSize * glyphlingSize, hexSize * glyphlingSize, hexSize * glyphlingSize);
+            _ghostGlyphling.transform.SetParent(transform);
+            _ghostGlyphling.name = "GhostGlyphling";
+
+            // Semi-transparent material
+            var renderer = _ghostGlyphling.GetComponent<Renderer>();
+            Material mat = new Material(owner == Player.Yellow ? yellowMaterial : blueMaterial);
+            Color c = mat.color;
+            c.a = 0.5f;
+            mat.color = c;
+
+            // Enable transparency
+            mat.SetFloat("_Mode", 3);
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetInt("_ZWrite", 0);
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.renderQueue = 3000;
+
+            renderer.material = mat;
+        }
+
+        /// <summary>
+        /// Hides the ghost glyphling.
+        /// </summary>
+        public void HideGhostGlyphling()
+        {
+            if (_ghostGlyphling != null)
+            {
+                Destroy(_ghostGlyphling);
+                _ghostGlyphling = null;
+            }
         }
 
         public void HideGhostTile()
@@ -738,8 +812,6 @@ namespace Glyphtender.Unity
 
             // Hide ghost tile if showing
             HideGhostTile();
-
-            Debug.Log("Board cleared for main menu.");
         }
 
         #endregion

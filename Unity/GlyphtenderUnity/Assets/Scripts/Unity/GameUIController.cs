@@ -95,7 +95,6 @@ namespace Glyphtender.Unity
 
                 if (uiCamera == null)
                 {
-                    Debug.LogError("GameUIController: No UI camera found!");
                     return;
                 }
             }
@@ -430,6 +429,16 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            // Check if in draft phase with pending placement
+            if (GameManager.Instance.GameState.Phase == GamePhase.Draft &&
+                GameManager.Instance.PendingDraftPosition.HasValue)
+            {
+                GameManager.Instance.ConfirmDraftPlacement();
+                HideConfirmButton();
+                HideCancelButton();
+                return;
+            }
+
             if (GameManager.Instance.CurrentTurnState == GameTurnState.ReadyToConfirm)
             {
                 // Don't hide buttons here - ConfirmMove may trigger cycle mode
@@ -441,6 +450,21 @@ namespace Glyphtender.Unity
 
         private void OnCancelClicked()
         {
+            // Check if in draft phase
+            if (GameManager.Instance.GameState.Phase == GamePhase.Draft)
+            {
+                GameManager.Instance.CancelDraftPlacement();
+                HideConfirmButton();
+                HideCancelButton();
+
+                // Refresh hand to show the glyphling again
+                if (HandController.Instance != null)
+                {
+                    HandController.Instance.RefreshHand();
+                }
+                return;
+            }
+
             // Return any placed hand tile back to hand
             HandTileDragHandler.ReturnCurrentlyPlacedTile();
             GameManager.Instance.ResetMove();
@@ -476,10 +500,28 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            var state = GameManager.Instance.CurrentTurnState;
+            var gameState = GameManager.Instance.GameState;
+            var turnState = GameManager.Instance.CurrentTurnState;
 
+            // Draft phase button visibility
+            if (gameState.Phase == GamePhase.Draft)
+            {
+                if (GameManager.Instance.PendingDraftPosition.HasValue)
+                {
+                    ShowConfirmButton();
+                    ShowCancelButton();
+                }
+                else
+                {
+                    HideConfirmButton();
+                    HideCancelButton();
+                }
+                return;
+            }
+
+            // Play phase button visibility
             // Show confirm only in ReadyToConfirm state
-            if (state == GameTurnState.ReadyToConfirm)
+            if (turnState == GameTurnState.ReadyToConfirm)
             {
                 ShowConfirmButton();
             }
@@ -489,7 +531,7 @@ namespace Glyphtender.Unity
             }
 
             // Show cancel when there's a pending move (MovePending or ReadyToConfirm)
-            if (state == GameTurnState.MovePending || state == GameTurnState.ReadyToConfirm)
+            if (turnState == GameTurnState.MovePending || turnState == GameTurnState.ReadyToConfirm)
             {
                 ShowCancelButton();
             }

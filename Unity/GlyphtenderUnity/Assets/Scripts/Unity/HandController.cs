@@ -9,6 +9,7 @@ namespace Glyphtender.Unity
     /// <summary>
     /// Manages the player's hand of tiles in 3D space.
     /// Attached to UI camera so it stays fixed during board zoom/pan.
+    /// During draft phase, shows unplaced glyphlings instead of tiles.
     /// </summary>
     public class HandController : MonoBehaviour
     {
@@ -46,6 +47,8 @@ namespace Glyphtender.Unity
         public Material yellowTileMaterial;
         public Material blueTileMaterial;
         public Material selectedMaterial;
+        public Material yellowGlyphlingMaterial;
+        public Material blueGlyphlingMaterial;
 
         // Public state for GameUIController
         public bool IsInCycleMode => _isInCycleMode;
@@ -66,6 +69,11 @@ namespace Glyphtender.Unity
         private List<GameObject> _handTileObjects = new List<GameObject>();
         private List<char> _currentHand = new List<char>();
         private int _selectedIndex = -1;
+
+        // Draft glyphlings in hand
+        private List<GameObject> _handGlyphlingObjects = new List<GameObject>();
+        private List<Glyphling> _currentDraftGlyphlings = new List<Glyphling>();
+        private int _selectedDraftIndex = -1;
 
         // Anchor
         private Transform _handAnchor;
@@ -112,7 +120,6 @@ namespace Glyphtender.Unity
 
                 if (uiCamera == null)
                 {
-                    Debug.LogError("HandController: No UI camera found!");
                     return;
                 }
             }
@@ -334,7 +341,6 @@ namespace Glyphtender.Unity
         private void SetHandActive(bool active)
         {
             _handIsActive = active;
-            Debug.Log($"[HandController] SetHandActive({active})");
             UpdateHandScale(animate: true);
         }
 
@@ -364,22 +370,58 @@ namespace Glyphtender.Unity
         #region Hand Tiles
 
         /// <summary>
-        /// Rebuild hand tiles from current player's hand.
+        /// Rebuild hand from current player's hand (tiles or draft glyphlings).
         /// </summary>
         public void RefreshHand()
         {
             if (GameManager.Instance?.GameState == null) return;
 
             var state = GameManager.Instance.GameState;
-            var hand = state.Hands[state.CurrentPlayer];
 
+            // Clear existing objects
+            ClearHandObjects();
+
+            // During draft phase, show unplaced glyphlings
+            if (state.Phase == GamePhase.Draft)
+            {
+                RefreshDraftHand();
+            }
+            else
+            {
+                RefreshTileHand();
+            }
+        }
+
+        /// <summary>
+        /// Clears all hand objects (tiles and glyphlings).
+        /// </summary>
+        private void ClearHandObjects()
+        {
             foreach (var obj in _handTileObjects)
             {
                 Destroy(obj);
             }
             _handTileObjects.Clear();
             _currentHand.Clear();
+
+            foreach (var obj in _handGlyphlingObjects)
+            {
+                Destroy(obj);
+            }
+            _handGlyphlingObjects.Clear();
+            _currentDraftGlyphlings.Clear();
+
             _selectedIndex = -1;
+            _selectedDraftIndex = -1;
+        }
+
+        /// <summary>
+        /// Shows letter tiles during play phase.
+        /// </summary>
+        private void RefreshTileHand()
+        {
+            var state = GameManager.Instance.GameState;
+            var hand = state.Hands[state.CurrentPlayer];
 
             float totalWidth = (hand.Count - 1) * tileSpacing;
             float startX = -totalWidth / 2f;
@@ -393,6 +435,55 @@ namespace Glyphtender.Unity
                 GameObject tileObj = CreateHandTile(letter, localPos, i);
                 _handTileObjects.Add(tileObj);
             }
+        }
+
+        /// <summary>
+        /// Shows unplaced glyphlings during draft phase.
+        /// </summary>
+        private void RefreshDraftHand()
+        {
+            var state = GameManager.Instance.GameState;
+            Player drafter = state.CurrentDrafter;
+
+            // Find unplaced glyphlings for current drafter
+            var unplacedGlyphlings = new List<Glyphling>();
+            foreach (var g in state.Glyphlings)
+            {
+                if (g.Owner == drafter && !g.IsPlaced)
+                {
+                    unplacedGlyphlings.Add(g);
+                }
+            }
+
+            // Skip the one currently being placed (if any)
+            var selectedDraft = GameManager.Instance.SelectedDraftGlyphling;
+
+            float totalWidth = (unplacedGlyphlings.Count - 1) * tileSpacing;
+            float startX = -totalWidth / 2f;
+
+            int displayIndex = 0;
+            for (int i = 0; i < unplacedGlyphlings.Count; i++)
+            {
+                var glyphling = unplacedGlyphlings[i];
+                _currentDraftGlyphlings.Add(glyphling);
+
+                // If this glyphling is selected and placed on board, don't show in hand
+                if (selectedDraft != null &&
+                    selectedDraft.Owner == glyphling.Owner &&
+                    selectedDraft.Index == glyphling.Index &&
+                    GameManager.Instance.PendingDraftPosition != null)
+                {
+                    continue;
+                }
+
+                Vector3 localPos = new Vector3(startX + displayIndex * tileSpacing, 0f, 0f);
+                GameObject glyphlingObj = CreateHandGlyphling(glyphling, localPos, i);
+                _handGlyphlingObjects.Add(glyphlingObj);
+                displayIndex++;
+            }
+
+            // Hand is active during draft
+            SetHandActive(true);
         }
 
         private GameObject CreateHandTile(char letter, Vector3 localPos, int index)
@@ -427,6 +518,48 @@ namespace Glyphtender.Unity
             CreateLetterText(tile, letter);
 
             return tile;
+        }
+
+        private GameObject CreateHandGlyphling(Glyphling glyphling, Vector3 localPos, int index)
+        {
+            GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            obj.transform.SetParent(_handAnchor);
+            obj.transform.localPosition = localPos;
+            obj.transform.localScale = new Vector3(tileSize * 0.8f, tileSize * 0.8f, tileSize * 0.8f);
+            obj.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            obj.layer = LayerMask.NameToLayer("UI3D");
+
+            // Use glyphling materials if available, otherwise fall back to tile materials
+            Material mat = null;
+            if (glyphling.Owner == Player.Yellow)
+            {
+                mat = yellowGlyphlingMaterial != null ? yellowGlyphlingMaterial : yellowTileMaterial;
+            }
+            else
+            {
+                mat = blueGlyphlingMaterial != null ? blueGlyphlingMaterial : blueTileMaterial;
+            }
+
+            if (mat != null)
+            {
+                obj.GetComponent<Renderer>().material = mat;
+            }
+
+            obj.name = $"HandGlyphling_{glyphling.Owner}_{glyphling.Index}";
+
+            // Add draft drag handler
+            var dragHandler = obj.AddComponent<DraftGlyphlingDragHandler>();
+            dragHandler.Controller = this;
+            dragHandler.Glyphling = glyphling;
+            dragHandler.Index = index;
+
+            // Add click handler for tap mode
+            var clickHandler = obj.AddComponent<DraftGlyphlingClickHandler>();
+            clickHandler.Controller = this;
+            clickHandler.Glyphling = glyphling;
+            clickHandler.Index = index;
+
+            return obj;
         }
 
         private void CreateLetterText(GameObject tile, char letter)
@@ -489,6 +622,44 @@ namespace Glyphtender.Unity
             }
         }
 
+        private void UpdateDraftGlyphlingHighlights()
+        {
+            var state = GameManager.Instance.GameState;
+            Player drafter = state.CurrentDrafter;
+
+            for (int i = 0; i < _handGlyphlingObjects.Count; i++)
+            {
+                var obj = _handGlyphlingObjects[i];
+                if (obj == null) continue;
+
+                var renderer = obj.GetComponent<Renderer>();
+                if (renderer == null) continue;
+
+                if (i == _selectedDraftIndex && selectedMaterial != null)
+                {
+                    renderer.material = selectedMaterial;
+                }
+                else
+                {
+                    // Restore original material
+                    Material mat = null;
+                    if (drafter == Player.Yellow)
+                    {
+                        mat = yellowGlyphlingMaterial != null ? yellowGlyphlingMaterial : yellowTileMaterial;
+                    }
+                    else
+                    {
+                        mat = blueGlyphlingMaterial != null ? blueGlyphlingMaterial : blueTileMaterial;
+                    }
+
+                    if (mat != null)
+                    {
+                        renderer.material = mat;
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Sets the selected tile index (called by drag handler).
         /// </summary>
@@ -499,6 +670,24 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Sets the selected draft glyphling index (called by click/drag handler).
+        /// </summary>
+        public void SetSelectedDraftIndex(int index)
+        {
+            _selectedDraftIndex = index;
+            UpdateDraftGlyphlingHighlights();
+        }
+
+        /// <summary>
+        /// Clears the selected draft glyphling index.
+        /// </summary>
+        public void ClearSelectedDraftIndex()
+        {
+            _selectedDraftIndex = -1;
+            UpdateDraftGlyphlingHighlights();
+        }
+
+        /// <summary>
         /// Clears the selected tile index.
         /// </summary>
         public void ClearSelectedIndex()
@@ -506,6 +695,8 @@ namespace Glyphtender.Unity
             _selectedIndex = -1;
             UpdateTileHighlights();
         }
+
+
 
         /// <summary>
         /// Wrapper to show confirm button via GameUIController.
@@ -540,6 +731,18 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            var state = GameManager.Instance.GameState;
+
+            // During draft, hand is always active
+            if (state.Phase == GamePhase.Draft)
+            {
+                if (!_handIsActive)
+                {
+                    SetHandActive(true);
+                }
+                return;
+            }
+
             // Check if hand should be active (ready to place a letter)
             var turnState = GameManager.Instance.CurrentTurnState;
             bool shouldBeActive = (turnState == GameTurnState.MovePending);
@@ -566,6 +769,10 @@ namespace Glyphtender.Unity
             {
                 tile.SetActive(false);
             }
+            foreach (var obj in _handGlyphlingObjects)
+            {
+                obj.SetActive(false);
+            }
         }
 
         private void OnGameRestarted()
@@ -582,6 +789,10 @@ namespace Glyphtender.Unity
             foreach (var tile in _handTileObjects)
             {
                 tile.SetActive(true);
+            }
+            foreach (var obj in _handGlyphlingObjects)
+            {
+                obj.SetActive(true);
             }
 
             RefreshHand();
@@ -607,8 +818,6 @@ namespace Glyphtender.Unity
 
             // Hand is active in cycle mode
             SetHandActive(true);
-
-            Debug.Log("Entered cycle mode - select tiles to discard");
         }
 
         private void ToggleTileForDiscard(int index)
@@ -627,8 +836,6 @@ namespace Glyphtender.Unity
                 tile.transform.localPosition -= new Vector3(0f, 0.3f, 0f);
                 tile.transform.localScale = new Vector3(tileSize * 1.2f, 0.05f, tileSize * 1.2f);
             }
-
-            Debug.Log($"Tiles selected for discard: {_selectedForDiscard.Count}");
         }
 
         /// <summary>
@@ -654,9 +861,6 @@ namespace Glyphtender.Unity
             {
                 GameRules.DrawTile(state, state.CurrentPlayer);
             }
-
-            Debug.Log($"Discarded {toDiscard.Count} tiles, drew back up to {hand.Count}");
-
             ExitCycleMode();
             GameManager.Instance.EndCycleMode();
         }
@@ -699,6 +903,245 @@ namespace Glyphtender.Unity
                 return;
 
             Controller?.OnTileClicked(Index, Letter);
+        }
+    }
+
+    /// <summary>
+    /// Handles clicks on draft glyphlings in hand (tap mode).
+    /// </summary>
+    public class DraftGlyphlingClickHandler : MonoBehaviour
+    {
+        public HandController Controller { get; set; }
+        public Glyphling Glyphling { get; set; }
+        public int Index { get; set; }
+
+        private void OnMouseDown()
+        {
+            // Block input when menu is open
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+                return;
+
+            if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
+                return;
+
+            if (GameManager.Instance.GameState.Phase != GamePhase.Draft)
+                return;
+
+            GameManager.Instance.SelectDraftGlyphlingFromHand(Glyphling);
+            Controller.SetSelectedDraftIndex(Index);
+        }
+    }
+
+    /// <summary>
+    /// Handles dragging draft glyphlings from hand to board.
+    /// </summary>
+    public class DraftGlyphlingDragHandler : MonoBehaviour
+    {
+        public HandController Controller { get; set; }
+        public Glyphling Glyphling { get; set; }
+        public int Index { get; set; }
+
+        private bool _isDragging;
+        private Vector3 _originalPosition;
+        private Vector3 _originalScale;
+        private Quaternion _originalRotation;
+        private Transform _originalParent;
+        private int _originalLayer;
+        private Camera _mainCamera;
+        private HexCoord? _hoveredHex;
+        private int _dragFingerId = -1;
+
+        private void Start()
+        {
+            _mainCamera = Camera.main;
+            _originalLayer = gameObject.layer;
+        }
+
+        private void OnMouseDown()
+        {
+            // Block input when menu is open
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+                return;
+
+            if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Drag)
+                return;
+
+            if (GameManager.Instance.GameState.Phase != GamePhase.Draft)
+                return;
+
+            // Save original transform
+            _originalPosition = transform.position;
+            _originalScale = transform.localScale;
+            _originalRotation = transform.localRotation;
+            _originalParent = transform.parent;
+            _originalLayer = gameObject.layer;
+
+            // Unparent so it moves in world space
+            transform.SetParent(null);
+
+            // Switch to Board layer so Main Camera renders it during drag
+            SetLayerRecursively(gameObject, LayerMask.NameToLayer("Board"));
+
+            // Select this glyphling (shows valid placements)
+            GameManager.Instance.SelectDraftGlyphlingFromHand(Glyphling);
+
+            _isDragging = true;
+
+            // Capture which finger started this drag
+            _dragFingerId = -1;  // -1 means mouse
+            if (Input.touchCount > 0)
+            {
+                for (int i = 0; i < Input.touchCount; i++)
+                {
+                    Touch t = Input.GetTouch(i);
+                    if (t.phase == TouchPhase.Began)
+                    {
+                        _dragFingerId = t.fingerId;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void Update()
+        {
+            if (!_isDragging) return;
+
+            Vector3 screenPos = Input.mousePosition;
+            bool fingerReleased = false;
+
+            if (_dragFingerId >= 0)
+            {
+                // Touch input - find our specific finger
+                bool foundFinger = false;
+                for (int i = 0; i < Input.touchCount; i++)
+                {
+                    Touch t = Input.GetTouch(i);
+                    if (t.fingerId == _dragFingerId)
+                    {
+                        foundFinger = true;
+                        screenPos = t.position;
+
+                        if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
+                        {
+                            fingerReleased = true;
+                        }
+                        break;
+                    }
+                }
+
+                if (!foundFinger)
+                {
+                    fingerReleased = true;
+                }
+                else if (!fingerReleased)
+                {
+                    UpdateDragPosition(screenPos);
+                }
+            }
+            else
+            {
+                // Mouse input
+                UpdateDragPosition(screenPos);
+
+                if (Input.GetMouseButtonUp(0))
+                {
+                    fingerReleased = true;
+                }
+            }
+
+            if (fingerReleased)
+            {
+                EndDrag();
+            }
+        }
+
+        private void UpdateDragPosition(Vector3 screenPos)
+        {
+            Vector3 mouseWorldPos = InputUtility.GetMouseWorldPosition(_mainCamera);
+
+            // Apply vertical offset
+            float offset = GameSettings.GetDragOffsetWorld();
+            transform.position = new Vector3(
+                mouseWorldPos.x,
+                0.5f,
+                mouseWorldPos.z + offset
+            );
+
+            UpdateHoverHighlight(mouseWorldPos + new Vector3(0, 0, offset));
+        }
+
+        private void UpdateHoverHighlight(Vector3 worldPos)
+        {
+            if (BoardRenderer.Instance == null) return;
+
+            HexCoord? newHoveredHex = BoardRenderer.Instance.WorldToHex(worldPos);
+
+            if (newHoveredHex != _hoveredHex)
+            {
+                _hoveredHex = newHoveredHex;
+
+                // Show highlight if over a valid draft position
+                if (_hoveredHex != null && GameManager.Instance.ValidDraftPlacements.Contains(_hoveredHex.Value))
+                {
+                    BoardRenderer.Instance.SetHoverHighlight(_hoveredHex.Value);
+                }
+                else
+                {
+                    BoardRenderer.Instance.ClearHoverHighlight();
+                }
+            }
+        }
+
+        private void EndDrag()
+        {
+            _isDragging = false;
+            BoardRenderer.Instance?.ClearHoverHighlight();
+
+            // Check if dropped on valid hex
+            if (_hoveredHex != null && GameManager.Instance.ValidDraftPlacements.Contains(_hoveredHex.Value))
+            {
+                // Valid drop - place draft glyphling preview
+                GameManager.Instance.SelectDraftPosition(_hoveredHex.Value);
+
+                // Destroy this hand object (ghost glyphling will show on board)
+                Destroy(gameObject);
+
+                // Show confirm/cancel buttons
+                if (GameUIController.Instance != null)
+                {
+                    GameUIController.Instance.ShowConfirmButton();
+                    GameUIController.Instance.ShowCancelButton();
+                }
+            }
+            else
+            {
+                // Invalid drop - return to hand
+                ReturnToHand();
+                GameManager.Instance.CancelDraftPlacement();
+            }
+
+            _hoveredHex = null;
+        }
+
+        private void ReturnToHand()
+        {
+            transform.SetParent(_originalParent);
+            transform.position = _originalPosition;
+            transform.localScale = _originalScale;
+            transform.localRotation = _originalRotation;
+
+            // Restore to UI3D layer
+            SetLayerRecursively(gameObject, LayerMask.NameToLayer("UI3D"));
+        }
+
+        private void SetLayerRecursively(GameObject obj, int layer)
+        {
+            obj.layer = layer;
+            foreach (Transform child in obj.transform)
+            {
+                SetLayerRecursively(child.gameObject, layer);
+            }
         }
     }
 }

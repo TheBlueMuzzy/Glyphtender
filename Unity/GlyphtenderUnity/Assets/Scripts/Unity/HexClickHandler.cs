@@ -34,6 +34,16 @@ namespace Glyphtender.Unity
 
             var state = GameManager.Instance.GameState;
 
+            // Handle draft phase
+            if (state.Phase == GamePhase.Draft)
+            {
+                if (GameManager.Instance.ValidDraftPlacements.Contains(Coord))
+                {
+                    GameManager.Instance.SelectDraftPosition(Coord);
+                }
+                return;
+            }
+
             // First, check if there's a glyphling at this hex
             Glyphling glyphlingHere = BoardRenderer.GetGlyphlingAt(Coord);
 

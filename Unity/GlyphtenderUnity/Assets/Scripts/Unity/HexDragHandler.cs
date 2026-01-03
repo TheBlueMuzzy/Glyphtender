@@ -60,6 +60,16 @@ namespace Glyphtender.Unity
 
             var state = GameManager.Instance.GameState;
 
+            // Draft phase uses tap, not drag
+            if (state.Phase == GamePhase.Draft)
+            {
+                if (GameManager.Instance.ValidDraftPlacements.Contains(Coord))
+                {
+                    GameManager.Instance.SelectDraftPosition(Coord);
+                }
+                return;
+            }
+
             // Check if there's a current player's glyphling at this hex
             Glyphling glyphlingHere = BoardRenderer.GetGlyphlingAt(Coord);
 

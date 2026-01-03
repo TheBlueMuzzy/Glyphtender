@@ -16,6 +16,7 @@ namespace Glyphtender.Unity
         MovePending,       // Destination chosen, selecting cast position and/or letter
         ReadyToConfirm,    // Both cast position and letter selected
         CycleMode,         // No word formed, selecting tiles to discard
+        DraftPlacement,    // Draft phase - waiting for player to place glyphling
         GameOver           // Game has ended
     }
 
@@ -39,6 +40,9 @@ namespace Glyphtender.Unity
         public bool IsResetting { get; set; }
         public HexCoord? LastCastOrigin { get; private set; }
         public char? PendingLetter { get; private set; }
+        // Draft phase tracking
+        public HexCoord? PendingDraftPosition { get; private set; }
+        public Glyphling SelectedDraftGlyphling { get; private set; }
         private AIManager _aiManager;
         public AIManager AIManager => _aiManager;
 
@@ -51,7 +55,6 @@ namespace Glyphtender.Unity
         public void SetInputMode(InputMode mode)
         {
             CurrentInputMode = mode;
-            Debug.Log($"Input mode set to: {mode}");
             OnInputModeChanged?.Invoke();
         }
 
@@ -60,6 +63,7 @@ namespace Glyphtender.Unity
         // Valid moves/casts for current selection
         public List<HexCoord> ValidMoves { get; private set; }
         public List<HexCoord> ValidCasts { get; private set; }
+        public List<HexCoord> ValidDraftPlacements { get; private set; }
 
         // Cycle mode tracking for stats
         private int _tilesCycledThisTurn;
@@ -80,6 +84,7 @@ namespace Glyphtender.Unity
         public event System.Action OnGameInitialized;
         public event System.Action OnInputModeChanged;
         public event System.Action<GameTurnState> OnTurnStateChanged;
+        public event System.Action OnDraftComplete;
 
         private void Awake()
         {
@@ -92,6 +97,7 @@ namespace Glyphtender.Unity
 
             ValidMoves = new List<HexCoord>();
             ValidCasts = new List<HexCoord>();
+            ValidDraftPlacements = new List<HexCoord>();
         }
 
         private void Start()
@@ -99,7 +105,6 @@ namespace Glyphtender.Unity
             // If waiting for main menu, don't initialize yet
             if (WaitingForMainMenu)
             {
-                Debug.Log("Waiting for MainMenuScreen to start game...");
                 return;
             }
 
@@ -129,7 +134,30 @@ namespace Glyphtender.Unity
             }
 
             // Create new game with selected board size
-            GameState = GameRules.CreateNewGame(boardSize);
+            GameState = GameRules.CreateNewGameWithDraft(boardSize);
+
+            // If draft mode, set up draft state and return early
+            if (GameState.Phase == GamePhase.Draft)
+            {
+
+                ValidDraftPlacements = GameRules.GetValidDraftPlacements(GameState);
+
+                _aiManager = FindObjectOfType<AIManager>();
+                if (_aiManager == null)
+                {
+                    var aiManagerObj = new GameObject("AIManager");
+                    _aiManager = aiManagerObj.AddComponent<AIManager>();
+                }
+                _aiManager.Initialize(WordScorer);
+                _aiManager.ResetForNewGame();
+
+                UpdateTurnState();
+                OnGameStateChanged?.Invoke();
+                OnGameRestarted?.Invoke();
+                WaitingForMainMenu = false;
+                OnGameInitialized?.Invoke();
+                return;
+            }
 
             // Reset all state
             LastTurnWordCount = 0;
@@ -138,11 +166,6 @@ namespace Glyphtender.Unity
             _enteredCycleMode = false;
             _lastTurnWords = null;
             _lastTurnScore = 0;
-
-            Debug.Log($"Game initialized. Board has {GameState.Board.HexCount} hexes.");
-            Debug.Log($"Dictionary loaded with {WordScorer.WordCount} words.");
-            Debug.Log($"Yellow hand: {string.Join(", ", GameState.Hands[Player.Yellow])}");
-            Debug.Log($"Blue hand: {string.Join(", ", GameState.Hands[Player.Blue])}");
 
             ClearSelection();
             UpdateTurnState();
@@ -159,7 +182,6 @@ namespace Glyphtender.Unity
             }
             _aiManager.Initialize(WordScorer);
             _aiManager.ResetForNewGame();
-            Debug.Log("AI system ready.");
 
             // Start game history tracking
             StartGameHistory();
@@ -177,13 +199,78 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Initializes a new game with draft phase.
+        /// </summary>
+        public void InitializeGameWithDraft()
+        {
+            // Load dictionary (only if not already loaded)
+            if (WordScorer == null)
+            {
+                WordScorer = new WordScorer();
+                LoadDictionary();
+            }
+
+            // Apply minimum word length setting
+            if (SettingsManager.Instance != null)
+            {
+                WordScorer.MinimumWordLength = SettingsManager.Instance.Allow2LetterWords ? 2 : 3;
+            }
+
+            // Get board size from settings
+            BoardSize boardSize = BoardSize.Medium;
+            if (SettingsManager.Instance != null)
+            {
+                boardSize = (BoardSize)SettingsManager.Instance.BoardSizeIndex;
+            }
+
+            // Create new game with draft phase
+            GameState = GameRules.CreateNewGameWithDraft(boardSize);
+
+            // Reset all state
+            LastTurnWordCount = 0;
+            _originalPosition = null;
+            _tilesCycledThisTurn = 0;
+            _enteredCycleMode = false;
+            _lastTurnWords = null;
+            _lastTurnScore = 0;
+
+
+            ClearSelection();
+
+            // Calculate initial valid draft placements
+            ValidDraftPlacements = GameRules.GetValidDraftPlacements(GameState);
+
+            // Initialize AI manager
+            _aiManager = FindObjectOfType<AIManager>();
+            if (_aiManager == null)
+            {
+                var aiManagerObj = new GameObject("AIManager");
+                _aiManager = aiManagerObj.AddComponent<AIManager>();
+            }
+            _aiManager.Initialize(WordScorer);
+            _aiManager.ResetForNewGame();
+
+            // Don't start game history yet - wait until draft completes and hands are dealt
+
+            UpdateTurnState();
+            OnGameStateChanged?.Invoke();
+            OnGameRestarted?.Invoke();
+
+            // Check if first drafter is AI
+            var drafterAI = _aiManager.GetAIForPlayer(GameState.CurrentDrafter);
+
+            // Notify listeners
+            WaitingForMainMenu = false;
+            OnGameInitialized?.Invoke();
+        }
+
+        /// <summary>
         /// Starts tracking game history for stats.
         /// </summary>
         private void StartGameHistory()
         {
             if (GameHistoryManager.Instance == null)
             {
-                Debug.LogWarning("GameHistoryManager not found - stats will not be tracked");
                 return;
             }
 
@@ -215,10 +302,201 @@ namespace Glyphtender.Unity
                     System.StringSplitOptions.RemoveEmptyEntries);
                 WordScorer.LoadDictionary(words);
             }
+        }
+
+        /// <summary>
+        /// Called when player drops a glyphling on a hex during draft phase (preview, not confirmed).
+        /// </summary>
+        public void SelectDraftPosition(HexCoord position)
+        {
+            // Only allow during draft phase
+            if (GameState.Phase != GamePhase.Draft)
+            {
+                return;
+            }
+
+            // Must have a glyphling selected from hand
+            if (SelectedDraftGlyphling == null)
+            {
+                return;
+            }
+
+            // Block input during AI turn
+            if (_aiManager != null && _aiManager.IsPlayerAI(GameState.CurrentDrafter))
+            {
+                return;
+            }
+
+            // Check if valid placement
+            if (!ValidDraftPlacements.Contains(position))
+            {
+                return;
+            }
+
+            PendingDraftPosition = position;
+
+            // Clear highlights while placed (user can still pick up and move)
+            ValidDraftPlacements.Clear();
+
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshBoard(); // Show ghost glyphling
+                BoardRenderer.Instance.RefreshHighlights(); // Clear old highlights AFTER board refresh
+            }
+
+            UpdateTurnState();
+            OnSelectionChanged?.Invoke();
+            OnGameStateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Called when player selects a glyphling from hand during draft phase.
+        /// </summary>
+        public void SelectDraftGlyphlingFromHand(Glyphling glyphling)
+        {
+            if (GameState.Phase != GamePhase.Draft)
+                return;
+
+            if (glyphling.Owner != GameState.CurrentDrafter)
+            {
+                return;
+            }
+
+            if (glyphling.IsPlaced)
+            {
+                return;
+            }
+
+            SelectedDraftGlyphling = glyphling;
+            PendingDraftPosition = null;
+
+            // Show all valid placements
+            ValidDraftPlacements = GameRules.GetValidDraftPlacements(GameState);
+
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshHighlights();
+            }
+
+            UpdateTurnState();
+            OnSelectionChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Called when player picks up a pending draft glyphling from the board to reposition it.
+        /// </summary>
+        public void PickUpPendingDraftGlyphling()
+        {
+            if (GameState.Phase != GamePhase.Draft)
+                return;
+
+            if (PendingDraftPosition == null)
+                return;
+
+            PendingDraftPosition = null;
+
+            // Re-show all valid placements
+            ValidDraftPlacements = GameRules.GetValidDraftPlacements(GameState);
+
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshHighlights();
+                BoardRenderer.Instance.RefreshBoard();
+            }
+
+            UpdateTurnState();
+            OnSelectionChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Confirms the pending draft placement.
+        /// </summary>
+        public void ConfirmDraftPlacement()
+        {
+            if (GameState.Phase != GamePhase.Draft)
+                return;
+
+            if (PendingDraftPosition == null || SelectedDraftGlyphling == null)
+            {
+                return;
+            }
+
+            // Place the glyphling
+            bool success = GameRules.PlaceDraftGlyphling(GameState, PendingDraftPosition.Value);
+            if (!success)
+            {
+                return;
+            }
+
+
+            // Clear draft selection state
+            PendingDraftPosition = null;
+            SelectedDraftGlyphling = null;
+            ValidDraftPlacements.Clear();
+
+            // Check if draft is complete
+            if (GameState.Phase == GamePhase.Play)
+            {
+                // Draft finished, transition to play
+
+                if (BoardRenderer.Instance != null)
+                {
+                    BoardRenderer.Instance.RefreshHighlights();
+                    BoardRenderer.Instance.RefreshBoard();
+                }
+
+                // Start game history tracking now that hands are dealt
+                StartGameHistory();
+
+                OnDraftComplete?.Invoke();
+                OnGameStateChanged?.Invoke();
+
+                // Check if first player is AI
+                var currentAI = _aiManager?.GetAIForPlayer(GameState.CurrentPlayer);
+                if (currentAI != null)
+                {
+                    currentAI.TakeTurn(GameState);
+                }
+            }
             else
             {
-                Debug.LogError("Could not load words.txt from Resources folder!");
+                // More picks remaining
+
+                if (BoardRenderer.Instance != null)
+                {
+                    BoardRenderer.Instance.RefreshHighlights();
+                    BoardRenderer.Instance.RefreshBoard();
+                }
+
+                // Check if next drafter is AI
+                var drafterAI = _aiManager?.GetAIForPlayer(GameState.CurrentDrafter);
             }
+
+            UpdateTurnState();
+            OnSelectionChanged?.Invoke();
+            OnGameStateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Cancels the current draft placement, returning glyphling to hand.
+        /// </summary>
+        public void CancelDraftPlacement()
+        {
+            if (GameState.Phase != GamePhase.Draft)
+                return;
+
+            PendingDraftPosition = null;
+            SelectedDraftGlyphling = null;
+            ValidDraftPlacements.Clear();
+
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshHighlights();
+                BoardRenderer.Instance.RefreshBoard();
+            }
+
+            UpdateTurnState();
+            OnSelectionChanged?.Invoke();
         }
 
         /// <summary>
@@ -229,7 +507,6 @@ namespace Glyphtender.Unity
             // Block input during AI turn
             if (IsCurrentPlayerAI)
             {
-                Debug.Log("AI is playing - input blocked");
                 return;
             }
 
@@ -238,14 +515,12 @@ namespace Glyphtender.Unity
                 CurrentTurnState != GameTurnState.GlyphlingSelected &&
                 CurrentTurnState != GameTurnState.MovePending)
             {
-                Debug.Log($"Cannot select glyphling in {CurrentTurnState} state");
                 return;
             }
 
             // Can only select own glyphlings
             if (glyphling.Owner != GameState.CurrentPlayer)
             {
-                Debug.Log("Not your glyphling!");
                 return;
             }
 
@@ -269,8 +544,6 @@ namespace Glyphtender.Unity
             // Begin move tracking for stats
             GameHistoryManager.Instance?.BeginMove(glyphling, GameState);
 
-            Debug.Log($"Selected glyphling at {glyphling.Position}. {ValidMoves.Count} valid moves.");
-
             UpdateTurnState();
             OnSelectionChanged?.Invoke();
         }
@@ -289,13 +562,11 @@ namespace Glyphtender.Unity
             // Only allow destination selection after glyphling is selected
             if (CurrentTurnState != GameTurnState.GlyphlingSelected)
             {
-                Debug.Log($"Cannot select destination in {CurrentTurnState} state");
                 return;
             }
 
             if (!ValidMoves.Contains(destination))
             {
-                Debug.Log("Invalid move destination!");
                 return;
             }
 
@@ -312,8 +583,6 @@ namespace Glyphtender.Unity
             // Calculate valid cast positions from new location
             ValidCasts = GameRules.GetValidCastPositions(GameState, SelectedGlyphling);
             ValidMoves.Clear();
-
-            Debug.Log($"Moved to {destination}. {ValidCasts.Count} valid cast positions.");
 
             UpdateTurnState();
             OnSelectionChanged?.Invoke();
@@ -335,31 +604,24 @@ namespace Glyphtender.Unity
             if (CurrentTurnState != GameTurnState.MovePending &&
                 CurrentTurnState != GameTurnState.ReadyToConfirm)
             {
-                Debug.Log($"Cannot select cast position in {CurrentTurnState} state");
                 return;
             }
 
             if (!ValidCasts.Contains(castPosition))
             {
-                Debug.Log("Invalid cast position!");
                 return;
             }
 
             PendingCastPosition = castPosition;
             LastCastOrigin = SelectedGlyphling.Position;
 
-            Debug.Log($"Cast position selected: {castPosition}");
 
             // If we already have a letter, show ghost and preview words
             if (PendingLetter != null)
             {
                 ShowGhostAndPreview();
             }
-            else
-            {
-                Debug.Log("Now select a letter from your hand.");
-            }
-
+ 
             UpdateTurnState();
             OnSelectionChanged?.Invoke();
         }
@@ -373,18 +635,15 @@ namespace Glyphtender.Unity
             if (CurrentTurnState != GameTurnState.MovePending &&
                 CurrentTurnState != GameTurnState.ReadyToConfirm)
             {
-                Debug.Log($"Cannot select letter in {CurrentTurnState} state");
                 return;
             }
 
             if (!GameState.Hands[GameState.CurrentPlayer].Contains(letter))
             {
-                Debug.Log("You don't have that letter!");
                 return;
             }
 
             PendingLetter = letter;
-            Debug.Log($"Selected letter: {letter}");
 
             // If we already have a cast position, show ghost and preview words
             if (PendingCastPosition != null)
@@ -427,10 +686,8 @@ namespace Glyphtender.Unity
             foreach (var word in previewWords)
             {
                 int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, GameState, GameState.CurrentPlayer);
-                Debug.Log($"Would form: {word.Letters} (+{wordScore})");
                 previewScore += wordScore;
             }
-            Debug.Log($"Total preview score: {previewScore}");
 
             // Only show ghost tile in tap mode
             if (CurrentInputMode == InputMode.Tap)
@@ -450,7 +707,6 @@ namespace Glyphtender.Unity
             // Only allow confirm in ReadyToConfirm state
             if (CurrentTurnState != GameTurnState.ReadyToConfirm)
             {
-                Debug.Log($"Cannot confirm move in {CurrentTurnState} state");
                 return;
             }
 
@@ -477,10 +733,8 @@ namespace Glyphtender.Unity
             {
                 int wordScore = WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, GameState, currentPlayer);
                 turnScore += wordScore;
-                Debug.Log($"Scored word: {word.Letters} (+{wordScore})");
             }
             GameState.Scores[currentPlayer] += turnScore;
-            Debug.Log($"Turn score: {turnScore}. Total: {GameState.Scores[currentPlayer]}");
 
             // Track how many words were formed
             LastTurnWordCount = newWords.Count;
@@ -492,7 +746,6 @@ namespace Glyphtender.Unity
             // If no words formed, enter cycle mode instead of ending turn
             if (newWords.Count == 0)
             {
-                Debug.Log("No words formed! Entering cycle mode.");
                 CurrentTurnState = GameTurnState.CycleMode;
                 _enteredCycleMode = true;
                 _tilesCycledThisTurn = 0;
@@ -511,10 +764,6 @@ namespace Glyphtender.Unity
 
             // Check for tangles
             var tangled = TangleChecker.GetTangledGlyphlings(GameState);
-            foreach (var g in tangled)
-            {
-                Debug.Log($"Glyphling tangled at {g.Position}!");
-            }
 
             // Check game over
             if (TangleChecker.ShouldEndGame(GameState))
@@ -525,8 +774,6 @@ namespace Glyphtender.Unity
 
             // End turn
             GameRules.EndTurn(GameState);
-
-            Debug.Log($"Turn ended. Now {GameState.CurrentPlayer}'s turn.");
 
             ClearSelection();
             UpdateTurnState();
@@ -594,7 +841,6 @@ namespace Glyphtender.Unity
             if (SelectedGlyphling != null && _originalPosition != null)
             {
                 SelectedGlyphling.Position = _originalPosition.Value;
-                Debug.Log($"Reset glyphling to {_originalPosition.Value}");
             }
 
             _originalPosition = null;
@@ -620,10 +866,7 @@ namespace Glyphtender.Unity
 
             // Check for tangles
             var tangled = TangleChecker.GetTangledGlyphlings(GameState);
-            foreach (var g in tangled)
-            {
-                Debug.Log($"Glyphling tangled at {g.Position}!");
-            }
+
 
             // Check game over
             if (TangleChecker.ShouldEndGame(GameState))
@@ -634,8 +877,6 @@ namespace Glyphtender.Unity
 
             // End turn
             GameRules.EndTurn(GameState);
-
-            Debug.Log($"Turn ended. Now {GameState.CurrentPlayer}'s turn.");
 
             ClearSelection();
             CurrentTurnState = GameTurnState.Idle;
@@ -667,10 +908,7 @@ namespace Glyphtender.Unity
         {
             // Check for tangles
             var tangled = TangleChecker.GetTangledGlyphlings(GameState);
-            foreach (var g in tangled)
-            {
-                Debug.Log($"Glyphling tangled at {g.Position}!");
-            }
+
 
             // Check game over
             if (TangleChecker.ShouldEndGame(GameState))
@@ -704,14 +942,8 @@ namespace Glyphtender.Unity
             foreach (var player in GameState.ActivePlayers)
             {
                 GameState.Scores[player] += tanglePoints[player];
-                Debug.Log($"Tangle points - {player}: +{tanglePoints[player]}");
             }
 
-            // Log final scores
-            foreach (var player in GameState.ActivePlayers)
-            {
-                Debug.Log($"Final score - {player}: {GameState.Scores[player]}");
-            }
 
             // Determine winner (highest score wins)
             Player? winner = null;
@@ -737,16 +969,7 @@ namespace Glyphtender.Unity
             {
                 winner = null;
             }
-            // If equal, winner stays null (tie)
 
-            if (winner != null)
-            {
-                Debug.Log($"{winner} wins!");
-            }
-            else
-            {
-                Debug.Log("It's a tie!");
-            }
 
             // Record game end for stats
             if (GameHistoryManager.Instance != null)
@@ -779,6 +1002,11 @@ namespace Glyphtender.Unity
             _originalPosition = null;
             ValidMoves.Clear();
             ValidCasts.Clear();
+
+            // Draft state
+            PendingDraftPosition = null;
+            SelectedDraftGlyphling = null;
+            ValidDraftPlacements.Clear();
         }
 
         /// <summary>
@@ -791,6 +1019,10 @@ namespace Glyphtender.Unity
             if (GameState.IsGameOver)
             {
                 CurrentTurnState = GameTurnState.GameOver;
+            }
+            else if (GameState.Phase == GamePhase.Draft)
+            {
+                CurrentTurnState = GameTurnState.DraftPlacement;
             }
             else if (CurrentTurnState == GameTurnState.CycleMode)
             {
@@ -816,7 +1048,6 @@ namespace Glyphtender.Unity
 
             if (CurrentTurnState != previousState)
             {
-                Debug.Log($"Turn state: {previousState} -> {CurrentTurnState}");
                 OnTurnStateChanged?.Invoke(CurrentTurnState);
             }
         }
