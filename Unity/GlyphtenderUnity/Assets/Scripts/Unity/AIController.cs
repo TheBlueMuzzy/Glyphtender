@@ -135,6 +135,123 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Call this when it's the AI's turn to draft.
+        /// </summary>
+        public void TakeDraftTurn(GameState state, List<HexCoord> validPositions)
+        {
+            if (_brain == null)
+            {
+                Debug.LogError("AIController.TakeDraftTurn called but AI not initialized!");
+                return;
+            }
+
+            if (_isThinking)
+            {
+                Debug.LogWarning("AI is already thinking!");
+                return;
+            }
+
+            // Don't start if menu is open (paused)
+            if (MenuController.Instance != null && MenuController.Instance.IsOpen)
+            {
+                return;
+            }
+
+            StartCoroutine(ThinkAndDraft(state, validPositions));
+        }
+
+        /// <summary>
+        /// Coroutine that thinks for a moment, then places a draft glyphling.
+        /// </summary>
+        private IEnumerator ThinkAndDraft(GameState state, List<HexCoord> validPositions)
+        {
+            _isThinking = true;
+
+            // Random think time for natural feel
+            float thinkTime = Random.Range(_minThinkTime, _maxThinkTime) / _speedMultiplier;
+            yield return new WaitForSeconds(thinkTime);
+
+            // Choose position
+            HexCoord chosenPos = _brain.ChooseDraftPosition(state, validPositions);
+
+            Debug.Log($"AI {_aiPlayer} drafts position: {chosenPos}");
+
+            // Get the glyphling to place
+            Glyphling toPlace = state.GetNextUnplacedGlyphling(_aiPlayer);
+            if (toPlace == null)
+            {
+                Debug.LogError("AI has no unplaced glyphling!");
+                _isThinking = false;
+                yield break;
+            }
+
+            // Find the actual hand object FIRST, before any state changes
+            string objName = $"HandGlyphling_{toPlace.Owner}_{toPlace.Index}";
+            GameObject handObj = GameObject.Find(objName);
+            if (handObj == null)
+            {
+                Debug.LogError($"Could not find hand object: {objName}");
+                _isThinking = false;
+                yield break;
+            }
+
+            // Convert hand position from UI camera space to main camera world space
+            Camera uiCamera = HandController.Instance.uiCamera;
+            Vector3 screenPos = uiCamera.WorldToScreenPoint(handObj.transform.position);
+            Vector3 startPos = Camera.main.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+            startPos.y = 0.3f; // Keep at board height
+
+            // Unparent and switch layer BEFORE any GameManager calls
+            handObj.transform.SetParent(null);
+            handObj.transform.position = startPos; // Move to converted position
+            SetLayerRecursively(handObj, LayerMask.NameToLayer("Board"));
+
+            // Now select the glyphling (shows valid positions on board)
+            GameManager.Instance.SelectDraftGlyphlingFromHand(toPlace);
+
+            yield return new WaitForSeconds(ScaledWait(0.3f));
+
+            // Target position on board
+            Vector3 endPos = BoardRenderer.Instance.HexToWorld(chosenPos) + Vector3.up * 0.3f;
+
+            // Animate to target position
+            float moveDuration = ScaledWait(0.5f);
+            float elapsed = 0f;
+            while (elapsed < moveDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, elapsed / moveDuration);
+                handObj.transform.position = Vector3.Lerp(startPos, endPos, t);
+                yield return null;
+            }
+            handObj.transform.position = endPos;
+
+            // Place at chosen position
+            GameManager.Instance.SelectDraftPosition(chosenPos);
+
+            // Destroy the hand object since SelectDraftPosition creates a ghost
+            Object.Destroy(handObj);
+
+            yield return new WaitForSeconds(ScaledWait(0.3f));
+
+            // Confirm placement
+            _isThinking = false;
+            GameManager.Instance.ConfirmDraftPlacement();
+        }
+
+        /// <summary>
+        /// Sets layer for object and all children.
+        /// </summary>
+        private void SetLayerRecursively(GameObject obj, int layer)
+        {
+            obj.layer = layer;
+            foreach (Transform child in obj.transform)
+            {
+                SetLayerRecursively(child.gameObject, layer);
+            }
+        }
+
+        /// <summary>
         /// Takes over a turn in progress, handling whatever state it's in.
         /// </summary>
         public void TakeOverTurn(GameState state)

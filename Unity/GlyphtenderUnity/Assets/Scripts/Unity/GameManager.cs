@@ -156,6 +156,13 @@ namespace Glyphtender.Unity
                 OnGameRestarted?.Invoke();
                 WaitingForMainMenu = false;
                 OnGameInitialized?.Invoke();
+
+                // Check if first drafter is AI
+                var drafterAI = _aiManager.GetAIForPlayer(GameState.CurrentDrafter);
+                if (drafterAI != null)
+                {
+                    drafterAI.TakeDraftTurn(GameState, ValidDraftPlacements);
+                }
                 return;
             }
 
@@ -258,6 +265,10 @@ namespace Glyphtender.Unity
 
             // Check if first drafter is AI
             var drafterAI = _aiManager.GetAIForPlayer(GameState.CurrentDrafter);
+            if (drafterAI != null)
+            {
+                drafterAI.TakeDraftTurn(GameState, ValidDraftPlacements);
+            }
 
             // Notify listeners
             WaitingForMainMenu = false;
@@ -317,12 +328,6 @@ namespace Glyphtender.Unity
 
             // Must have a glyphling selected from hand
             if (SelectedDraftGlyphling == null)
-            {
-                return;
-            }
-
-            // Block input during AI turn
-            if (_aiManager != null && _aiManager.IsPlayerAI(GameState.CurrentDrafter))
             {
                 return;
             }
@@ -470,6 +475,11 @@ namespace Glyphtender.Unity
 
                 // Check if next drafter is AI
                 var drafterAI = _aiManager?.GetAIForPlayer(GameState.CurrentDrafter);
+                if (drafterAI != null)
+                {
+                    ValidDraftPlacements = GameRules.GetValidDraftPlacements(GameState);
+                    drafterAI.TakeDraftTurn(GameState, ValidDraftPlacements);
+                }
             }
 
             UpdateTurnState();

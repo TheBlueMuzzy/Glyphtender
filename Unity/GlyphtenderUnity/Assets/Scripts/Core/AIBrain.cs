@@ -300,6 +300,133 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
+        /// Chooses a position for draft placement based on personality.
+        /// </summary>
+        public HexCoord ChooseDraftPosition(GameState state, List<HexCoord> validPositions)
+        {
+            if (validPositions == null || validPositions.Count == 0)
+                return default;
+
+            if (validPositions.Count == 1)
+                return validPositions[0];
+
+            // Roll traits for this decision
+            float aggression = Personality.BaseRanges.Aggression.Roll(_random);
+            float positional = Personality.BaseRanges.Positional.Roll(_random);
+            float protectiveness = Personality.BaseRanges.Protectiveness.Roll(_random);
+            float riskTolerance = Personality.BaseRanges.RiskTolerance.Roll(_random);
+
+            // Calculate board center
+            int minCol = int.MaxValue, maxCol = int.MinValue;
+            int minRow = int.MaxValue, maxRow = int.MinValue;
+            foreach (var hex in state.Board.BoardHexes)
+            {
+                if (hex.Column < minCol) minCol = hex.Column;
+                if (hex.Column > maxCol) maxCol = hex.Column;
+                if (hex.Row < minRow) minRow = hex.Row;
+                if (hex.Row > maxRow) maxRow = hex.Row;
+            }
+            float centerCol = (minCol + maxCol) / 2f;
+            float centerRow = (minRow + maxRow) / 2f;
+            float maxCenterDist = Math.Max(maxCol - minCol, maxRow - minRow) / 2f;
+
+            // Find placed glyphlings
+            var opponentGlyphlings = new List<HexCoord>();
+            var ownGlyphlings = new List<HexCoord>();
+            foreach (var g in state.Glyphlings)
+            {
+                if (!g.IsPlaced) continue;
+                if (g.Owner == AIPlayer)
+                    ownGlyphlings.Add(g.Position.Value);
+                else
+                    opponentGlyphlings.Add(g.Position.Value);
+            }
+
+            // Score each valid position
+            var scored = new List<(HexCoord pos, float score)>();
+
+            foreach (var pos in validPositions)
+            {
+                float score = 0f;
+
+                // Center control (high Positional = prefer center)
+                float distFromCenter = Math.Abs(pos.Column - centerCol) + Math.Abs(pos.Row - centerRow);
+                float centerScore = (maxCenterDist - distFromCenter) / maxCenterDist;
+                score += centerScore * positional * 0.5f;
+
+                // Distance to opponents
+                if (opponentGlyphlings.Count > 0)
+                {
+                    float minOppDist = float.MaxValue;
+                    foreach (var opp in opponentGlyphlings)
+                    {
+                        float dist = HexDistance(pos, opp);
+                        if (dist < minOppDist) minOppDist = dist;
+                    }
+
+                    // High aggression = closer to opponents
+                    float aggressionScore = (10f - minOppDist) * aggression * 0.3f;
+                    score += aggressionScore;
+
+                    // High protectiveness = further from opponents
+                    float defenseScore = minOppDist * protectiveness * 0.2f;
+                    score += defenseScore;
+                }
+
+                // Mobility (count valid adjacent hexes)
+                int mobility = 0;
+                for (int dir = 0; dir < 6; dir++)
+                {
+                    var neighbor = pos.GetNeighbor(dir);
+                    if (state.Board.IsBoardHex(neighbor) && !state.Board.IsPerimeterHex(neighbor))
+                    {
+                        if (!state.HasGlyphling(neighbor) && !state.HasTile(neighbor))
+                            mobility++;
+                    }
+                }
+                score += mobility * positional * 0.15f;
+
+                // Spread from own glyphlings (for 2nd placement)
+                if (ownGlyphlings.Count > 0)
+                {
+                    float minOwnDist = float.MaxValue;
+                    foreach (var own in ownGlyphlings)
+                    {
+                        float dist = HexDistance(pos, own);
+                        if (dist < minOwnDist) minOwnDist = dist;
+                    }
+
+                    // Low aggression = spread out, high aggression = cluster
+                    float spreadPreference = (10f - aggression) / 10f;
+                    score += minOwnDist * spreadPreference * 0.3f;
+                }
+
+                // Small random factor for variety
+                score += (float)_random.NextDouble() * riskTolerance * 0.2f;
+
+                scored.Add((pos, score));
+            }
+
+            // Sort by score descending
+            scored.Sort((a, b) => b.score.CompareTo(a.score));
+
+            // Pick from top candidates with some randomness
+            int topCount = Math.Min(3, scored.Count);
+            int pick = _random.Next(topCount);
+            return scored[pick].pos;
+        }
+
+        /// <summary>
+        /// Approximate hex distance between two positions.
+        /// </summary>
+        private float HexDistance(HexCoord a, HexCoord b)
+        {
+            int dc = Math.Abs(a.Column - b.Column);
+            int dr = Math.Abs(a.Row - b.Row);
+            return dc + Math.Max(0, dr - dc / 2);
+        }
+
+        /// <summary>
         /// Gets the strategic value of a letter (for discard decisions).
         /// </summary>
         private int GetLetterValue(char letter)
