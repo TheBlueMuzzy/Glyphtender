@@ -1,8 +1,8 @@
 # The Glyphtender's Trial — Project Handoff Document
 
-**Project Owner:** Muzzy  
-**Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions  
-**Last Updated:** January 2026
+**Project Owner:** Muzzy
+**Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions
+**Last Updated:** January 4, 2026 (Phase 5 Online Multiplayer Started)
 
 ---
 
@@ -13,11 +13,12 @@
 3. [Technical Architecture](#3-technical-architecture)
 4. [UI/UX Philosophy](#4-uiux-philosophy)
 5. [AI System Design](#5-ai-system-design)
-6. [Current State & Completed Work](#6-current-state--completed-work)
-7. [Roadmap & Future Goals](#7-roadmap--future-goals)
-8. [Key Learnings & Principles](#8-key-learnings--principles)
-9. [Development Practices & Workflow](#9-development-practices--workflow)
-10. [Unimplemented Features Backlog](#10-unimplemented-features-backlog)
+6. [Online Multiplayer Design](#6-online-multiplayer-design)
+7. [Current State & Completed Work](#7-current-state--completed-work)
+8. [Roadmap & Future Goals](#8-roadmap--future-goals)
+9. [Key Learnings & Principles](#9-key-learnings--principles)
+10. [Development Practices & Workflow](#10-development-practices--workflow)
+11. [Unimplemented Features Backlog](#11-unimplemented-features-backlog)
 
 ---
 
@@ -43,7 +44,7 @@ This distinction is critical. Every design decision — especially AI behavior �
 
 1. **Mobile (Android/iOS)** — Primary target
 2. **PC (Steam/Itch)** — Stretch goal, only if AI opponents are good enough
-3. **Online multiplayer** — Future aspiration, architecture prepared for it
+3. **Online multiplayer** — **CURRENT PRIORITY** (Phase 5)
 
 ### 1.4 MoSCoW Prioritization
 
@@ -52,6 +53,7 @@ This distinction is critical. Every design decision — especially AI behavior �
 - Multiple AI personalities that feel distinct
 - Polished enough to show friends
 - Basic menu/UI
+- **1v1 online multiplayer with room codes** ← CURRENT FOCUS
 
 **Should Have (Post-MVP):**
 - PC build
@@ -59,7 +61,7 @@ This distinction is critical. Every design decision — especially AI behavior �
 - Audio system
 
 **Could Have (Future):**
-- Online multiplayer (simple matchmaking)
+- Async multiplayer (play multiple games)
 - Leaderboards
 - Account system / stat tracking
 - Advanced visuals (animated Glyphlings, growing plant letters)
@@ -89,21 +91,21 @@ Each turn follows this exact sequence:
 1. **Move** one of your Glyphlings at least 1 hex along a leyline
    - Cannot pass through or land on tiles or other Glyphlings
    - Must move at least 1 hex (cannot stay in place)
-   
+
 2. **Cast** one Runeblossom from your hand along any leyline from the Glyphling's NEW position
    - Can pass over your own tiles, but NOT opponent's tiles or any Glyphlings
    - Must land on an empty hex
    - Tiles can be cast to any distance along the leyline, including adjacent
-   
+
 3. **Score** any valid words formed that include your newly-placed tile
    - Words must read left-to-right or top-to-bottom along leylines
    - Only score words containing the tile you just placed
-   
+
 4. **Draw/Cycle:**
    - If you scored: Draw 1 tile from the bag
    - If you didn't score: May discard any number of tiles, then refill to 8
    - **Digital refinement:** Discarded tiles are set aside, hand refills, THEN discards return to bag
-   
+
 5. **Check Tangle:** If any Glyphling has no valid moves (all 6 directions blocked), they are "tangled" — game ends when this occurs
 
 ### 2.3 Leylines (Movement/Casting Directions)
@@ -143,7 +145,6 @@ A menu setting allows enabling/disabling 2-letter words. When disabled, minimum 
 |-------|---------|-------|----------|--------|
 | Large | 13 | 106 | 74 | [5,7,8,9,10,9,10,9,10,9,8,7,5] |
 | Medium | 11 | 85 | 59 | [4,7,8,9,10,9,10,9,8,7,4] |
-| Small | 9 | 61 | 37 | [5,6,7,8,9,8,7,6,5] |
 
 ### 2.7 Player Counts & Colors
 
@@ -207,18 +208,17 @@ Assets/Scripts/
 │   ├── GameRules.cs
 │   ├── WordScorer.cs
 │   ├── TangleChecker.cs
-│   └── HexCoord.cs
-├── AI/             # AI system — also pure C#
-│   ├── AIBrain.cs
-│   ├── AIPerception.cs
-│   ├── Personality.cs
-│   ├── AIMoveEvaluator.cs
+│   ├── AIGoal.cs           # Goal-selection AI model
+│   ├── AIPersonality.cs    # 7 personality presets
+│   ├── AIGoalEvaluators.cs # Goal-specific evaluation
+│   ├── AIBrain.cs          # Main AI pipeline
+│   ├── AIPerception.cs     # Fuzzy perception
 │   └── ...
 └── Unity/          # Unity-specific code
     ├── GameManager.cs
     ├── BoardRenderer.cs
-    ├── HandController.cs
-    ├── CameraController.cs
+    ├── AIManager.cs        # AI controller management
+    ├── AIController.cs     # Turn execution
     └── ...
 ```
 
@@ -283,7 +283,7 @@ Settings are saved to JSON file for persistence across sessions:
 
 ```csharp
 // SettingsManager handles:
-// - Play mode (Local 2P, vs AI, AI vs AI)
+// - Play mode (Local 2P, vs AI, AI vs AI, Online 1v1)
 // - Player count
 // - Board size
 // - AI personalities
@@ -407,116 +407,309 @@ Muzzy wants animations that feel:
 
 ## 5. AI System Design
 
-### 5.1 The Core Problem with AI
+### 5.1 Goal-Selection Model (Implemented)
 
-**Current AI behavior:** AI treats the game like Scrabble — maximize word score per turn.
+The AI now uses a **goal-selection model** instead of weighted scoring:
 
-**Correct AI behavior:** AI should treat the game like Go or Chess that uses words — area control, pressure, denial, with scoring as a *tool* not the *goal*.
+**OLD (deprecated):** Weighted sum of all factors → pick highest total score
+**NEW (implemented):** Select goal via trait roll → evaluate moves ONLY for that goal
 
-This is THE fundamental gameplay issue. Every AI personality inherits a base scoring system that overweights word points relative to positional pressure. This makes all AI feel like word-optimizers rather than territorial threats.
+This creates personality-driven behavior where a Bully will ignore great words because TRAP activated, and a Scholar will ignore trap opportunities because SCORE activated.
 
-### 5.2 What "Threatening" Looks Like
+### 5.2 How Goal Selection Works
 
-From Muzzy's description, threatening AI should:
+1. **Priority Cascade:** Each personality defines goal priority order
+2. **Trait Roll:** For each goal in priority order, roll d100 against that goal's trait
+3. **First Success Wins:** First goal where roll ≤ trait threshold becomes active
+4. **Fallback:** If all goals fail, auto-succeed on primary goal
+5. **Goal-Specific Evaluation:** Moves are scored ONLY for the active goal's criteria
+
+**Result:** Even the same personality in the same situation makes different choices sometimes — like humans.
+
+### 5.3 The 7 Goals
+
+| Goal | Description | Controlling Trait |
+|------|-------------|-------------------|
+| TRAP | Box opponent toward tangle | Aggression |
+| SCORE | Maximize word points | Greed |
+| DENY | Block opponent leylines/words | Spite |
+| ESCAPE | Create movement options when pressured | Caution |
+| BUILD | Set up future word opportunities | Patience |
+| STEAL | Complete opponent's partial words | Opportunism |
+| DUMP | Discard junk letters strategically | Pragmatism |
+
+### 5.4 The 7 Traits (0-100 Scale)
+
+Each personality has trait ranges (min/max) that shift based on game state:
+
+| Trait | Low (0-30) | High (70-100) |
+|-------|------------|---------------|
+| Aggression | Defensive, avoids conflict | Hunts opponent, pressures |
+| Greed | Safe plays, modest scores | Big risky plays, max points |
+| Spite | Ignores opponent | Ruins setups, denies access |
+| Caution | Sacrifices for scoring | Guards glyphlings carefully |
+| Patience | Score now | Build for future payoffs |
+| Opportunism | Own setups only | Steals opponent work |
+| Pragmatism | Holds bad letters | Cycles aggressively |
+
+### 5.5 Dynamic Trait Shifting (Subtraits)
+
+Trait ranges shift based on game state:
+
+| Subtrait | When Active | Effect |
+|----------|-------------|--------|
+| EndgameSensitivity | Board fill > 60% | Shifts Aggression/Caution |
+| DesperationSensitivity | Behind by 10+ points | Increases Greed/Opportunism |
+| PressureSensitivity | Opponent pressuring glyphling | Increases Caution |
+| HandSensitivity | Poor hand quality | Increases Pragmatism |
+| MomentumSensitivity | Scoring streak | Confidence affects multiple traits |
+| RetaliationSensitivity | After big opponent score | Increases Spite |
+
+### 5.6 Meta-Traits
+
+Beyond goal selection, personalities have meta-traits:
+
+| Meta-Trait | Effect |
+|------------|--------|
+| VocabularyModifier | Adjusts Zipf threshold (word difficulty) |
+| SelfScoreAccuracy | How accurately AI knows own score |
+| OpponentScoreAccuracy | How accurately AI knows opponent score |
+| MoraleResponse | How much recent events affect confidence |
+
+### 5.7 Fuzzy Perception System
+
+AI doesn't have perfect information. Implements "fuzzy knowledge":
+
+```csharp
+class AIPerception
+{
+    float PerceivedLead;      // Can be wrong about who's winning
+    float Momentum;           // Recent scoring trend
+    float HandQuality;        // Assessment of current hand
+    float MyMaxPressure;      // How trapped are my glyphlings
+    float OpponentMaxPressure; // How trapped are opponents
+}
+```
+
+This makes AI opponents feel more human — they can be wrong about who's winning.
+
+### 5.8 Vocabulary Filtering
+
+AI vocabulary is limited by both personality AND difficulty:
+
+**Difficulty Base Thresholds:**
+- Apprentice: Zipf ≥ 3.0 (~5,000 common words)
+- FirstClass: Zipf ≥ 2.0 (~20,000 words)
+- Archmage: Zipf ≥ 0.0 (all ~63,000 words)
+
+**Personality Modifier:** VocabularyModifier meta-trait adjusts threshold
+- Modifier < 0: Knows fewer words (simpler vocabulary)
+- Modifier > 0: Knows more words (broader vocabulary)
+
+### 5.9 AI Personalities (7 Presets)
+
+| Personality | Primary Goal | Behavior |
+|-------------|--------------|----------|
+| Bully | TRAP | Aggressive hunter, pressures opponents into tangles |
+| Scholar | SCORE | Word optimizer, uses sophisticated vocabulary |
+| Builder | BUILD | Patient setup, extends words across turns |
+| Vulture | STEAL | Opportunist, completes opponent's partial words |
+| Survivor | ESCAPE | Defensive, prioritizes glyphling safety |
+| Strategist | DENY | Tactical, blocks opponent leylines and words |
+| Balanced | (varies) | Moderate all traits, adapts to situations |
+
+### 5.10 What "Threatening" Looks Like
+
+From Muzzy's original vision, threatening AI should:
 - Block opponent's movement paths
 - Box opponents toward tangle situations
 - Deny access to almost-complete words on the board
 - Force opponents to deal with pressure instead of freely building
 - Make players *feel hunted*
 
-The player's feedback: "I have sat for many turns in a vulnerable place, but they just kept scoring instead of pressuring me by trying to tangle me."
-
-### 5.3 Personality System Architecture
-
-AI personalities are defined by range-based traits (not fixed values):
-
-```csharp
-public struct PersonalityTraits
-{
-    public FloatRange Aggression;      // Low = defensive, High = hunts opponent
-    public FloatRange Greed;           // Low = safe plays, High = big risky plays
-    public FloatRange Protectiveness;  // Low = sacrifices pieces, High = guards carefully
-    public FloatRange Patience;        // Low = score now, High = build for payoffs
-    public FloatRange Spite;           // Low = ignores opponent, High = ruins setups
-    public FloatRange Territorialism;  // Low = roams freely, High = creates/defends zones
-}
-```
-
-**Range-based traits** create more natural variation — same personality makes different choices in similar situations.
-
-### 5.4 Dynamic Modifiers
-
-Traits are modified by game state:
-
-| Modifier | Effect |
-|----------|--------|
-| Perceived Score Lead | Behind → more desperate, Ahead → more aggressive |
-| Glyphling Pressure | High tangle threat → more defensive |
-| Hand Quality | Bad hand → dump junk aggressively |
-| Board Control | Losing space → territorial priority increases |
-| Momentum | Recent scoring streak affects confidence |
-
-### 5.5 Fuzzy Perception System
-
-AI doesn't have perfect information. Implements "fuzzy knowledge":
-
-```csharp
-class ScorePerception
-{
-    float MyScoreEstimate;
-    float OpponentScoreEstimate;
-    float Confidence;  // Decays over time, updates on observed scores
-}
-```
-
-This makes AI opponents feel more human — they can be wrong about who's winning.
-
-### 5.6 Zone Detection
-
-"Closed zones" are areas only one player can access:
-- Bounded by tiles, Glyphlings, and board edges
-- Opponent Glyphlings cannot path into the zone
-- Value is strategic — more freedom to maneuver without interference
-
-Zone detection is implemented but weight/priority may need tuning.
-
-### 5.7 Known AI Issues to Address
-
-1. **Builder personality doesn't actually build** — Should extend words across multiple turns (IN→KIN→SKIN), doesn't yet
-2. **All AI favor density** — Base scoring overweights word points, makes games feel like word-optimizers
-3. **Intersection plays too common** — Should be a personality trait (Strategist), not default behavior
-4. **Missing goal-selection model** — Current system is weighted scoring; Muzzy described a "priority cascade with variance" model that might feel more human
-
-### 5.8 Goal-Selection Model (Proposed Alternative)
-
-Muzzy described an alternative to weighted scoring:
-
-1. Personality defines *goal priority ranges* (not scoring weights)
-2. Board pressure shifts those ranges
-3. Perceived score differential shifts them again
-4. Random roll within final range picks which *goal* drives the decision
-5. If top goal can't be satisfied, fall to next goal
-
-**Result:** Even the same personality in the same situation makes different choices sometimes — like humans.
-
-This is NOT currently implemented but represents the design intent.
-
-### 5.9 AI Personalities (Current)
-
-| Personality | Intended Behavior |
-|-------------|-------------------|
-| Balanced | Moderate all traits |
-| Builder | Extend words across turns, build chains |
-| Bully | Aggressive, pressures opponent |
-| Opportunist | Steals opponent setups, completion hunting |
-| Strategist | Multi-word plays, intersection efficiency |
-| (Others TBD) | Various combinations |
+**The Bully personality now achieves this.** Testing confirmed: "it felt good!"
 
 ---
 
-## 6. Current State & Completed Work
+## 6. Online Multiplayer Design
 
-### 6.1 Completed Phases
+### 6.1 Overview
+
+**Goal:** 1v1 online multiplayer with room code system (host creates code, friend joins with code)
+
+**Stack:** Unity Gaming Services (Authentication + Lobby + Relay + Netcode for GameObjects)
+
+**Key Features:**
+- Anonymous player IDs (no login)
+- Room code sharing (6-character codes)
+- Forfeit with AI takeover option
+- Auto-forfeit on timeout/disconnect
+- Rematch capability
+
+### 6.2 Architecture Decisions
+
+**Real-time vs Async:** Real-time for MVP
+- Both players online simultaneously
+- Simpler (no persistent storage needed)
+- Matches "room code" design (friends playing together)
+- AI takeover on disconnect makes sense for real-time
+
+**Host-Authoritative Model:**
+- One player hosts, validates all moves
+- No server costs for indie game
+- Cheat risk acceptable for friend games
+- Turn-based = low latency requirements
+
+**Provider Abstraction:**
+Architected to swap providers later:
+```
+INetworkTransport (interface)
+    ├── UnityRelayTransport (current - MVP)
+    ├── SteamTransport (future)
+    ├── EpicTransport (future)
+    └── AsyncCloudTransport (future - for turn-based)
+
+IMatchmaker (interface)
+    ├── LobbyMatchmaker (Unity Lobby - room codes)
+    ├── SteamMatchmaker (future)
+    └── CloudMatchmaker (future)
+```
+
+### 6.3 User Flow
+
+**Host Creates Match:**
+1. Player selects "Online: 1v1" mode
+2. Configures settings (Board size, 2-Letter toggle)
+3. Taps PLAY
+4. Sees room code (e.g., "ABC123")
+5. Waits for guest to join
+6. Game begins when guest connects
+
+**Guest Joins Match:**
+1. Player selects "Online: 1v1" mode
+2. Taps PLAY
+3. Enters room code
+4. Joins match
+5. Game begins
+
+**During Game - Forfeit:**
+- Player taps Menu → Forfeit
+- Confirmation dialog
+- Forfeiting player returns to main menu
+- Other player offered: "Continue with AI?" Yes/No
+
+**Disconnect/Timeout:**
+- 2-minute per-turn timeout
+- 30-second connection heartbeat
+- On disconnect: "Opponent disconnected. Continue with AI?"
+
+**Game End - Rematch:**
+- Winner announced
+- Both see: [Rematch] [Main Menu]
+- If both tap Rematch: New game, swap colors
+- If one taps Main Menu: Other sees "Opponent left"
+
+### 6.4 Files to Create
+
+**Network Layer:**
+```
+Assets/Scripts/Unity/Network/
+├── NetworkManager.cs         # Initialize services, auth, connection state
+├── LobbyManager.cs           # Create/join lobbies, room codes
+├── RelayManager.cs           # Relay allocation, join codes
+├── NetworkGameBridge.cs      # Wrap GameManager calls as RPCs
+└── ConnectionMonitor.cs      # Heartbeat, timeout detection
+```
+
+**UI Screens:**
+```
+Assets/Scripts/Unity/UI/
+├── OnlineModeScreen.cs       # Create Match / Join with Code
+├── WaitingForPlayerScreen.cs # Show room code, waiting...
+├── DisconnectPopup.cs        # Opponent disconnected, continue with AI?
+├── ForfeitPopup.cs           # Confirm forfeit
+└── RematchPopup.cs           # Rematch / Main Menu
+```
+
+**Core:**
+```
+Assets/Scripts/Core/
+└── NetworkMessages.cs        # Serializable move data, state snapshots
+```
+
+### 6.5 Files to Modify
+
+- `MainMenuScreen.cs` - Add "Online: 1v1" mode
+- `GameManager.cs` - Add IsNetworkedGame flag, RPC branching
+- `MenuController.cs` - Add Forfeit button for online games
+- `EndGameScreen.cs` - Add Rematch button for online games
+- `AIController.cs` - Handle AI takeover mid-game
+
+### 6.6 Implementation Phases
+
+**Phase 5.0: Setup**
+- Create Unity Gaming Services project
+- Install packages (auth, lobby, relay, netcode)
+- Link project in Unity Editor
+
+**Phase 5.1: Foundation**
+- NetworkManager.cs (init, auth)
+- LobbyManager.cs (create/join)
+- RelayManager.cs (allocation)
+- Basic connection test
+
+**Phase 5.2: State Sync**
+- NetworkMessages.cs (serializable data)
+- NetworkGameBridge.cs (RPCs)
+- GameManager network mode
+- Move replication
+
+**Phase 5.3: Full Game Loop**
+- Draft phase over network
+- Score sync
+- Turn indicator
+- Game end detection
+
+**Phase 5.4: Forfeit & Disconnect**
+- ConnectionMonitor.cs
+- Forfeit flow
+- Disconnect handling
+- AI takeover
+
+**Phase 5.5: Rematch**
+- Rematch flow
+- Color swap
+- Same-lobby continuation
+
+### 6.7 Cost Analysis
+
+**Unity Gaming Services Free Tier:**
+- Authentication: Unlimited
+- Lobby: 10,000 DAU
+- Relay: 50 CCU (concurrent users)
+
+**For this use case:**
+- 50 CCU = 25 simultaneous games
+- More than enough for friends/beta
+- Paid tier only if game goes viral
+
+### 6.8 Codebase Readiness
+
+| Aspect | Score | Notes |
+|--------|-------|-------|
+| Core/Unity Separation | 10/10 | Perfect isolation |
+| GameState Serializability | 9/10 | Trivial to add |
+| Rule Validation | 10/10 | Pure static functions |
+| Mutation Isolation | 10/10 | All through GameRules |
+| Event System | 10/10 | Perfect for replication |
+
+**No major refactoring needed.** The architecture is multiplayer-ready.
+
+---
+
+## 7. Current State & Completed Work
+
+### 7.1 Completed Phases
 
 **Phase 1: Foundation ✅**
 - Code audit completed
@@ -524,7 +717,7 @@ This is NOT currently implemented but represents the design intent.
 
 **Phase 2: Modes Update ✅**
 - 2-letter word toggle with persistence
-- Board size variants (Small/Medium/Large)
+- Board size variants (Medium/Large)
 - Player count modes (2/3/4 players)
 - Settings persistence (JSON)
 - Snake draft placement phase
@@ -534,21 +727,30 @@ This is NOT currently implemented but represents the design intent.
 - Menu system overhaul ✅
 - Progressive disclosure tutorial — NOT DONE (depends on AI feeling right)
 
-### 6.2 Working Systems
+**Phase 4: AI Behavioral Rework ✅**
+- Goal-selection model implemented (replacing weighted scoring)
+- 7 goals with 7 corresponding traits (0-100 scale)
+- Priority cascade with d100 roll for goal activation
+- Subtraits for dynamic trait shifting based on game state
+- Zipf-based vocabulary filtering per personality + difficulty
+- 7 personality presets (Bully, Scholar, Builder, Vulture, Survivor, Strategist, Balanced)
+- Bully personality tested — "it felt good!"
+
+### 7.2 Working Systems
 
 - Complete turn loop (move → cast → score → draw/cycle)
-- All three board sizes functional
+- Two board sizes functional (Medium/Large)
 - 2-4 player support with turn rotation
 - Snake draft placement with confirm/cancel
 - Touch input (tap and drag modes)
 - Pinch zoom, pan, double-tap zoom
 - 3D UI (hand, buttons, scores)
-- AI opponents (8 personalities, though behavioral improvements needed)
+- AI opponents with goal-selection model (7 distinct personalities)
 - Statistics tracking with radar chart
 - Settings persistence
 - Android builds working (IL2CPP + ARM64)
 
-### 6.3 Known Issues / Technical Debt
+### 7.3 Known Issues / Technical Debt
 
 - BoardRenderer is 900+ lines (god class, should be split)
 - Static state in drag handlers (risk for multiplayer)
@@ -557,40 +759,47 @@ This is NOT currently implemented but represents the design intent.
 
 ---
 
-## 7. Roadmap & Future Goals
+## 8. Roadmap & Future Goals
 
-### 7.1 Current Phase Priority
+### 8.1 Current Phase Priority
 
-**Phase 4: AI Behavioral Rework** — THIS IS THE PRIORITY
+**Phase 5: Online Multiplayer** — THIS IS THE PRIORITY
 
-- Diagnose why all AI favor density/words over pressure
-- Implement goal-selection model (or hybrid with current)
-- Make "area control first, spelling second" the default
-- Builder rework (actually builds across turns)
-- Personality differentiation (feel distinct from each other)
+- 1v1 real-time with room codes
+- Unity Gaming Services (Auth + Lobby + Relay + Netcode)
+- Forfeit/disconnect with AI takeover
+- Rematch capability
+- Architected for provider swap (Steam, Epic, etc.)
 
-### 7.2 Remaining Phases
+### 8.2 Remaining Phases
 
-**Phase 5: Polish**
+**Phase 6: Polish**
 - Audio system (SFX, music, animation callbacks)
 - Animation polish (easing varieties, arcs, bubbly feel)
 - Visual polish (vine letters, 3D figurines, VFX)
+- Menu system overhaul
+- Progressive disclosure tutorial
 
-**Phase 6: Future**
-- Online multiplayer
+**Phase 7: Platforms & Distribution**
+- iOS build
+- PC/Steam build
+- Itch.io build
+- Steam networking integration (separate build or unified)
+
+**Phase 8: Future Systems**
+- Async multiplayer (optional)
 - Account system
 - Leaderboards
-- Platform builds (iOS, Steam, Itch)
 
-### 7.3 Tutorial Dependency
+### 8.3 Tutorial Dependency
 
-Progressive disclosure tutorial should NOT be built until AI plays correctly. Teaching rules when AI doesn't embody those rules creates confusion.
+Progressive disclosure tutorial should NOT be built until AI plays correctly and multiplayer works. Teaching rules when systems aren't complete creates confusion.
 
 ---
 
-## 8. Key Learnings & Principles
+## 9. Key Learnings & Principles
 
-### 8.1 Design Principles
+### 9.1 Design Principles
 
 1. **Area control first, spelling second** — This is the game's identity
 2. **Preview-and-confirm everything** — Essential for mobile touch UX
@@ -599,15 +808,16 @@ Progressive disclosure tutorial should NOT be built until AI plays correctly. Te
 5. **Fuzzy perception** — AI shouldn't have perfect information
 6. **Clean Core/Unity separation** — Enables testing, portability, multiplayer-readiness
 
-### 8.2 Technical Principles
+### 9.2 Technical Principles
 
 1. **Singleton pattern for managers** — Use consistently (don't mix with FindObjectOfType)
 2. **Event-driven updates** — Subscribe to state changes, don't poll
 3. **Guard state transitions** — Invalid transitions should fail, not corrupt state
 4. **Clone for simulation** — Never mutate real GameState during AI evaluation
 5. **JSON for persistence** — Simple, readable, debuggable
+6. **Abstract network providers** — Design for swappability
 
-### 8.3 Communication Principles (Working with Muzzy)
+### 9.3 Communication Principles (Working with Muzzy)
 
 From Muzzy's preferences:
 - **Don't pander** — Tell him when logic is flawed
@@ -618,7 +828,7 @@ From Muzzy's preferences:
 - **He can spot logic mistakes** — Use him as a design sanity-check
 - **Complete file replacements over patches** — Easier for non-technical implementation
 
-### 8.4 What NOT To Do
+### 9.4 What NOT To Do
 
 - Don't treat word scoring as the primary goal
 - Don't add features before AI feels right
@@ -629,9 +839,9 @@ From Muzzy's preferences:
 
 ---
 
-## 9. Development Practices & Workflow
+## 10. Development Practices & Workflow
 
-### 9.1 Git Commit Format
+### 10.1 Git Commit Format
 
 ```
 Commit this:
@@ -642,7 +852,7 @@ Commit this:
 5. Push origin
 ```
 
-### 9.2 Chat Organization
+### 10.2 Chat Organization
 
 Muzzy uses multiple Claude chats within a Project, organized by topic:
 - PROJECT MANAGEMENT — Master tracking
@@ -650,7 +860,7 @@ Muzzy uses multiple Claude chats within a Project, organized by topic:
 
 When starting a new chat, reference previous chats for context.
 
-### 9.3 Code Quality Standards
+### 10.3 Code Quality Standards
 
 - **Industry-standard** — Code should pass professional review
 - **Clean separation** — Core vs Unity
@@ -658,7 +868,7 @@ When starting a new chat, reference previous chats for context.
 - **No magic numbers** — Extract to constants or ScriptableObjects
 - **Consistent patterns** — Use established patterns (singleton, events, etc.)
 
-### 9.4 File Locations
+### 10.4 File Locations
 
 ```
 /mnt/user-data/uploads/     — User's uploaded files (read-only)
@@ -670,9 +880,9 @@ When creating files for Muzzy, always copy to `/mnt/user-data/outputs/`.
 
 ---
 
-## 10. Unimplemented Features Backlog
+## 11. Unimplemented Features Backlog
 
-### 10.1 Visual/Polish
+### 11.1 Visual/Polish
 
 | # | Feature | Notes |
 |---|---------|-------|
@@ -684,7 +894,7 @@ When creating files for Muzzy, always copy to `/mnt/user-data/outputs/`.
 | 6 | Multiple board themes | Different visual sets |
 | 7 | Animated 3D Glyphlings | Movement animations |
 
-### 10.2 Animation System
+### 11.2 Animation System
 
 | # | Feature | Notes |
 |---|---------|-------|
@@ -696,16 +906,16 @@ When creating files for Muzzy, always copy to `/mnt/user-data/outputs/`.
 | 13 | Animation chaining with delays | Paced sequences |
 | 14 | "Bubbly" feel | Overall animation personality |
 
-### 10.3 AI System
+### 11.3 AI System
 
 | # | Feature | Notes |
 |---|---------|-------|
 | 15 | Multi-turn lookahead | Under consideration, complex |
-| 16 | Incremental word building | IN→KIN→SKIN across turns |
-| 17 | Goal-selection model | Alternative to weighted scoring |
-| 18 | Closed zone strategy weight | Tune zone detection impact |
+| 16 | Closed zone strategy weight | Tune zone detection impact |
+| 17 | ~~Goal-selection model~~ | ✅ DONE — Implemented in Phase 4 |
+| 18 | AI personality balance testing | Ensure all 7 personalities feel distinct |
 
-### 10.4 Audio
+### 11.4 Audio
 
 | # | Feature | Notes |
 |---|---------|-------|
@@ -713,7 +923,7 @@ When creating files for Muzzy, always copy to `/mnt/user-data/outputs/`.
 | 20 | Music system | Not started |
 | 21 | Animation callbacks for audio | Sync sounds to animations |
 
-### 10.5 Platforms/Distribution
+### 11.5 Platforms/Distribution
 
 | # | Feature | Notes |
 |---|---------|-------|
@@ -721,20 +931,30 @@ When creating files for Muzzy, always copy to `/mnt/user-data/outputs/`.
 | 23 | PC/Steam build | Stretch goal |
 | 24 | Itch.io build | Alongside Steam |
 
-### 10.6 Future Systems
+### 11.6 Online Multiplayer (Phase 5 - IN PROGRESS)
 
 | # | Feature | Notes |
 |---|---------|-------|
-| 25 | Online multiplayer | Architecture designed, not built |
-| 26 | Account system | For stat persistence |
-| 27 | Leaderboards | Competitive rankings |
+| 25 | ~~Online multiplayer~~ | ⏳ IN PROGRESS |
+| 26 | Room code system | Part of Phase 5 |
+| 27 | Forfeit/disconnect handling | Part of Phase 5 |
+| 28 | Rematch flow | Part of Phase 5 |
+| 29 | Provider abstraction | Designed for Steam/Epic swap |
 
-### 10.7 Cleanup
+### 11.7 Future Systems
+
+| # | Feature | Notes |
+|---|---------|-------|
+| 30 | Async multiplayer | Future - requires cloud storage |
+| 31 | Account system | For stat persistence |
+| 32 | Leaderboards | Competitive rankings |
+
+### 11.8 Cleanup
 
 | # | Item | Notes |
 |---|------|-------|
-| 28 | Remove Hand Dock code | Dead code in menu |
-| 29 | Split BoardRenderer | God class, 900+ lines |
+| 33 | Remove Hand Dock code | Dead code in menu |
+| 34 | Split BoardRenderer | God class, 900+ lines |
 
 ---
 
@@ -778,16 +998,26 @@ Assets/Scripts/Core/
     Board.cs            — Hex grid, coordinate system, board configs
     GameState.cs        — Game state data (tiles, glyphlings, hands, scores)
     GameRules.cs        — Move validation, turn execution, starting positions
-    WordScorer.cs       — Dictionary, word detection, scoring
+    WordScorer.cs       — Dictionary, word detection, scoring, Zipf filtering
     TangleChecker.cs    — Trapped glyphling detection
-    HexCoord.cs         — Hex coordinate struct and math
 
-Assets/Scripts/AI/
-    AIBrain.cs          — Core decision-making
-    AIPerception.cs     — Fuzzy knowledge system
-    Personality.cs      — Trait definitions
-    AIMoveEvaluator.cs  — Move scoring
-    (+ supporting files)
+Assets/Scripts/Core/ — AI System (Pure C#)
+    AIGoal.cs           — 7 goals enum, AIMove class, GoalSelector, TraitRange
+    AIPersonality.cs    — 7 traits, meta-traits, subtraits, 7 personality presets
+    AIGoalEvaluators.cs — Goal-specific move evaluation functions
+    AIBrain.cs          — Goal selection + move evaluation pipeline
+    AIPerception.cs     — Fuzzy perception (scores, pressure, momentum)
+    AIConstants.cs      — Centralized tuning values
+    TrapDetector.cs     — Opponent movement restriction analysis
+    ContestDetector.cs  — Denial opportunity detection
+    SetupDetector.cs    — Future word potential evaluation
+    HandQualityAssessor.cs — Hand quality scoring
+    LetterJunkAssessor.cs  — Letter junk scoring
+
+Assets/Scripts/Core/Future/ — Archived/Unused
+    Personality_OLD.cs      — Old 13-trait weighted model (deprecated)
+    AIMoveEvaluator_OLD.cs  — Old weighted scoring system (deprecated)
+    AIWordDetector.cs       — Future: almost-word detection
 
 Assets/Scripts/Unity/
     GameManager.cs      — Central controller, state machine
@@ -802,6 +1032,17 @@ Assets/Scripts/Unity/
     UIScaler.cs         — Responsive scaling
     TweenManager.cs     — Animation system
     WordHighlighter.cs  — Word outline visualization
+
+Assets/Scripts/Unity/ — AI Integration
+    AIManager.cs        — Manages AI controllers for both players
+    AIController.cs     — Executes AI turns with coroutines, uses AIPersonalityPresets
+
+Assets/Scripts/Unity/Network/ — Online Multiplayer (Phase 5)
+    NetworkManager.cs       — (TODO) Initialize services, auth
+    LobbyManager.cs         — (TODO) Create/join lobbies
+    RelayManager.cs         — (TODO) Relay allocation
+    NetworkGameBridge.cs    — (TODO) RPC wrapper
+    ConnectionMonitor.cs    — (TODO) Heartbeat, timeout
 ```
 
 ---
@@ -820,13 +1061,6 @@ Assets/Scripts/Unity/
 ```
      Col: 0  1  2  3  4  5  6  7  8  9  10
           4  7  8  9  10 9  10 9  8  7  4
-```
-
-### Small Board (9 columns, 61 hexes)
-
-```
-     Col: 0  1  2  3  4  5  6  7  8
-          5  6  7  8  9  8  7  6  5
 ```
 
 ---
