@@ -43,7 +43,7 @@ This distinction is critical. Every design decision — especially AI behavior �
 ### 1.3 Target Platforms (Priority Order)
 
 1. **Mobile (Android/iOS)** — Primary target
-2. **PC (Steam/Itch)** — Stretch goal, only if AI opponents are good enough
+2. **PC (Steam/Itch)** — webgl for Itch
 3. **Online multiplayer** — **CURRENT PRIORITY** (Phase 5)
 
 ### 1.4 MoSCoW Prioritization
@@ -56,7 +56,8 @@ This distinction is critical. Every design decision — especially AI behavior �
 - **1v1 online multiplayer with room codes** ← CURRENT FOCUS
 
 **Should Have (Post-MVP):**
-- PC build
+- steam build
+- google play store build
 - Visual polish (VFX, 3D models)
 - Audio system
 
@@ -67,10 +68,7 @@ This distinction is critical. Every design decision — especially AI behavior �
 - Advanced visuals (animated Glyphlings, growing plant letters)
 
 **Won't Have (Out of Scope):**
-- Local multiplayer (same device)
-- Cross-platform accounts
 - Ranked competitive modes
-- Level editor
 
 ---
 
@@ -191,6 +189,7 @@ The project uses a column-row coordinate system:
 - **Word count:** ~63,479 cleaned words
 - **Source:** Standard word list with abbreviations removed
 - **Minimum length:** 2 letters (configurable via toggle)
+- **Zipf's values:** words come with zipf's law values
 
 ---
 
@@ -316,7 +315,7 @@ Settings are saved to JSON file for persistence across sessions:
 ### 3.8 Camera System
 
 - **Two-camera setup:** Main camera for board (with zoom/pan), UI camera for 3D UI elements (fixed)
-- **Board camera tilt:** 45-60 degrees on X axis for more immersive 3D feel
+- **Board camera tilt:** 45-90 degrees on X axis for more immersive 3D feel
 - **Auto-framing:** Camera automatically calculates bounds from board hexes
 - **Gesture support:** Pinch zoom, double-tap zoom toggle, single-finger pan
 
@@ -527,7 +526,7 @@ From Muzzy's original vision, threatening AI should:
 - Force opponents to deal with pressure instead of freely building
 - Make players *feel hunted*
 
-**The Bully personality now achieves this.** Testing confirmed: "it felt good!"
+**The Bully personality now achieves this.** 
 
 ---
 
@@ -831,11 +830,9 @@ From Muzzy's preferences:
 ### 9.4 What NOT To Do
 
 - Don't treat word scoring as the primary goal
-- Don't add features before AI feels right
 - Don't use Canvas UI
-- Don't assume fixed starting positions (snake draft is the system)
 - Don't implement multi-turn lookahead without discussing complexity/value tradeoff
-- Don't skip reading relevant SKILL.md files before implementation
+- Don't skip reading relevant claude.md and handoff.md files before implementation
 
 ---
 
@@ -851,14 +848,16 @@ Commit this:
 4. Commit to main
 5. Push origin
 ```
+can be triggered by <commit> by muzzy
 
 ### 10.2 Chat Organization
 
-Muzzy uses multiple Claude chats within a Project, organized by topic:
+Muzzy used multiple Claude chats within a Project, organized by topic:
 - PROJECT MANAGEMENT — Master tracking
 - Topic-specific chats (REFACTOR, AI IMPLEMENTATION, etc.)
+- When starting a new chat, reference previous chats for context.
 
-When starting a new chat, reference previous chats for context.
+Muzzy uses Claude Code now for this project.
 
 ### 10.3 Code Quality Standards
 
