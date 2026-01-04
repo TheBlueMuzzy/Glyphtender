@@ -83,6 +83,7 @@ namespace Glyphtender.Core
 
         /// <summary>
         /// Checks if a word meets the minimum frequency for a given Verbosity.
+        /// DEPRECATED: Use IsWordAllowedForZipf instead.
         /// </summary>
         public bool IsWordAllowedForVerbosity(string word, float verbosity)
         {
@@ -92,7 +93,25 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
+        /// Checks if a word meets the Zipf threshold for this AI's vocabulary.
+        /// Used by the new goal-selection AI system.
+        ///
+        /// Zipf thresholds:
+        /// - 3.0+ = ~5,000 common words (Apprentice base)
+        /// - 2.0+ = ~20,000 words (FirstClass base)
+        /// - 0.0+ = All ~63,000 words (Archmage base)
+        ///
+        /// Personality modifiers adjust this threshold.
+        /// </summary>
+        public bool IsWordAllowedForZipf(string word, float zipfThreshold)
+        {
+            float wordFreq = GetWordFrequency(word);
+            return wordFreq >= zipfThreshold;
+        }
+
+        /// <summary>
         /// Gets the minimum Zipf score for a given Verbosity trait (1-10).
+        /// DEPRECATED: Use AIPersonality.GetZipfThreshold instead.
         /// </summary>
         public static float GetMinFrequencyForVerbosity(float verbosity)
         {

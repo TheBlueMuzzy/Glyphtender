@@ -1,41 +1,46 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Glyphtender.Core
 {
     /// <summary>
-    /// The main AI controller that makes decisions.
-    /// Ties together perception, personality, detection, and evaluation.
+    /// The main AI controller using the goal-selection model.
+    ///
+    /// KEY CHANGE from old system:
+    /// OLD: Weighted sum of all factors → pick highest total score
+    /// NEW: Select goal via trait roll → evaluate moves ONLY for that goal
+    ///
+    /// This creates personality-driven behavior where a Bully will ignore
+    /// great words because TRAP activated, and a Scholar will ignore
+    /// trap opportunities because SCORE activated.
     /// </summary>
     public class AIBrain
     {
-        public Personality Personality { get; private set; }
+        public AIPersonality Personality { get; private set; }
         public AIPerception Perception { get; private set; }
         public Player AIPlayer { get; private set; }
         public AIDifficulty Difficulty { get; private set; }
 
         private WordScorer _wordScorer;
+        private GoalSelector _goalSelector;
         private Random _random;
 
-        // For cycle mode (discarding letters)
-        private static readonly Dictionary<char, int> LetterValues = new Dictionary<char, int>
-        {
-            {'E', 5}, {'A', 5},
-            {'I', 4}, {'O', 4}, {'N', 4}, {'R', 4}, {'T', 4}, {'S', 4},
-            {'L', 3}, {'U', 3}, {'D', 3},
-            {'G', 2}, {'B', 2}, {'C', 2}, {'M', 2}, {'P', 2}, {'F', 2}, {'H', 2},
-            {'V', 1}, {'W', 1}, {'Y', 1}, {'K', 1},
-            {'J', 0}, {'X', 0}, {'Z', 0}, {'Q', 0}
-        };
+        // Last goal selected (for debugging/display)
+        public GoalSelectionResult LastGoalSelection { get; private set; }
 
-        public AIBrain(Player aiPlayer, Personality personality, WordScorer wordScorer, AIDifficulty difficulty = AIDifficulty.Apprentice, int? seed = null)
+        public AIBrain(
+            Player aiPlayer,
+            AIPersonality personality,
+            WordScorer wordScorer,
+            AIDifficulty difficulty = AIDifficulty.Apprentice,
+            int? seed = null)
         {
             AIPlayer = aiPlayer;
             Personality = personality;
             Difficulty = difficulty;
             _wordScorer = wordScorer;
             _random = seed.HasValue ? new Random(seed.Value) : new Random();
+            _goalSelector = new GoalSelector(seed);
             Perception = new AIPerception(aiPlayer, seed);
         }
 
@@ -56,23 +61,34 @@ namespace Glyphtender.Core
             // Update perception of game state
             Perception.Update(state);
 
-            // Calculate board fill for endgame awareness
+            // Calculate situational values
             float boardFill = (float)state.Tiles.Count / state.Board.HexCount;
-
-            // Get perceived lead for this turn
             float perceivedLead = Perception.GetPerceivedLead();
+            float momentum = Perception.GetMomentum();
+            int lastOpponentScore = Perception.GetLastOpponentScore();
 
-            // Roll effective traits for this turn (with difficulty and morale)
-            Personality.RollEffectiveTraits(
+            // Get shifted trait ranges based on current situation
+            var shiftedRanges = Personality.GetShiftedRanges(
+                Difficulty,
+                boardFill,
                 perceivedLead,
                 Perception.MyMaxPressure,
                 Perception.OpponentMaxPressure,
                 Perception.HandQuality,
-                Perception.GetMomentum(),
-                boardFill,
-                Difficulty,
-                Perception.GetLastOpponentScore()
+                momentum,
+                lastOpponentScore
             );
+
+            // Select goal using priority cascade
+            LastGoalSelection = _goalSelector.SelectGoal(
+                Personality.GoalPriority,
+                shiftedRanges
+            );
+
+            AIGoal activeGoal = LastGoalSelection.SelectedGoal;
+
+            // Get Zipf threshold for vocabulary filtering
+            float zipfThreshold = Personality.GetZipfThreshold(Difficulty);
 
             // Generate candidate moves
             var candidates = GenerateCandidateMoves(state);
@@ -80,39 +96,45 @@ namespace Glyphtender.Core
             if (candidates.Count == 0)
                 return null;
 
-            // Evaluate all candidates
-            var evaluated = new List<EvaluatedMove>();
+            // Evaluate all candidates FOR THE ACTIVE GOAL ONLY
+            var evaluated = new List<GoalEvaluationResult>();
             foreach (var move in candidates)
             {
-                var eval = AIMoveEvaluator.Evaluate(
-                    move, state, Personality.EffectiveTraits, AIPlayer, _wordScorer,
-                    perceivedLead, Perception.HandQuality);
+                var eval = AIGoalEvaluators.Evaluate(
+                    move,
+                    state,
+                    activeGoal,
+                    AIPlayer,
+                    _wordScorer,
+                    zipfThreshold,
+                    perceivedLead,
+                    boardFill
+                );
                 evaluated.Add(eval);
             }
 
             // Sort by score descending
-            evaluated.Sort((a, b) => b.TotalScore.CompareTo(a.TotalScore));
+            evaluated.Sort((a, b) => b.Score.CompareTo(a.Score));
 
             // Select from top moves using weighted randomness
             return SelectMove(evaluated);
         }
 
         /// <summary>
-        /// Generates candidate moves using goal-directed search.
-        /// Instead of all possible moves, focuses on word opportunities.
+        /// Generates candidate moves.
+        /// For each glyphling → each valid destination → each cast position → each letter in hand.
         /// </summary>
         private List<AIMove> GenerateCandidateMoves(GameState state)
         {
             var candidates = new List<AIMove>();
             var hand = state.Hands[AIPlayer];
 
-            // Get all AI glyphlings that aren't tangled
+            // Get all AI glyphlings that can move
             var myGlyphlings = new List<Glyphling>();
             foreach (var g in state.Glyphlings)
             {
-                if (g.Owner == AIPlayer)
+                if (g.Owner == AIPlayer && g.IsPlaced)
                 {
-                    // Skip tangled glyphlings (no valid moves)
                     var moves = GameRules.GetValidMoves(state, g);
                     if (moves.Count > 0)
                     {
@@ -121,10 +143,9 @@ namespace Glyphtender.Core
                 }
             }
 
-            // For each glyphling, for each reachable position, for each cast position, for each letter
+            // Generate all possible moves
             foreach (var glyphling in myGlyphlings)
             {
-                // Get valid move destinations (including staying put if already there)
                 var moveDestinations = GameRules.GetValidMoves(state, glyphling);
 
                 foreach (var dest in moveDestinations)
@@ -137,10 +158,9 @@ namespace Glyphtender.Core
 
                     glyphling.Position = originalPos;
 
-                    // For each cast position, try each letter in hand
+                    // For each cast position, try each unique letter in hand
                     foreach (var castPos in castPositions)
                     {
-                        // Use a set to avoid duplicate letters
                         var triedLetters = new HashSet<char>();
 
                         foreach (var letter in hand)
@@ -161,7 +181,7 @@ namespace Glyphtender.Core
                 }
             }
 
-            // If we have too many candidates, sample randomly
+            // If too many candidates, sample randomly
             int maxCandidates = 300;
             if (candidates.Count > maxCandidates)
             {
@@ -185,39 +205,35 @@ namespace Glyphtender.Core
         }
 
         /// <summary>
-        /// Selects a move from evaluated candidates using weighted randomness.
-        /// Higher scored moves are more likely, but not guaranteed.
-        /// This adds variety and unpredictability.
+        /// Selects a move from evaluated candidates.
+        /// Uses weighted randomness for variety.
         /// </summary>
-        private AIMove SelectMove(List<EvaluatedMove> evaluated)
+        private AIMove SelectMove(List<GoalEvaluationResult> evaluated)
         {
             if (evaluated.Count == 0)
                 return null;
 
-            // Get flexibility from personality
-            float flexibility = Personality.SubTraits.Flexibility;
+            // Get best score
+            float bestScore = evaluated[0].Score;
 
             // Calculate threshold for "good enough" moves
-            float bestScore = evaluated[0].TotalScore;
             float threshold;
-
             if (bestScore > 0)
             {
-                // Threshold is a percentage of best score
-                // High flexibility = lower threshold = more variety
-                threshold = bestScore * (0.7f + (1f - flexibility) * 0.25f);
+                // Moves within 80% of best are considered
+                threshold = bestScore * 0.8f;
             }
             else
             {
-                // If best score is negative, use absolute threshold
-                threshold = bestScore - 3f;
+                // If best is negative, be more lenient
+                threshold = bestScore - 5f;
             }
 
             // Gather moves above threshold (max 8)
-            var topMoves = new List<EvaluatedMove>();
+            var topMoves = new List<GoalEvaluationResult>();
             foreach (var eval in evaluated)
             {
-                if (eval.TotalScore >= threshold && topMoves.Count < 8)
+                if (eval.Score >= threshold && topMoves.Count < 8)
                     topMoves.Add(eval);
             }
 
@@ -234,7 +250,7 @@ namespace Glyphtender.Core
 
             foreach (var eval in topMoves)
             {
-                float weight = Math.Max(0.1f, eval.TotalScore - threshold + 1f);
+                float weight = Math.Max(0.1f, eval.Score - threshold + 1f);
                 weights.Add(weight);
                 totalWeight += weight;
             }
@@ -256,43 +272,50 @@ namespace Glyphtender.Core
 
         /// <summary>
         /// Chooses which letters to discard when no word was formed (cycle mode).
-        /// Returns list of letters to discard, or empty list to keep all.
         /// </summary>
         public List<char> ChooseDiscards(GameState state)
         {
             var hand = state.Hands[AIPlayer];
             var discards = new List<char>();
 
-            // Check if hand is "acceptable" based on hand optimism
+            // Assess hand quality
             float handQuality = HandQualityAssessor.Assess(hand);
-            float threshold = 4f + Personality.SubTraits.HandOptimism * 3f;  // 4-7 range
+
+            // Higher Pragmatism personalities are more willing to cycle
+            // Use the base range center as threshold modifier
+            float pragmatismCenter = 50f;
+            if (Personality.BaseTraitRanges.TryGetValue(AITrait.Pragmatism, out var pragRange))
+            {
+                pragmatismCenter = (pragRange.Min + pragRange.Max) / 2f;
+            }
+
+            // Threshold: lower Pragmatism = need worse hand to discard
+            float threshold = 5f - (pragmatismCenter / 25f); // 3-5 range
 
             if (handQuality >= threshold)
             {
-                // Hand is good enough, keep it
+                // Hand is acceptable
                 return discards;
             }
 
-            // Sort letters by value (worst first)
-            var sortedHand = new List<char>(hand);
-            sortedHand.Sort((a, b) => GetLetterValue(a).CompareTo(GetLetterValue(b)));
+            // Sort letters by junk score (worst first)
+            var sortedHand = new List<(char letter, float junk)>();
+            foreach (var letter in hand)
+            {
+                float junk = LetterJunkAssessor.Assess(letter, hand);
+                sortedHand.Add((letter, junk));
+            }
+            sortedHand.Sort((a, b) => b.junk.CompareTo(a.junk));
 
-            // How many to discard based on patience
-            // Low patience = discard more
-            float patience = Personality.EffectiveTraits.Patience;
-            int maxDiscard = (int)(3 + (10 - patience) / 3);  // 3-6 range
-            maxDiscard = Math.Min(maxDiscard, hand.Count - 1);  // Keep at least 1
+            // Discard worst letters (up to 4)
+            int maxDiscard = Math.Min(4, hand.Count - 1);
 
-            // Discard worst letters
             for (int i = 0; i < maxDiscard && i < sortedHand.Count; i++)
             {
-                char letter = sortedHand[i];
-                int value = GetLetterValue(letter);
-
-                // Only discard truly bad letters (value 0-2)
-                if (value <= 2)
+                // Only discard truly junky letters
+                if (sortedHand[i].junk >= 3f)
                 {
-                    discards.Add(letter);
+                    discards.Add(sortedHand[i].letter);
                 }
             }
 
@@ -310,11 +333,12 @@ namespace Glyphtender.Core
             if (validPositions.Count == 1)
                 return validPositions[0];
 
-            // Roll traits for this decision
-            float aggression = Personality.BaseRanges.Aggression.Roll(_random);
-            float positional = Personality.BaseRanges.Positional.Roll(_random);
-            float protectiveness = Personality.BaseRanges.Protectiveness.Roll(_random);
-            float riskTolerance = Personality.BaseRanges.RiskTolerance.Roll(_random);
+            // Get personality traits for decision-making
+            float aggression = 50f, caution = 50f;
+            if (Personality.BaseTraitRanges.TryGetValue(AITrait.Aggression, out var aggRange))
+                aggression = (aggRange.Min + aggRange.Max) / 2f;
+            if (Personality.BaseTraitRanges.TryGetValue(AITrait.Caution, out var cautRange))
+                caution = (cautRange.Min + cautRange.Max) / 2f;
 
             // Calculate board center
             int minCol = int.MaxValue, maxCol = int.MinValue;
@@ -349,10 +373,10 @@ namespace Glyphtender.Core
             {
                 float score = 0f;
 
-                // Center control (high Positional = prefer center)
+                // Center control (high for most personalities)
                 float distFromCenter = Math.Abs(pos.Column - centerCol) + Math.Abs(pos.Row - centerRow);
                 float centerScore = (maxCenterDist - distFromCenter) / maxCenterDist;
-                score += centerScore * positional * 0.5f;
+                score += centerScore * 5f;
 
                 // Distance to opponents
                 if (opponentGlyphlings.Count > 0)
@@ -364,12 +388,12 @@ namespace Glyphtender.Core
                         if (dist < minOppDist) minOppDist = dist;
                     }
 
-                    // High aggression = closer to opponents
-                    float aggressionScore = (10f - minOppDist) * aggression * 0.3f;
+                    // High aggression = prefer closer to opponents
+                    float aggressionScore = (10f - minOppDist) * (aggression / 100f) * 0.5f;
                     score += aggressionScore;
 
-                    // High protectiveness = further from opponents
-                    float defenseScore = minOppDist * protectiveness * 0.2f;
+                    // High caution = prefer further from opponents
+                    float defenseScore = minOppDist * (caution / 100f) * 0.3f;
                     score += defenseScore;
                 }
 
@@ -384,7 +408,7 @@ namespace Glyphtender.Core
                             mobility++;
                     }
                 }
-                score += mobility * positional * 0.15f;
+                score += mobility * 1.5f;
 
                 // Spread from own glyphlings (for 2nd placement)
                 if (ownGlyphlings.Count > 0)
@@ -397,12 +421,12 @@ namespace Glyphtender.Core
                     }
 
                     // Low aggression = spread out, high aggression = cluster
-                    float spreadPreference = (10f - aggression) / 10f;
+                    float spreadPreference = (100f - aggression) / 100f;
                     score += minOwnDist * spreadPreference * 0.3f;
                 }
 
-                // Small random factor for variety
-                score += (float)_random.NextDouble() * riskTolerance * 0.2f;
+                // Small random factor
+                score += (float)_random.NextDouble() * 2f;
 
                 scored.Add((pos, score));
             }
@@ -416,23 +440,11 @@ namespace Glyphtender.Core
             return scored[pick].pos;
         }
 
-        /// <summary>
-        /// Approximate hex distance between two positions.
-        /// </summary>
         private float HexDistance(HexCoord a, HexCoord b)
         {
             int dc = Math.Abs(a.Column - b.Column);
             int dr = Math.Abs(a.Row - b.Row);
             return dc + Math.Max(0, dr - dc / 2);
-        }
-
-        /// <summary>
-        /// Gets the strategic value of a letter (for discard decisions).
-        /// </summary>
-        private int GetLetterValue(char letter)
-        {
-            char upper = char.ToUpper(letter);
-            return LetterValues.TryGetValue(upper, out int value) ? value : 2;
         }
 
         /// <summary>

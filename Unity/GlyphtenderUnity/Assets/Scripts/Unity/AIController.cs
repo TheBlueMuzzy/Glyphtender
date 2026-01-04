@@ -42,7 +42,7 @@ namespace Glyphtender.Unity
         {
             _wordScorer = wordScorer;
 
-            var personality = PersonalityPresets.GetByName(_personalityName);
+            var personality = AIPersonalityPresets.GetByName(_personalityName);
             _brain = new AIBrain(_aiPlayer, personality, _wordScorer, _difficulty);
 
             Debug.Log($"AI initialized: {personality.Name} ({_difficulty}) - {personality.Description}");
@@ -57,7 +57,7 @@ namespace Glyphtender.Unity
 
             if (_wordScorer != null)
             {
-                var personality = PersonalityPresets.GetByName(_personalityName);
+                var personality = AIPersonalityPresets.GetByName(_personalityName);
                 _brain = new AIBrain(_aiPlayer, personality, _wordScorer, _difficulty);
                 Debug.Log($"AI personality changed to: {personality.Name} ({_difficulty})");
             }
@@ -86,7 +86,7 @@ namespace Glyphtender.Unity
 
             if (_brain != null && _wordScorer != null)
             {
-                var personality = PersonalityPresets.GetByName(_personalityName);
+                var personality = AIPersonalityPresets.GetByName(_personalityName);
                 _brain = new AIBrain(_aiPlayer, personality, _wordScorer, _difficulty);
             }
         }
@@ -597,7 +597,7 @@ namespace Glyphtender.Unity
         /// </summary>
         public static string[] GetAvailablePersonalities()
         {
-            return PersonalityPresets.GetAllNames();
+            return AIPersonalityPresets.GetAllNames();
         }
 
         /// <summary>
