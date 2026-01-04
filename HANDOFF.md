@@ -1,8 +1,8 @@
 # The Glyphtender's Trial — Project Handoff Document
 
-**Project Owner:** Muzzy  
-**Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions  
-**Last Updated:** January 2026
+**Project Owner:** Muzzy
+**Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions
+**Last Updated:** January 4, 2026 (Phase 4 AI Rework Complete)
 
 ---
 
@@ -207,18 +207,17 @@ Assets/Scripts/
 │   ├── GameRules.cs
 │   ├── WordScorer.cs
 │   ├── TangleChecker.cs
-│   └── HexCoord.cs
-├── AI/             # AI system — also pure C#
-│   ├── AIBrain.cs
-│   ├── AIPerception.cs
-│   ├── Personality.cs
-│   ├── AIMoveEvaluator.cs
+│   ├── AIGoal.cs           # Goal-selection AI model
+│   ├── AIPersonality.cs    # 7 personality presets
+│   ├── AIGoalEvaluators.cs # Goal-specific evaluation
+│   ├── AIBrain.cs          # Main AI pipeline
+│   ├── AIPerception.cs     # Fuzzy perception
 │   └── ...
 └── Unity/          # Unity-specific code
     ├── GameManager.cs
     ├── BoardRenderer.cs
-    ├── HandController.cs
-    ├── CameraController.cs
+    ├── AIManager.cs        # AI controller management
+    ├── AIController.cs     # Turn execution
     └── ...
 ```
 
@@ -407,110 +406,127 @@ Muzzy wants animations that feel:
 
 ## 5. AI System Design
 
-### 5.1 The Core Problem with AI
+### 5.1 Goal-Selection Model (Implemented)
 
-**Current AI behavior:** AI treats the game like Scrabble — maximize word score per turn.
+The AI now uses a **goal-selection model** instead of weighted scoring:
 
-**Correct AI behavior:** AI should treat the game like Go or Chess that uses words — area control, pressure, denial, with scoring as a *tool* not the *goal*.
+**OLD (deprecated):** Weighted sum of all factors → pick highest total score
+**NEW (implemented):** Select goal via trait roll → evaluate moves ONLY for that goal
 
-This is THE fundamental gameplay issue. Every AI personality inherits a base scoring system that overweights word points relative to positional pressure. This makes all AI feel like word-optimizers rather than territorial threats.
+This creates personality-driven behavior where a Bully will ignore great words because TRAP activated, and a Scholar will ignore trap opportunities because SCORE activated.
 
-### 5.2 What "Threatening" Looks Like
+### 5.2 How Goal Selection Works
 
-From Muzzy's description, threatening AI should:
+1. **Priority Cascade:** Each personality defines goal priority order
+2. **Trait Roll:** For each goal in priority order, roll d100 against that goal's trait
+3. **First Success Wins:** First goal where roll ≤ trait threshold becomes active
+4. **Fallback:** If all goals fail, auto-succeed on primary goal
+5. **Goal-Specific Evaluation:** Moves are scored ONLY for the active goal's criteria
+
+**Result:** Even the same personality in the same situation makes different choices sometimes — like humans.
+
+### 5.3 The 7 Goals
+
+| Goal | Description | Controlling Trait |
+|------|-------------|-------------------|
+| TRAP | Box opponent toward tangle | Aggression |
+| SCORE | Maximize word points | Greed |
+| DENY | Block opponent leylines/words | Spite |
+| ESCAPE | Create movement options when pressured | Caution |
+| BUILD | Set up future word opportunities | Patience |
+| STEAL | Complete opponent's partial words | Opportunism |
+| DUMP | Discard junk letters strategically | Pragmatism |
+
+### 5.4 The 7 Traits (0-100 Scale)
+
+Each personality has trait ranges (min/max) that shift based on game state:
+
+| Trait | Low (0-30) | High (70-100) |
+|-------|------------|---------------|
+| Aggression | Defensive, avoids conflict | Hunts opponent, pressures |
+| Greed | Safe plays, modest scores | Big risky plays, max points |
+| Spite | Ignores opponent | Ruins setups, denies access |
+| Caution | Sacrifices for scoring | Guards glyphlings carefully |
+| Patience | Score now | Build for future payoffs |
+| Opportunism | Own setups only | Steals opponent work |
+| Pragmatism | Holds bad letters | Cycles aggressively |
+
+### 5.5 Dynamic Trait Shifting (Subtraits)
+
+Trait ranges shift based on game state:
+
+| Subtrait | When Active | Effect |
+|----------|-------------|--------|
+| EndgameSensitivity | Board fill > 60% | Shifts Aggression/Caution |
+| DesperationSensitivity | Behind by 10+ points | Increases Greed/Opportunism |
+| PressureSensitivity | Opponent pressuring glyphling | Increases Caution |
+| HandSensitivity | Poor hand quality | Increases Pragmatism |
+| MomentumSensitivity | Scoring streak | Confidence affects multiple traits |
+| RetaliationSensitivity | After big opponent score | Increases Spite |
+
+### 5.6 Meta-Traits
+
+Beyond goal selection, personalities have meta-traits:
+
+| Meta-Trait | Effect |
+|------------|--------|
+| VocabularyModifier | Adjusts Zipf threshold (word difficulty) |
+| SelfScoreAccuracy | How accurately AI knows own score |
+| OpponentScoreAccuracy | How accurately AI knows opponent score |
+| MoraleResponse | How much recent events affect confidence |
+
+### 5.7 Fuzzy Perception System
+
+AI doesn't have perfect information. Implements "fuzzy knowledge":
+
+```csharp
+class AIPerception
+{
+    float PerceivedLead;      // Can be wrong about who's winning
+    float Momentum;           // Recent scoring trend
+    float HandQuality;        // Assessment of current hand
+    float MyMaxPressure;      // How trapped are my glyphlings
+    float OpponentMaxPressure; // How trapped are opponents
+}
+```
+
+This makes AI opponents feel more human — they can be wrong about who's winning.
+
+### 5.8 Vocabulary Filtering
+
+AI vocabulary is limited by both personality AND difficulty:
+
+**Difficulty Base Thresholds:**
+- Apprentice: Zipf ≥ 3.0 (~5,000 common words)
+- FirstClass: Zipf ≥ 2.0 (~20,000 words)
+- Archmage: Zipf ≥ 0.0 (all ~63,000 words)
+
+**Personality Modifier:** VocabularyModifier meta-trait adjusts threshold
+- Modifier < 0: Knows fewer words (simpler vocabulary)
+- Modifier > 0: Knows more words (broader vocabulary)
+
+### 5.9 AI Personalities (7 Presets)
+
+| Personality | Primary Goal | Behavior |
+|-------------|--------------|----------|
+| Bully | TRAP | Aggressive hunter, pressures opponents into tangles |
+| Scholar | SCORE | Word optimizer, uses sophisticated vocabulary |
+| Builder | BUILD | Patient setup, extends words across turns |
+| Vulture | STEAL | Opportunist, completes opponent's partial words |
+| Survivor | ESCAPE | Defensive, prioritizes glyphling safety |
+| Strategist | DENY | Tactical, blocks opponent leylines and words |
+| Balanced | (varies) | Moderate all traits, adapts to situations |
+
+### 5.10 What "Threatening" Looks Like
+
+From Muzzy's original vision, threatening AI should:
 - Block opponent's movement paths
 - Box opponents toward tangle situations
 - Deny access to almost-complete words on the board
 - Force opponents to deal with pressure instead of freely building
 - Make players *feel hunted*
 
-The player's feedback: "I have sat for many turns in a vulnerable place, but they just kept scoring instead of pressuring me by trying to tangle me."
-
-### 5.3 Personality System Architecture
-
-AI personalities are defined by range-based traits (not fixed values):
-
-```csharp
-public struct PersonalityTraits
-{
-    public FloatRange Aggression;      // Low = defensive, High = hunts opponent
-    public FloatRange Greed;           // Low = safe plays, High = big risky plays
-    public FloatRange Protectiveness;  // Low = sacrifices pieces, High = guards carefully
-    public FloatRange Patience;        // Low = score now, High = build for payoffs
-    public FloatRange Spite;           // Low = ignores opponent, High = ruins setups
-    public FloatRange Territorialism;  // Low = roams freely, High = creates/defends zones
-}
-```
-
-**Range-based traits** create more natural variation — same personality makes different choices in similar situations.
-
-### 5.4 Dynamic Modifiers
-
-Traits are modified by game state:
-
-| Modifier | Effect |
-|----------|--------|
-| Perceived Score Lead | Behind → more desperate, Ahead → more aggressive |
-| Glyphling Pressure | High tangle threat → more defensive |
-| Hand Quality | Bad hand → dump junk aggressively |
-| Board Control | Losing space → territorial priority increases |
-| Momentum | Recent scoring streak affects confidence |
-
-### 5.5 Fuzzy Perception System
-
-AI doesn't have perfect information. Implements "fuzzy knowledge":
-
-```csharp
-class ScorePerception
-{
-    float MyScoreEstimate;
-    float OpponentScoreEstimate;
-    float Confidence;  // Decays over time, updates on observed scores
-}
-```
-
-This makes AI opponents feel more human — they can be wrong about who's winning.
-
-### 5.6 Zone Detection
-
-"Closed zones" are areas only one player can access:
-- Bounded by tiles, Glyphlings, and board edges
-- Opponent Glyphlings cannot path into the zone
-- Value is strategic — more freedom to maneuver without interference
-
-Zone detection is implemented but weight/priority may need tuning.
-
-### 5.7 Known AI Issues to Address
-
-1. **Builder personality doesn't actually build** — Should extend words across multiple turns (IN→KIN→SKIN), doesn't yet
-2. **All AI favor density** — Base scoring overweights word points, makes games feel like word-optimizers
-3. **Intersection plays too common** — Should be a personality trait (Strategist), not default behavior
-4. **Missing goal-selection model** — Current system is weighted scoring; Muzzy described a "priority cascade with variance" model that might feel more human
-
-### 5.8 Goal-Selection Model (Proposed Alternative)
-
-Muzzy described an alternative to weighted scoring:
-
-1. Personality defines *goal priority ranges* (not scoring weights)
-2. Board pressure shifts those ranges
-3. Perceived score differential shifts them again
-4. Random roll within final range picks which *goal* drives the decision
-5. If top goal can't be satisfied, fall to next goal
-
-**Result:** Even the same personality in the same situation makes different choices sometimes — like humans.
-
-This is NOT currently implemented but represents the design intent.
-
-### 5.9 AI Personalities (Current)
-
-| Personality | Intended Behavior |
-|-------------|-------------------|
-| Balanced | Moderate all traits |
-| Builder | Extend words across turns, build chains |
-| Bully | Aggressive, pressures opponent |
-| Opportunist | Steals opponent setups, completion hunting |
-| Strategist | Multi-word plays, intersection efficiency |
-| (Others TBD) | Various combinations |
+**The Bully personality now achieves this.** Testing confirmed: "it felt good!"
 
 ---
 
@@ -534,16 +550,25 @@ This is NOT currently implemented but represents the design intent.
 - Menu system overhaul ✅
 - Progressive disclosure tutorial — NOT DONE (depends on AI feeling right)
 
+**Phase 4: AI Behavioral Rework ✅**
+- Goal-selection model implemented (replacing weighted scoring)
+- 7 goals with 7 corresponding traits (0-100 scale)
+- Priority cascade with d100 roll for goal activation
+- Subtraits for dynamic trait shifting based on game state
+- Zipf-based vocabulary filtering per personality + difficulty
+- 7 personality presets (Bully, Scholar, Builder, Vulture, Survivor, Strategist, Balanced)
+- Bully personality tested — "it felt good!"
+
 ### 6.2 Working Systems
 
 - Complete turn loop (move → cast → score → draw/cycle)
-- All three board sizes functional
+- All three board sizes functional (Medium/Large only — Small removed for 4P draft issues)
 - 2-4 player support with turn rotation
 - Snake draft placement with confirm/cancel
 - Touch input (tap and drag modes)
 - Pinch zoom, pan, double-tap zoom
 - 3D UI (hand, buttons, scores)
-- AI opponents (8 personalities, though behavioral improvements needed)
+- AI opponents with goal-selection model (7 distinct personalities)
 - Statistics tracking with radar chart
 - Settings persistence
 - Android builds working (IL2CPP + ARM64)
@@ -561,20 +586,14 @@ This is NOT currently implemented but represents the design intent.
 
 ### 7.1 Current Phase Priority
 
-**Phase 4: AI Behavioral Rework** — THIS IS THE PRIORITY
+**Phase 5: Polish** — THIS IS THE PRIORITY
 
-- Diagnose why all AI favor density/words over pressure
-- Implement goal-selection model (or hybrid with current)
-- Make "area control first, spelling second" the default
-- Builder rework (actually builds across turns)
-- Personality differentiation (feel distinct from each other)
-
-### 7.2 Remaining Phases
-
-**Phase 5: Polish**
 - Audio system (SFX, music, animation callbacks)
 - Animation polish (easing varieties, arcs, bubbly feel)
 - Visual polish (vine letters, 3D figurines, VFX)
+- Progressive disclosure tutorial (AI now plays correctly)
+
+### 7.2 Remaining Phases
 
 **Phase 6: Future**
 - Online multiplayer
@@ -582,9 +601,13 @@ This is NOT currently implemented but represents the design intent.
 - Leaderboards
 - Platform builds (iOS, Steam, Itch)
 
-### 7.3 Tutorial Dependency
+### 7.3 Phase 4 Completed
 
-Progressive disclosure tutorial should NOT be built until AI plays correctly. Teaching rules when AI doesn't embody those rules creates confusion.
+The AI behavioral rework is complete:
+- Goal-selection model implemented
+- 7 distinct personalities feel different from each other
+- Bully personality pressures opponents as intended
+- "Area control first, spelling second" is now the AI's approach
 
 ---
 
@@ -701,9 +724,9 @@ When creating files for Muzzy, always copy to `/mnt/user-data/outputs/`.
 | # | Feature | Notes |
 |---|---------|-------|
 | 15 | Multi-turn lookahead | Under consideration, complex |
-| 16 | Incremental word building | IN→KIN→SKIN across turns |
-| 17 | Goal-selection model | Alternative to weighted scoring |
-| 18 | Closed zone strategy weight | Tune zone detection impact |
+| 16 | Closed zone strategy weight | Tune zone detection impact |
+| 17 | ~~Goal-selection model~~ | ✅ DONE — Implemented in Phase 4 |
+| 18 | AI personality balance testing | Ensure all 7 personalities feel distinct |
 
 ### 10.4 Audio
 
@@ -778,16 +801,26 @@ Assets/Scripts/Core/
     Board.cs            — Hex grid, coordinate system, board configs
     GameState.cs        — Game state data (tiles, glyphlings, hands, scores)
     GameRules.cs        — Move validation, turn execution, starting positions
-    WordScorer.cs       — Dictionary, word detection, scoring
+    WordScorer.cs       — Dictionary, word detection, scoring, Zipf filtering
     TangleChecker.cs    — Trapped glyphling detection
-    HexCoord.cs         — Hex coordinate struct and math
 
-Assets/Scripts/AI/
-    AIBrain.cs          — Core decision-making
-    AIPerception.cs     — Fuzzy knowledge system
-    Personality.cs      — Trait definitions
-    AIMoveEvaluator.cs  — Move scoring
-    (+ supporting files)
+Assets/Scripts/Core/ — AI System (Pure C#)
+    AIGoal.cs           — 7 goals enum, AIMove class, GoalSelector, TraitRange
+    AIPersonality.cs    — 7 traits, meta-traits, subtraits, 7 personality presets
+    AIGoalEvaluators.cs — Goal-specific move evaluation functions
+    AIBrain.cs          — Goal selection + move evaluation pipeline
+    AIPerception.cs     — Fuzzy perception (scores, pressure, momentum)
+    AIConstants.cs      — Centralized tuning values
+    TrapDetector.cs     — Opponent movement restriction analysis
+    ContestDetector.cs  — Denial opportunity detection
+    SetupDetector.cs    — Future word potential evaluation
+    HandQualityAssessor.cs — Hand quality scoring
+    LetterJunkAssessor.cs  — Letter junk scoring
+
+Assets/Scripts/Core/Future/ — Archived/Unused
+    Personality_OLD.cs      — Old 13-trait weighted model (deprecated)
+    AIMoveEvaluator_OLD.cs  — Old weighted scoring system (deprecated)
+    AIWordDetector.cs       — Future: almost-word detection
 
 Assets/Scripts/Unity/
     GameManager.cs      — Central controller, state machine
@@ -802,6 +835,10 @@ Assets/Scripts/Unity/
     UIScaler.cs         — Responsive scaling
     TweenManager.cs     — Animation system
     WordHighlighter.cs  — Word outline visualization
+
+Assets/Scripts/Unity/ — AI Integration
+    AIManager.cs        — Manages AI controllers for both players
+    AIController.cs     — Executes AI turns with coroutines, uses AIPersonalityPresets
 ```
 
 ---
