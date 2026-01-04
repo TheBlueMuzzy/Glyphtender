@@ -935,11 +935,12 @@ When creating files for Muzzy, always copy to `/mnt/user-data/outputs/`.
 
 | # | Feature | Notes |
 |---|---------|-------|
-| 25 | ~~Online multiplayer~~ | ⏳ IN PROGRESS |
-| 26 | Room code system | Part of Phase 5 |
-| 27 | Forfeit/disconnect handling | Part of Phase 5 |
-| 28 | Rematch flow | Part of Phase 5 |
-| 29 | Provider abstraction | Designed for Steam/Epic swap |
+| 25 | Network foundation | ✅ Phase 5.1-5.3 complete (auth, lobby, relay, messages, bridge) |
+| 26 | Room code system | ✅ Working - host creates, guest joins with 6-char code |
+| 27 | Host-guest connection | ⏳ In testing - host works, guest relay polling added |
+| 28 | Forfeit/disconnect handling | Part of Phase 5.4 |
+| 29 | Rematch flow | Part of Phase 5.5 |
+| 30 | Provider abstraction | Designed for Steam/Epic swap |
 
 ### 11.7 Future Systems
 
@@ -1038,11 +1039,14 @@ Assets/Scripts/Unity/ — AI Integration
     AIController.cs     — Executes AI turns with coroutines, uses AIPersonalityPresets
 
 Assets/Scripts/Unity/Network/ — Online Multiplayer (Phase 5)
-    NetworkManager.cs       — (TODO) Initialize services, auth
-    LobbyManager.cs         — (TODO) Create/join lobbies
-    RelayManager.cs         — (TODO) Relay allocation
-    NetworkGameBridge.cs    — (TODO) RPC wrapper
-    ConnectionMonitor.cs    — (TODO) Heartbeat, timeout
+    NetworkBootstrap.cs     — RuntimeInitializeOnLoadMethod, creates all network singletons
+    NetworkServices.cs      — Unity Services init, anonymous auth, connection state
+    GlyphtenderLobby.cs     — Room code matchmaking, create/join lobbies, heartbeat
+    GlyphtenderRelay.cs     — Unity Relay NAT traversal, allocate/join relay
+    NetworkMessages.cs      — INetworkSerializable structs for all game actions
+    NetworkGameBridge.cs    — NetworkBehaviour with ServerRpc/ClientRpc, game bridge
+    NetworkedGameManager.cs — Companion to GameManager for online mode
+    ConnectionMonitor.cs    — (TODO) Heartbeat, timeout detection
 ```
 
 ---

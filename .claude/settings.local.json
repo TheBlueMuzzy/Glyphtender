@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nStart Phase 5: Online Multiplayer implementation\n\n- Updated roadmap: Online Multiplayer is now current priority (Phase 5)\n- Polish moved to Phase 6\n- Added comprehensive Online Multiplayer Design section to HANDOFF.md\n  - Real-time 1v1 with room codes (Unity Gaming Services)\n  - Host-authoritative model\n  - Provider abstraction for future Steam/Epic swap\n  - Forfeit/disconnect handling with AI takeover\n  - Rematch flow\n- Updated file structure with planned Network/ directory\n- Updated MoSCoW priorities\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(dir \"C:\\Users\\Muzzy\\Documents\\UnityProjects\\Glyphtender\\Assets\" /b)",
+      "Bash(cmd /c \"dir C:\\Users\\Muzzy\\Documents\\UnityProjects\\Glyphtender /b\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd Phase 5.1: Network foundation (Auth, Lobby, Relay)\n\nCreated networking infrastructure for online multiplayer:\n\n- NetworkServices.cs: Unity Services init, anonymous authentication\n  - Singleton pattern, auto-reauthentication on session expiry\n  - Events for connection state changes\n\n- GlyphtenderLobby.cs: Room code matchmaking\n  - Create/join lobbies with 6-char room codes\n  - Store game settings (board size, 2-letter toggle) in lobby data\n  - Heartbeat to prevent timeout, polling for player join\n\n- GlyphtenderRelay.cs: NAT traversal via Unity Relay\n  - Allocate relay server (host)\n  - Join relay by code (guest)\n  - Configure Unity Transport for Netcode\n\n- Added assembly definition for Network namespace\n\nThis completes Phase 5.1 Foundation. Next: Phase 5.2 State Sync.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd Phase 5.2: State sync infrastructure\n\nNetwork messaging and game bridge for online multiplayer:\n\n- NetworkMessages.cs: INetworkSerializable structs for all game actions\n  - NetworkHexCoord, NetworkMoveData, NetworkCastData, NetworkTurnData\n  - NetworkDraftPlacement, NetworkCycleData, NetworkGameStart\n  - NetworkForfeit, NetworkRematch for game flow control\n\n- NetworkGameBridge.cs: RPC wrapper bridging network and game logic\n  - Host-authoritative validation pattern\n  - ServerRpc for client requests (turns, drafts, cycle, forfeit, rematch)\n  - ClientRpc for broadcasting confirmed actions to all clients\n  - Events for UI to react to network actions\n\n- MainMenuScreen.cs: Added Online1v1 PlayMode\n  - Mode appears in cycle after AI vs AI\n  - AI options hidden for online mode\n  - Placeholder OnOnlinePlayClicked for lobby transition\n\n- Updated asmdef with Unity.Collections reference\n\nThis completes Phase 5.2 State Sync infrastructure.\nNext: Phase 5.3 Online Lobby UI.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nUpdate CLAUDE.md with Phase 5.1-5.2 progress\n\n- Added Unity/Network/ file reference section\n- Updated Current Status with Phase 5.1 & 5.2 completion\n- Added Recent Decisions entries for both phases\n- Next: Phase 5.3 Lobby UI\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(dir \"C:\\Users\\Muzzy\\Documents\\UnityProjects\\Glyphtender\\Unity\\GlyphtenderUnity\\Assets\\Scripts\\Unity\" /b)",
+      "Bash(dir:*)",
+      "Bash(find:*)"
+    ]
+  }
+}
