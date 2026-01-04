@@ -36,6 +36,16 @@ This distinction is critical. The game is NOT Scrabble with hexagons. Every desi
 3. Add any important implementation details discovered
 4. If significant decisions were made, note them in "Recent Decisions" section below
 
+### When Updating CLAUDE.md or HANDOFF.md
+**IMPORTANT:** These files exist in both the worktree and the main repository. After editing:
+1. Edit the file in the current worktree (where you're working)
+2. **Copy to main repository:** `cp <worktree>/CLAUDE.md C:\Users\Muzzy\Documents\UnityProjects\Glyphtender\CLAUDE.md`
+3. Same for HANDOFF.md if updated
+4. Commit and push changes
+
+The main repository location is: `C:\Users\Muzzy\Documents\UnityProjects\Glyphtender`
+This ensures both locations stay in sync.
+
 ### Handoff File
 Location: `HANDOFF.md` (same folder as this file)
 - Created by Claude Chat with comprehensive context about vision, goals, and decisions
