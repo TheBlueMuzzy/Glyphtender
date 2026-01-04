@@ -122,8 +122,7 @@ namespace Glyphtender.Unity
             set { if (SettingsManager.Instance != null) SettingsManager.Instance.BoardSizeIndex = value; }
         }
 
-        private string[] _boardSizeNames = { "Small", "Medium", "Large" };
-
+        private string[] _boardSizeNames = { "Small", "Large" };
         private void Awake()
         {
             Instance = this;

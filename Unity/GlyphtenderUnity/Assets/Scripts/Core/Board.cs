@@ -109,8 +109,7 @@ namespace Glyphtender.Core
     /// </summary>
     public enum BoardSize
     {
-        Small,   // 9 columns, 61 hexes
-        Medium,  // 11 columns, 85 hexes (default)
+        Small,   // 11 columns, 85 hexes (was Medium)
         Large    // 13 columns, 106 hexes
     }
 
@@ -135,12 +134,6 @@ namespace Glyphtender.Core
         // StartRows represent the row offset for each column (0 = bottom)
 
         public static readonly BoardConfig Small = new BoardConfig(
-            columns: 9,
-            columnHeights: new[] { 5, 6, 7, 8, 9, 8, 7, 6, 5 },
-            startRows: new[] { 3, 2, 2, 1, 1, 1, 2, 2, 3 }
-        );
-
-        public static readonly BoardConfig Medium = new BoardConfig(
             columns: 11,
             columnHeights: new[] { 4, 7, 8, 9, 10, 9, 10, 9, 8, 7, 4 },
             startRows: new[] { 4, 2, 2, 1, 1, 1, 1, 1, 2, 2, 4 }
@@ -156,10 +149,9 @@ namespace Glyphtender.Core
         {
             switch (size)
             {
-                case BoardSize.Small: return Small;
                 case BoardSize.Large: return Large;
-                case BoardSize.Medium:
-                default: return Medium;
+                case BoardSize.Small:
+                default: return Small;
             }
         }
     }
@@ -176,7 +168,7 @@ namespace Glyphtender.Core
         public BoardSize Size { get; }
         public int Columns { get; }
 
-        public Board() : this(BoardSize.Medium) { }
+        public Board() : this(BoardSize.Small) { }
 
         public Board(BoardSize size)
         {

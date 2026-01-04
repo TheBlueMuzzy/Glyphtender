@@ -28,7 +28,7 @@ namespace Glyphtender.Core
         /// </summary>
         public static GameState CreateNewGame(Random random = null)
         {
-            return CreateNewGame(BoardSize.Medium, 2, random);
+            return CreateNewGame(BoardSize.Small, 2, random);
         }
 
         /// <summary>

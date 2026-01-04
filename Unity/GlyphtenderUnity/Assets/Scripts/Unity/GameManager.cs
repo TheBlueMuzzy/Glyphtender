@@ -127,7 +127,7 @@ namespace Glyphtender.Unity
             }
 
             // Get board size from settings
-            BoardSize boardSize = BoardSize.Medium;
+            BoardSize boardSize = BoardSize.Small;
             if (SettingsManager.Instance != null)
             {
                 boardSize = (BoardSize)SettingsManager.Instance.BoardSizeIndex;
@@ -242,7 +242,7 @@ namespace Glyphtender.Unity
             }
 
             // Get board size from settings
-            BoardSize boardSize = BoardSize.Medium;
+            BoardSize boardSize = BoardSize.Small;
             if (SettingsManager.Instance != null)
             {
                 boardSize = (BoardSize)SettingsManager.Instance.BoardSizeIndex;
