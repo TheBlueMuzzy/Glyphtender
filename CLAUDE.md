@@ -244,6 +244,13 @@ This creates personality-driven behavior where a Bully ignores great words becau
 | **GlyphtenderRelay.cs** | NAT traversal via Unity Relay, allocate/join relay servers |
 | **NetworkMessages.cs** | INetworkSerializable structs for moves, casts, drafts, game start, forfeit, rematch |
 | **NetworkGameBridge.cs** | RPC wrapper bridging network and game logic, host-authoritative validation |
+| **NetworkBootstrap.cs** | Auto-creates network singletons on scene load |
+
+### Unity/ - Online Lobby
+
+| File | What it does |
+|------|-------------|
+| **OnlineLobbyScreen.cs** | 3D UI for online matchmaking: Create/Join room, room code input, connection flow |
 
 ### Future/ - Not Yet Integrated
 
@@ -282,7 +289,8 @@ This creates personality-driven behavior where a Bully ignores great words becau
 - ⏳ **PHASE 5 IN PROGRESS: Online Multiplayer**
   - ✅ **5.1 Foundation:** NetworkServices, GlyphtenderLobby, GlyphtenderRelay
   - ✅ **5.2 State Sync:** NetworkMessages, NetworkGameBridge, Online1v1 PlayMode
-  - ⏳ **5.3 Lobby UI:** Create/Join room screen (next)
+  - ✅ **5.3 Lobby UI:** OnlineLobbyScreen, NetworkBootstrap
+  - ⏳ **5.4 Game State Sync:** Connect NetworkGameBridge to GameManager (next)
 
 ## Known Issues
 1. **Hex directions may be incorrect** - The leyline movement paths don't work correctly after fixing the board layout. Need to verify/fix `HexCoord.Directions` array.
@@ -331,11 +339,15 @@ Always use `HexCoord.DistanceTo()` for hex distance - it uses the correct cube-c
 
 ## Recent Decisions
 <!-- Add dated entries here when significant decisions are made -->
+- **2026-01-04**: **PHASE 5.3 COMPLETE: Online Lobby UI**
+  - OnlineLobbyScreen.cs: 3D UI for Create/Join room flow
+  - NetworkBootstrap.cs: Auto-creates network singletons
+  - Connected MainMenuScreen to lobby screen
+  - Next: Phase 5.4 Game State Sync
 - **2026-01-04**: **PHASE 5.2 COMPLETE: State Sync Infrastructure**
   - NetworkMessages.cs: All game actions as INetworkSerializable structs
   - NetworkGameBridge.cs: Host-authoritative RPC pattern
   - Online1v1 added to PlayMode enum, cycles after AI vs AI
-  - Next: Phase 5.3 Lobby UI (Create/Join room screen)
 - **2026-01-04**: **PHASE 5.1 COMPLETE: Network Foundation**
   - NetworkServices.cs: Unity Services init + anonymous auth
   - GlyphtenderLobby.cs: Room code matchmaking
