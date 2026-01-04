@@ -12,9 +12,10 @@ namespace Glyphtender.Unity
     {
         Local2P,    // Human vs Human (2 players)
         Local3P,    // Human vs Human vs Human (3 players)
-        Local4P,     // Human vs Human vs Human vs Human (4 players)
+        Local4P,    // Human vs Human vs Human vs Human (4 players)
         VsAI,       // Human (Yellow) vs AI (Blue)
-        AIvsAI     // AI vs AI
+        AIvsAI,     // AI vs AI
+        Online1v1   // Online multiplayer (1v1 with room codes)
     }
 
     /// <summary>
@@ -641,6 +642,9 @@ namespace Glyphtender.Unity
                     CurrentPlayMode = PlayMode.AIvsAI;
                     break;
                 case PlayMode.AIvsAI:
+                    CurrentPlayMode = PlayMode.Online1v1;
+                    break;
+                case PlayMode.Online1v1:
                     CurrentPlayMode = PlayMode.Local3P;
                     break;
                 case PlayMode.Local3P:
@@ -659,6 +663,7 @@ namespace Glyphtender.Unity
                 case PlayMode.Local2P: return "Local 2P";
                 case PlayMode.VsAI: return "vs AI";
                 case PlayMode.AIvsAI: return "AI vs AI";
+                case PlayMode.Online1v1: return "Online 1v1";
                 case PlayMode.Local3P: return "Local 3P";
                 case PlayMode.Local4P: return "Local 4P";
                 default: return "vs AI";
@@ -670,8 +675,10 @@ namespace Glyphtender.Unity
             bool showBlueAI = CurrentPlayMode == PlayMode.VsAI || CurrentPlayMode == PlayMode.AIvsAI;
             bool showYellowAI = CurrentPlayMode == PlayMode.AIvsAI;
 
-            // Hide all AI options for 3P and 4P local modes
-            if (CurrentPlayMode == PlayMode.Local3P || CurrentPlayMode == PlayMode.Local4P)
+            // Hide all AI options for local multiplayer and online modes
+            if (CurrentPlayMode == PlayMode.Local3P ||
+                CurrentPlayMode == PlayMode.Local4P ||
+                CurrentPlayMode == PlayMode.Online1v1)
             {
                 showBlueAI = false;
                 showYellowAI = false;
@@ -689,6 +696,13 @@ namespace Glyphtender.Unity
 
         private void OnPlayClicked()
         {
+            // Online mode requires special handling - show lobby screen
+            if (CurrentPlayMode == PlayMode.Online1v1)
+            {
+                OnOnlinePlayClicked();
+                return;
+            }
+
             // Ensure AIManager exists before we configure it
             EnsureAIManagerExists();
 
@@ -700,6 +714,17 @@ namespace Glyphtender.Unity
             {
                 GameManager.Instance.InitializeGame();
             }
+        }
+
+        /// <summary>
+        /// Called when Play is clicked in Online 1v1 mode.
+        /// Transitions to the online lobby screen.
+        /// </summary>
+        private void OnOnlinePlayClicked()
+        {
+            // TODO: Show online lobby screen (create/join room)
+            // For now, just log
+            Debug.Log("[MainMenuScreen] Online 1v1 mode selected - lobby screen not yet implemented");
         }
 
         private void EnsureAIManagerExists()
@@ -729,10 +754,11 @@ namespace Glyphtender.Unity
 
         private void ApplyAISettings(AIManager aiManager)
         {
-            // Disable all AI for local multiplayer modes
+            // Disable all AI for local multiplayer and online modes
             if (CurrentPlayMode == PlayMode.Local2P ||
                 CurrentPlayMode == PlayMode.Local3P ||
-                CurrentPlayMode == PlayMode.Local4P)
+                CurrentPlayMode == PlayMode.Local4P ||
+                CurrentPlayMode == PlayMode.Online1v1)
             {
                 if (aiManager.YellowAI != null)
                     aiManager.YellowAI.enabled = false;

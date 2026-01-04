@@ -7,7 +7,8 @@
         "Unity.Services.Lobbies",
         "Unity.Services.Relay",
         "Unity.Netcode.Runtime",
-        "Unity.Networking.Transport"
+        "Unity.Networking.Transport",
+        "Unity.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
