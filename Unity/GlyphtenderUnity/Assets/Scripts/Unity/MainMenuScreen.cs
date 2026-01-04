@@ -10,9 +10,11 @@ namespace Glyphtender.Unity
     /// </summary>
     public enum PlayMode
     {
-        Local2P,    // Human vs Human
+        Local2P,    // Human vs Human (2 players)
+        Local3P,    // Human vs Human vs Human (3 players)
+        Local4P,     // Human vs Human vs Human vs Human (4 players)
         VsAI,       // Human (Yellow) vs AI (Blue)
-        AIvsAI      // AI vs AI
+        AIvsAI     // AI vs AI
     }
 
     /// <summary>
@@ -160,6 +162,12 @@ namespace Glyphtender.Unity
         {
             if (_isAnimating)
             {
+                if (!_menuRoot)
+                {
+                    _isAnimating = false;
+                    return;
+                }
+
                 _animationTime += Time.deltaTime;
                 float duration = _animationEndScale == Vector3.zero ? closeDuration : openDuration;
                 float t = Mathf.Clamp01(_animationTime / duration);
@@ -192,6 +200,7 @@ namespace Glyphtender.Unity
             if (_isVisible) return;
 
             _isVisible = true;
+            _isAnimating = false;
 
             // Destroy old menu if exists
             if (_menuRoot != null)
@@ -633,6 +642,12 @@ namespace Glyphtender.Unity
                     CurrentPlayMode = PlayMode.AIvsAI;
                     break;
                 case PlayMode.AIvsAI:
+                    CurrentPlayMode = PlayMode.Local3P;
+                    break;
+                case PlayMode.Local3P:
+                    CurrentPlayMode = PlayMode.Local4P;
+                    break;
+                case PlayMode.Local4P:
                     CurrentPlayMode = PlayMode.Local2P;
                     break;
             }
@@ -645,6 +660,8 @@ namespace Glyphtender.Unity
                 case PlayMode.Local2P: return "Local 2P";
                 case PlayMode.VsAI: return "vs AI";
                 case PlayMode.AIvsAI: return "AI vs AI";
+                case PlayMode.Local3P: return "Local 3P";
+                case PlayMode.Local4P: return "Local 4P";
                 default: return "vs AI";
             }
         }
@@ -653,6 +670,13 @@ namespace Glyphtender.Unity
         {
             bool showBlueAI = CurrentPlayMode == PlayMode.VsAI || CurrentPlayMode == PlayMode.AIvsAI;
             bool showYellowAI = CurrentPlayMode == PlayMode.AIvsAI;
+
+            // Hide all AI options for 3P and 4P local modes
+            if (CurrentPlayMode == PlayMode.Local3P || CurrentPlayMode == PlayMode.Local4P)
+            {
+                showBlueAI = false;
+                showYellowAI = false;
+            }
 
             if (_bluePersonalityRow != null)
                 _bluePersonalityRow.SetActive(showBlueAI);
@@ -706,6 +730,18 @@ namespace Glyphtender.Unity
 
         private void ApplyAISettings(AIManager aiManager)
         {
+            // Disable all AI for local multiplayer modes
+            if (CurrentPlayMode == PlayMode.Local2P ||
+                CurrentPlayMode == PlayMode.Local3P ||
+                CurrentPlayMode == PlayMode.Local4P)
+            {
+                if (aiManager.YellowAI != null)
+                    aiManager.YellowAI.enabled = false;
+                if (aiManager.BlueAI != null)
+                    aiManager.BlueAI.enabled = false;
+                return;
+            }
+
             // Yellow AI
             if (CurrentPlayMode == PlayMode.AIvsAI)
             {

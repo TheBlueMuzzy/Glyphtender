@@ -46,9 +46,53 @@ namespace Glyphtender.Unity
         [Header("Materials")]
         public Material yellowTileMaterial;
         public Material blueTileMaterial;
+        public Material purpleTileMaterial;
+        public Material pinkTileMaterial;
         public Material selectedMaterial;
         public Material yellowGlyphlingMaterial;
         public Material blueGlyphlingMaterial;
+        public Material purpleGlyphlingMaterial;
+        public Material pinkGlyphlingMaterial;
+
+        /// <summary>
+        /// Gets the appropriate glyphling material for a player.
+        /// </summary>
+        private Material GetGlyphlingMaterial(Player player)
+        {
+            switch (player)
+            {
+                case Player.Yellow:
+                    return yellowGlyphlingMaterial != null ? yellowGlyphlingMaterial : yellowTileMaterial;
+                case Player.Blue:
+                    return blueGlyphlingMaterial != null ? blueGlyphlingMaterial : blueTileMaterial;
+                case Player.Purple:
+                    return purpleGlyphlingMaterial != null ? purpleGlyphlingMaterial : BoardRenderer.Instance?.purpleMaterial;
+                case Player.Pink:
+                    return pinkGlyphlingMaterial != null ? pinkGlyphlingMaterial : BoardRenderer.Instance?.pinkMaterial;
+                default:
+                    return yellowGlyphlingMaterial;
+            }
+        }
+
+        /// <summary>
+        /// Gets the appropriate tile material for a player.
+        /// </summary>
+        private Material GetTileMaterial(Player player)
+        {
+            switch (player)
+            {
+                case Player.Yellow:
+                    return yellowTileMaterial;
+                case Player.Blue:
+                    return blueTileMaterial;
+                case Player.Purple:
+                    return purpleTileMaterial != null ? purpleTileMaterial : BoardRenderer.Instance?.purpleMaterial;
+                case Player.Pink:
+                    return pinkTileMaterial != null ? pinkTileMaterial : BoardRenderer.Instance?.pinkMaterial;
+                default:
+                    return yellowTileMaterial;
+            }
+        }
 
         // Public state for GameUIController
         public bool IsInCycleMode => _isInCycleMode;
@@ -92,14 +136,12 @@ namespace Glyphtender.Unity
 
         private void Awake()
         {
-            if (Instance == null)
+            if (Instance != null && Instance != this)
             {
-                Instance = this;
+                Destroy(this);
+                return;
             }
-            else
-            {
-                Destroy(gameObject);
-            }
+            Instance = this;
         }
 
         private void Start()
@@ -497,7 +539,7 @@ namespace Glyphtender.Unity
             tile.layer = LayerMask.NameToLayer("UI3D");
 
             var state = GameManager.Instance.GameState;
-            Material mat = state.CurrentPlayer == Player.Yellow ? yellowTileMaterial : blueTileMaterial;
+            Material mat = GetTileMaterial(state.CurrentPlayer);
             if (mat != null)
             {
                 tile.GetComponent<Renderer>().material = mat;
@@ -529,17 +571,8 @@ namespace Glyphtender.Unity
             obj.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
             obj.layer = LayerMask.NameToLayer("UI3D");
 
-            // Use glyphling materials if available, otherwise fall back to tile materials
-            Material mat = null;
-            if (glyphling.Owner == Player.Yellow)
-            {
-                mat = yellowGlyphlingMaterial != null ? yellowGlyphlingMaterial : yellowTileMaterial;
-            }
-            else
-            {
-                mat = blueGlyphlingMaterial != null ? blueGlyphlingMaterial : blueTileMaterial;
-            }
-
+            // Use glyphling materials based on owner
+            Material mat = GetGlyphlingMaterial(glyphling.Owner);
             if (mat != null)
             {
                 obj.GetComponent<Renderer>().material = mat;
@@ -613,7 +646,7 @@ namespace Glyphtender.Unity
                 }
                 else
                 {
-                    Material mat = state.CurrentPlayer == Player.Yellow ? yellowTileMaterial : blueTileMaterial;
+                    Material mat = GetTileMaterial(state.CurrentPlayer);
                     if (mat != null)
                     {
                         renderer.material = mat;
@@ -642,16 +675,7 @@ namespace Glyphtender.Unity
                 else
                 {
                     // Restore original material
-                    Material mat = null;
-                    if (drafter == Player.Yellow)
-                    {
-                        mat = yellowGlyphlingMaterial != null ? yellowGlyphlingMaterial : yellowTileMaterial;
-                    }
-                    else
-                    {
-                        mat = blueGlyphlingMaterial != null ? blueGlyphlingMaterial : blueTileMaterial;
-                    }
-
+                    Material mat = GetGlyphlingMaterial(drafter);
                     if (mat != null)
                     {
                         renderer.material = mat;

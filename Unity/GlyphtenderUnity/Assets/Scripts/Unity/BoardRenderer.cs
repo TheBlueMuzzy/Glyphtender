@@ -35,6 +35,10 @@ namespace Glyphtender.Unity
         public Material blueMaterial;
         public Material yellowCastMaterial;
         public Material blueCastMaterial;
+        public Material purpleMaterial;
+        public Material pinkMaterial;
+        public Material purpleCastMaterial;
+        public Material pinkCastMaterial;
         public Material hexHoverMaterial;
 
         [Header("Settings")]
@@ -84,6 +88,36 @@ namespace Glyphtender.Unity
             _glyphlingObjects = new Dictionary<Glyphling, GameObject>();
 
             _glyphlingTargets = new Dictionary<Glyphling, Vector3>();
+        }
+
+        /// <summary>
+        /// Gets the material for a player's pieces.
+        /// </summary>
+        public Material GetPlayerMaterial(Player player)
+        {
+            switch (player)
+            {
+                case Player.Yellow: return yellowMaterial;
+                case Player.Blue: return blueMaterial;
+                case Player.Purple: return purpleMaterial;
+                case Player.Pink: return pinkMaterial;
+                default: return yellowMaterial;
+            }
+        }
+
+        /// <summary>
+        /// Gets the cast highlight material for a player.
+        /// </summary>
+        private Material GetPlayerCastMaterial(Player player)
+        {
+            switch (player)
+            {
+                case Player.Yellow: return yellowCastMaterial ?? hexValidCastMaterial;
+                case Player.Blue: return blueCastMaterial ?? hexValidCastMaterial;
+                case Player.Purple: return purpleCastMaterial ?? hexValidCastMaterial;
+                case Player.Pink: return pinkCastMaterial ?? hexValidCastMaterial;
+                default: return hexValidCastMaterial;
+            }
         }
 
         private void Update()
@@ -211,6 +245,13 @@ namespace Glyphtender.Unity
         {
             if (GameManager.Instance?.GameState == null) return;
 
+            // Clear any existing hexes first
+            foreach (var hex in _hexObjects.Values)
+            {
+                Destroy(hex);
+            }
+            _hexObjects.Clear();
+
             var board = GameManager.Instance.GameState.Board;
 
             foreach (var hex in board.BoardHexes)
@@ -221,6 +262,7 @@ namespace Glyphtender.Unity
 
         private void CreateHex(HexCoord coord)
         {
+
             GameObject hexObj;
 
             if (hexPrefab != null)
@@ -342,7 +384,7 @@ namespace Glyphtender.Unity
                 tileObj.transform.SetParent(transform);
 
                 // Color by owner
-                var material = tile.Owner == Player.Yellow ? yellowMaterial : blueMaterial;
+                var material = GetPlayerMaterial(tile.Owner);
                 if (material != null)
                 {
                     tileObj.GetComponent<Renderer>().material = material;
@@ -420,8 +462,7 @@ namespace Glyphtender.Unity
                 obj.transform.SetParent(transform);
 
                 // Color by owner
-                var material = glyphling.Owner == Player.Yellow ? yellowMaterial : blueMaterial;
-                if (material != null)
+                var material = GetPlayerMaterial(glyphling.Owner); if (material != null)
                 {
                     obj.GetComponent<Renderer>().material = material;
                 }
@@ -527,10 +568,7 @@ namespace Glyphtender.Unity
             // Highlight valid casts with player-specific color
             foreach (var coord in GameManager.Instance.ValidCasts)
             {
-                Material castMat = GameManager.Instance.GameState.CurrentPlayer == Player.Yellow
-                    ? (yellowCastMaterial ?? hexValidCastMaterial)
-                    : (blueCastMaterial ?? hexValidCastMaterial);
-
+                Material castMat = GetPlayerCastMaterial(GameManager.Instance.GameState.CurrentPlayer);
                 SetHexMaterial(coord, castMat);
             }
 
@@ -603,9 +641,7 @@ namespace Glyphtender.Unity
 
             if (GameManager.Instance.ValidCasts.Contains(coord))
             {
-                return GameManager.Instance.GameState.CurrentPlayer == Player.Yellow
-                    ? (yellowCastMaterial ?? hexValidCastMaterial)
-                    : (blueCastMaterial ?? hexValidCastMaterial);
+                return GetPlayerCastMaterial(GameManager.Instance.GameState.CurrentPlayer);
             }
 
             if (GameManager.Instance.ValidMoves.Contains(coord))
@@ -623,7 +659,6 @@ namespace Glyphtender.Unity
                 var renderer = hexObj.GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    string oldMatName = renderer.material != null ? renderer.material.name : "null";
                     renderer.material = material;
                 }
             }
@@ -648,8 +683,7 @@ namespace Glyphtender.Unity
 
             // Semi-transparent material
             var renderer = _ghostTile.GetComponent<Renderer>();
-            Material mat = new Material(owner == Player.Yellow ? yellowMaterial : blueMaterial);
-            Color c = mat.color;
+            Material mat = new Material(GetPlayerMaterial(owner)); Color c = mat.color;
             c.a = 0.5f;
             mat.color = c;
 
@@ -699,8 +733,7 @@ namespace Glyphtender.Unity
 
             // Semi-transparent material
             var renderer = _ghostGlyphling.GetComponent<Renderer>();
-            Material mat = new Material(owner == Player.Yellow ? yellowMaterial : blueMaterial);
-            Color c = mat.color;
+            Material mat = new Material(GetPlayerMaterial(owner)); Color c = mat.color;
             c.a = 0.5f;
             mat.color = c;
 

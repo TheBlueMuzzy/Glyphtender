@@ -133,8 +133,26 @@ namespace Glyphtender.Unity
                 boardSize = (BoardSize)SettingsManager.Instance.BoardSizeIndex;
             }
 
-            // Create new game with selected board size
-            GameState = GameRules.CreateNewGameWithDraft(boardSize);
+            // Get player count from play mode
+            int playerCount = 2;
+            if (SettingsManager.Instance != null)
+            {
+                switch (SettingsManager.Instance.PlayMode)
+                {
+                    case PlayMode.Local3P:
+                        playerCount = 3;
+                        break;
+                    case PlayMode.Local4P:
+                        playerCount = 4;
+                        break;
+                    default:
+                        playerCount = 2;
+                        break;
+                }
+            }
+
+            // Create new game with selected board size and player count
+            GameState = GameRules.CreateNewGameWithDraft(boardSize, playerCount);
 
             // If draft mode, set up draft state and return early
             if (GameState.Phase == GamePhase.Draft)
