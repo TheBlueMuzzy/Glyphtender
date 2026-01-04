@@ -109,9 +109,14 @@ There is NO true horizontal leyline — this is intentional.
 
 ## AI Design Context
 
-### The Core Problem
-**Current:** AI treats the game like Scrabble — maximize word score per turn.
-**Correct:** AI should treat it like Go or Chess that uses words — area control, pressure, denial, with scoring as a *tool* not the *goal*.
+### Goal-Selection Model (IMPLEMENTED - Phase 4 Complete)
+The AI now uses a **goal-selection model** instead of weighted scoring:
+- **7 Goals:** TRAP, SCORE, DENY, ESCAPE, BUILD, STEAL, DUMP
+- **7 Traits (0-100 scale):** Aggression, Greed, Spite, Caution, Patience, Opportunism, Pragmatism
+- **Priority Cascade:** Roll d100 against each goal's trait in priority order; first success activates
+- **Goal-Specific Evaluation:** Moves scored ONLY for active goal's criteria
+
+This creates personality-driven behavior where a Bully ignores great words because TRAP activated.
 
 ### What "Threatening" Looks Like
 - Block opponent's movement paths
@@ -119,10 +124,10 @@ There is NO true horizontal leyline — this is intentional.
 - Deny access to almost-complete words on the board
 - Make players *feel hunted*
 
-Muzzy's feedback: "I have sat for many turns in a vulnerable place, but they just kept scoring instead of pressuring me by trying to tangle me."
+**The Bully personality now achieves this.** Testing confirmed: "it felt good!"
 
 ### Current Priority
-**Phase 4: AI Behavioral Rework** — Make "area control first, spelling second" the default AI behavior.
+**Phase 5: Polish** — Audio, animation polish, visual polish, tutorial.
 
 ---
 
@@ -141,18 +146,26 @@ Muzzy's feedback: "I have sat for many turns in a vulnerable place, but they jus
 | **WordScorer.cs** | Dictionary loading (63K words), word detection along leylines, scoring calculation, ownership bonuses |
 | **TangleChecker.cs** | Detects when glyphlings are trapped (no valid moves), awards +10 to opponent |
 
-### Core/ - AI System
+### Core/ - AI System (Goal-Selection Model)
 
 | File | What it does |
 |------|-------------|
-| **Personality.cs** | 13 personality traits (0-10 scale), 8 presets (Bully, Scholar, etc.), dynamic trait shifting based on game state |
+| **AIGoal.cs** | 7 goals enum, AIMove class, GoalSelector with priority cascade, TraitRange (0-100 scale) |
+| **AIPersonality.cs** | 7 traits + meta-traits + subtraits, 7 personality presets (Bully, Scholar, Builder, Vulture, Survivor, Strategist, Balanced) |
+| **AIGoalEvaluators.cs** | Goal-specific move evaluation functions (TrapEval, ScoreEval, DenyEval, etc.) |
+| **AIBrain.cs** | Main AI: selects goal via trait roll, evaluates moves ONLY for active goal |
+| **AIPerception.cs** | Fuzzy perception: estimated scores, hand quality, pressure detection, momentum |
 | **AIConstants.cs** | Centralized tuning values for AI behavior (weights, thresholds, bonuses) |
-| **AIPerception.cs** | Fuzzy perception of game state: estimated scores, hand quality, letter junk assessment, pressure detection |
-| **AIMoveEvaluator.cs** | Scores candidate moves using 12 weighted factors, applies personality influence |
-| **AIBrain.cs** | Main AI decision pipeline: generates candidates, evaluates, selects best move |
-| **TrapDetector.cs** | Analyzes opponent movement restrictions for Bully personality |
+| **TrapDetector.cs** | Analyzes opponent movement restrictions |
 | **ContestDetector.cs** | Finds denial opportunities (blocking opponent's leylines) |
-| **SetupDetector.cs** | Evaluates future word potential for Builder personality (gaps, pillars, intersections) |
+| **SetupDetector.cs** | Evaluates future word potential (gaps, pillars, intersections) |
+
+### Core/Future/ - Archived (Old AI System)
+
+| File | What it does |
+|------|-------------|
+| **Personality_OLD.cs** | OLD: 13 traits (0-10 scale), weighted scoring model - ARCHIVED |
+| **AIMoveEvaluator_OLD.cs** | OLD: Weighted sum of all factors - ARCHIVED |
 
 ### Core/Stats/ - Game Statistics (pure C#)
 
@@ -248,11 +261,15 @@ Muzzy's feedback: "I have sat for many turns in a vulnerable place, but they jus
 - ✅ Board renders correctly with 92 hexes
 - ✅ Glyphlings spawn at correct positions
 - ✅ Dictionary loaded (63,612 words)
-- ✅ AI system ported (personalities, perception, evaluation)
 - ✅ Draft phase implemented (snake draft for 2-4 players)
 - ✅ Stats tracking system implemented
 - ✅ All code files documented with comprehensive headers
-- ⏳ **NEXT:** AI behavioral rework (area control focus)
+- ✅ **PHASE 4 COMPLETE: AI Goal-Selection Model**
+  - AIGoal.cs: 7 goals enum, GoalSelector with priority cascade
+  - AIPersonality.cs: 7 traits (0-100), meta-traits, subtraits, 7 presets
+  - AIGoalEvaluators.cs: Goal-specific move evaluation
+  - Bully personality tested — pressures opponents as intended!
+- ⏳ **NEXT:** Phase 5 - Polish (audio, animation, visual, tutorial)
 
 ## Known Issues
 1. **Hex directions may be incorrect** - The leyline movement paths don't work correctly after fixing the board layout. Need to verify/fix `HexCoord.Directions` array.
@@ -301,6 +318,14 @@ Always use `HexCoord.DistanceTo()` for hex distance - it uses the correct cube-c
 
 ## Recent Decisions
 <!-- Add dated entries here when significant decisions are made -->
+- **2026-01-04**: **PHASE 4 AI REWORK COMPLETE** - Goal-selection model implemented and tested!
+  - Created AIGoal.cs (7 goals, GoalSelector with priority cascade, TraitRange 0-100)
+  - Created AIPersonality.cs (7 traits, meta-traits, subtraits, 7 presets)
+  - Created AIGoalEvaluators.cs (goal-specific evaluation - only active goal scores moves)
+  - Updated AIBrain.cs to select goal first, then evaluate moves for that goal only
+  - Added Zipf threshold filtering to WordScorer for vocabulary access per personality
+  - Archived old files to Core/Future/: Personality_OLD.cs, AIMoveEvaluator_OLD.cs
+  - Bully personality tested and feels threatening!
 - **2026-01-03**: Comprehensive documentation added to all 48 code files (file headers with context anchoring)
 - **2026-01-03**: Consolidated duplicate HexDistance code into HexCoord.DistanceTo()
 - **2026-01-03**: Moved unused AIWordDetector to Future/ folder (not deleted, may integrate later)
