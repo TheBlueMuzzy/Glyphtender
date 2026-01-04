@@ -235,6 +235,16 @@ This creates personality-driven behavior where a Bully ignores great words becau
 | **GameHistoryManager.cs** | Unity bridge for stats: tracks moves during play, triggers calculation on game end |
 | **StatsPersistence.cs** | Saves/loads stats to JSON files, supports game save/resume for app backgrounding |
 
+### Unity/Network/ - Online Multiplayer
+
+| File | What it does |
+|------|-------------|
+| **NetworkServices.cs** | Unity Gaming Services init, anonymous authentication, connection state tracking |
+| **GlyphtenderLobby.cs** | Room code matchmaking, lobby creation/joining, game settings in lobby data |
+| **GlyphtenderRelay.cs** | NAT traversal via Unity Relay, allocate/join relay servers |
+| **NetworkMessages.cs** | INetworkSerializable structs for moves, casts, drafts, game start, forfeit, rematch |
+| **NetworkGameBridge.cs** | RPC wrapper bridging network and game logic, host-authoritative validation |
+
 ### Future/ - Not Yet Integrated
 
 | File | What it does |
@@ -270,9 +280,9 @@ This creates personality-driven behavior where a Bully ignores great words becau
   - AIGoalEvaluators.cs: Goal-specific move evaluation
   - Bully personality tested — pressures opponents as intended!
 - ⏳ **PHASE 5 IN PROGRESS: Online Multiplayer**
-  - Real-time 1v1 with room codes
-  - Unity Gaming Services (Auth + Lobby + Relay + Netcode)
-  - Architected for future provider swap (Steam, etc.)
+  - ✅ **5.1 Foundation:** NetworkServices, GlyphtenderLobby, GlyphtenderRelay
+  - ✅ **5.2 State Sync:** NetworkMessages, NetworkGameBridge, Online1v1 PlayMode
+  - ⏳ **5.3 Lobby UI:** Create/Join room screen (next)
 
 ## Known Issues
 1. **Hex directions may be incorrect** - The leyline movement paths don't work correctly after fixing the board layout. Need to verify/fix `HexCoord.Directions` array.
@@ -321,6 +331,15 @@ Always use `HexCoord.DistanceTo()` for hex distance - it uses the correct cube-c
 
 ## Recent Decisions
 <!-- Add dated entries here when significant decisions are made -->
+- **2026-01-04**: **PHASE 5.2 COMPLETE: State Sync Infrastructure**
+  - NetworkMessages.cs: All game actions as INetworkSerializable structs
+  - NetworkGameBridge.cs: Host-authoritative RPC pattern
+  - Online1v1 added to PlayMode enum, cycles after AI vs AI
+  - Next: Phase 5.3 Lobby UI (Create/Join room screen)
+- **2026-01-04**: **PHASE 5.1 COMPLETE: Network Foundation**
+  - NetworkServices.cs: Unity Services init + anonymous auth
+  - GlyphtenderLobby.cs: Room code matchmaking
+  - GlyphtenderRelay.cs: NAT traversal
 - **2026-01-04**: **PHASE 5 STARTED: Online Multiplayer**
   - Real-time 1v1 with room codes (not async turn-based)
   - Unity Gaming Services for MVP (free tier: 50 CCU, 10K DAU)
