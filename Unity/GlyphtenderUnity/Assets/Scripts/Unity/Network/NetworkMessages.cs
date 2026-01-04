@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 using Unity.Netcode;
+using Unity.Collections;
 using Glyphtender.Core;
 
 namespace Glyphtender.Unity.Network
@@ -158,9 +159,9 @@ namespace Glyphtender.Unity.Network
         // Fixed-size arrays for tile data
         // Total tiles in standard bag: ~100 tiles
         // We'll use a FixedString for compactness (letters as string)
-        public Unity.Collections.FixedString512Bytes TileBagOrder;
-        public Unity.Collections.FixedString32Bytes YellowHand;
-        public Unity.Collections.FixedString32Bytes BlueHand;
+        public FixedString512Bytes TileBagOrder;
+        public FixedString32Bytes YellowHand;
+        public FixedString32Bytes BlueHand;
         public int BoardSizeIndex;
         public bool Allow2LetterWords;
 
