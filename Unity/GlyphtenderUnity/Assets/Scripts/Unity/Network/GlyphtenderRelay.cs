@@ -212,6 +212,8 @@ namespace Glyphtender.Unity.Network
                         return false;
                     }
 
+                    Debug.Log($"[GlyphtenderRelay] Host allocation: Region={_hostAllocation.Region}, ConnectionData length={_hostAllocation.ConnectionData?.Length}");
+
                     // Configure transport for host
                     var relayServerData = new RelayServerData(_hostAllocation, "dtls");
                     transport.SetRelayServerData(relayServerData);
@@ -228,6 +230,8 @@ namespace Glyphtender.Unity.Network
                         return false;
                     }
 
+                    Debug.Log($"[GlyphtenderRelay] Guest allocation: Region={_guestAllocation.Region}, ConnectionData length={_guestAllocation.ConnectionData?.Length}");
+
                     // Configure transport for client
                     var relayServerData = new RelayServerData(_guestAllocation, "dtls");
                     transport.SetRelayServerData(relayServerData);
@@ -242,6 +246,7 @@ namespace Glyphtender.Unity.Network
             {
                 LastError = $"Failed to configure transport: {ex.Message}";
                 Debug.LogError($"[GlyphtenderRelay] {LastError}");
+                Debug.LogException(ex);
                 OnError?.Invoke(LastError);
                 return false;
             }

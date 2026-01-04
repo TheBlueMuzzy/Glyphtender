@@ -130,11 +130,13 @@ namespace Glyphtender.Unity
             if (SettingsManager.Instance?.PlayMode == PlayMode.Online1v1)
             {
                 IsOnlineGame = true;
-                LocalPlayer = NetworkManager.Singleton?.IsHost == true ? Player.Yellow : Player.Blue;
+                // Use GlyphtenderLobby.IsHost since NetworkManager.IsHost may not be ready
+                bool isHost = GlyphtenderLobby.Instance?.IsHost ?? false;
+                LocalPlayer = isHost ? Player.Yellow : Player.Blue;
                 Debug.Log($"[NetworkedGameManager] Online game started. Local player: {LocalPlayer}");
 
                 // If host, broadcast initial game state
-                if (NetworkManager.Singleton?.IsHost == true)
+                if (isHost)
                 {
                     BroadcastInitialGameState();
                 }
@@ -150,7 +152,9 @@ namespace Glyphtender.Unity
         /// </summary>
         private void BroadcastInitialGameState()
         {
-            if (!NetworkManager.Singleton?.IsHost == true) return;
+            // Use GlyphtenderLobby.IsHost since NetworkManager.IsHost may not be ready
+            bool isHost = GlyphtenderLobby.Instance?.IsHost ?? false;
+            if (!isHost) return;
             if (GameManager.Instance?.GameState == null) return;
 
             var gameState = GameManager.Instance.GameState;

@@ -51,8 +51,8 @@ namespace Glyphtender.Unity.Network
         // State
         public NetworkConnectionState ConnectionState { get; private set; } = NetworkConnectionState.Disconnected;
         public bool IsInitialized { get; private set; }
-        public bool IsSignedIn => AuthenticationService.Instance?.IsSignedIn ?? false;
-        public string PlayerId => AuthenticationService.Instance?.PlayerId ?? "";
+        public bool IsSignedIn => IsInitialized && AuthenticationService.Instance.IsSignedIn;
+        public string PlayerId => IsInitialized ? AuthenticationService.Instance.PlayerId : "";
         public string LastError { get; private set; }
 
         // Events
@@ -77,12 +77,19 @@ namespace Glyphtender.Unity.Network
         {
             if (Instance == this)
             {
-                // Unsubscribe from auth events
-                if (AuthenticationService.Instance != null)
+                // Unsubscribe from auth events (only if we successfully initialized)
+                if (IsInitialized)
                 {
-                    AuthenticationService.Instance.SignedIn -= HandleSignedIn;
-                    AuthenticationService.Instance.SignedOut -= HandleSignedOut;
-                    AuthenticationService.Instance.Expired -= HandleSessionExpired;
+                    try
+                    {
+                        AuthenticationService.Instance.SignedIn -= HandleSignedIn;
+                        AuthenticationService.Instance.SignedOut -= HandleSignedOut;
+                        AuthenticationService.Instance.Expired -= HandleSessionExpired;
+                    }
+                    catch (ServicesInitializationException)
+                    {
+                        // Services weren't initialized, nothing to unsubscribe
+                    }
                 }
                 Instance = null;
             }

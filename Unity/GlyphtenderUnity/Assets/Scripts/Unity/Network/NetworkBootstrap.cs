@@ -3,21 +3,24 @@
  *
  * PURPOSE:
  *   Ensures all network-related singletons exist at startup.
- *   Creates NetworkServices, GlyphtenderLobby, and GlyphtenderRelay GameObjects.
+ *   Creates NetworkServices, GlyphtenderLobby, GlyphtenderRelay, and NetworkManager.
  *
  * RESPONSIBILITIES:
  *   - Create network manager GameObjects if they don't exist
+ *   - Create Unity NetworkManager with UnityTransport for Netcode
  *   - Run early via RuntimeInitializeOnLoadMethod
  *
  * ARCHITECTURE:
  *   - Static bootstrapper, no instance needed
- *   - Creates singletons under a "NetworkManagers" parent object
+ *   - Creates singletons as root objects for DontDestroyOnLoad
  *
  * USAGE:
  *   Automatic - runs on scene load
  ******************************************************************************/
 
 using UnityEngine;
+using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 
 namespace Glyphtender.Unity.Network
 {
@@ -29,33 +32,42 @@ namespace Glyphtender.Unity.Network
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Initialize()
         {
-            // Create parent object for network managers
-            var parent = new GameObject("NetworkManagers");
-            Object.DontDestroyOnLoad(parent);
+            // Create each network manager as a root object so DontDestroyOnLoad works
+            // Each component handles its own DontDestroyOnLoad in Awake()
+
+            // Create Unity NetworkManager with UnityTransport (required for Netcode)
+            if (NetworkManager.Singleton == null)
+            {
+                var networkManagerObj = new GameObject("NetworkManager");
+                var networkManager = networkManagerObj.AddComponent<NetworkManager>();
+                var transport = networkManagerObj.AddComponent<UnityTransport>();
+
+                // CRITICAL: Assign the transport to the NetworkManager's config
+                networkManager.NetworkConfig = new NetworkConfig();
+                networkManager.NetworkConfig.NetworkTransport = transport;
+
+                Object.DontDestroyOnLoad(networkManagerObj);
+                Debug.Log("[NetworkBootstrap] NetworkManager with UnityTransport created");
+            }
 
             // Create NetworkServices
             var services = new GameObject("NetworkServices");
-            services.transform.SetParent(parent.transform);
             services.AddComponent<NetworkServices>();
 
             // Create GlyphtenderLobby
             var lobby = new GameObject("GlyphtenderLobby");
-            lobby.transform.SetParent(parent.transform);
             lobby.AddComponent<GlyphtenderLobby>();
 
             // Create GlyphtenderRelay
             var relay = new GameObject("GlyphtenderRelay");
-            relay.transform.SetParent(parent.transform);
             relay.AddComponent<GlyphtenderRelay>();
 
-            // Create NetworkGameBridge
+            // Create NetworkGameBridge (must be spawned after NetworkManager starts)
             var bridge = new GameObject("NetworkGameBridge");
-            bridge.transform.SetParent(parent.transform);
             bridge.AddComponent<NetworkGameBridge>();
 
             // Create NetworkedGameManager
             var networkedGM = new GameObject("NetworkedGameManager");
-            networkedGM.transform.SetParent(parent.transform);
             networkedGM.AddComponent<Glyphtender.Unity.NetworkedGameManager>();
 
             Debug.Log("[NetworkBootstrap] Network managers initialized");

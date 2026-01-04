@@ -87,7 +87,11 @@ namespace Glyphtender.Unity
         private GameObject _joinButton;
         private GameObject _backButton;
         private GameObject _confirmJoinButton;
-        private GameObject[] _codeInputButtons;
+        private GameObject _inputFieldButton;  // Clickable area to open keyboard
+
+        // Keyboard input
+        private TouchScreenKeyboard _touchKeyboard;
+        private bool _isWaitingForKeyboardInput;
 
         // Animation
         private bool _isAnimating;
@@ -141,6 +145,7 @@ namespace Glyphtender.Unity
 
         private void Update()
         {
+            // Handle animation
             if (_isAnimating && _menuRoot != null)
             {
                 _animationTime += Time.deltaTime;
@@ -160,6 +165,70 @@ namespace Glyphtender.Unity
                     }
                 }
             }
+
+            // Handle keyboard input when in EnteringCode state
+            if (State == LobbyScreenState.EnteringCode)
+            {
+                HandleKeyboardInput();
+            }
+        }
+
+        private void HandleKeyboardInput()
+        {
+            // Check touch keyboard (mobile)
+            if (_touchKeyboard != null)
+            {
+                if (_touchKeyboard.status == TouchScreenKeyboard.Status.Done ||
+                    _touchKeyboard.status == TouchScreenKeyboard.Status.Visible)
+                {
+                    string text = _touchKeyboard.text.ToUpper();
+                    // Filter to alphanumeric only, max 6 chars
+                    _enteredCode = "";
+                    foreach (char c in text)
+                    {
+                        if (char.IsLetterOrDigit(c) && _enteredCode.Length < 6)
+                        {
+                            _enteredCode += c;
+                        }
+                    }
+                    UpdateUI();
+                }
+
+                if (_touchKeyboard.status == TouchScreenKeyboard.Status.Done ||
+                    _touchKeyboard.status == TouchScreenKeyboard.Status.Canceled)
+                {
+                    _touchKeyboard = null;
+                    _isWaitingForKeyboardInput = false;
+                }
+            }
+
+            // Handle PC keyboard input
+            if (!TouchScreenKeyboard.isSupported || !_isWaitingForKeyboardInput)
+            {
+                foreach (char c in Input.inputString)
+                {
+                    if (c == '\b') // Backspace
+                    {
+                        if (_enteredCode.Length > 0)
+                        {
+                            _enteredCode = _enteredCode.Substring(0, _enteredCode.Length - 1);
+                            UpdateUI();
+                        }
+                    }
+                    else if (c == '\n' || c == '\r') // Enter
+                    {
+                        if (_enteredCode.Length >= 6)
+                        {
+                            OnConfirmJoinClicked();
+                        }
+                    }
+                    else if (char.IsLetterOrDigit(c) && _enteredCode.Length < 6)
+                    {
+                        _enteredCode += char.ToUpper(c);
+                        UpdateUI();
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -171,6 +240,19 @@ namespace Glyphtender.Unity
 
             _enteredCode = "";
             _errorMessage = "";
+
+            // Find UI camera if not set
+            if (uiCamera == null)
+            {
+                var camObj = GameObject.Find("UICamera");
+                if (camObj != null) uiCamera = camObj.GetComponent<Camera>();
+            }
+
+            if (uiCamera == null)
+            {
+                Debug.LogError("[OnlineLobbyScreen] UICamera not found! Cannot show lobby screen.");
+                return;
+            }
 
             // Destroy old menu if exists
             if (_menuRoot != null)
@@ -298,8 +380,11 @@ namespace Glyphtender.Unity
             // Room code display (large, for showing to host)
             _roomCodeText = CreateText("", new Vector3(0f, contentTop - 1.3f * elementScale, -0.1f), 0.12f * elementScale, codeColor, true);
 
-            // Input text (for entering code when joining)
+            // Input text (for entering code when joining) - clickable to open keyboard on mobile
             _inputText = CreateText("", new Vector3(0f, contentTop - 1.3f * elementScale, -0.1f), 0.1f * elementScale, valueColor, true);
+
+            // Create clickable input field background (for mobile keyboard)
+            _inputFieldButton = CreateInputFieldButton(new Vector3(0f, contentTop - 1.3f * elementScale, -0.05f), 3f * elementScale, 0.5f * elementScale);
 
             // Create buttons
             float buttonY = contentTop - 2.2f * elementScale;
@@ -307,45 +392,53 @@ namespace Glyphtender.Unity
             _joinButton = CreateButton("JOIN ROOM", new Vector3(0f, buttonY - 0.6f * elementScale, -0.08f), 2f * elementScale, OnJoinRoomClicked);
 
             // Confirm join button (for after entering code)
-            _confirmJoinButton = CreateButton("CONNECT", new Vector3(0f, buttonY, -0.08f), 2f * elementScale, OnConfirmJoinClicked);
-
-            // Create code input buttons (A-Z, 0-9 simplified to just digits for room codes)
-            CreateCodeInputButtons(contentTop - 2.0f * elementScale, elementScale);
+            _confirmJoinButton = CreateButton("CONNECT", new Vector3(0f, buttonY - 0.6f * elementScale, -0.08f), 2f * elementScale, OnConfirmJoinClicked);
 
             // Back button at bottom
             float backY = -(panelHeight / 2f) + (0.4f * elementScale);
             _backButton = CreateButton("BACK", new Vector3(0f, backY, -0.08f), 1.5f * elementScale, OnBackClicked);
         }
 
-        private void CreateCodeInputButtons(float yStart, float scale)
+        private GameObject CreateInputFieldButton(Vector3 localPos, float width, float height)
         {
-            // Create digit buttons 0-9 and backspace for entering room codes
-            // Room codes are typically 6 uppercase alphanumeric characters
-            // We'll create a simple keyboard: digits on one row, some common letters on another
+            // Create a clickable background for the input field
+            // On mobile, tapping this opens the keyboard
+            GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            btn.name = "InputFieldButton";
+            btn.transform.SetParent(_menuRoot.transform);
+            btn.transform.localPosition = localPos;
+            btn.transform.localRotation = Quaternion.identity;
+            btn.transform.localScale = new Vector3(width, height, 0.02f);
+            btn.layer = LayerMask.NameToLayer("UI3D");
 
-            _codeInputButtons = new GameObject[12]; // 0-9 + backspace + clear
+            var renderer = btn.GetComponent<Renderer>();
+            renderer.material.color = new Color(0.2f, 0.2f, 0.25f);
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
 
-            string[] chars = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "<", "C" };
-            float buttonWidth = 0.4f * scale;
-            float spacing = 0.05f * scale;
-            float totalWidth = 6 * buttonWidth + 5 * spacing;
-            float startX = -totalWidth / 2f + buttonWidth / 2f;
+            var handler = btn.AddComponent<MenuButtonClickHandler>();
+            handler.OnClick = OnInputFieldClicked;
 
-            for (int row = 0; row < 2; row++)
+            return btn;
+        }
+
+        private void OnInputFieldClicked()
+        {
+            // Open keyboard on mobile devices
+            if (TouchScreenKeyboard.isSupported)
             {
-                for (int col = 0; col < 6; col++)
-                {
-                    int index = row * 6 + col;
-                    if (index >= chars.Length) break;
-
-                    string c = chars[index];
-                    float x = startX + col * (buttonWidth + spacing);
-                    float y = yStart - row * (0.45f * scale);
-
-                    int capturedIndex = index;
-                    _codeInputButtons[index] = CreateSmallButton(c, new Vector3(x, y, -0.08f), buttonWidth, 0.35f * scale, () => OnCodeInputClicked(chars[capturedIndex]));
-                }
+                _touchKeyboard = TouchScreenKeyboard.Open(
+                    _enteredCode,
+                    TouchScreenKeyboardType.Default,
+                    false,  // autocorrection
+                    false,  // multiline
+                    false,  // secure
+                    false,  // alert
+                    "Enter 6-character room code",
+                    6       // character limit
+                );
+                _isWaitingForKeyboardInput = true;
             }
+            // On PC, keyboard input is already handled in Update()
         }
 
         private TextMesh CreateText(string text, Vector3 localPos, float scale, Color color, bool bold)
@@ -407,43 +500,6 @@ namespace Glyphtender.Unity
             return btn;
         }
 
-        private GameObject CreateSmallButton(string text, Vector3 localPos, float width, float height, Action onClick)
-        {
-            GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            btn.name = $"Key_{text}";
-            btn.transform.SetParent(_menuRoot.transform);
-            btn.transform.localPosition = localPos;
-            btn.transform.localRotation = Quaternion.identity;
-            btn.transform.localScale = new Vector3(width, height, 0.05f);
-            btn.layer = LayerMask.NameToLayer("UI3D");
-
-            var renderer = btn.GetComponent<Renderer>();
-            if (buttonMaterial != null)
-                renderer.material = buttonMaterial;
-            else
-                renderer.material.color = new Color(0.25f, 0.25f, 0.3f);
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-
-            GameObject textObj = new GameObject("Text");
-            textObj.transform.SetParent(btn.transform);
-            textObj.transform.localPosition = new Vector3(0f, 0f, -1.5f);
-            textObj.transform.localRotation = Quaternion.identity;
-            textObj.transform.localScale = new Vector3(0.08f, 0.1f, 1f);
-            textObj.layer = LayerMask.NameToLayer("UI3D");
-
-            var textMesh = textObj.AddComponent<TextMesh>();
-            textMesh.text = text;
-            textMesh.fontSize = 36;
-            textMesh.alignment = TextAlignment.Center;
-            textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.color = Color.white;
-
-            var handler = btn.AddComponent<MenuButtonClickHandler>();
-            handler.OnClick = onClick;
-
-            return btn;
-        }
-
         private void UpdateUI()
         {
             if (_menuRoot == null) return;
@@ -454,7 +510,10 @@ namespace Glyphtender.Unity
             _confirmJoinButton?.SetActive(false);
             _roomCodeText?.gameObject.SetActive(false);
             _inputText?.gameObject.SetActive(false);
-            SetCodeInputButtonsVisible(false);
+            _inputFieldButton?.SetActive(false);
+
+            // Reset status text color
+            _statusText.color = labelColor;
 
             switch (State)
             {
@@ -475,10 +534,12 @@ namespace Glyphtender.Unity
                     break;
 
                 case LobbyScreenState.EnteringCode:
-                    _statusText.text = "Enter room code:";
+                    _statusText.text = TouchScreenKeyboard.isSupported
+                        ? "Tap below to enter code:"
+                        : "Type room code:";
                     _inputText.gameObject.SetActive(true);
                     _inputText.text = _enteredCode.Length > 0 ? _enteredCode : "______";
-                    SetCodeInputButtonsVisible(true);
+                    _inputFieldButton?.SetActive(true);
                     _confirmJoinButton.SetActive(_enteredCode.Length >= 6);
                     break;
 
@@ -499,15 +560,6 @@ namespace Glyphtender.Unity
             }
         }
 
-        private void SetCodeInputButtonsVisible(bool visible)
-        {
-            if (_codeInputButtons == null) return;
-            foreach (var btn in _codeInputButtons)
-            {
-                if (btn != null) btn.SetActive(visible);
-            }
-        }
-
         #region Button Handlers
 
         private async void OnCreateRoomClicked()
@@ -515,7 +567,7 @@ namespace Glyphtender.Unity
             SetState(LobbyScreenState.CreatingRoom);
 
             // Initialize network services if needed
-            if (!NetworkServices.Instance?.IsSignedIn == true)
+            if (NetworkServices.Instance == null || !NetworkServices.Instance.IsSignedIn)
             {
                 bool success = await NetworkServices.Instance.InitializeAsync();
                 if (!success)
@@ -544,33 +596,12 @@ namespace Glyphtender.Unity
         {
             _enteredCode = "";
             SetState(LobbyScreenState.EnteringCode);
-        }
 
-        private void OnCodeInputClicked(string input)
-        {
-            if (input == "<")
+            // On mobile, open keyboard immediately
+            if (TouchScreenKeyboard.isSupported)
             {
-                // Backspace
-                if (_enteredCode.Length > 0)
-                {
-                    _enteredCode = _enteredCode.Substring(0, _enteredCode.Length - 1);
-                }
+                OnInputFieldClicked();
             }
-            else if (input == "C")
-            {
-                // Clear
-                _enteredCode = "";
-            }
-            else
-            {
-                // Add character (max 6)
-                if (_enteredCode.Length < 6)
-                {
-                    _enteredCode += input;
-                }
-            }
-
-            UpdateUI();
         }
 
         private async void OnConfirmJoinClicked()
@@ -584,7 +615,7 @@ namespace Glyphtender.Unity
             SetState(LobbyScreenState.JoiningRoom);
 
             // Initialize network services if needed
-            if (!NetworkServices.Instance?.IsSignedIn == true)
+            if (NetworkServices.Instance == null || !NetworkServices.Instance.IsSignedIn)
             {
                 bool success = await NetworkServices.Instance.InitializeAsync();
                 if (!success)
@@ -647,9 +678,13 @@ namespace Glyphtender.Unity
         {
             SetState(LobbyScreenState.StartingGame);
 
+            Debug.Log($"[OnlineLobbyScreen] StartGame called. IsHost={GlyphtenderLobby.Instance?.IsHost}");
+
             // Allocate relay (host) or get relay code and join (guest)
             if (GlyphtenderLobby.Instance.IsHost)
             {
+                Debug.Log("[OnlineLobbyScreen] Host path: Allocating relay...");
+
                 // Host: Allocate relay and update lobby with join code
                 string relayCode = await GlyphtenderRelay.Instance.AllocateRelayAsync();
                 if (relayCode == null)
@@ -658,7 +693,11 @@ namespace Glyphtender.Unity
                     return;
                 }
 
+                Debug.Log($"[OnlineLobbyScreen] Relay allocated with code: {relayCode}. Updating lobby...");
+
                 await GlyphtenderLobby.Instance.UpdateLobbyDataAsync("relayCode", relayCode);
+
+                Debug.Log("[OnlineLobbyScreen] Lobby updated. Configuring transport...");
 
                 // Start host
                 if (!GlyphtenderRelay.Instance.ConfigureTransportAndStart())
@@ -666,18 +705,26 @@ namespace Glyphtender.Unity
                     ShowError("Failed to start network host");
                     return;
                 }
+
+                Debug.Log("[OnlineLobbyScreen] Host started successfully!");
             }
             else
             {
+                Debug.Log("[OnlineLobbyScreen] Guest path: Waiting for relay code from host...");
+
                 // Guest: Get relay code from lobby and join
+                // The lobby data needs to be refreshed to get the relay code
                 string relayCode = GlyphtenderLobby.Instance.GetLobbyData("relayCode");
 
-                // Wait for relay code if not available yet
+                // Wait for relay code if not available yet - need to refresh lobby data
                 int attempts = 0;
-                while (string.IsNullOrEmpty(relayCode) && attempts < 10)
+                while (string.IsNullOrEmpty(relayCode) && attempts < 20) // 20 attempts * 500ms = 10 seconds
                 {
                     await System.Threading.Tasks.Task.Delay(500);
+                    // Force refresh the lobby to get updated data from host
+                    await GlyphtenderLobby.Instance.RefreshLobbyAsync();
                     relayCode = GlyphtenderLobby.Instance.GetLobbyData("relayCode");
+                    Debug.Log($"[OnlineLobbyScreen] Attempt {attempts + 1}: relayCode = '{relayCode ?? "(null)"}'");
                     attempts++;
                 }
 
@@ -686,6 +733,8 @@ namespace Glyphtender.Unity
                     ShowError("Failed to get relay connection from host");
                     return;
                 }
+
+                Debug.Log($"[OnlineLobbyScreen] Got relay code: {relayCode}. Joining relay...");
 
                 bool joined = await GlyphtenderRelay.Instance.JoinRelayAsync(relayCode);
                 if (!joined)

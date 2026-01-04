@@ -19,11 +19,11 @@
  *   - Events for UI to react to network actions
  *
  * USAGE:
- *   // Client sends move request:
- *   NetworkGameBridge.Instance.RequestMoveServerRpc(moveData);
+ *   // Client sends turn request:
+ *   NetworkGameBridge.Instance.RequestTurnServerRpc(turnData);
  *
- *   // All clients receive confirmed move:
- *   NetworkGameBridge.Instance.OnMoveConfirmed += HandleMoveConfirmed;
+ *   // All clients receive confirmed turn:
+ *   NetworkGameBridge.Instance.OnTurnConfirmed += HandleTurnConfirmed;
  ******************************************************************************/
 
 using System;
@@ -42,8 +42,6 @@ namespace Glyphtender.Unity.Network
         public static NetworkGameBridge Instance { get; private set; }
 
         // Events for game actions (fired on all clients after host validation)
-        public event Action<NetworkMoveData> OnMoveConfirmed;
-        public event Action<NetworkCastData> OnCastConfirmed;
         public event Action<NetworkTurnData> OnTurnConfirmed;
         public event Action<NetworkDraftPlacement> OnDraftPlacementConfirmed;
         public event Action<NetworkCycleData> OnCycleConfirmed;
@@ -55,7 +53,9 @@ namespace Glyphtender.Unity.Network
         public event Action<string> OnActionRejected;
 
         // Track if we're the host player (Yellow) or guest player (Blue)
-        public bool IsHostPlayer => IsHost;
+        // Note: Use GlyphtenderLobby.IsHost instead of NetworkBehaviour.IsHost
+        // because NetworkBehaviour.IsHost only works after network session starts
+        public bool IsHostPlayer => GlyphtenderLobby.Instance?.IsHost ?? IsHost;
         public Player LocalPlayer => IsHostPlayer ? Player.Yellow : Player.Blue;
         public Player RemotePlayer => IsHostPlayer ? Player.Blue : Player.Yellow;
 
@@ -241,9 +241,17 @@ namespace Glyphtender.Unity.Network
         /// </summary>
         public void BroadcastGameStart(NetworkGameStart gameStart)
         {
-            if (!IsHost)
+            // Use lobby's IsHost check since NetworkBehaviour.IsHost may not be ready yet
+            if (!IsHostPlayer)
             {
                 Debug.LogError("[NetworkGameBridge] Only host can broadcast game start");
+                return;
+            }
+
+            // Check if we're actually spawned and can send RPCs
+            if (!IsSpawned)
+            {
+                Debug.LogWarning("[NetworkGameBridge] Cannot broadcast game start - not yet spawned on network. Will retry when client connects.");
                 return;
             }
 

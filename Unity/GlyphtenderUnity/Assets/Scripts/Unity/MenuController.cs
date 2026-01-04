@@ -125,9 +125,13 @@ namespace Glyphtender.Unity
         private void Update()
         {
             // Q key always opens menu (escape hatch for AI vs AI)
+            // But not when lobby screen is active (it captures keyboard input)
             if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.Escape))
             {
-                ToggleMenu();
+                if (OnlineLobbyScreen.Instance == null || OnlineLobbyScreen.Instance.State == LobbyScreenState.Hidden)
+                {
+                    ToggleMenu();
+                }
             }
 
             // Handle menu clicks when open

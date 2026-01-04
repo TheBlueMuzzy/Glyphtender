@@ -235,23 +235,17 @@ This creates personality-driven behavior where a Bully ignores great words becau
 | **GameHistoryManager.cs** | Unity bridge for stats: tracks moves during play, triggers calculation on game end |
 | **StatsPersistence.cs** | Saves/loads stats to JSON files, supports game save/resume for app backgrounding |
 
-### Unity/Network/ - Online Multiplayer
+### Unity/Network/ - Online Multiplayer (Phase 5)
 
 | File | What it does |
 |------|-------------|
-| **NetworkServices.cs** | Unity Gaming Services init, anonymous authentication, connection state tracking |
-| **GlyphtenderLobby.cs** | Room code matchmaking, lobby creation/joining, game settings in lobby data |
-| **GlyphtenderRelay.cs** | NAT traversal via Unity Relay, allocate/join relay servers |
-| **NetworkMessages.cs** | INetworkSerializable structs for moves, casts, drafts, game start, forfeit, rematch |
-| **NetworkGameBridge.cs** | RPC wrapper bridging network and game logic, host-authoritative validation |
-| **NetworkBootstrap.cs** | Auto-creates network singletons on scene load |
-| **NetworkedGameManager.cs** | Bridges GameManager with network, intercepts local actions, applies remote actions |
-
-### Unity/ - Online Lobby
-
-| File | What it does |
-|------|-------------|
-| **OnlineLobbyScreen.cs** | 3D UI for online matchmaking: Create/Join room, room code input, connection flow |
+| **NetworkBootstrap.cs** | RuntimeInitializeOnLoadMethod bootstrapper - creates all network singletons at startup |
+| **NetworkServices.cs** | Unity Services init, anonymous authentication, connection state tracking |
+| **GlyphtenderLobby.cs** | Room code matchmaking - create/join lobbies, heartbeat, player join detection |
+| **GlyphtenderRelay.cs** | Unity Relay NAT traversal - allocate relay (host), join relay (guest), configure UnityTransport |
+| **NetworkMessages.cs** | INetworkSerializable structs for all game actions (moves, casts, draft, forfeit, rematch) |
+| **NetworkGameBridge.cs** | NetworkBehaviour with ServerRpc/ClientRpc - bridges network messages with game logic |
+| **NetworkedGameManager.cs** | Companion to GameManager - intercepts actions in online mode, routes through network |
 
 ### Future/ - Not Yet Integrated
 
@@ -288,14 +282,16 @@ This creates personality-driven behavior where a Bully ignores great words becau
   - AIGoalEvaluators.cs: Goal-specific move evaluation
   - Bully personality tested — pressures opponents as intended!
 - ⏳ **PHASE 5 IN PROGRESS: Online Multiplayer**
-  - ✅ **5.1 Foundation:** NetworkServices, GlyphtenderLobby, GlyphtenderRelay
-  - ✅ **5.2 State Sync:** NetworkMessages, NetworkGameBridge, Online1v1 PlayMode
-  - ✅ **5.3 Lobby UI:** OnlineLobbyScreen, NetworkBootstrap
-  - ✅ **5.4 Game State Sync:** NetworkedGameManager bridges network and GameManager
-  - ⏳ **5.5 Testing & Polish:** Test full online flow, fix issues (next)
+  - ✅ Phase 5.1: NetworkServices (auth), GlyphtenderLobby (room codes), GlyphtenderRelay (NAT traversal)
+  - ✅ Phase 5.2: NetworkMessages (serializable structs), NetworkGameBridge (RPCs)
+  - ✅ Phase 5.3: OnlineLobbyScreen UI, NetworkBootstrap, NetworkedGameManager
+  - ⏳ Phase 5.4: Testing connection between PC and Phone (in progress)
+  - Host flow working: auth → lobby create → relay allocate → StartHost succeeds
+  - Guest flow: auth → lobby join → polling for relay code → needs testing
 
 ## Known Issues
 1. **Hex directions may be incorrect** - The leyline movement paths don't work correctly after fixing the board layout. Need to verify/fix `HexCoord.Directions` array.
+2. **NetworkGameBridge.IsSpawned timing** - BroadcastGameStart() called before NetworkBehaviour is spawned; logs warning but game state sync needs retry logic when client connects.
 
 ---
 
@@ -341,24 +337,12 @@ Always use `HexCoord.DistanceTo()` for hex distance - it uses the correct cube-c
 
 ## Recent Decisions
 <!-- Add dated entries here when significant decisions are made -->
-- **2026-01-04**: **PHASE 5.4 COMPLETE: Game State Sync**
-  - NetworkedGameManager.cs: Bridges GameManager with network
-  - Intercepts local actions and sends to host via RPC
-  - Receives remote actions and applies to GameManager
-  - Detects Online1v1 mode and tracks local player
-  - Next: Phase 5.5 Testing & Polish
-- **2026-01-04**: **PHASE 5.3 COMPLETE: Online Lobby UI**
-  - OnlineLobbyScreen.cs: 3D UI for Create/Join room flow
-  - NetworkBootstrap.cs: Auto-creates network singletons
-  - Connected MainMenuScreen to lobby screen
-- **2026-01-04**: **PHASE 5.2 COMPLETE: State Sync Infrastructure**
-  - NetworkMessages.cs: All game actions as INetworkSerializable structs
-  - NetworkGameBridge.cs: Host-authoritative RPC pattern
-  - Online1v1 added to PlayMode enum, cycles after AI vs AI
-- **2026-01-04**: **PHASE 5.1 COMPLETE: Network Foundation**
-  - NetworkServices.cs: Unity Services init + anonymous auth
-  - GlyphtenderLobby.cs: Room code matchmaking
-  - GlyphtenderRelay.cs: NAT traversal
+- **2026-01-04**: **PHASE 5.3 Online Lobby UI Complete**
+  - OnlineLobbyScreen: Create/Join room UI with keyboard input (PC + mobile)
+  - NetworkBootstrap: Creates NetworkManager with UnityTransport + all network singletons
+  - Host flow works: auth → create lobby → allocate relay → StartHost succeeds
+  - Guest flow: polls lobby for relay code, then joins
+  - Key fix: Use GlyphtenderLobby.IsHost instead of NetworkManager.IsHost (timing issue)
 - **2026-01-04**: **PHASE 5 STARTED: Online Multiplayer**
   - Real-time 1v1 with room codes (not async turn-based)
   - Unity Gaming Services for MVP (free tier: 50 CCU, 10K DAU)

@@ -316,6 +316,24 @@ namespace Glyphtender.Unity.Network
         }
 
         /// <summary>
+        /// Forces a refresh of lobby data from the server.
+        /// Useful for guests waiting for host to update relay code.
+        /// </summary>
+        public async Task RefreshLobbyAsync()
+        {
+            if (CurrentLobby == null) return;
+
+            try
+            {
+                CurrentLobby = await LobbyService.Instance.GetLobbyAsync(CurrentLobby.Id);
+            }
+            catch (LobbyServiceException ex)
+            {
+                Debug.LogWarning($"[GlyphtenderLobby] Failed to refresh lobby: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Gets the game settings from lobby data.
         /// </summary>
         public LobbyGameSettings GetGameSettings()
