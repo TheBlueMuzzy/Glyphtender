@@ -7,6 +7,17 @@
 | **"status"** | Show git status and current work summary |
 | **"push"** | Push commits to remote |
 | **"look at handoff"** | Read HANDOFF.md for deep context |
+| **`<claude>`** | Explicit: add following info to CLAUDE.md |
+| **`<handoff>`** | Explicit: add following info to HANDOFF.md |
+
+---
+
+## Capturing User Context
+
+**Proactively capture important information Muzzy shares:**
+- If he mentions design decisions, preferences, or insights worth preserving → add to appropriate .md file
+- Use judgment: not everything needs documenting, but vision/decisions/learnings should be captured
+- `<claude>` and `<handoff>` are explicit commands, but you should recognize important info without them
 
 ---
 
