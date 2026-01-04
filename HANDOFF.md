@@ -2,7 +2,7 @@
 
 **Project Owner:** Muzzy
 **Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions
-**Last Updated:** January 4, 2026 (Phase 5.4 Draft Sync)
+**Last Updated:** January 4, 2026 (Phase 5 Online Multiplayer Started)
 
 ---
 
@@ -735,12 +735,6 @@ Assets/Scripts/Core/
 - Zipf-based vocabulary filtering per personality + difficulty
 - 7 personality presets (Bully, Scholar, Builder, Vulture, Survivor, Strategist, Balanced)
 - Bully personality tested — "it felt good!"
-
-**Phase 5: Online Multiplayer (IN PROGRESS)**
-- ✅ Phase 5.1: NetworkServices (auth), GlyphtenderLobby (room codes), GlyphtenderRelay (NAT traversal)
-- ✅ Phase 5.2: NetworkMessages (serializable structs), NetworkGameBridge (RPCs)
-- ✅ Phase 5.3: OnlineLobbyScreen UI, NetworkBootstrap, NetworkedGameManager
-- ⏳ Phase 5.4: Draft Phase Sync — see CLAUDE.md for current session context
 
 ### 7.2 Working Systems
 
