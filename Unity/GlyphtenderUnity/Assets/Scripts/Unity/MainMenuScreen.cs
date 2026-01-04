@@ -722,9 +722,17 @@ namespace Glyphtender.Unity
         /// </summary>
         private void OnOnlinePlayClicked()
         {
-            // TODO: Show online lobby screen (create/join room)
-            // For now, just log
-            Debug.Log("[MainMenuScreen] Online 1v1 mode selected - lobby screen not yet implemented");
+            // Hide main menu and show lobby screen
+            Hide();
+
+            // Ensure OnlineLobbyScreen exists
+            if (OnlineLobbyScreen.Instance == null)
+            {
+                var lobbyObj = new GameObject("OnlineLobbyScreen");
+                lobbyObj.AddComponent<OnlineLobbyScreen>();
+            }
+
+            OnlineLobbyScreen.Instance.Show();
         }
 
         private void EnsureAIManagerExists()
