@@ -48,6 +48,16 @@ namespace Glyphtender.Unity.Network
             relay.transform.SetParent(parent.transform);
             relay.AddComponent<GlyphtenderRelay>();
 
+            // Create NetworkGameBridge
+            var bridge = new GameObject("NetworkGameBridge");
+            bridge.transform.SetParent(parent.transform);
+            bridge.AddComponent<NetworkGameBridge>();
+
+            // Create NetworkedGameManager
+            var networkedGM = new GameObject("NetworkedGameManager");
+            networkedGM.transform.SetParent(parent.transform);
+            networkedGM.AddComponent<Glyphtender.Unity.NetworkedGameManager>();
+
             Debug.Log("[NetworkBootstrap] Network managers initialized");
         }
     }
