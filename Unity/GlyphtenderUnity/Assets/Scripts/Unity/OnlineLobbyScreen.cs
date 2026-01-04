@@ -24,6 +24,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Netcode;
 using Glyphtender.Unity.Network;
 
 namespace Glyphtender.Unity
@@ -588,8 +589,24 @@ namespace Glyphtender.Unity
             if (roomCode == null)
             {
                 ShowError(GlyphtenderLobby.Instance?.LastError ?? "Failed to create room");
+                return;
             }
-            // OnLobbyCreated will be called if successful
+
+            // IMPORTANT: Allocate relay NOW so guest can connect immediately when they join
+            // This prevents race condition where guest joins but relay isn't ready yet
+            Debug.Log("[OnlineLobbyScreen] Pre-allocating relay before guest joins...");
+            string relayCode = await GlyphtenderRelay.Instance.AllocateRelayAsync();
+            if (relayCode == null)
+            {
+                ShowError("Failed to create relay connection");
+                await GlyphtenderLobby.Instance.LeaveLobbyAsync();
+                return;
+            }
+
+            Debug.Log($"[OnlineLobbyScreen] Relay pre-allocated: {relayCode}. Updating lobby...");
+            await GlyphtenderLobby.Instance.UpdateLobbyDataAsync("relayCode", relayCode);
+
+            // OnLobbyCreated will be called to show the room code
         }
 
         private void OnJoinRoomClicked()
@@ -680,33 +697,49 @@ namespace Glyphtender.Unity
 
             Debug.Log($"[OnlineLobbyScreen] StartGame called. IsHost={GlyphtenderLobby.Instance?.IsHost}");
 
-            // Allocate relay (host) or get relay code and join (guest)
+            // Host: relay already allocated in OnCreateRoomClicked, just start host
+            // Guest: get relay code from lobby and join
             if (GlyphtenderLobby.Instance.IsHost)
             {
-                Debug.Log("[OnlineLobbyScreen] Host path: Allocating relay...");
+                Debug.Log("[OnlineLobbyScreen] Host path: Configuring transport and starting host...");
 
-                // Host: Allocate relay and update lobby with join code
-                string relayCode = await GlyphtenderRelay.Instance.AllocateRelayAsync();
-                if (relayCode == null)
-                {
-                    ShowError("Failed to create relay connection");
-                    return;
-                }
-
-                Debug.Log($"[OnlineLobbyScreen] Relay allocated with code: {relayCode}. Updating lobby...");
-
-                await GlyphtenderLobby.Instance.UpdateLobbyDataAsync("relayCode", relayCode);
-
-                Debug.Log("[OnlineLobbyScreen] Lobby updated. Configuring transport...");
-
-                // Start host
+                // Relay was already allocated in OnCreateRoomClicked
+                // Just start the host
                 if (!GlyphtenderRelay.Instance.ConfigureTransportAndStart())
                 {
                     ShowError("Failed to start network host");
                     return;
                 }
 
-                Debug.Log("[OnlineLobbyScreen] Host started successfully!");
+                // CRITICAL: Host must spawn the NetworkGameBridge so RPCs work
+                if (NetworkGameBridge.Instance != null)
+                {
+                    var networkObject = NetworkGameBridge.Instance.GetComponent<NetworkObject>();
+                    if (networkObject != null && !networkObject.IsSpawned)
+                    {
+                        networkObject.Spawn();
+                        Debug.Log("[OnlineLobbyScreen] NetworkGameBridge spawned on network");
+                    }
+                }
+
+                Debug.Log("[OnlineLobbyScreen] Host started. Waiting for guest to connect via relay...");
+
+                // Wait for guest to connect
+                int connectAttempts = 0;
+                while (NetworkManager.Singleton.ConnectedClientsIds.Count < 2 && connectAttempts < 60) // 60 * 200ms = 12 seconds
+                {
+                    await System.Threading.Tasks.Task.Delay(200);
+                    connectAttempts++;
+                }
+
+                if (NetworkManager.Singleton.ConnectedClientsIds.Count < 2)
+                {
+                    Debug.LogWarning("[OnlineLobbyScreen] Guest didn't connect in time, starting game anyway");
+                }
+                else
+                {
+                    Debug.Log("[OnlineLobbyScreen] Guest connected!");
+                }
             }
             else
             {
@@ -749,6 +782,23 @@ namespace Glyphtender.Unity
                     ShowError("Failed to start network client");
                     return;
                 }
+
+                // Wait for client to actually connect to host
+                Debug.Log("[OnlineLobbyScreen] Waiting for connection to host...");
+                int connectAttempts = 0;
+                while (!NetworkManager.Singleton.IsConnectedClient && connectAttempts < 30) // 30 * 200ms = 6 seconds
+                {
+                    await System.Threading.Tasks.Task.Delay(200);
+                    connectAttempts++;
+                }
+
+                if (!NetworkManager.Singleton.IsConnectedClient)
+                {
+                    ShowError("Failed to connect to host");
+                    return;
+                }
+
+                Debug.Log("[OnlineLobbyScreen] Connected to host!");
             }
 
             // Hide lobby screen and start game
@@ -761,6 +811,14 @@ namespace Glyphtender.Unity
                 SettingsManager.Instance.BoardSizeIndex = lobbySettings.BoardSizeIndex;
                 SettingsManager.Instance.Allow2LetterWords = lobbySettings.Allow2LetterWords;
             }
+
+            // CRITICAL: Set PlayMode to Online1v1 so NetworkedGameManager activates
+            if (SettingsManager.Instance != null)
+            {
+                SettingsManager.Instance.PlayMode = PlayMode.Online1v1;
+            }
+
+            Debug.Log($"[OnlineLobbyScreen] Starting game. PlayMode={SettingsManager.Instance?.PlayMode}, IsHost={GlyphtenderLobby.Instance?.IsHost}");
 
             // Start the game
             if (GameManager.Instance != null)

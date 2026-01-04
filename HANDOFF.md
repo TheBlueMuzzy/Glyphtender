@@ -736,6 +736,27 @@ Assets/Scripts/Core/
 - 7 personality presets (Bully, Scholar, Builder, Vulture, Survivor, Strategist, Balanced)
 - Bully personality tested — "it felt good!"
 
+**Phase 5: Online Multiplayer (IN PROGRESS)**
+- ✅ Phase 5.1: NetworkServices (auth), GlyphtenderLobby (room codes), GlyphtenderRelay (NAT traversal)
+- ✅ Phase 5.2: NetworkMessages (serializable structs), NetworkGameBridge (RPCs)
+- ✅ Phase 5.3: OnlineLobbyScreen UI, NetworkBootstrap, NetworkedGameManager
+- ⏳ Phase 5.4: Draft Phase Sync (CURRENT SESSION) — see Known Issues below
+
+**Phase 5.4 Session Context (for next session):**
+- Connection works: both players connect, game initializes, both see board
+- **Root cause fixed**: NetworkGameBridge was missing NetworkObject component and wasn't spawned
+- **Fix applied**: NetworkBootstrap adds NetworkObject, host spawns it after StartHost()
+- **Remaining bugs to verify**:
+  1. LocalPlayer assignment: check `GlyphtenderLobby.IsHost` returns correct value for guest
+  2. Turn indicator: should show "Your turn" for active player, player name for others
+  3. Hand visibility: P2 should see empty hand while waiting for P1 to draft
+  4. Draft sync: P1's placement should replicate to P2 via `OnNetworkDraftPlacementConfirmed`
+- **Key debug logs to check**:
+  - `[NetworkedGameManager] OnGameInitialized called. PlayMode=..., HasNetworkSession=...`
+  - `[NetworkedGameManager] GlyphtenderLobby.IsHost = ...`
+  - `[NetworkedGameManager] Online game started. isHost=..., LocalPlayer=...`
+  - `[HandController] RefreshDraftHand: displayPlayer=..., IsOnlineGame=..., LocalPlayer=..., CurrentDrafter=...`
+
 ### 7.2 Working Systems
 
 - Complete turn loop (move → cast → score → draw/cycle)

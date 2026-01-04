@@ -458,12 +458,31 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Gets the player whose hand should be displayed.
+        /// In online mode, always show local player's hand.
+        /// In local mode, show current player's hand.
+        /// </summary>
+        private Player GetDisplayPlayer()
+        {
+            if (NetworkedGameManager.Instance != null && NetworkedGameManager.Instance.IsOnlineGame)
+            {
+                return NetworkedGameManager.Instance.LocalPlayer;
+            }
+            return GameManager.Instance.GameState.CurrentPlayer;
+        }
+
+        /// <summary>
         /// Shows letter tiles during play phase.
         /// </summary>
         private void RefreshTileHand()
         {
             var state = GameManager.Instance.GameState;
-            var hand = state.Hands[state.CurrentPlayer];
+
+            // In online mode, always show local player's tiles (they can see their hand even when waiting)
+            // But the hand is inactive when it's not their turn
+            bool isOnline = NetworkedGameManager.Instance != null && NetworkedGameManager.Instance.IsOnlineGame;
+            Player displayPlayer = GetDisplayPlayer();
+            var hand = state.Hands[displayPlayer];
 
             float totalWidth = (hand.Count - 1) * tileSpacing;
             float startX = -totalWidth / 2f;
@@ -477,6 +496,23 @@ namespace Glyphtender.Unity
                 GameObject tileObj = CreateHandTile(letter, localPos, i);
                 _handTileObjects.Add(tileObj);
             }
+
+            Debug.Log($"[HandController] RefreshTileHand: displayPlayer={displayPlayer}, " +
+                $"handCount={hand.Count}, IsOnline={isOnline}");
+        }
+
+        /// <summary>
+        /// Gets the player whose glyphlings should be shown during draft.
+        /// In online mode, always show local player's glyphlings.
+        /// In local mode, show current drafter's glyphlings.
+        /// </summary>
+        private Player GetDraftDisplayPlayer()
+        {
+            if (NetworkedGameManager.Instance != null && NetworkedGameManager.Instance.IsOnlineGame)
+            {
+                return NetworkedGameManager.Instance.LocalPlayer;
+            }
+            return GameManager.Instance.GameState.CurrentDrafter;
         }
 
         /// <summary>
@@ -485,13 +521,31 @@ namespace Glyphtender.Unity
         private void RefreshDraftHand()
         {
             var state = GameManager.Instance.GameState;
-            Player drafter = state.CurrentDrafter;
 
-            // Find unplaced glyphlings for current drafter
+            // In online mode, only show hand when it's our turn to draft
+            bool isOnline = NetworkedGameManager.Instance != null && NetworkedGameManager.Instance.IsOnlineGame;
+            if (isOnline && !NetworkedGameManager.Instance.IsLocalPlayerTurn)
+            {
+                Debug.Log($"[HandController] RefreshDraftHand: Not our turn, hiding hand. " +
+                    $"LocalPlayer={NetworkedGameManager.Instance.LocalPlayer}, CurrentDrafter={state.CurrentDrafter}");
+                // Don't show any glyphlings - it's not our turn
+                SetHandActive(false);
+                return;
+            }
+
+            // In online mode, show local player's glyphlings; in local mode, show current drafter's
+            Player displayPlayer = GetDraftDisplayPlayer();
+
+            Debug.Log($"[HandController] RefreshDraftHand: displayPlayer={displayPlayer}, " +
+                $"IsOnlineGame={isOnline}, " +
+                $"LocalPlayer={NetworkedGameManager.Instance?.LocalPlayer}, " +
+                $"CurrentDrafter={state.CurrentDrafter}");
+
+            // Find unplaced glyphlings for the display player
             var unplacedGlyphlings = new List<Glyphling>();
             foreach (var g in state.Glyphlings)
             {
-                if (g.Owner == drafter && !g.IsPlaced)
+                if (g.Owner == displayPlayer && !g.IsPlaced)
                 {
                     unplacedGlyphlings.Add(g);
                 }
@@ -524,7 +578,7 @@ namespace Glyphtender.Unity
                 displayIndex++;
             }
 
-            // Hand is active during draft
+            // Hand is active during draft when it's our turn
             SetHandActive(true);
         }
 
@@ -538,8 +592,9 @@ namespace Glyphtender.Unity
             tile.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
             tile.layer = LayerMask.NameToLayer("UI3D");
 
-            var state = GameManager.Instance.GameState;
-            Material mat = GetTileMaterial(state.CurrentPlayer);
+            // Use display player's material (local player in online mode)
+            Player displayPlayer = GetDisplayPlayer();
+            Material mat = GetTileMaterial(displayPlayer);
             if (mat != null)
             {
                 tile.GetComponent<Renderer>().material = mat;
@@ -634,7 +689,7 @@ namespace Glyphtender.Unity
 
         private void UpdateTileHighlights()
         {
-            var state = GameManager.Instance.GameState;
+            Player displayPlayer = GetDisplayPlayer();
             for (int i = 0; i < _handTileObjects.Count; i++)
             {
                 var tile = _handTileObjects[i];
@@ -646,7 +701,7 @@ namespace Glyphtender.Unity
                 }
                 else
                 {
-                    Material mat = GetTileMaterial(state.CurrentPlayer);
+                    Material mat = GetTileMaterial(displayPlayer);
                     if (mat != null)
                     {
                         renderer.material = mat;
@@ -926,6 +981,12 @@ namespace Glyphtender.Unity
                 GameManager.Instance.CurrentInputMode != GameManager.InputMode.Tap)
                 return;
 
+            // Block input if it's not the local player's turn in online mode
+            if (NetworkedGameManager.Instance != null &&
+                NetworkedGameManager.Instance.IsOnlineGame &&
+                !NetworkedGameManager.Instance.IsLocalPlayerTurn)
+                return;
+
             Controller?.OnTileClicked(Index, Letter);
         }
     }
@@ -949,6 +1010,12 @@ namespace Glyphtender.Unity
                 return;
 
             if (GameManager.Instance.GameState.Phase != GamePhase.Draft)
+                return;
+
+            // Block input if it's not the local player's turn in online mode
+            if (NetworkedGameManager.Instance != null &&
+                NetworkedGameManager.Instance.IsOnlineGame &&
+                !NetworkedGameManager.Instance.IsLocalPlayerTurn)
                 return;
 
             GameManager.Instance.SelectDraftGlyphlingFromHand(Glyphling);
@@ -991,6 +1058,12 @@ namespace Glyphtender.Unity
                 return;
 
             if (GameManager.Instance.GameState.Phase != GamePhase.Draft)
+                return;
+
+            // Block input if it's not the local player's turn in online mode
+            if (NetworkedGameManager.Instance != null &&
+                NetworkedGameManager.Instance.IsOnlineGame &&
+                !NetworkedGameManager.Instance.IsLocalPlayerTurn)
                 return;
 
             // Save original transform

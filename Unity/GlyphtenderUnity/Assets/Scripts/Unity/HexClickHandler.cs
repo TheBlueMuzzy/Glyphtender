@@ -32,6 +32,12 @@ namespace Glyphtender.Unity
             if (GameManager.Instance.CurrentTurnState == GameTurnState.CycleMode)
                 return;
 
+            // Block input if it's not the local player's turn in online mode
+            if (NetworkedGameManager.Instance != null &&
+                NetworkedGameManager.Instance.IsOnlineGame &&
+                !NetworkedGameManager.Instance.IsLocalPlayerTurn)
+                return;
+
             var state = GameManager.Instance.GameState;
 
             // Handle draft phase
@@ -47,8 +53,13 @@ namespace Glyphtender.Unity
             // First, check if there's a glyphling at this hex
             Glyphling glyphlingHere = BoardRenderer.GetGlyphlingAt(Coord);
 
-            // If there's a glyphling here and it belongs to current player, select it
-            if (glyphlingHere != null && glyphlingHere.Owner == state.CurrentPlayer)
+            // Determine which player can interact - in online mode, only local player
+            Player interactingPlayer = (NetworkedGameManager.Instance != null && NetworkedGameManager.Instance.IsOnlineGame)
+                ? NetworkedGameManager.Instance.LocalPlayer
+                : state.CurrentPlayer;
+
+            // If there's a glyphling here and it belongs to the interacting player, select it
+            if (glyphlingHere != null && glyphlingHere.Owner == interactingPlayer)
             {
                 // If we're mid-turn, reset the current move first
                 var turnState = GameManager.Instance.CurrentTurnState;

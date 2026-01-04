@@ -277,21 +277,19 @@ This creates personality-driven behavior where a Bully ignores great words becau
 - ✅ Stats tracking system implemented
 - ✅ All code files documented with comprehensive headers
 - ✅ **PHASE 4 COMPLETE: AI Goal-Selection Model**
-  - AIGoal.cs: 7 goals enum, GoalSelector with priority cascade
-  - AIPersonality.cs: 7 traits (0-100), meta-traits, subtraits, 7 presets
-  - AIGoalEvaluators.cs: Goal-specific move evaluation
-  - Bully personality tested — pressures opponents as intended!
 - ⏳ **PHASE 5 IN PROGRESS: Online Multiplayer**
-  - ✅ Phase 5.1: NetworkServices (auth), GlyphtenderLobby (room codes), GlyphtenderRelay (NAT traversal)
-  - ✅ Phase 5.2: NetworkMessages (serializable structs), NetworkGameBridge (RPCs)
-  - ✅ Phase 5.3: OnlineLobbyScreen UI, NetworkBootstrap, NetworkedGameManager
-  - ⏳ Phase 5.4: Testing connection between PC and Phone (in progress)
-  - Host flow working: auth → lobby create → relay allocate → StartHost succeeds
-  - Guest flow: auth → lobby join → polling for relay code → needs testing
+  - ✅ Phase 5.1-5.3: Core networking infrastructure complete
+  - ⏳ **Phase 5.4: Draft Phase Sync (CURRENT)**
+    - Connection works: both players connect, game initializes
+    - Issues being fixed: LocalPlayer assignment, draft placement sync, turn indicator
 
-## Known Issues
+## Known Issues (Phase 5.4)
 1. **Hex directions may be incorrect** - The leyline movement paths don't work correctly after fixing the board layout. Need to verify/fix `HexCoord.Directions` array.
-2. **NetworkGameBridge.IsSpawned timing** - BroadcastGameStart() called before NetworkBehaviour is spawned; logs warning but game state sync needs retry logic when client connects.
+2. **Online Draft Sync Bugs (being fixed this session)**:
+   - Both screens show "Yellow's turn" instead of "Your turn" / "Waiting for Yellow"
+   - P2 sees yellow glyphlings in hand (should see nothing while waiting)
+   - P1 can't confirm draft (NetworkGameBridge RPC error - fixed by adding NetworkObject component and spawning)
+   - Turn indicator should show "Your turn" for active player, player name for non-active
 
 ---
 
@@ -337,6 +335,14 @@ Always use `HexCoord.DistanceTo()` for hex distance - it uses the correct cube-c
 
 ## Recent Decisions
 <!-- Add dated entries here when significant decisions are made -->
+- **2026-01-04**: **PHASE 5.4 Draft Sync Bug Fixes**
+  - **NetworkGameBridge must be spawned**: Added NetworkObject component in NetworkBootstrap, host spawns it after StartHost()
+  - **IsOnlineGame detection**: Now checks both PlayMode AND active network session (GlyphtenderLobby.CurrentLobby or Relay connected)
+  - **LocalPlayer assignment**: Uses GlyphtenderLobby.IsHost as primary source (set when creating/joining lobby)
+  - **HandController draft visibility**: Only shows glyphlings in hand when IsLocalPlayerTurn is true
+  - **GameManager.ConfirmDraftPlacement**: Routes through NetworkedGameManager.SendDraftPlacementToNetwork() in online mode
+  - **NetworkedGameManager.OnNetworkDraftPlacementConfirmed**: Applies GameRules.PlaceDraftGlyphling() then refreshes board/hand
+  - **TurnIndicator**: Shows "Your turn" for local player, "Yellow's turn" for remote (designed for 3-4P future)
 - **2026-01-04**: **PHASE 5.3 Online Lobby UI Complete**
   - OnlineLobbyScreen: Create/Join room UI with keyboard input (PC + mobile)
   - NetworkBootstrap: Creates NetworkManager with UnityTransport + all network singletons

@@ -62,9 +62,13 @@ namespace Glyphtender.Unity.Network
             var relay = new GameObject("GlyphtenderRelay");
             relay.AddComponent<GlyphtenderRelay>();
 
-            // Create NetworkGameBridge (must be spawned after NetworkManager starts)
+            // Create NetworkGameBridge
+            // NOTE: NetworkGameBridge is a NetworkBehaviour and needs a NetworkObject.
+            // It will be spawned when the network starts (host/client).
             var bridge = new GameObject("NetworkGameBridge");
+            bridge.AddComponent<NetworkObject>();  // Required for NetworkBehaviour
             bridge.AddComponent<NetworkGameBridge>();
+            Object.DontDestroyOnLoad(bridge);
 
             // Create NetworkedGameManager
             var networkedGM = new GameObject("NetworkedGameManager");

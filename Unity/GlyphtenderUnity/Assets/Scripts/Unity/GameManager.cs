@@ -444,8 +444,27 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            var position = PendingDraftPosition.Value;
+
+            // In online mode, send to network instead of applying locally
+            // The NetworkedGameManager will apply when confirmed
+            if (NetworkedGameManager.Instance != null &&
+                NetworkedGameManager.Instance.IsOnlineGame)
+            {
+                NetworkedGameManager.Instance.SendDraftPlacementToNetwork(position);
+
+                // Clear draft selection state immediately (UI feedback)
+                PendingDraftPosition = null;
+                SelectedDraftGlyphling = null;
+                ValidDraftPlacements.Clear();
+
+                UpdateTurnState();
+                OnSelectionChanged?.Invoke();
+                return;
+            }
+
             // Place the glyphling
-            bool success = GameRules.PlaceDraftGlyphling(GameState, PendingDraftPosition.Value);
+            bool success = GameRules.PlaceDraftGlyphling(GameState, position);
             if (!success)
             {
                 return;

@@ -63,6 +63,12 @@ namespace Glyphtender.Unity
             if (GameManager.Instance.CurrentInputMode != GameManager.InputMode.Drag)
                 return;
 
+            // Block input if it's not the local player's turn in online mode
+            if (NetworkedGameManager.Instance != null &&
+                NetworkedGameManager.Instance.IsOnlineGame &&
+                !NetworkedGameManager.Instance.IsLocalPlayerTurn)
+                return;
+
             // Only allow in states where tile selection is valid
             var state = GameManager.Instance.CurrentTurnState;
             if (state != GameTurnState.MovePending &&

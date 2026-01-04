@@ -81,6 +81,17 @@ namespace Glyphtender.Unity
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnGameInitialized += OnGameInitialized;
+
+                // If game was already initialized before we subscribed, check now
+                if (GameManager.Instance.GameState != null && !GameManager.Instance.WaitingForMainMenu)
+                {
+                    Debug.Log("[NetworkedGameManager] Game already initialized, checking online status now");
+                    OnGameInitialized();
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[NetworkedGameManager] GameManager.Instance is null in Start()");
             }
 
             // Subscribe to network events
@@ -127,13 +138,46 @@ namespace Glyphtender.Unity
         private void OnGameInitialized()
         {
             // Check if this is an online game
-            if (SettingsManager.Instance?.PlayMode == PlayMode.Online1v1)
+            // Check multiple sources since SettingsManager might not be set yet
+            var playMode = SettingsManager.Instance?.PlayMode;
+
+            // Also check if we have an active network session as a backup indicator
+            bool hasNetworkSession = GlyphtenderLobby.Instance?.CurrentLobby != null ||
+                                     GlyphtenderRelay.Instance?.State == RelayState.Connected;
+
+            Debug.Log($"[NetworkedGameManager] OnGameInitialized called. PlayMode={playMode}, HasNetworkSession={hasNetworkSession}");
+
+            // Consider it online if either PlayMode says so OR we have an active network session
+            if (playMode == PlayMode.Online1v1 || hasNetworkSession)
             {
                 IsOnlineGame = true;
-                // Use GlyphtenderLobby.IsHost since NetworkManager.IsHost may not be ready
-                bool isHost = GlyphtenderLobby.Instance?.IsHost ?? false;
+
+                // Determine if we're host or guest
+                // Check multiple sources for reliability
+                bool isHost = false;
+
+                // Primary: Check GlyphtenderLobby (most reliable - set when creating/joining lobby)
+                if (GlyphtenderLobby.Instance != null)
+                {
+                    isHost = GlyphtenderLobby.Instance.IsHost;
+                    Debug.Log($"[NetworkedGameManager] GlyphtenderLobby.IsHost = {isHost}");
+                }
+                // Secondary: Check GlyphtenderRelay (set during allocation/join)
+                else if (GlyphtenderRelay.Instance != null)
+                {
+                    isHost = GlyphtenderRelay.Instance.IsHost;
+                    Debug.Log($"[NetworkedGameManager] Using GlyphtenderRelay.IsHost = {isHost}");
+                }
+
+                // Debug: also log NetworkManager state
+                var netManager = global::Unity.Netcode.NetworkManager.Singleton;
+                if (netManager != null)
+                {
+                    Debug.Log($"[NetworkedGameManager] NetworkManager.IsHost = {netManager.IsHost}, IsClient = {netManager.IsClient}, IsServer = {netManager.IsServer}");
+                }
+
                 LocalPlayer = isHost ? Player.Yellow : Player.Blue;
-                Debug.Log($"[NetworkedGameManager] Online game started. Local player: {LocalPlayer}");
+                Debug.Log($"[NetworkedGameManager] Online game started. isHost={isHost}, LocalPlayer={LocalPlayer}");
 
                 // If host, broadcast initial game state
                 if (isHost)
@@ -144,6 +188,7 @@ namespace Glyphtender.Unity
             else
             {
                 IsOnlineGame = false;
+                Debug.Log("[NetworkedGameManager] Not an online game");
             }
         }
 
@@ -184,8 +229,46 @@ namespace Glyphtender.Unity
         private void OnNetworkGameStartReceived(NetworkGameStart gameStart)
         {
             // Client receives initial game state from host
-            // TODO: Apply the game state (tile bag order, hands) to match host
             Debug.Log($"[NetworkedGameManager] Received game start: TileBag={gameStart.TileBagOrder.Length} chars");
+
+            if (GameManager.Instance?.GameState == null)
+            {
+                Debug.LogWarning("[NetworkedGameManager] GameState is null, cannot apply network game start");
+                return;
+            }
+
+            var state = GameManager.Instance.GameState;
+
+            // Apply tile bag from host (so both clients draw in same order)
+            state.TileBag.Clear();
+            string tileBagStr = gameStart.TileBagOrder.ToString();
+            for (int i = 0; i < tileBagStr.Length; i++)
+            {
+                state.TileBag.Add(tileBagStr[i]);
+            }
+
+            // Apply hands from host
+            state.Hands[Player.Yellow].Clear();
+            string yellowHandStr = gameStart.YellowHand.ToString();
+            for (int i = 0; i < yellowHandStr.Length; i++)
+            {
+                state.Hands[Player.Yellow].Add(yellowHandStr[i]);
+            }
+
+            state.Hands[Player.Blue].Clear();
+            string blueHandStr = gameStart.BlueHand.ToString();
+            for (int i = 0; i < blueHandStr.Length; i++)
+            {
+                state.Hands[Player.Blue].Add(blueHandStr[i]);
+            }
+
+            Debug.Log($"[NetworkedGameManager] Applied game state: TileBag={state.TileBag.Count}, YellowHand={state.Hands[Player.Yellow].Count}, BlueHand={state.Hands[Player.Blue].Count}");
+
+            // Refresh the hand display to show the correct hand
+            if (HandController.Instance != null)
+            {
+                HandController.Instance.RefreshHand();
+            }
         }
 
         private void OnNetworkTurnConfirmed(NetworkTurnData turnData)
@@ -203,9 +286,54 @@ namespace Glyphtender.Unity
         {
             if (!IsOnlineGame) return;
 
-            Debug.Log($"[NetworkedGameManager] Draft placement confirmed at ({placement.Position.Column},{placement.Position.Row})");
+            var pos = placement.Position.ToHexCoord();
+            Debug.Log($"[NetworkedGameManager] Draft placement confirmed at ({pos.Column},{pos.Row})");
 
-            // TODO: Apply draft placement to GameManager
+            // Apply draft placement to GameManager
+            if (GameManager.Instance?.GameState == null) return;
+
+            var state = GameManager.Instance.GameState;
+
+            // Only apply if we're in draft phase
+            if (state.Phase != GamePhase.Draft)
+            {
+                Debug.LogWarning("[NetworkedGameManager] Received draft placement but not in draft phase");
+                return;
+            }
+
+            // Apply the placement directly to game state (bypass GameManager validation since host already validated)
+            bool success = GameRules.PlaceDraftGlyphling(state, pos);
+            if (!success)
+            {
+                Debug.LogError($"[NetworkedGameManager] Failed to place draft glyphling at {pos}");
+                return;
+            }
+
+            Debug.Log($"[NetworkedGameManager] Applied draft placement. Phase now: {state.Phase}, CurrentDrafter: {state.CurrentDrafter}");
+
+            // Refresh visuals
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshBoard();
+                BoardRenderer.Instance.RefreshHighlights();
+            }
+
+            if (HandController.Instance != null)
+            {
+                HandController.Instance.RefreshHand();
+            }
+
+            // Check if draft is complete
+            if (state.Phase == GamePhase.Play)
+            {
+                Debug.Log("[NetworkedGameManager] Draft phase complete, transitioning to play");
+            }
+
+            // Update turn indicator
+            if (TurnIndicator.Instance != null)
+            {
+                TurnIndicator.Instance.UpdateIndicator();
+            }
         }
 
         private void OnNetworkCycleConfirmed(NetworkCycleData cycleData)
