@@ -177,14 +177,14 @@ namespace Glyphtender.Unity.Network
         [ClientRpc]
         private void ConfirmTurnClientRpc(NetworkTurnData turnData)
         {
-            Debug.Log($"[NetworkGameBridge] Turn confirmed: Move to ({turnData.Move.To.Col},{turnData.Move.To.Row}), Cast '{turnData.Cast.GetLetter()}' at ({turnData.Cast.Position.Col},{turnData.Cast.Position.Row})");
+            Debug.Log($"[NetworkGameBridge] Turn confirmed: Move to ({turnData.Move.To.Column},{turnData.Move.To.Row}), Cast '{turnData.Cast.GetLetter()}' at ({turnData.Cast.Position.Column},{turnData.Cast.Position.Row})");
             OnTurnConfirmed?.Invoke(turnData);
         }
 
         [ClientRpc]
         private void ConfirmDraftPlacementClientRpc(NetworkDraftPlacement placement)
         {
-            Debug.Log($"[NetworkGameBridge] Draft placement confirmed at ({placement.Position.Col},{placement.Position.Row})");
+            Debug.Log($"[NetworkGameBridge] Draft placement confirmed at ({placement.Position.Column},{placement.Position.Row})");
             OnDraftPlacementConfirmed?.Invoke(placement);
         }
 

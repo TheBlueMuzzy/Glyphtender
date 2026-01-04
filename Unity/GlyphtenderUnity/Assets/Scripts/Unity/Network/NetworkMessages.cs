@@ -32,29 +32,29 @@ namespace Glyphtender.Unity.Network
     /// </summary>
     public struct NetworkHexCoord : INetworkSerializable
     {
-        public int Col;
+        public int Column;
         public int Row;
 
-        public NetworkHexCoord(int col, int row)
+        public NetworkHexCoord(int column, int row)
         {
-            Col = col;
+            Column = column;
             Row = row;
         }
 
         public NetworkHexCoord(HexCoord coord)
         {
-            Col = coord.Col;
+            Column = coord.Column;
             Row = coord.Row;
         }
 
         public HexCoord ToHexCoord()
         {
-            return new HexCoord(Col, Row);
+            return new HexCoord(Column, Row);
         }
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
-            serializer.SerializeValue(ref Col);
+            serializer.SerializeValue(ref Column);
             serializer.SerializeValue(ref Row);
         }
     }
