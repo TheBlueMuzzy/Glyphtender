@@ -598,6 +598,23 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Called by NetworkedGameManager when no words were formed and cycle mode should be entered.
+        /// </summary>
+        public void EnterCycleModeFromNetwork(Player player)
+        {
+            Debug.Log($"[GameManager] EnterCycleModeFromNetwork: player={player}");
+            CurrentTurnState = GameTurnState.CycleMode;
+            _enteredCycleMode = true;
+            _tilesCycledThisTurn = 0;
+            _cycleModeTurnPlayer = player;
+            _lastTurnWords = new System.Collections.Generic.List<WordResult>();
+            _lastTurnScore = 0;
+            ClearSelection();
+            OnSelectionChanged?.Invoke();
+            OnGameStateChanged?.Invoke();
+        }
+
+        /// <summary>
         /// Called when player taps/clicks a glyphling.
         /// </summary>
         public void SelectGlyphling(Glyphling glyphling)

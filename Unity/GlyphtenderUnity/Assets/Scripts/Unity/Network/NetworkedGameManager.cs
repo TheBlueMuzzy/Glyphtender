@@ -338,8 +338,27 @@ namespace Glyphtender.Unity
             // Track words formed
             GameManager.Instance.LastTurnWordCount = newWords.Count;
 
-            // If no words formed, we'd enter cycle mode - but host handles this
-            // For now, assume host validates and words were formed or cycle was completed
+            // If no words formed, enter cycle mode instead of ending turn
+            if (newWords.Count == 0)
+            {
+                Debug.Log($"[NetworkedGameManager] No words formed, entering cycle mode for {currentPlayer}");
+
+                // Refresh visuals first
+                if (BoardRenderer.Instance != null)
+                {
+                    BoardRenderer.Instance.RefreshBoard();
+                    BoardRenderer.Instance.RefreshHighlights();
+                }
+
+                if (HandController.Instance != null)
+                {
+                    HandController.Instance.RefreshHand();
+                }
+
+                // Enter cycle mode through GameManager
+                GameManager.Instance.EnterCycleModeFromNetwork(currentPlayer);
+                return;
+            }
 
             // Draw new tile
             GameRules.DrawTile(state, currentPlayer);
@@ -384,12 +403,31 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            // Find the glyphling that's being placed (current drafter's next unplaced glyphling)
+            Glyphling placingGlyphling = null;
+            foreach (var g in state.Glyphlings)
+            {
+                if (g.Owner == state.CurrentDrafter && !g.IsPlaced)
+                {
+                    placingGlyphling = g;
+                    break;
+                }
+            }
+
             // Apply the placement directly to game state (bypass GameManager validation since host already validated)
             bool success = GameRules.PlaceDraftGlyphling(state, pos);
             if (!success)
             {
                 Debug.LogError($"[NetworkedGameManager] Failed to place draft glyphling at {pos}");
                 return;
+            }
+
+            // Confirm the ghost glyphling so it becomes the permanent board object
+            // This MUST happen BEFORE RefreshBoard to prevent creating a duplicate
+            if (BoardRenderer.Instance != null && placingGlyphling != null)
+            {
+                BoardRenderer.Instance.ConfirmGhostGlyphling(placingGlyphling);
+                Debug.Log($"[NetworkedGameManager] Confirmed ghost glyphling for {placingGlyphling.Owner}_{placingGlyphling.Index}");
             }
 
             bool draftComplete = state.Phase == GamePhase.Play;

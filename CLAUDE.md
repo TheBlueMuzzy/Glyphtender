@@ -95,9 +95,17 @@ Local 1v1 play is now fully working. All major bugs from unified prefab lifecycl
 6. **Tile sizes updated to use `glyphlingSize`** - Was hardcoded to 1.5
    - All tile size calculations now use `hexSize * glyphlingSize`
 
+7. **Online: Refresh phase not entering** - NetworkedGameManager skipped cycle mode
+   - Added `EnterCycleModeFromNetwork()` method to GameManager
+   - Now `OnNetworkTurnConfirmed` checks for zero words and enters cycle mode
+
+8. **Online: Glyphling doubling during draft** - Ghost not confirmed on network path
+   - Added `ConfirmGhostGlyphling()` call in `OnNetworkDraftPlacementConfirmed`
+   - Now ghost becomes permanent object before RefreshBoard creates duplicate
+
 ### What Needs Testing
-- Online play phase (move + cast actions)
-- Turn indicator after draft in online mode
+- Online cycle mode (no word formed → should show refresh UI)
+- Online draft glyphling identity (should not duplicate anymore)
 
 ---
 
@@ -150,7 +158,7 @@ Local 1v1 play is now fully working. All major bugs from unified prefab lifecycl
 
 ## Session Log
 
-### 2026-01-05 (Phase 5.4 - Play Phase Bug Fixes)
+### 2026-01-05 (Phase 5.4 - Online Play Phase Bug Fixes)
 - Fixed glyphling/tile size on board (changed `glyphlingSize` from 1.0 to 1.8)
 - Fixed runeblossom selection during refresh phase (uniform quad scaling)
 - Fixed green square during tile drag (material reapplication)
@@ -158,6 +166,8 @@ Local 1v1 play is now fully working. All major bugs from unified prefab lifecycl
 - Fixed ghost tile not converting to permanent on confirm (removed premature HideGhostTile)
 - Updated all tile size calculations to use `hexSize * glyphlingSize`
 - Local 1v1 now fully working!
+- **Fixed online refresh phase** - NetworkedGameManager now calls `EnterCycleModeFromNetwork()` when no words formed
+- **Fixed online draft glyphling doubling** - NetworkedGameManager now calls `ConfirmGhostGlyphling()` before RefreshBoard
 
 ### 2026-01-04 (Phase 5.4 - Glyphling Prefab Lifecycle)
 - Created glyphling prefab system (Quad-based with materials)
