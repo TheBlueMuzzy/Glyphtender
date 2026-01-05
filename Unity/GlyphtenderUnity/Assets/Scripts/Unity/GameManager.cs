@@ -820,18 +820,26 @@ namespace Glyphtender.Unity
                 // Find which glyphling was selected
                 int glyphlingIndex = GameState.Glyphlings.IndexOf(SelectedGlyphling);
 
-                NetworkedGameManager.Instance.SendTurnToNetwork(
-                    _originalPosition ?? SelectedGlyphling.Position.Value,
-                    PendingDestination.Value,
-                    PendingCastPosition.Value,
-                    PendingLetter.Value,
-                    glyphlingIndex);
+                // IMPORTANT: Reset glyphling position BEFORE sending RPC!
+                // The RPC executes immediately on host (server-side), and the
+                // "already at destination" check would incorrectly skip processing
+                // if the glyphling is still at PendingDestination when the RPC runs.
+                HexCoord originalPos = _originalPosition ?? SelectedGlyphling.Position.Value;
+                HexCoord destPos = PendingDestination.Value;
+                HexCoord castPos = PendingCastPosition.Value;
+                char letter = PendingLetter.Value;
 
-                // Reset the glyphling position back (server will confirm the move)
                 if (_originalPosition != null && SelectedGlyphling != null)
                 {
                     SelectedGlyphling.Position = _originalPosition.Value;
                 }
+
+                NetworkedGameManager.Instance.SendTurnToNetwork(
+                    originalPos,
+                    destPos,
+                    castPos,
+                    letter,
+                    glyphlingIndex);
 
                 // Hide ghost tile
                 if (BoardRenderer.Instance != null)

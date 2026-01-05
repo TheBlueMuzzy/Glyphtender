@@ -81,33 +81,95 @@ Working on fixing online multiplayer bugs. Local 1v1 works.
 - **FIXED: Glyphling duplication in online mode** (v751)
 - **FIXED: Cycle mode (refresh phase) now works in online mode** (v752)
 
-### Current Testing (v752)
-**Look for v752 in red text at top of main menu** - this confirms Unity compiled the latest code.
+### Current Testing (v754)
+**Look for v754 in red text at top of main menu** - this confirms Unity compiled the latest code.
 
 ### Recent Fixes
 
-**Glyphling duplication (v751):**
-- Root cause: `ConfirmDraftPlacement()` was returning early in online mode without placing the glyphling or confirming the ghost object
-- This left the ghost orphaned, and `RefreshGlyphlings` created a duplicate
-- Fix: Host now applies draft placements locally AND sends to network (no early return)
-- The RPC callback's "already has glyphling" check correctly skips for host
+**Turn not advancing (v754):**
+- Root cause: ServerRpc executes synchronously on host - glyphling position was being reset AFTER RPC sent, so "already at destination" check passed incorrectly
+- Fix: Reset glyphling position BEFORE sending RPC in `ConfirmMove()`
+
+**Cycle mode on wrong player (v753):**
+- Root cause: HandController was entering cycle mode for non-local player
+- Fix: Added `IsLocalPlayerTurn` check in `OnSelectionChanged()` before entering cycle mode
 
 **Cycle mode / Refresh phase (v752):**
 - Root cause: `OnNetworkTurnConfirmed` wasn't checking if words were formed and always ended turn immediately
 - Fix: Added cycle mode detection - if no words formed, enters cycle mode instead of ending turn
 - Added network sync for cycle completion via `SendCycleToNetwork`
-- Added `EnterCycleModeFromNetwork` and `ExitCycleModeFromNetwork` methods
+
+**Glyphling duplication (v751):**
+- Root cause: `ConfirmDraftPlacement()` was returning early in online mode without placing the glyphling
+- Fix: Host now applies draft placements locally AND sends to network (no early return)
 
 ### Remaining Issues
-- Turn indicator may still be stuck after refresh phase - needs testing
+- Glyphling duplication may still occur in play phase (P1 - needs investigation)
 
 ---
 
 ## Known Issues
 
-1. **Turn indicator may be stuck after refresh phase** - P2 may show "waiting for player 1..." even though it's P2's turn. Needs testing after v752 cycle mode fix.
+See **Known Bug Registry** section below for prioritized list.
 
-2. **Hex directions may be incorrect** - Leyline movement paths may not work correctly. Need to verify `HexCoord.Directions` array.
+---
+
+## Bug Prevention Protocol
+
+**BEFORE fixing any bug:**
+1. Re-read the relevant HANDOFF.md section (Turn Flow, Draft Flow, etc.)
+2. Trace the documented flow step-by-step
+3. Identify WHERE in the flow the bug occurs
+4. ASK clarifying questions if symptoms are unclear
+5. Only THEN write code
+
+**Common pitfalls:**
+- Unity Netcode ServerRpc executes **synchronously on host** - code after RPC call runs AFTER RPC handler
+- Check `IsLocalPlayerTurn` before any player-specific UI/logic
+- Ghost objects must be confirmed before RefreshBoard or they get orphaned
+- `_glyphlingObjects` dictionary is the source of truth for preventing duplicates
+
+---
+
+## Quick Reference
+
+### Turn Flow (Play Phase)
+```
+1. Select glyphling (click on board)
+2. Move glyphling (drag to valid hex)
+3. Cast tile (select from hand, place adjacent)
+4. Score words (automatic)
+5. IF words formed: Draw tiles → EndTurn → Next player
+6. IF no words: Enter cycle mode → Discard up to 3 → Draw same amount → EndTurn → Next player
+```
+
+### Draft Flow
+```
+Snake draft: P1 → P2 → P2 → P1 (for 2 players)
+1. CurrentDrafter selects glyphling from hand
+2. Drag to valid hex → ShowGhostGlyphling
+3. Confirm placement → ConfirmGhostGlyphling
+4. Advance DraftPickNumber
+5. When all placed: Phase → Play, fire OnDraftComplete
+```
+
+### Network Sync Points
+- Draft placement: `SendDraftToNetwork()` → `OnNetworkDraftPlacementConfirmed()`
+- Turn confirmation: `SendTurnToNetwork()` → `OnNetworkTurnConfirmed()`
+- Cycle completion: `SendCycleToNetwork()` → `OnNetworkCycleConfirmed()`
+
+---
+
+## Known Bug Registry
+
+### P0 - Game Breaking
+(none currently)
+
+### P1 - Confusing but playable
+1. **Glyphling duplication (online)** - Sometimes duplicates appear during play phase. Needs investigation.
+
+### P2 - Minor
+1. **Hex directions may be incorrect** - Leyline movement paths may not work correctly.
 
 ---
 
@@ -160,6 +222,9 @@ Working on fixing online multiplayer bugs. Local 1v1 works.
 - Local 1v1 now fully working!
 - **FIXED: Online glyphling duplication (v751)** - Host now applies draft locally + sends to network
 - **FIXED: Cycle mode in online play (v752)** - Added network sync for refresh phase
+- **FIXED: Cycle mode on wrong player (v753)** - Added IsLocalPlayerTurn check
+- **FIXED: Turn not advancing (v754)** - Reset position BEFORE RPC (ServerRpc is synchronous on host)
+- Added Bug Prevention Protocol and Quick Reference sections to CLAUDE.md
 
 ### 2026-01-04 (Phase 5.4 - Glyphling Prefab Lifecycle)
 - Created glyphling prefab system (Quad-based with materials)

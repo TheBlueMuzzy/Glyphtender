@@ -375,9 +375,10 @@ namespace Glyphtender.Unity
             GameRules.DrawTile(state, currentPlayer);
 
             // End turn
+            Player playerBeforeEndTurn = state.CurrentPlayer;
             GameRules.EndTurn(state);
 
-            Debug.Log($"[NetworkedGameManager] Turn applied. New CurrentPlayer: {state.CurrentPlayer}");
+            Debug.Log($"[NetworkedGameManager] Turn applied. PlayerBefore: {playerBeforeEndTurn}, NewCurrentPlayer: {state.CurrentPlayer}");
 
             // Refresh visuals
             if (BoardRenderer.Instance != null)
