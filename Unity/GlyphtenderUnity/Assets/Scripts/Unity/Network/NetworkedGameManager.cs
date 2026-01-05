@@ -309,7 +309,11 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            Debug.Log($"[NetworkedGameManager] Applied draft placement. Phase now: {state.Phase}, CurrentDrafter: {state.CurrentDrafter}");
+            bool draftComplete = state.Phase == GamePhase.Play;
+            Debug.Log($"[NetworkedGameManager] Applied draft placement. Phase now: {state.Phase}, CurrentPlayer: {state.CurrentPlayer}, DraftComplete: {draftComplete}");
+
+            // Notify GameManager to fire appropriate events (this updates all subscribers)
+            GameManager.Instance.NotifyNetworkDraftPlacement(draftComplete);
 
             // Refresh visuals
             if (BoardRenderer.Instance != null)
@@ -321,18 +325,6 @@ namespace Glyphtender.Unity
             if (HandController.Instance != null)
             {
                 HandController.Instance.RefreshHand();
-            }
-
-            // Check if draft is complete
-            if (state.Phase == GamePhase.Play)
-            {
-                Debug.Log("[NetworkedGameManager] Draft phase complete, transitioning to play");
-            }
-
-            // Update turn indicator
-            if (TurnIndicator.Instance != null)
-            {
-                TurnIndicator.Instance.UpdateIndicator();
             }
         }
 

@@ -143,7 +143,9 @@ namespace Glyphtender.Unity
                     var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
                     if (renderer != null)
                     {
-                        Color baseColor = glyphling.Owner == Player.Yellow ? Color.yellow : Color.blue;
+                        // Get base color from player material (supports all 4 players)
+                        var playerMaterial = GetPlayerMaterial(glyphling.Owner);
+                        Color baseColor = playerMaterial != null ? playerMaterial.color : Color.white;
                         Color trappedColor = Color.red;
                         renderer.material.color = Color.Lerp(baseColor, trappedColor, pulse * 0.5f);
                     }
@@ -155,11 +157,11 @@ namespace Glyphtender.Unity
                     {
                         _trappedPulseTime.Remove(glyphling);
 
-                        // Restore original material
+                        // Restore original material (supports all 4 players)
                         var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
                         if (renderer != null)
                         {
-                            Material mat = glyphling.Owner == Player.Yellow ? yellowMaterial : blueMaterial;
+                            Material mat = GetPlayerMaterial(glyphling.Owner);
                             if (mat != null)
                             {
                                 renderer.material = mat;
@@ -315,12 +317,18 @@ namespace Glyphtender.Unity
             RefreshHighlights();
 
             // Show ghost glyphling during draft if position is pending
+            // Skip if we already have an external ghost (drag mode handles its own ghost)
             if (GameManager.Instance.GameState.Phase == GamePhase.Draft &&
                 GameManager.Instance.PendingDraftPosition.HasValue)
             {
-                ShowGhostGlyphling(
-                    GameManager.Instance.PendingDraftPosition.Value,
-                    GameManager.Instance.GameState.CurrentDrafter);
+                if (_ghostGlyphling == null)
+                {
+                    // No ghost yet - create one (tap mode or AI)
+                    ShowGhostGlyphling(
+                        GameManager.Instance.PendingDraftPosition.Value,
+                        GameManager.Instance.GameState.CurrentDrafter);
+                }
+                // else: ghost already exists (drag mode passed it in), keep it
             }
             else
             {
@@ -450,7 +458,20 @@ namespace Glyphtender.Unity
             if (glyphlingPrefab != null)
             {
                 Vector3 spawnPos = HexToWorld(glyphling.Position.Value) + Vector3.up * 0.3f;
-                obj = Instantiate(glyphlingPrefab, spawnPos, Quaternion.identity, transform);
+                // Rotate 90 degrees on X so quad faces up
+                obj = Instantiate(glyphlingPrefab, spawnPos, Quaternion.Euler(90f, 0f, 0f), transform);
+
+                // Apply player material to prefab
+                var material = GetPlayerMaterial(glyphling.Owner);
+                if (material != null)
+                {
+                    var renderer = obj.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        renderer.material = material;
+                        Debug.Log($"[BoardRenderer] Applied material '{material.name}' to {glyphling.Owner} glyphling prefab");
+                    }
+                }
             }
             else
             {
@@ -715,51 +736,171 @@ namespace Glyphtender.Unity
         }
 
         private GameObject _ghostGlyphling;
+        private bool _ghostIsExternal; // True if ghost was passed in from hand (don't destroy it)
+        private Material _ghostOriginalMaterial; // To restore opacity on confirm/cancel
 
         /// <summary>
         /// Shows a ghost glyphling at the pending draft position.
+        /// If existingObject is provided, uses that instead of creating a new one.
         /// </summary>
-        public void ShowGhostGlyphling(HexCoord position, Player owner)
+        public void ShowGhostGlyphling(HexCoord position, Player owner, GameObject existingObject = null)
         {
-            HideGhostGlyphling();
+            // Hide any existing ghost - if it was external, destroy it (it's being replaced)
+            var previousGhost = HideGhostGlyphling();
+            if (previousGhost != null)
+            {
+                Debug.Log($"[BoardRenderer] ShowGhostGlyphling: Destroying previous external ghost '{previousGhost.name}'");
+                Destroy(previousGhost);
+            }
 
             Vector3 pos = HexToWorld(position) + Vector3.up * 0.3f;
 
-            _ghostGlyphling = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            _ghostGlyphling.transform.position = pos;
-            _ghostGlyphling.transform.localScale = new Vector3(hexSize * glyphlingSize, hexSize * glyphlingSize, hexSize * glyphlingSize);
-            _ghostGlyphling.transform.SetParent(transform);
-            _ghostGlyphling.name = "GhostGlyphling";
+            if (existingObject != null)
+            {
+                // Use the existing object from hand - don't create a new one
+                _ghostGlyphling = existingObject;
+                _ghostIsExternal = true;
 
-            // Semi-transparent material
-            var renderer = _ghostGlyphling.GetComponent<Renderer>();
-            Material mat = new Material(GetPlayerMaterial(owner)); Color c = mat.color;
-            c.a = 0.5f;
-            mat.color = c;
+                Debug.Log($"[BoardRenderer] ShowGhostGlyphling: Using existing object '{existingObject.name}' at position {pos}");
 
-            // Enable transparency
-            mat.SetFloat("_Mode", 3);
-            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            mat.SetInt("_ZWrite", 0);
-            mat.DisableKeyword("_ALPHATEST_ON");
-            mat.EnableKeyword("_ALPHABLEND_ON");
-            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-            mat.renderQueue = 3000;
+                // Reparent to board
+                _ghostGlyphling.transform.SetParent(transform);
+                _ghostGlyphling.transform.position = pos;
+                _ghostGlyphling.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Board rotation
+                _ghostGlyphling.transform.localScale = new Vector3(hexSize * glyphlingSize, hexSize * glyphlingSize, hexSize * glyphlingSize);
+                _ghostGlyphling.layer = LayerMask.NameToLayer("Board");
 
-            renderer.material = mat;
+                Debug.Log($"[BoardRenderer] Ghost placed: pos={_ghostGlyphling.transform.position}, scale={_ghostGlyphling.transform.localScale}, layer={_ghostGlyphling.layer}");
+
+                // Store original material - keep it visible (no transparency, it's confusing)
+                var renderer = _ghostGlyphling.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    _ghostOriginalMaterial = renderer.material;
+                    Debug.Log($"[BoardRenderer] Ghost renderer found, material={renderer.material?.name}");
+                }
+                else
+                {
+                    Debug.LogWarning("[BoardRenderer] Ghost has no Renderer component!");
+                }
+            }
+            else
+            {
+                // Fallback: create a new object (for tap mode or AI)
+                _ghostIsExternal = false;
+
+                if (glyphlingPrefab != null)
+                {
+                    _ghostGlyphling = Instantiate(glyphlingPrefab, pos, Quaternion.Euler(90f, 0f, 0f), transform);
+                    _ghostGlyphling.transform.localScale = new Vector3(hexSize * glyphlingSize, hexSize * glyphlingSize, hexSize * glyphlingSize);
+                }
+                else
+                {
+                    _ghostGlyphling = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    _ghostGlyphling.transform.position = pos;
+                    _ghostGlyphling.transform.localScale = new Vector3(hexSize * glyphlingSize, hexSize * glyphlingSize, hexSize * glyphlingSize);
+                    _ghostGlyphling.transform.SetParent(transform);
+                }
+                _ghostGlyphling.name = "GhostGlyphling";
+
+                // Semi-transparent material
+                var renderer = _ghostGlyphling.GetComponent<Renderer>();
+                Material mat = new Material(GetPlayerMaterial(owner));
+                Color c = mat.color;
+                c.a = 0.5f;
+                mat.color = c;
+
+                // Enable transparency
+                mat.SetFloat("_Mode", 3);
+                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                mat.SetInt("_ZWrite", 0);
+                mat.DisableKeyword("_ALPHATEST_ON");
+                mat.EnableKeyword("_ALPHABLEND_ON");
+                mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                mat.renderQueue = 3000;
+
+                renderer.material = mat;
+                _ghostOriginalMaterial = null;
+            }
         }
 
         /// <summary>
-        /// Hides the ghost glyphling.
+        /// Hides the ghost glyphling. If external, returns the object; otherwise destroys it.
         /// </summary>
-        public void HideGhostGlyphling()
+        /// <returns>The external ghost object if it was passed in, null otherwise.</returns>
+        public GameObject HideGhostGlyphling()
         {
+            GameObject result = null;
+
             if (_ghostGlyphling != null)
             {
-                Destroy(_ghostGlyphling);
+                Debug.Log($"[BoardRenderer] HideGhostGlyphling: ghost exists, isExternal={_ghostIsExternal}");
+                if (_ghostIsExternal)
+                {
+                    // Return the object so it can be returned to hand
+                    result = _ghostGlyphling;
+                    Debug.Log($"[BoardRenderer] HideGhostGlyphling: Returning external ghost '{result.name}'");
+                }
+                else
+                {
+                    Debug.Log($"[BoardRenderer] HideGhostGlyphling: Destroying internal ghost");
+                    Destroy(_ghostGlyphling);
+                }
                 _ghostGlyphling = null;
+                _ghostIsExternal = false;
+                _ghostOriginalMaterial = null;
             }
+            else
+            {
+                Debug.Log("[BoardRenderer] HideGhostGlyphling: No ghost to hide");
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Confirms the ghost glyphling placement - makes it permanent on the board.
+        /// The object becomes a real board glyphling (tracked by RefreshGlyphlings).
+        /// </summary>
+        public void ConfirmGhostGlyphling(Glyphling glyphling)
+        {
+            if (_ghostGlyphling == null)
+            {
+                Debug.LogWarning("[BoardRenderer] ConfirmGhostGlyphling: No ghost to confirm!");
+                return;
+            }
+            Debug.Log($"[BoardRenderer] ConfirmGhostGlyphling: Confirming ghost '{_ghostGlyphling.name}' for {glyphling.Owner}_{glyphling.Index}");
+
+            // Restore full opacity
+            var renderer = _ghostGlyphling.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Material mat = GetPlayerMaterial(glyphling.Owner);
+                if (mat != null)
+                {
+                    renderer.material = mat;
+                }
+            }
+
+            // Remove drag/click handlers that were from the hand
+            var dragHandler = _ghostGlyphling.GetComponent<DraftGlyphlingDragHandler>();
+            if (dragHandler != null) Destroy(dragHandler);
+            var clickHandler = _ghostGlyphling.GetComponent<DraftGlyphlingClickHandler>();
+            if (clickHandler != null) Destroy(clickHandler);
+
+            // Remove collider (board glyphlings don't need it - hex handles selection)
+            var collider = _ghostGlyphling.GetComponent<Collider>();
+            if (collider != null) Destroy(collider);
+
+            // Track it as a real glyphling
+            _glyphlingObjects[glyphling] = _ghostGlyphling;
+            _ghostGlyphling.name = $"Glyphling_{glyphling.Owner}_{glyphling.Index}";
+
+            // Clear ghost reference (object is now tracked in _glyphlingObjects)
+            _ghostGlyphling = null;
+            _ghostIsExternal = false;
+            _ghostOriginalMaterial = null;
         }
 
         public void HideGhostTile()

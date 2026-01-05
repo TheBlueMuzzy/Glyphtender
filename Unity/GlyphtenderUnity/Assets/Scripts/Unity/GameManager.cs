@@ -463,6 +463,9 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            // Capture the glyphling before placement (for confirming the ghost object)
+            var placingGlyphling = SelectedDraftGlyphling;
+
             // Place the glyphling
             bool success = GameRules.PlaceDraftGlyphling(GameState, position);
             if (!success)
@@ -470,6 +473,12 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            // Confirm the ghost object so it becomes the permanent board glyphling
+            // This must happen BEFORE RefreshBoard to prevent creating a duplicate
+            if (BoardRenderer.Instance != null && placingGlyphling != null)
+            {
+                BoardRenderer.Instance.ConfirmGhostGlyphling(placingGlyphling);
+            }
 
             // Clear draft selection state
             PendingDraftPosition = null;
@@ -532,6 +541,18 @@ namespace Glyphtender.Unity
             if (GameState.Phase != GamePhase.Draft)
                 return;
 
+            // If there's an external ghost (dragged from hand), destroy it
+            // HandController will recreate it on RefreshHand
+            if (BoardRenderer.Instance != null)
+            {
+                var returnedGhost = BoardRenderer.Instance.HideGhostGlyphling();
+                if (returnedGhost != null)
+                {
+                    // Destroy the returned ghost - RefreshDraftHand will create a new one in hand
+                    Object.Destroy(returnedGhost);
+                }
+            }
+
             PendingDraftPosition = null;
             SelectedDraftGlyphling = null;
             ValidDraftPlacements.Clear();
@@ -544,6 +565,24 @@ namespace Glyphtender.Unity
 
             UpdateTurnState();
             OnSelectionChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Called by NetworkedGameManager when a draft placement is received from network.
+        /// Fires appropriate events so all subscribers (TurnIndicator, HandController, etc.) update.
+        /// </summary>
+        public void NotifyNetworkDraftPlacement(bool draftComplete)
+        {
+            if (draftComplete)
+            {
+                StartGameHistory();
+                OnDraftComplete?.Invoke();
+                Debug.Log("[GameManager] NotifyNetworkDraftPlacement: Draft complete, fired OnDraftComplete");
+            }
+
+            UpdateTurnState();
+            OnGameStateChanged?.Invoke();
+            Debug.Log($"[GameManager] NotifyNetworkDraftPlacement: Fired OnGameStateChanged, CurrentPlayer={GameState?.CurrentPlayer}");
         }
 
         /// <summary>

@@ -43,6 +43,10 @@ namespace Glyphtender.Unity
         public float handInactiveScale = 1.0f;
         public float handScaleDuration = 0.15f;
 
+        [Header("Prefabs")]
+        [Tooltip("Prefab for glyphlings in hand during draft. If null, uses sphere fallback.")]
+        public GameObject glyphlingPrefab;
+
         [Header("Materials")]
         public Material yellowTileMaterial;
         public Material blueTileMaterial;
@@ -458,6 +462,19 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Removes a glyphling object from hand tracking without destroying it.
+        /// Called when the object is being transferred to the board.
+        /// </summary>
+        public void UntrackGlyphlingObject(GameObject obj)
+        {
+            if (_handGlyphlingObjects.Contains(obj))
+            {
+                _handGlyphlingObjects.Remove(obj);
+                Debug.Log($"[HandController] Untracked glyphling '{obj.name}' from hand (will not be destroyed on refresh)");
+            }
+        }
+
+        /// <summary>
         /// Gets the player whose hand should be displayed.
         /// In online mode, always show local player's hand.
         /// In local mode, show current player's hand.
@@ -619,20 +636,50 @@ namespace Glyphtender.Unity
 
         private GameObject CreateHandGlyphling(Glyphling glyphling, Vector3 localPos, int index)
         {
-            GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            obj.transform.SetParent(_handAnchor);
-            obj.transform.localPosition = localPos;
-            obj.transform.localScale = new Vector3(tileSize * 0.8f, tileSize * 0.8f, tileSize * 0.8f);
-            obj.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
-            obj.layer = LayerMask.NameToLayer("UI3D");
+            GameObject obj;
 
-            // Use glyphling materials based on owner
-            Material mat = GetGlyphlingMaterial(glyphling.Owner);
-            if (mat != null)
+            if (glyphlingPrefab != null)
             {
-                obj.GetComponent<Renderer>().material = mat;
+                // Use prefab - rotate 180 degrees on X so quad faces camera (hand view is opposite of board view)
+                obj = Instantiate(glyphlingPrefab, Vector3.zero, Quaternion.identity);
+                obj.transform.SetParent(_handAnchor);
+                obj.transform.localPosition = localPos;
+                obj.transform.localScale = new Vector3(tileSize * 0.8f, tileSize * 0.8f, tileSize * 0.8f);
+                obj.transform.localRotation = Quaternion.Euler(180f, 0f, 0f);
+
+                // Add collider for OnMouseDown detection (Quads don't have colliders by default)
+                if (obj.GetComponent<Collider>() == null)
+                {
+                    obj.AddComponent<BoxCollider>();
+                }
+            }
+            else
+            {
+                // Fallback to sphere
+                obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                obj.transform.SetParent(_handAnchor);
+                obj.transform.localPosition = localPos;
+                obj.transform.localScale = new Vector3(tileSize * 0.8f, tileSize * 0.8f, tileSize * 0.8f);
+
+                // Remove collider from primitive
+                var collider = obj.GetComponent<Collider>();
+                if (collider != null) Destroy(collider);
             }
 
+            var renderer = obj.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+
+                // Use glyphling materials based on owner
+                Material mat = GetGlyphlingMaterial(glyphling.Owner);
+                if (mat != null)
+                {
+                    renderer.material = mat;
+                }
+            }
+
+            obj.layer = LayerMask.NameToLayer("UI3D");
             obj.name = $"HandGlyphling_{glyphling.Owner}_{glyphling.Index}";
 
             // Add draft drag handler
@@ -1198,11 +1245,22 @@ namespace Glyphtender.Unity
             // Check if dropped on valid hex
             if (_hoveredHex != null && GameManager.Instance.ValidDraftPlacements.Contains(_hoveredHex.Value))
             {
-                // Valid drop - place draft glyphling preview
-                GameManager.Instance.SelectDraftPosition(_hoveredHex.Value);
+                Debug.Log($"[DraftGlyphlingDragHandler] EndDrag: Valid drop at {_hoveredHex.Value}, passing '{gameObject.name}' to ShowGhostGlyphling");
 
-                // Destroy this hand object (ghost glyphling will show on board)
-                Destroy(gameObject);
+                // Remove this object from HandController's tracking BEFORE SelectDraftPosition
+                // triggers RefreshHand (which would destroy tracked objects)
+                Controller.UntrackGlyphlingObject(gameObject);
+
+                // Valid drop - pass this object to board as the ghost (same object, no destroy/recreate)
+                BoardRenderer.Instance.ShowGhostGlyphling(
+                    _hoveredHex.Value,
+                    Glyphling.Owner,
+                    gameObject);
+
+                Debug.Log($"[DraftGlyphlingDragHandler] EndDrag: After ShowGhostGlyphling, gameObject null? {gameObject == null}");
+
+                // Now set the pending draft position in GameManager
+                GameManager.Instance.SelectDraftPosition(_hoveredHex.Value);
 
                 // Show confirm/cancel buttons
                 if (GameUIController.Instance != null)

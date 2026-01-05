@@ -50,37 +50,37 @@ After editing .md files in a main repo C:\Users\Muzzy\Documents\UnityProjects\Gl
 
 ## Current Work
 
-**Phase 5.4: Online Draft Sync** (IN PROGRESS)
+**Phase 5.4: Online Draft & Play Phase Sync** (DRAFT WORKING - PLAY PHASE NEXT)
 
-Connection works. Both players connect and see the board. Fixing draft phase sync issues.
+Draft phase now working in local 1v1. Glyphling prefab system implemented with proper lifecycle management.
 
 ### What's Working
 - Auth → Lobby → Relay → Connection established
 - Both players see board and can interact
-- NetworkGameBridge now has NetworkObject and gets spawned
+- NetworkGameBridge spawns and syncs correctly
+- Draft placements sync between players
+- **Glyphling prefab system** - same object from hand → board (no destroy/recreate)
+- Proper material application to prefabs
+- Ghost glyphling lifecycle management
+
+### What Was Fixed This Session
+1. **Glyphling prefab lifecycle** - Same object from hand to board
+   - HandController creates glyphling with prefab
+   - When dragged to board, object is reparented (not destroyed/recreated)
+   - `BoardRenderer.ShowGhostGlyphling()` now accepts existing object
+   - `BoardRenderer.ConfirmGhostGlyphling()` registers it as permanent
+   - `HandController.UntrackGlyphlingObject()` prevents double-destroy
+
+2. **Hand/Board rotation** - Quads need different rotations
+   - Board glyphlings: 90° X rotation (face up at camera)
+   - Hand glyphlings: 180° X rotation (face forward at camera)
+
+3. **Collider for interaction** - Added BoxCollider to prefab glyphlings in hand
+   - Required for `OnMouseDown()` detection in drag/click handlers
 
 ### What Needs Testing
-1. **LocalPlayer assignment** - Guest should be Blue, not Yellow
-   - Check: `[NetworkedGameManager] GlyphtenderLobby.IsHost = false` for guest
-   - Check: `[NetworkedGameManager] Online game started. isHost=false, LocalPlayer=Blue`
-
-2. **Hand visibility** - P2 should see empty hand while waiting for P1
-   - Check: `[HandController] RefreshDraftHand: Not our turn, hiding hand`
-
-3. **Turn indicator** - Should show "Your turn" for active player, player name for others
-
-4. **Draft sync** - P1's placement should replicate to P2
-   - Check: `[NetworkGameBridge] Draft placement confirmed`
-   - Check: `[NetworkedGameManager] Applied draft placement`
-
-### Key Debug Logs to Watch
-```
-[NetworkedGameManager] OnGameInitialized called. PlayMode=Online1v1, HasNetworkSession=True
-[NetworkedGameManager] GlyphtenderLobby.IsHost = true/false
-[NetworkedGameManager] Online game started. isHost=..., LocalPlayer=...
-[HandController] RefreshDraftHand: displayPlayer=..., IsOnlineGame=..., LocalPlayer=...
-[OnlineLobbyScreen] NetworkGameBridge spawned on network
-```
+- Online play phase (move + cast actions)
+- Turn indicator after draft in online mode
 
 ---
 
@@ -88,10 +88,9 @@ Connection works. Both players connect and see the board. Fixing draft phase syn
 
 1. **Hex directions may be incorrect** - Leyline movement paths may not work correctly. Need to verify `HexCoord.Directions` array.
 
-2. **Online Draft Bugs** (Phase 5.4 - being fixed):
-   - Turn indicator may show "Yellow's turn" instead of "Your turn"
-   - P2 may see yellow glyphlings (should see nothing while waiting)
-   - Draft placements may not sync between players
+2. **Online Play Phase** (Phase 5.4 - needs testing):
+   - Glyphling color fix needs testing (was white, should be yellow/blue now)
+   - Turn sync after draft needs testing (both showed "waiting", should be fixed now)
 
 ---
 
@@ -134,7 +133,29 @@ Connection works. Both players connect and see the board. Fixing draft phase syn
 
 ## Session Log
 
-### 2026-01-04 (Phase 5.4)
+### 2026-01-04 (Phase 5.4 - Glyphling Prefab Lifecycle)
+- Created glyphling prefab system (Quad-based with materials)
+- Same object from hand → board (no destroy/recreate)
+- Added `ShowGhostGlyphling(existingObject)` for drag mode
+- Added `ConfirmGhostGlyphling()` to register ghost as permanent
+- Added `HandController.UntrackGlyphlingObject()` to prevent double-destroy
+- Fixed rotation: 90° for board, 180° for hand
+- Added BoxCollider for prefab interaction
+
+### 2026-01-04 (Phase 5.4 - Glyphling Color & Turn Sync Fix)
+- Fixed glyphling prefab not getting material applied (was white on host)
+- Fixed `Update()` trapped pulsing to use `GetPlayerMaterial()` for all 4 players
+- Added `GameManager.NotifyNetworkDraftPlacement()` for network to fire events
+- Now `OnNetworkDraftPlacementConfirmed` properly fires `OnDraftComplete` and `OnGameStateChanged`
+
+### 2026-01-04 (Phase 5.4 - Play Phase Sync)
+- Simplified ConfirmMove network condition (was requiring 7 conditions, now just IsOnlineGame)
+- Added DontDestroyOnLoad to NetworkedGameManager
+- Added debug logging for material assignment in BoardRenderer
+- Fixed Update loop to use GetPlayerMaterial for all 4 players (was hardcoded Yellow/Blue)
+- TurnIndicator now subscribes to OnOnlineModeInitialized event
+
+### 2026-01-04 (Phase 5.4 - Draft Sync)
 - Fixed NetworkGameBridge RPC error (added NetworkObject, host spawns it)
 - Improved IsOnlineGame detection (checks lobby/relay state too)
 - Added TurnIndicator.cs for "Your turn" / "Waiting for..." UI
