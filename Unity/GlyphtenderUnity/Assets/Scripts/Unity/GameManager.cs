@@ -466,8 +466,8 @@ namespace Glyphtender.Unity
             // Capture the glyphling before placement (for confirming the ghost object)
             var placingGlyphling = SelectedDraftGlyphling;
 
-            // Place the glyphling
-            bool success = GameRules.PlaceDraftGlyphling(GameState, position);
+            // Place the glyphling - pass the selected glyphling explicitly to avoid mismatch
+            bool success = GameRules.PlaceDraftGlyphling(GameState, position, placingGlyphling);
             if (!success)
             {
                 return;
@@ -595,6 +595,22 @@ namespace Glyphtender.Unity
             OnTurnEnded?.Invoke();
             OnGameStateChanged?.Invoke();
             Debug.Log($"[GameManager] NotifyNetworkTurnComplete: CurrentPlayer={GameState?.CurrentPlayer}");
+        }
+
+        /// <summary>
+        /// Called by NetworkedGameManager when a turn with no words is received.
+        /// Enters cycle mode for the local player to discard tiles.
+        /// </summary>
+        public void EnterCycleModeFromNetwork(Player player)
+        {
+            Debug.Log($"[GameManager] EnterCycleModeFromNetwork for {player}");
+            CurrentTurnState = GameTurnState.CycleMode;
+            _enteredCycleMode = true;
+            _tilesCycledThisTurn = 0;
+            _cycleModeTurnPlayer = player;
+            ClearSelection();
+            OnSelectionChanged?.Invoke();
+            OnGameStateChanged?.Invoke();
         }
 
         /// <summary>
