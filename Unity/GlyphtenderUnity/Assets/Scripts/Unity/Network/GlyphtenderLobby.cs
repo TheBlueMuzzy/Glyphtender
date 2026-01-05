@@ -288,6 +288,8 @@ namespace Glyphtender.Unity.Network
 
             try
             {
+                Debug.Log($"[GlyphtenderLobby] Updating lobby data: key='{key}', value='{value}' (length={value?.Length ?? 0})");
+
                 var options = new UpdateLobbyOptions
                 {
                     Data = new Dictionary<string, DataObject>
@@ -297,6 +299,11 @@ namespace Glyphtender.Unity.Network
                 };
 
                 CurrentLobby = await LobbyService.Instance.UpdateLobbyAsync(CurrentLobby.Id, options);
+
+                // Verify the update
+                string stored = GetLobbyData(key);
+                Debug.Log($"[GlyphtenderLobby] Lobby data updated. Verified stored value: '{stored}'");
+
                 return true;
             }
             catch (LobbyServiceException ex)
@@ -326,6 +333,8 @@ namespace Glyphtender.Unity.Network
             try
             {
                 CurrentLobby = await LobbyService.Instance.GetLobbyAsync(CurrentLobby.Id);
+                var keys = CurrentLobby.Data != null ? string.Join(", ", CurrentLobby.Data.Keys) : "(none)";
+                Debug.Log($"[GlyphtenderLobby] Refreshed lobby. Data keys: {keys}");
             }
             catch (LobbyServiceException ex)
             {

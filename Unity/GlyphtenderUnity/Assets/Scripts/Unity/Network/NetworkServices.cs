@@ -129,7 +129,9 @@ namespace Glyphtender.Unity.Network
 
                 IsInitialized = true;
                 SetConnectionState(NetworkConnectionState.Connected);
-                Debug.Log($"[NetworkServices] Initialized. Player ID: {PlayerId}");
+
+                // Log project info for debugging cross-platform issues
+                Debug.Log($"[NetworkServices] Initialized. Player ID: {PlayerId}, CloudProjectId: {UnityEngine.Application.cloudProjectId}");
 
                 OnInitialized?.Invoke();
                 return true;

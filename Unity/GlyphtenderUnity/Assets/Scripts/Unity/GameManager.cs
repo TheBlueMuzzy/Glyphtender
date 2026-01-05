@@ -446,21 +446,17 @@ namespace Glyphtender.Unity
 
             var position = PendingDraftPosition.Value;
 
-            // In online mode, send to network instead of applying locally
-            // The NetworkedGameManager will apply when confirmed
+            // In online mode, send to network AND apply locally
+            // The host applies immediately; the RPC callback will skip since it's already applied
+            // The client receives via RPC (they don't hit this code path - it's not their turn)
             if (NetworkedGameManager.Instance != null &&
                 NetworkedGameManager.Instance.IsOnlineGame)
             {
                 NetworkedGameManager.Instance.SendDraftPlacementToNetwork(position);
 
-                // Clear draft selection state immediately (UI feedback)
-                PendingDraftPosition = null;
-                SelectedDraftGlyphling = null;
-                ValidDraftPlacements.Clear();
-
-                UpdateTurnState();
-                OnSelectionChanged?.Invoke();
-                return;
+                // Host should ALSO apply locally (fall through to normal processing)
+                // The RPC callback's "already has glyphling" check will correctly skip
+                // This ensures the ghost is confirmed before RefreshBoard can orphan it
             }
 
             // Capture the glyphling before placement (for confirming the ghost object)
@@ -824,18 +820,26 @@ namespace Glyphtender.Unity
                 // Find which glyphling was selected
                 int glyphlingIndex = GameState.Glyphlings.IndexOf(SelectedGlyphling);
 
-                NetworkedGameManager.Instance.SendTurnToNetwork(
-                    _originalPosition ?? SelectedGlyphling.Position.Value,
-                    PendingDestination.Value,
-                    PendingCastPosition.Value,
-                    PendingLetter.Value,
-                    glyphlingIndex);
+                // IMPORTANT: Reset glyphling position BEFORE sending RPC!
+                // The RPC executes immediately on host (server-side), and the
+                // "already at destination" check would incorrectly skip processing
+                // if the glyphling is still at PendingDestination when the RPC runs.
+                HexCoord originalPos = _originalPosition ?? SelectedGlyphling.Position.Value;
+                HexCoord destPos = PendingDestination.Value;
+                HexCoord castPos = PendingCastPosition.Value;
+                char letter = PendingLetter.Value;
 
-                // Reset the glyphling position back (server will confirm the move)
                 if (_originalPosition != null && SelectedGlyphling != null)
                 {
                     SelectedGlyphling.Position = _originalPosition.Value;
                 }
+
+                NetworkedGameManager.Instance.SendTurnToNetwork(
+                    originalPos,
+                    destPos,
+                    castPos,
+                    letter,
+                    glyphlingIndex);
 
                 // Hide ghost tile
                 if (BoardRenderer.Instance != null)
@@ -1032,6 +1036,37 @@ namespace Glyphtender.Unity
             }
 
             OnGameStateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Called by NetworkedGameManager when a network turn results in no words formed.
+        /// Enters cycle mode so the player can discard tiles before their turn ends.
+        /// </summary>
+        public void EnterCycleModeFromNetwork(Player player)
+        {
+            Debug.Log($"[GameManager] EnterCycleModeFromNetwork for {player}");
+
+            CurrentTurnState = GameTurnState.CycleMode;
+            _enteredCycleMode = true;
+            _tilesCycledThisTurn = 0;
+            _cycleModeTurnPlayer = player;
+
+            ClearSelection();
+            OnSelectionChanged?.Invoke();
+            OnGameStateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Called by NetworkedGameManager when cycle mode is complete from network.
+        /// Exits cycle mode state without ending turn (network handles that).
+        /// </summary>
+        public void ExitCycleModeFromNetwork()
+        {
+            Debug.Log("[GameManager] ExitCycleModeFromNetwork");
+
+            _enteredCycleMode = false;
+            CurrentTurnState = GameTurnState.Idle;
+            ClearSelection();
         }
 
         /// <summary>

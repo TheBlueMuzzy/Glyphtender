@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 using UnityEngine;
+using System.Collections.Generic;
 using Unity.Netcode;
 using Glyphtender.Core;
 using Glyphtender.Unity.Network;
@@ -346,16 +347,38 @@ namespace Glyphtender.Unity
             // Track words formed
             GameManager.Instance.LastTurnWordCount = newWords.Count;
 
-            // If no words formed, we'd enter cycle mode - but host handles this
-            // For now, assume host validates and words were formed or cycle was completed
+            // If no words formed, enter cycle mode instead of ending turn
+            if (newWords.Count == 0)
+            {
+                Debug.Log($"[NetworkedGameManager] No words formed - entering cycle mode for {currentPlayer}");
 
-            // Draw new tile
+                // Enter cycle mode through GameManager so UI updates properly
+                GameManager.Instance.EnterCycleModeFromNetwork(currentPlayer);
+
+                // Refresh visuals but DON'T end turn yet
+                if (BoardRenderer.Instance != null)
+                {
+                    BoardRenderer.Instance.RefreshBoard();
+                    BoardRenderer.Instance.RefreshHighlights();
+                }
+
+                if (HandController.Instance != null)
+                {
+                    HandController.Instance.RefreshHand();
+                }
+
+                // Don't fire NotifyNetworkTurnComplete - turn isn't complete yet
+                return;
+            }
+
+            // Draw new tile (only when words were formed)
             GameRules.DrawTile(state, currentPlayer);
 
             // End turn
+            Player playerBeforeEndTurn = state.CurrentPlayer;
             GameRules.EndTurn(state);
 
-            Debug.Log($"[NetworkedGameManager] Turn applied. New CurrentPlayer: {state.CurrentPlayer}");
+            Debug.Log($"[NetworkedGameManager] Turn applied. PlayerBefore: {playerBeforeEndTurn}, NewCurrentPlayer: {state.CurrentPlayer}");
 
             // Refresh visuals
             if (BoardRenderer.Instance != null)
@@ -411,19 +434,9 @@ namespace Glyphtender.Unity
             bool draftComplete = state.Phase == GamePhase.Play;
             Debug.Log($"[NetworkedGameManager] Applied draft placement. Phase now: {state.Phase}, CurrentPlayer: {state.CurrentPlayer}, DraftComplete: {draftComplete}");
 
-            // If we're the host, we need to confirm the ghost glyphling to prevent duplication
-            // The ghost was created when we dragged the glyphling, and now we need to register it
-            // as the permanent board object BEFORE RefreshBoard creates a duplicate
-            if (GlyphtenderLobby.Instance?.IsHost == true && BoardRenderer.Instance != null)
-            {
-                // Find the glyphling that was just placed at this position
-                var placedGlyphling = state.GetGlyphlingAt(pos);
-                if (placedGlyphling != null)
-                {
-                    Debug.Log($"[NetworkedGameManager] Host confirming ghost for {placedGlyphling.Owner}_{placedGlyphling.Index}");
-                    BoardRenderer.Instance.ConfirmGhostGlyphling(placedGlyphling);
-                }
-            }
+            // Note: Host applies draft placements locally in GameManager.ConfirmDraftPlacement,
+            // so this code path is only hit by the CLIENT receiving the other player's placement.
+            // The client doesn't have a ghost to confirm - it just creates a new object in RefreshBoard.
 
             // Notify GameManager to fire appropriate events (this updates all subscribers)
             GameManager.Instance.NotifyNetworkDraftPlacement(draftComplete);
@@ -447,7 +460,63 @@ namespace Glyphtender.Unity
 
             Debug.Log($"[NetworkedGameManager] Cycle confirmed with mask {cycleData.DiscardMask}");
 
-            // TODO: Apply cycle to GameManager
+            if (GameManager.Instance?.GameState == null) return;
+
+            var state = GameManager.Instance.GameState;
+            Player currentPlayer = state.CurrentPlayer;
+            var hand = state.Hands[currentPlayer];
+
+            // Apply discards based on mask
+            // Build list of tiles to discard (by index, highest first so removal doesn't shift indices)
+            var indicesToDiscard = new List<int>();
+            for (int i = 0; i < 8; i++)
+            {
+                if ((cycleData.DiscardMask & (1 << i)) != 0)
+                {
+                    indicesToDiscard.Add(i);
+                }
+            }
+
+            // Sort descending so we remove from end first
+            indicesToDiscard.Sort((a, b) => b.CompareTo(a));
+
+            foreach (int index in indicesToDiscard)
+            {
+                if (index < hand.Count)
+                {
+                    Debug.Log($"[NetworkedGameManager] Discarding tile at index {index}: '{hand[index]}'");
+                    hand.RemoveAt(index);
+                }
+            }
+
+            // Draw new tiles to refill hand
+            while (hand.Count < GameRules.HandSize && state.TileBag.Count > 0)
+            {
+                GameRules.DrawTile(state, currentPlayer);
+            }
+
+            // Now end the turn
+            GameRules.EndTurn(state);
+
+            Debug.Log($"[NetworkedGameManager] Cycle applied, turn ended. New CurrentPlayer: {state.CurrentPlayer}");
+
+            // Exit cycle mode in GameManager
+            GameManager.Instance.ExitCycleModeFromNetwork();
+
+            // Refresh visuals
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshBoard();
+                BoardRenderer.Instance.RefreshHighlights();
+            }
+
+            if (HandController.Instance != null)
+            {
+                HandController.Instance.RefreshHand();
+            }
+
+            // Fire events through GameManager so all subscribers update
+            GameManager.Instance.NotifyNetworkTurnComplete();
         }
 
         private void OnNetworkForfeitReceived(NetworkForfeit forfeit)

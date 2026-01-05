@@ -65,9 +65,9 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 5.4: Online Play Phase Bug Fixes** (IN PROGRESS - BLOCKED)
+**Phase 5.4: Online Play Phase Bug Fixes** (IN PROGRESS - PC Build Host Issue)
 
-Working on fixing online multiplayer bugs. Local 1v1 works, but online has critical bugs.
+Working on fixing online multiplayer bugs. Local 1v1 works. Most online combinations work.
 
 ### What's Working
 - Auth → Lobby → Relay → Connection established
@@ -78,41 +78,130 @@ Working on fixing online multiplayer bugs. Local 1v1 works, but online has criti
 - **Tile prefab system** - same lifecycle as glyphlings!
 - **Runeblossoms visible during refresh phase selection**
 - **Local 1v1 fully working**
+- **FIXED: Glyphling duplication in online mode** (v751)
+- **FIXED: Cycle mode (refresh phase) now works in online mode** (v752)
+- **FIXED: White borders on tiles/glyphlings in PC builds** (shader stripping)
+- **Editor host → Phone joiner: WORKS**
+- **Phone host → Editor joiner: WORKS**
+- **Phone host → PC Build joiner: WORKS**
 
-### Current Testing (v750)
-**Look for v750 in red text at top of main menu** - this confirms Unity compiled the latest code.
+### Current Bug (v760)
+**PC Build host → Phone joiner: FAILS**
 
-### CRITICAL BUG - NOT FIXED (Needs Fresh Investigation)
-**Glyphling duplication when host drags during play phase:**
-- When host starts dragging a glyphling, a duplicate remains at the original position
-- Happens in play phase (after draft complete)
-- The dragged glyphling moves with mouse, but original stays behind
-- Multiple fix attempts in `NetworkedGameManager.OnNetworkDraftPlacementConfirmed` have failed
-- Attempted to call `ConfirmGhostGlyphling` before `RefreshBoard` - didn't work
+The phone receives the correct relay code (verified: raw == cleaned, length = 6), but `JoinRelayAsync` fails with "join code not found".
 
-**Root cause theory (unverified):**
-- Host drags glyphling → creates ghost visual
-- Host confirms → sends to network, but ghost still exists visually
-- Host receives own RPC → `RefreshBoard` creates NEW object
-- Result: BOTH ghost AND new object exist = duplication
+**What's different about PC Build:**
+- Same computer as Editor, same wifi network
+- Editor hosting works fine, PC Build hosting fails
+- Something in the build process is causing the relay allocation to not work properly
 
-**Files involved:**
-- `NetworkedGameManager.cs` - lines 414-426 (attempted fix)
-- `BoardRenderer.cs` - `RefreshGlyphlings()`, `ConfirmGhostGlyphling()`
-- `HexDragHandler.cs` - play phase drag handling
+**Debugging tools added:**
+- On-screen debug overlay on phone (shows CloudProjectId, relay codes, errors)
+- Desktop debug file: `glyphtender_host_debug.txt` written when PC Build hosts
+- PC Build logs at: `%USERPROFILE%\AppData\LocalLow\DefaultCompany\GlyphtenderUnity\Player.log`
 
-**Bug #2 (pending):**
-- Turn indicator stuck after refresh phase - not yet investigated
+### Current Testing (v760)
+**Look for v760 in red text at top of main menu**
+
+When PC Build hosts a game, check Desktop for `glyphtender_host_debug.txt` - it will show:
+- Room code and Relay code allocated
+- CloudProjectId
+- Whether running in Editor or Build
+
+### Remaining Issues
+1. **P0: PC Build host → Phone joiner fails** - relay join code not found (under investigation)
 
 ---
 
 ## Known Issues
 
-1. **CRITICAL: Glyphling duplication in online play phase** - When host drags glyphling, duplicate remains at original position. Multiple fix attempts failed. Needs fresh investigation.
+### P0 - Game Breaking
+1. **PC Build host → Phone joiner fails** - Relay join code not found. Editor host works, PC Build host doesn't. Under investigation (v760).
 
-2. **Turn indicator stuck after refresh phase** - P2 shows "waiting for player 1..." even though it's P2's turn. Not yet investigated.
+### P1 - Minor
+1. Glyphling duplication may still occur in play phase (needs investigation)
+2. Hex directions may be incorrect for leyline movement
 
-3. **Hex directions may be incorrect** - Leyline movement paths may not work correctly. Need to verify `HexCoord.Directions` array.
+---
+
+## Bug Prevention Protocol
+
+**BEFORE fixing any bug:**
+1. Re-read the relevant HANDOFF.md section (Turn Flow, Draft Flow, etc.)
+2. Trace the documented flow step-by-step
+3. Identify WHERE in the flow the bug occurs
+4. ASK clarifying questions if symptoms are unclear
+5. Only THEN write code
+
+**Common pitfalls:**
+- Unity Netcode ServerRpc executes **synchronously on host** - code after RPC call runs AFTER RPC handler
+- Check `IsLocalPlayerTurn` before any player-specific UI/logic
+- Ghost objects must be confirmed before RefreshBoard or they get orphaned
+- `_glyphlingObjects` dictionary is the source of truth for preventing duplicates
+
+---
+
+## Unity Editor vs Build Differences
+
+**When something works in Editor but not in builds, consider:**
+
+1. **Shader stripping** - Shaders used only via `Shader.Find()` at runtime get stripped from builds
+   - Fix: Add shader to **Edit → Project Settings → Graphics → Always Included Shaders**
+   - Current project requires: `Unlit/Transparent`
+
+2. **Texture import settings** - Editor may use different compression than builds
+   - For transparent PNGs: ensure `alphaIsTransparency: 1` in .meta files
+
+3. **Build logs** - PC builds write logs to:
+   - `%USERPROFILE%\AppData\LocalLow\<CompanyName>\<ProductName>\Player.log`
+
+**When fixing bugs, consider ALL of:**
+- Code changes
+- Unity Editor settings (Project Settings, Graphics, etc.)
+- Asset import settings (.meta files)
+- Build settings
+
+---
+
+## Quick Reference
+
+### Turn Flow (Play Phase)
+```
+1. Select glyphling (click on board)
+2. Move glyphling (drag to valid hex)
+3. Cast tile (select from hand, place adjacent)
+4. Score words (automatic)
+5. IF words formed: Draw tiles → EndTurn → Next player
+6. IF no words: Enter cycle mode → Discard up to 3 → Draw same amount → EndTurn → Next player
+```
+
+### Draft Flow
+```
+Snake draft: P1 → P2 → P2 → P1 (for 2 players)
+1. CurrentDrafter selects glyphling from hand
+2. Drag to valid hex → ShowGhostGlyphling
+3. Confirm placement → ConfirmGhostGlyphling
+4. Advance DraftPickNumber
+5. When all placed: Phase → Play, fire OnDraftComplete
+```
+
+### Network Sync Points
+- Draft placement: `SendDraftToNetwork()` → `OnNetworkDraftPlacementConfirmed()`
+- Turn confirmation: `SendTurnToNetwork()` → `OnNetworkTurnConfirmed()`
+- Cycle completion: `SendCycleToNetwork()` → `OnNetworkCycleConfirmed()`
+
+---
+
+## Known Bug Registry
+
+### P0 - Game Breaking
+(none currently)
+
+### P1 - Confusing but playable
+1. **Glyphling duplication (online)** - Sometimes duplicates appear during play phase. Needs investigation.
+
+### P2 - Minor
+1. **Hex directions may be incorrect** - Leyline movement paths may not work correctly.
 
 ---
 
@@ -163,8 +252,16 @@ Working on fixing online multiplayer bugs. Local 1v1 works, but online has criti
 - Fixed ghost tile not converting to permanent on confirm (removed premature HideGhostTile)
 - Updated all tile size calculations to use `hexSize * glyphlingSize`
 - Local 1v1 now fully working!
-- **Attempted fix for online glyphling duplication** - Added ConfirmGhostGlyphling call in NetworkedGameManager - DID NOT WORK
-- Bug still exists: glyphling duplicates when host drags during play phase
+- **FIXED: Online glyphling duplication (v751)** - Host now applies draft locally + sends to network
+- **FIXED: Cycle mode in online play (v752)** - Added network sync for refresh phase
+- **FIXED: Cycle mode on wrong player (v753)** - Added IsLocalPlayerTurn check
+- **FIXED: Turn not advancing (v754)** - Reset position BEFORE RPC (ServerRpc is synchronous on host)
+- Added Bug Prevention Protocol and Quick Reference sections to CLAUDE.md
+- **FIXED: White borders on tiles/glyphlings in PC builds** - Shader stripping issue
+  - Changed SpriteLoader to use `Unlit/Transparent` shader (alpha blend instead of cutout)
+  - Added `Unlit/Transparent` to Always Included Shaders in Graphics settings
+  - Updated all texture .meta files with `alphaIsTransparency: 1`
+  - Added "Unity Editor vs Build Differences" section to CLAUDE.md
 
 ### 2026-01-04 (Phase 5.4 - Glyphling Prefab Lifecycle)
 - Created glyphling prefab system (Quad-based with materials)

@@ -77,6 +77,11 @@ namespace Glyphtender.Unity
         private string _enteredCode = "";
         private string _errorMessage = "";
 
+        // Debug overlay for on-screen diagnostics
+        private static string _debugInfo = "";
+        private static GameObject _debugOverlay;
+        private static TextMesh _debugText;
+
         // UI elements
         private GameObject _menuRoot;
         private GameObject _backgroundBlocker;
@@ -606,6 +611,9 @@ namespace Glyphtender.Unity
             Debug.Log($"[OnlineLobbyScreen] Relay pre-allocated: {relayCode}. Updating lobby...");
             await GlyphtenderLobby.Instance.UpdateLobbyDataAsync("relayCode", relayCode);
 
+            // Write debug info to desktop for PC build debugging
+            WriteHostDebugFile(roomCode, relayCode);
+
             // OnLobbyCreated will be called to show the room code
         }
 
@@ -691,6 +699,86 @@ namespace Glyphtender.Unity
             SetState(LobbyScreenState.Error);
         }
 
+        /// <summary>
+        /// Writes host debug info to a file on Desktop for PC build debugging.
+        /// </summary>
+        private void WriteHostDebugFile(string roomCode, string relayCode)
+        {
+            try
+            {
+                string desktopPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
+                string filePath = System.IO.Path.Combine(desktopPath, "glyphtender_host_debug.txt");
+                string timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                string cloudId = UnityEngine.Application.cloudProjectId;
+                string playerId = NetworkServices.Instance?.PlayerId ?? "(unknown)";
+
+                string content = $"=== Glyphtender Host Debug ===\n" +
+                                 $"Timestamp: {timestamp}\n" +
+                                 $"Room Code (Lobby): {roomCode}\n" +
+                                 $"Relay Code: {relayCode} (length={relayCode?.Length})\n" +
+                                 $"CloudProjectId: {cloudId}\n" +
+                                 $"PlayerId: {playerId}\n" +
+                                 $"IsEditor: {Application.isEditor}\n" +
+                                 $"Platform: {Application.platform}\n" +
+                                 $"Version: {Application.version}\n";
+
+                System.IO.File.WriteAllText(filePath, content);
+                Debug.Log($"[OnlineLobbyScreen] Wrote host debug file to: {filePath}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[OnlineLobbyScreen] Failed to write debug file: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Shows debug info on screen (visible without logcat)
+        /// </summary>
+        private static void ShowDebugOverlay(string info)
+        {
+            _debugInfo = info;
+
+            // Create overlay if it doesn't exist
+            if (_debugOverlay == null)
+            {
+                _debugOverlay = new GameObject("DebugOverlay");
+                DontDestroyOnLoad(_debugOverlay);
+
+                // Use GUI text that renders on top of everything
+                var canvas = _debugOverlay.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 9999;
+
+                var textObj = new GameObject("DebugText");
+                textObj.transform.SetParent(_debugOverlay.transform);
+
+                var text = textObj.AddComponent<UnityEngine.UI.Text>();
+                text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                text.fontSize = 24;
+                text.color = Color.yellow;
+                text.alignment = TextAnchor.UpperLeft;
+                text.horizontalOverflow = HorizontalWrapMode.Wrap;
+                text.verticalOverflow = VerticalWrapMode.Overflow;
+
+                var rectTransform = textObj.GetComponent<RectTransform>();
+                rectTransform.anchorMin = new Vector2(0, 0.7f);
+                rectTransform.anchorMax = new Vector2(1, 1);
+                rectTransform.offsetMin = new Vector2(10, 0);
+                rectTransform.offsetMax = new Vector2(-10, -10);
+
+                _debugText = null; // We're using UI.Text instead
+                textObj.GetComponent<UnityEngine.UI.Text>().text = _debugInfo;
+            }
+            else
+            {
+                var text = _debugOverlay.GetComponentInChildren<UnityEngine.UI.Text>();
+                if (text != null)
+                {
+                    text.text = _debugInfo;
+                }
+            }
+        }
+
         private async void StartGame()
         {
             SetState(LobbyScreenState.StartingGame);
@@ -745,6 +833,10 @@ namespace Glyphtender.Unity
             {
                 Debug.Log("[OnlineLobbyScreen] Guest path: Waiting for relay code from host...");
 
+                // Show debug overlay with CloudProjectId
+                string cloudId = UnityEngine.Application.cloudProjectId;
+                ShowDebugOverlay($"CloudProjectId: {cloudId}\nWaiting for relay code...");
+
                 // Guest: Get relay code from lobby and join
                 // The lobby data needs to be refreshed to get the relay code
                 string relayCode = GlyphtenderLobby.Instance.GetLobbyData("relayCode");
@@ -758,21 +850,54 @@ namespace Glyphtender.Unity
                     await GlyphtenderLobby.Instance.RefreshLobbyAsync();
                     relayCode = GlyphtenderLobby.Instance.GetLobbyData("relayCode");
                     Debug.Log($"[OnlineLobbyScreen] Attempt {attempts + 1}: relayCode = '{relayCode ?? "(null)"}'");
+                    ShowDebugOverlay($"CloudProjectId: {cloudId}\nRelayCode: {relayCode ?? "(waiting)"}\nAttempt: {attempts + 1}");
                     attempts++;
                 }
 
                 if (string.IsNullOrEmpty(relayCode))
                 {
+                    ShowDebugOverlay($"CloudProjectId: {cloudId}\nERROR: No relay code received");
                     ShowError("Failed to get relay connection from host");
                     return;
                 }
 
-                Debug.Log($"[OnlineLobbyScreen] Got relay code: {relayCode}. Joining relay...");
+                // CRITICAL: Trim the relay code to remove any whitespace/encoding issues
+                string rawRelayCode = relayCode;
+                relayCode = relayCode.Trim();
+
+                // Also strip any non-alphanumeric characters (just in case)
+                string cleanedRelayCode = "";
+                foreach (char c in relayCode)
+                {
+                    if (char.IsLetterOrDigit(c))
+                    {
+                        cleanedRelayCode += c;
+                    }
+                }
+                relayCode = cleanedRelayCode;
+
+                Debug.Log($"[OnlineLobbyScreen] Got relay code from lobby: raw='{rawRelayCode}' (len={rawRelayCode?.Length}), cleaned='{relayCode}' (len={relayCode?.Length})");
+                ShowDebugOverlay($"CloudProjectId: {cloudId}\nRaw code: '{rawRelayCode}' (len={rawRelayCode?.Length})\nCleaned: '{relayCode}' (len={relayCode?.Length})\nJoining relay...");
+
+                // Debug: Log the exact relay code characters to check for hidden chars
+                if (!string.IsNullOrEmpty(rawRelayCode))
+                {
+                    string charDebug = "";
+                    foreach (char c in rawRelayCode)
+                    {
+                        charDebug += $"[{c}:{(int)c}]";
+                    }
+                    Debug.Log($"[OnlineLobbyScreen] Raw relay code chars: {charDebug}");
+                }
 
                 bool joined = await GlyphtenderRelay.Instance.JoinRelayAsync(relayCode);
                 if (!joined)
                 {
-                    ShowError("Failed to join relay");
+                    string errorDetail = GlyphtenderRelay.Instance.LastError ?? "Unknown error";
+                    Debug.LogError($"[OnlineLobbyScreen] Relay join failed: {errorDetail}");
+                    // Show more detail: raw vs cleaned, and full error
+                    ShowDebugOverlay($"CloudProjectId: {cloudId}\nRaw: '{rawRelayCode}' len={rawRelayCode?.Length}\nCleaned: '{relayCode}' len={relayCode?.Length}\nERROR: {errorDetail}");
+                    ShowError($"Failed to join relay: {errorDetail}");
                     return;
                 }
 

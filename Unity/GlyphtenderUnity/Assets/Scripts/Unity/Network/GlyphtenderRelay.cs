@@ -124,7 +124,7 @@ namespace Glyphtender.Unity.Network
                 IsHost = true;
                 SetState(RelayState.Connected);
 
-                Debug.Log($"[GlyphtenderRelay] Relay allocated. Join code: {JoinCode}");
+                Debug.Log($"[GlyphtenderRelay] Relay allocated. Join code: {JoinCode}, Region: {_hostAllocation.Region}, AllocationId: {_hostAllocation.AllocationId}");
 
                 OnRelayAllocated?.Invoke(JoinCode);
                 return JoinCode;
@@ -163,7 +163,7 @@ namespace Glyphtender.Unity.Network
 
             try
             {
-                Debug.Log($"[GlyphtenderRelay] Joining relay with code: {joinCode}");
+                Debug.Log($"[GlyphtenderRelay] Joining relay with code: '{joinCode}' (length={joinCode?.Length ?? 0})");
 
                 _guestAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
@@ -171,7 +171,7 @@ namespace Glyphtender.Unity.Network
                 IsHost = false;
                 SetState(RelayState.Connected);
 
-                Debug.Log("[GlyphtenderRelay] Joined relay successfully");
+                Debug.Log($"[GlyphtenderRelay] Joined relay successfully. Region: {_guestAllocation.Region}");
 
                 OnRelayJoined?.Invoke();
                 return true;

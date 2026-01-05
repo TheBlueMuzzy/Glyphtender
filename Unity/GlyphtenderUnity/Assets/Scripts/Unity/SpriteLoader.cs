@@ -36,25 +36,26 @@ namespace Glyphtender.Unity
 
         private void CreateBaseMaterial()
         {
-            // Use Unlit/Transparent Cutout shader for crisp sprite rendering
-            // This renders fully opaque where alpha > cutoff, fully transparent elsewhere
-            Shader shader = Shader.Find("Unlit/Transparent Cutout");
+            // Use Unlit/Transparent shader for proper alpha blending
+            // This handles semi-transparent pixels correctly without white edge artifacts
+            Shader shader = Shader.Find("Unlit/Transparent");
             if (shader == null)
             {
-                // Fallback to Standard with Cutout mode
+                // Fallback to Standard with Transparent mode (alpha blend)
                 shader = Shader.Find("Standard");
                 _baseMaterial = new Material(shader);
-                _baseMaterial.SetFloat("_Mode", 1); // Cutout mode
-                _baseMaterial.SetFloat("_Cutoff", 0.5f);
-                _baseMaterial.EnableKeyword("_ALPHATEST_ON");
-                _baseMaterial.DisableKeyword("_ALPHABLEND_ON");
+                _baseMaterial.SetFloat("_Mode", 3); // Transparent mode (alpha blend)
+                _baseMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                _baseMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                _baseMaterial.SetInt("_ZWrite", 0);
+                _baseMaterial.DisableKeyword("_ALPHATEST_ON");
+                _baseMaterial.EnableKeyword("_ALPHABLEND_ON");
                 _baseMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                _baseMaterial.renderQueue = 2450; // AlphaTest queue
+                _baseMaterial.renderQueue = 3000; // Transparent queue
             }
             else
             {
                 _baseMaterial = new Material(shader);
-                _baseMaterial.SetFloat("_Cutoff", 0.5f);
             }
             _baseMaterial.color = Color.white;
         }
