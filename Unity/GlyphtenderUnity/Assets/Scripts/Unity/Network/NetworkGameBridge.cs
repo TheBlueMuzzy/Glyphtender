@@ -86,6 +86,8 @@ namespace Glyphtender.Unity.Network
         [ServerRpc(RequireOwnership = false)]
         public void RequestTurnServerRpc(NetworkTurnData turnData, ServerRpcParams rpcParams = default)
         {
+            Debug.Log($"[NetworkGameBridge] RequestTurnServerRpc RECEIVED from client {rpcParams.Receive.SenderClientId}");
+
             // Validate the requesting client is the current player
             if (!ValidateClientTurn(rpcParams.Receive.SenderClientId))
             {

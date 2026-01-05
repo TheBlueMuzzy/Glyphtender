@@ -44,15 +44,23 @@
 
 ### File Sync (Worktrees)
 Main repo: `C:\Users\Muzzy\Documents\UnityProjects\Glyphtender`
-After editing .md files in a main repo C:\Users\Muzzy\Documents\UnityProjects\Glyphtender , copy to worktree and commit both.
-- Muzzy may do manual editing on the main repo versions, so they are the source of truth!
+Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
+
+**CRITICAL: Unity runs from the main repo, NOT the worktree!**
+- After editing ANY scripts in a worktree, ALWAYS copy them to the main repo so Unity sees the changes
+- Example: After editing `BoardRenderer.cs` in worktree, run:
+  ```
+  cp "C:\Users\Muzzy\.claude-worktrees\Glyphtender\bold-shirley\Unity\GlyphtenderUnity\Assets\Scripts\Unity\BoardRenderer.cs" "C:\Users\Muzzy\Documents\UnityProjects\Glyphtender\Unity\GlyphtenderUnity\Assets\Scripts\Unity\BoardRenderer.cs"
+  ```
+- This applies to ALL script files (.cs), not just .md files
+- Muzzy may do manual editing on the main repo versions, so they are the source of truth for .md files
 ---
 
 ## Current Work
 
-**Phase 5.4: Online Draft & Play Phase Sync** (DRAFT WORKING - PLAY PHASE NEXT)
+**Phase 5.4: Local Play Phase Bug Fixes** (WORKING!)
 
-Draft phase now working in local 1v1. Glyphling prefab system implemented with proper lifecycle management.
+Local 1v1 play is now fully working. All major bugs from unified prefab lifecycle have been fixed.
 
 ### What's Working
 - Auth → Lobby → Relay → Connection established
@@ -60,23 +68,32 @@ Draft phase now working in local 1v1. Glyphling prefab system implemented with p
 - NetworkGameBridge spawns and syncs correctly
 - Draft placements sync between players
 - **Glyphling prefab system** - same object from hand → board (no destroy/recreate)
-- Proper material application to prefabs
-- Ghost glyphling lifecycle management
+- **Tile prefab system** - same lifecycle as glyphlings!
+- **Tile drag shows runeblossom texture** (not green square)
+- **Ghost tile properly converts to permanent tile on confirm**
+- **Glyphling identity preserved through draft** (no duplicate objects)
+- **Runeblossoms visible during refresh phase selection**
 
-### What Was Fixed This Session
-1. **Glyphling prefab lifecycle** - Same object from hand to board
-   - HandController creates glyphling with prefab
-   - When dragged to board, object is reparented (not destroyed/recreated)
-   - `BoardRenderer.ShowGhostGlyphling()` now accepts existing object
-   - `BoardRenderer.ConfirmGhostGlyphling()` registers it as permanent
-   - `HandController.UntrackGlyphlingObject()` prevents double-destroy
+### What Was Fixed This Session (2026-01-05)
+1. **Glyphling size on board** - Was 67% of tile size, now matches tiles
+   - Scene had `glyphlingSize: 1` instead of `1.5` → changed to `1.8` for 20% larger
 
-2. **Hand/Board rotation** - Quads need different rotations
-   - Board glyphlings: 90° X rotation (face up at camera)
-   - Hand glyphlings: 180° X rotation (face forward at camera)
+2. **Runeblossom rotation during refresh phase** - Was using cylinder Y-scale (0.05)
+   - Changed `ToggleTileForDiscard()` to use uniform scaling for quad prefabs
 
-3. **Collider for interaction** - Added BoxCollider to prefab glyphlings in hand
-   - Required for `OnMouseDown()` detection in drag/click handlers
+3. **Green square during tile drag** - Material was lost when tile unparented
+   - Added material reapplication in `HandTileDragHandler.OnMouseDown()`
+
+4. **Glyphling identity mismatch** - `PlaceDraftGlyphling` used wrong glyphling
+   - Added optional `glyphlingToPlace` parameter
+   - `GameManager.ConfirmDraftPlacement` now passes selected glyphling
+
+5. **Ghost tile not removed on confirm** - `HideGhostTile` cleared before `RefreshTiles`
+   - Removed premature `HideGhostTile` call from `ConfirmMove`
+   - Now `RefreshTiles` properly finds and confirms ghost
+
+6. **Tile sizes updated to use `glyphlingSize`** - Was hardcoded to 1.5
+   - All tile size calculations now use `hexSize * glyphlingSize`
 
 ### What Needs Testing
 - Online play phase (move + cast actions)
@@ -132,6 +149,15 @@ Draft phase now working in local 1v1. Glyphling prefab system implemented with p
 ---
 
 ## Session Log
+
+### 2026-01-05 (Phase 5.4 - Play Phase Bug Fixes)
+- Fixed glyphling/tile size on board (changed `glyphlingSize` from 1.0 to 1.8)
+- Fixed runeblossom selection during refresh phase (uniform quad scaling)
+- Fixed green square during tile drag (material reapplication)
+- Fixed glyphling identity mismatch during draft (pass selected glyphling to PlaceDraftGlyphling)
+- Fixed ghost tile not converting to permanent on confirm (removed premature HideGhostTile)
+- Updated all tile size calculations to use `hexSize * glyphlingSize`
+- Local 1v1 now fully working!
 
 ### 2026-01-04 (Phase 5.4 - Glyphling Prefab Lifecycle)
 - Created glyphling prefab system (Quad-based with materials)

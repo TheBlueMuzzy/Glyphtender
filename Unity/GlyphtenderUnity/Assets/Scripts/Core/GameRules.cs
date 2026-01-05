@@ -433,7 +433,10 @@ namespace Glyphtender.Core
         /// Places a glyphling during draft phase.
         /// Returns true if successful.
         /// </summary>
-        public static bool PlaceDraftGlyphling(GameState state, HexCoord position)
+        /// <param name="state">The game state.</param>
+        /// <param name="position">The position to place the glyphling.</param>
+        /// <param name="glyphlingToPlace">The specific glyphling to place. If null, uses GetNextUnplacedGlyphling.</param>
+        public static bool PlaceDraftGlyphling(GameState state, HexCoord position, Glyphling glyphlingToPlace = null)
         {
             if (state.Phase != GamePhase.Draft)
                 return false;
@@ -442,9 +445,13 @@ namespace Glyphtender.Core
             if (!validPlacements.Contains(position))
                 return false;
 
-            // Find the next unplaced glyphling for the current drafter
-            var glyphling = state.GetNextUnplacedGlyphling(state.CurrentDrafter);
+            // Use specified glyphling or fall back to next unplaced
+            var glyphling = glyphlingToPlace ?? state.GetNextUnplacedGlyphling(state.CurrentDrafter);
             if (glyphling == null)
+                return false;
+
+            // Verify this glyphling can be placed (belongs to current drafter and is unplaced)
+            if (glyphling.Owner != state.CurrentDrafter || glyphling.IsPlaced)
                 return false;
 
             // Place it

@@ -864,6 +864,7 @@ MonoBehaviour:
   handInactiveScale: 1
   handScaleDuration: 0.15
   glyphlingPrefab: {fileID: 7170534405630657383, guid: 43a6d2cbfc1aa0847a1ac23b174c68a4, type: 3}
+  tilePrefab: {fileID: 8170534405630657383, guid: efde132e9b9e33740be41e856ddef2f2, type: 3}
   yellowTileMaterial: {fileID: 2100000, guid: 404bda4bd2fc7174281380ebb6485089, type: 2}
   blueTileMaterial: {fileID: 2100000, guid: 1b1765b85303cc342bb7bab16a0a673e, type: 2}
   purpleTileMaterial: {fileID: 2100000, guid: 03dd4f01252db164f9d497d200892099, type: 2}
@@ -1048,7 +1049,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hexPrefab: {fileID: 0}
-  tilePrefab: {fileID: 0}
+  tilePrefab: {fileID: 8170534405630657383, guid: efde132e9b9e33740be41e856ddef2f2, type: 3}
   glyphlingPrefab: {fileID: 7170534405630657383, guid: 43a6d2cbfc1aa0847a1ac23b174c68a4, type: 3}
   hexDefaultMaterial: {fileID: 2100000, guid: 3bd03c902d3afc741bfa23bd74d2dab8, type: 2}
   hexHighlightMaterial: {fileID: 2100000, guid: e50706dde23752b4f98acf677aaf35a5, type: 2}
@@ -1065,7 +1066,7 @@ MonoBehaviour:
   hexHoverMaterial: {fileID: 2100000, guid: 76429ab267e559747a9f15413eeb491a, type: 2}
   hexSize: 0.9
   hexSpacing: 1
-  glyphlingSize: 1
+  glyphlingSize: 1.8
   moveDuration: 0.3
   resetDuration: 0.1
   tileCastDuration: 0.3

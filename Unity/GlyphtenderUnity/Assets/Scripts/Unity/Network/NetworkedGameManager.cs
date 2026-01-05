@@ -98,6 +98,15 @@ namespace Glyphtender.Unity
             SubscribeToNetworkEvents();
         }
 
+        private void Update()
+        {
+            // Retry subscription if it failed during Start
+            if (!_subscribedToNetworkEvents)
+            {
+                SubscribeToNetworkEvents();
+            }
+        }
+
         private void OnDestroy()
         {
             if (GameManager.Instance != null)
@@ -113,15 +122,24 @@ namespace Glyphtender.Unity
             }
         }
 
+        private bool _subscribedToNetworkEvents = false;
+
         private void SubscribeToNetworkEvents()
         {
-            if (NetworkGameBridge.Instance == null) return;
+            if (_subscribedToNetworkEvents) return;
+            if (NetworkGameBridge.Instance == null)
+            {
+                Debug.LogWarning("[NetworkedGameManager] NetworkGameBridge.Instance is null, will retry subscription");
+                return;
+            }
 
             NetworkGameBridge.Instance.OnTurnConfirmed += OnNetworkTurnConfirmed;
             NetworkGameBridge.Instance.OnDraftPlacementConfirmed += OnNetworkDraftPlacementConfirmed;
             NetworkGameBridge.Instance.OnCycleConfirmed += OnNetworkCycleConfirmed;
             NetworkGameBridge.Instance.OnGameStartReceived += OnNetworkGameStartReceived;
             NetworkGameBridge.Instance.OnForfeitReceived += OnNetworkForfeitReceived;
+            _subscribedToNetworkEvents = true;
+            Debug.Log("[NetworkedGameManager] Subscribed to network events");
         }
 
         private void UnsubscribeFromNetworkEvents()
@@ -273,13 +291,78 @@ namespace Glyphtender.Unity
 
         private void OnNetworkTurnConfirmed(NetworkTurnData turnData)
         {
+            Debug.Log($"[NetworkedGameManager] OnNetworkTurnConfirmed EVENT FIRED! IsOnlineGame={IsOnlineGame}");
+
             if (!IsOnlineGame) return;
 
-            // If this is the remote player's turn, apply it
             Debug.Log($"[NetworkedGameManager] Turn confirmed from network");
 
-            // TODO: Apply the move and cast to GameManager
-            // This would involve calling GameManager methods to execute the turn
+            if (GameManager.Instance?.GameState == null) return;
+
+            var state = GameManager.Instance.GameState;
+
+            // Get the glyphling
+            if (turnData.Move.GlyphlingIndex < 0 || turnData.Move.GlyphlingIndex >= state.Glyphlings.Count)
+            {
+                Debug.LogError($"[NetworkedGameManager] Invalid glyphling index: {turnData.Move.GlyphlingIndex}");
+                return;
+            }
+
+            var glyphling = state.Glyphlings[turnData.Move.GlyphlingIndex];
+            var fromCoord = turnData.Move.From.ToHexCoord();
+            var toCoord = turnData.Move.To.ToHexCoord();
+            var castCoord = turnData.Cast.Position.ToHexCoord();
+            char letter = turnData.Cast.GetLetter();
+
+            Player currentPlayer = state.CurrentPlayer;
+
+            Debug.Log($"[NetworkedGameManager] Applying turn: Glyphling {turnData.Move.GlyphlingIndex} ({glyphling.Owner}) from {fromCoord} to {toCoord}, cast '{letter}' at {castCoord}");
+
+            // Move glyphling
+            glyphling.Position = toCoord;
+
+            // Place tile
+            state.Hands[currentPlayer].Remove(letter);
+            state.Tiles[castCoord] = new Tile(letter, currentPlayer, castCoord);
+
+            // Score words
+            var newWords = GameManager.Instance.WordScorer.FindWordsAt(state, castCoord, letter);
+            int turnScore = 0;
+            foreach (var word in newWords)
+            {
+                int wordScore = Core.WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, state, currentPlayer);
+                turnScore += wordScore;
+            }
+            state.Scores[currentPlayer] += turnScore;
+
+            // Track words formed
+            GameManager.Instance.LastTurnWordCount = newWords.Count;
+
+            // If no words formed, we'd enter cycle mode - but host handles this
+            // For now, assume host validates and words were formed or cycle was completed
+
+            // Draw new tile
+            GameRules.DrawTile(state, currentPlayer);
+
+            // End turn
+            GameRules.EndTurn(state);
+
+            Debug.Log($"[NetworkedGameManager] Turn applied. New CurrentPlayer: {state.CurrentPlayer}");
+
+            // Refresh visuals
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshBoard();
+                BoardRenderer.Instance.RefreshHighlights();
+            }
+
+            if (HandController.Instance != null)
+            {
+                HandController.Instance.RefreshHand();
+            }
+
+            // Fire events through GameManager so all subscribers update
+            GameManager.Instance.NotifyNetworkTurnComplete();
         }
 
         private void OnNetworkDraftPlacementConfirmed(NetworkDraftPlacement placement)
@@ -367,8 +450,19 @@ namespace Glyphtender.Unity
         /// </summary>
         public void SendTurnToNetwork(HexCoord moveFrom, HexCoord moveTo, HexCoord castPosition, char letter, int glyphlingIndex)
         {
-            if (!IsOnlineGame) return;
-            if (NetworkGameBridge.Instance == null) return;
+            Debug.Log($"[NetworkedGameManager] ========== SendTurnToNetwork ==========");
+            Debug.Log($"[NetworkedGameManager] from={moveFrom}, to={moveTo}, cast={castPosition}, letter={letter}, glyphling={glyphlingIndex}");
+
+            if (!IsOnlineGame)
+            {
+                Debug.LogWarning("[NetworkedGameManager] SendTurnToNetwork: Not online game, skipping");
+                return;
+            }
+            if (NetworkGameBridge.Instance == null)
+            {
+                Debug.LogError("[NetworkedGameManager] SendTurnToNetwork: NetworkGameBridge.Instance is null!");
+                return;
+            }
 
             var turnData = new NetworkTurnData
             {
@@ -385,7 +479,9 @@ namespace Glyphtender.Unity
                 }
             };
 
+            Debug.Log($"[NetworkedGameManager] Calling RequestTurnServerRpc...");
             NetworkGameBridge.Instance.RequestTurnServerRpc(turnData);
+            Debug.Log($"[NetworkedGameManager] RequestTurnServerRpc called successfully");
         }
 
         /// <summary>

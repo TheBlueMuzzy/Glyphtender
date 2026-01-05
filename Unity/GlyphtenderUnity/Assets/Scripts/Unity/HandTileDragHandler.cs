@@ -6,6 +6,7 @@ namespace Glyphtender.Unity
     /// <summary>
     /// Handles drag and drop input for hand tiles.
     /// Only active when GameManager.CurrentInputMode is Drag.
+    /// Works with both quad prefabs (with textures) and cylinder fallbacks.
     /// </summary>
     public class HandTileDragHandler : MonoBehaviour
     {
@@ -20,11 +21,12 @@ namespace Glyphtender.Unity
         private Quaternion _originalRotation;
         private Transform _originalParent;
         private int _originalLayer;
-        private Color _originalColor;
+        private Material _originalMaterial;
         private Camera _mainCamera;
         private HexCoord? _hoveredHex;
         private Renderer _renderer;
         private int _dragFingerId = -1;  // Track which finger started the drag
+        private bool _isQuadPrefab;  // True if this is a quad prefab, false if cylinder
 
         /// <summary>
         /// True if any hand tile is currently being dragged.
@@ -45,9 +47,14 @@ namespace Glyphtender.Unity
             _renderer = GetComponent<Renderer>();
             if (_renderer != null)
             {
-                _originalColor = _renderer.material.color;
+                _originalMaterial = _renderer.material;
             }
             _originalLayer = gameObject.layer;
+
+            // Detect if this is a quad prefab (has MeshFilter with Quad mesh) or cylinder
+            var meshFilter = GetComponent<MeshFilter>();
+            _isQuadPrefab = meshFilter != null && meshFilter.sharedMesh != null &&
+                           meshFilter.sharedMesh.name.Contains("Quad");
 
             // Ensure InputStateManager exists
             InputStateManager.EnsureExists();
@@ -128,21 +135,44 @@ namespace Glyphtender.Unity
                 }
             }
 
-            // Set scale for board visibility
-            transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
-
-            // Set tile flat and facing up
-            transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-
-            // Fix the letter text to face up
-            var letterText = transform.Find("Letter");
-            if (letterText != null)
+            // Set scale and rotation for board visibility
+            if (_isQuadPrefab)
             {
-                letterText.rotation = Quaternion.Euler(90f, 0f, 0f);
+                // Quad prefab: scale to board tile size, rotate to face up
+                float boardTileSize = BoardRenderer.Instance != null
+                    ? BoardRenderer.Instance.hexSize * BoardRenderer.Instance.glyphlingSize
+                    : 1.62f;
+                transform.localScale = new Vector3(boardTileSize, boardTileSize, boardTileSize);
+                transform.rotation = Quaternion.Euler(90f, 0f, 0f);  // Quad faces up
+            }
+            else
+            {
+                // Cylinder fallback
+                float boardTileSize = BoardRenderer.Instance != null
+                    ? BoardRenderer.Instance.hexSize * BoardRenderer.Instance.glyphlingSize
+                    : 1.62f;
+                transform.localScale = new Vector3(boardTileSize, 0.05f, boardTileSize);
+                transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+                // Fix the letter text to face up
+                var letterText = transform.Find("Letter");
+                if (letterText != null)
+                {
+                    letterText.rotation = Quaternion.Euler(90f, 0f, 0f);
+                }
             }
 
-            // Make semi-transparent while dragging
-            SetGhostAppearance(true);
+            // Ensure material is preserved during drag (re-apply runeblossom texture)
+            // Sometimes material can be lost during layer/transform changes
+            if (_renderer != null && SpriteLoader.Instance != null)
+            {
+                var owner = GameManager.Instance?.GameState?.CurrentPlayer ?? Player.Yellow;
+                Material mat = SpriteLoader.Instance.GetRuneblossomMaterial(Letter, owner);
+                if (mat != null)
+                {
+                    _renderer.material = mat;
+                }
+            }
 
             Debug.Log($"Started dragging letter {Letter}");
         }
@@ -255,18 +285,19 @@ namespace Glyphtender.Unity
             // Check if dropped on valid hex
             if (_hoveredHex != null && GameManager.Instance.ValidCasts.Contains(_hoveredHex.Value))
             {
-                // Valid drop - set cast position and keep tile on board as ghost
+                Debug.Log($"[HandTileDragHandler] EndDrag: Valid drop at {_hoveredHex.Value}, passing '{gameObject.name}' to ShowGhostTile");
+
+                // Remove this object from HandController's tracking BEFORE we transfer it to board
+                Controller.UntrackTileObject(gameObject);
+
+                // Get current player for the tile owner
+                var owner = GameManager.Instance.GameState.CurrentPlayer;
+
+                // Pass this object to BoardRenderer as the ghost tile (same object, no destroy/recreate)
+                BoardRenderer.Instance.ShowGhostTile(_hoveredHex.Value, Letter, owner, gameObject);
+
+                // Set cast position in GameManager
                 GameManager.Instance.SelectCastPosition(_hoveredHex.Value);
-
-                // Position tile on the board
-                Vector3 boardPos = BoardRenderer.Instance.HexToWorld(_hoveredHex.Value) + Vector3.up * 0.2f;
-                transform.position = boardPos;
-                transform.localScale = new Vector3(1.5f, 0.05f, 1.5f);
-                transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-
-                // Keep on Board layer so it's visible with the board
-                // Keep ghost appearance
-                SetGhostAppearance(true);
 
                 // Mark as placed
                 _isPlaced = true;
@@ -290,6 +321,17 @@ namespace Glyphtender.Unity
 
         public void ReturnToHand()
         {
+            // If we were placed on board, BoardRenderer has ownership - get it back
+            if (_isPlaced && BoardRenderer.Instance != null)
+            {
+                // HideGhostTile returns the external object so we can reclaim it
+                var ghostObj = BoardRenderer.Instance.HideGhostTile();
+                if (ghostObj != null && ghostObj == gameObject)
+                {
+                    Debug.Log($"[HandTileDragHandler] ReturnToHand: Reclaimed tile from BoardRenderer");
+                }
+            }
+
             transform.SetParent(_originalParent);
             transform.position = _originalPosition;
             transform.localScale = _originalScale;
@@ -316,42 +358,58 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
-        /// Called when the move is confirmed - hide this ghost tile.
+        /// Called when the move is confirmed.
+        /// The tile is already owned by BoardRenderer (via ShowGhostTile), so we just clear state.
+        /// BoardRenderer.RefreshTiles will call ConfirmGhostTile to finalize it.
         /// </summary>
         public void OnMoveConfirmed()
         {
             if (_isPlaced)
             {
-                // Hide this tile - the real tile will be created by BoardRenderer
-                gameObject.SetActive(false);
+                // Clear placed state - BoardRenderer now owns this object
                 _isPlaced = false;
 
                 if (InputStateManager.Instance != null && InputStateManager.Instance.CurrentlyPlacedTile == this)
                 {
                     InputStateManager.Instance.CurrentlyPlacedTile = null;
                 }
+
+                Debug.Log($"[HandTileDragHandler] OnMoveConfirmed: Tile '{Letter}' confirmed, BoardRenderer now owns it");
             }
         }
 
         /// <summary>
         /// Resets the tile after turn ends.
+        /// Note: If the tile was confirmed, this handler is destroyed by BoardRenderer.ConfirmGhostTile
+        /// and this method won't be called. This is only for tiles that were NOT confirmed.
         /// </summary>
         public void ResetAfterTurn()
         {
+            // If this object is inactive, it was hidden by old code - shouldn't happen anymore
             if (!gameObject.activeSelf)
             {
                 gameObject.SetActive(true);
             }
 
-            transform.SetParent(_originalParent);
-            transform.position = _originalPosition;
-            transform.localScale = _originalScale;
-            transform.localRotation = _originalRotation;
+            // If we're still placed (not confirmed), return to hand
+            if (_isPlaced)
+            {
+                ReturnToHand();
+            }
+            else
+            {
+                // Just ensure we're in correct state
+                transform.SetParent(_originalParent);
+                transform.position = _originalPosition;
+                transform.localScale = _originalScale;
+                transform.localRotation = _originalRotation;
 
-            // Restore to UI3D layer
-            SetLayerRecursively(gameObject, LayerMask.NameToLayer("UI3D"));
+                // Restore to UI3D layer
+                SetLayerRecursively(gameObject, LayerMask.NameToLayer("UI3D"));
 
-            SetGhostAppearance(false);
+                SetGhostAppearance(false);
+            }
+
             _isPlaced = false;
 
             if (InputStateManager.Instance != null && InputStateManager.Instance.CurrentlyPlacedTile == this)
@@ -364,37 +422,31 @@ namespace Glyphtender.Unity
         {
             if (_renderer == null) return;
 
-            // Create a new material instance if needed
-            if (_originalColor == default)
-            {
-                _originalColor = _renderer.material.color;
-            }
-
-            Color color = _originalColor;
-            color.a = isGhost ? 0.5f : 1f;
-
-            // Set rendering mode to transparent
-            Material mat = _renderer.material;
             if (isGhost)
             {
+                // For ghost: make semi-transparent
+                Material mat = _renderer.material;
+                Color color = mat.color;
+                color.a = 0.5f;
+
+                // Set rendering mode to transparent
                 mat.SetOverrideTag("RenderType", "Transparent");
                 mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                 mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                 mat.SetInt("_ZWrite", 0);
+                mat.DisableKeyword("_ALPHATEST_ON");
                 mat.EnableKeyword("_ALPHABLEND_ON");
                 mat.renderQueue = 3000;
+                mat.color = color;
             }
             else
             {
-                mat.SetOverrideTag("RenderType", "Opaque");
-                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-                mat.SetInt("_ZWrite", 1);
-                mat.DisableKeyword("_ALPHABLEND_ON");
-                mat.renderQueue = -1;
+                // Restore original material
+                if (_originalMaterial != null)
+                {
+                    _renderer.material = _originalMaterial;
+                }
             }
-
-            mat.color = color;
         }
 
         /// <summary>

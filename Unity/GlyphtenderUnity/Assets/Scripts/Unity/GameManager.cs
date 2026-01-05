@@ -58,7 +58,7 @@ namespace Glyphtender.Unity
             OnInputModeChanged?.Invoke();
         }
 
-        public int LastTurnWordCount { get; private set; }
+        public int LastTurnWordCount { get; set; }
 
         // Valid moves/casts for current selection
         public List<HexCoord> ValidMoves { get; private set; }
@@ -586,6 +586,18 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Called by NetworkedGameManager when a turn is received from network.
+        /// Fires appropriate events so all subscribers update.
+        /// </summary>
+        public void NotifyNetworkTurnComplete()
+        {
+            UpdateTurnState();
+            OnTurnEnded?.Invoke();
+            OnGameStateChanged?.Invoke();
+            Debug.Log($"[GameManager] NotifyNetworkTurnComplete: CurrentPlayer={GameState?.CurrentPlayer}");
+        }
+
+        /// <summary>
         /// Called when player taps/clicks a glyphling.
         /// </summary>
         public void SelectGlyphling(Glyphling glyphling)
@@ -786,13 +798,56 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
-        /// Confirms the current move and ends the turn.
+        /// Confirms the current move and ends the turn. [FORCE RECOMPILE]
         /// </summary>
         public void ConfirmMove()
         {
+            Debug.Log($"[GameManager] ========== ConfirmMove CALLED ==========");
+            Debug.Log($"[GameManager] CurrentTurnState={CurrentTurnState}");
+
             // Only allow confirm in ReadyToConfirm state
             if (CurrentTurnState != GameTurnState.ReadyToConfirm)
             {
+                Debug.Log($"[GameManager] ConfirmMove: REJECTED - not in ReadyToConfirm state");
+                return;
+            }
+
+            // In online mode, send to network instead of applying locally
+            // The NetworkedGameManager will apply when confirmed from host
+            bool hasNetManager = NetworkedGameManager.Instance != null;
+            bool isOnline = hasNetManager && NetworkedGameManager.Instance.IsOnlineGame;
+            Debug.Log($"[GameManager] ConfirmMove: hasNetManager={hasNetManager}, isOnline={isOnline}");
+
+            if (hasNetManager && isOnline)
+            {
+                Debug.Log("[GameManager] ConfirmMove: Taking network path");
+                // Find which glyphling was selected
+                int glyphlingIndex = GameState.Glyphlings.IndexOf(SelectedGlyphling);
+
+                NetworkedGameManager.Instance.SendTurnToNetwork(
+                    _originalPosition ?? SelectedGlyphling.Position.Value,
+                    PendingDestination.Value,
+                    PendingCastPosition.Value,
+                    PendingLetter.Value,
+                    glyphlingIndex);
+
+                // Reset the glyphling position back (server will confirm the move)
+                if (_originalPosition != null && SelectedGlyphling != null)
+                {
+                    SelectedGlyphling.Position = _originalPosition.Value;
+                }
+
+                // Hide ghost tile
+                if (BoardRenderer.Instance != null)
+                {
+                    BoardRenderer.Instance.HideGhostTile();
+                }
+
+                // Clear selection state (UI feedback)
+                ClearSelection();
+                UpdateTurnState();
+                OnSelectionChanged?.Invoke();
+                OnGameStateChanged?.Invoke();
                 return;
             }
 

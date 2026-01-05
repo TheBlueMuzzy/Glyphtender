@@ -124,9 +124,14 @@ namespace Glyphtender.Unity
         }
 
         private string[] _boardSizeNames = { "Small", "Large" };
+
+        // BUILD VERSION - Change this number each time to verify recompile
+        private const string BUILD_VERSION = "743";
+
         private void Awake()
         {
             Instance = this;
+            Debug.Log($"[MainMenuScreen] BUILD VERSION: {BUILD_VERSION}");
         }
 
         private void Start()
@@ -399,6 +404,22 @@ namespace Glyphtender.Unity
 
         private void CreateTitle(float yPos, float scale)
         {
+            // Version text above title (small, red)
+            GameObject versionObj = new GameObject("VersionText");
+            versionObj.transform.SetParent(_menuRoot.transform);
+            versionObj.transform.localPosition = new Vector3(0f, yPos + 0.4f * scale, -0.1f);
+            versionObj.transform.localRotation = Quaternion.identity;
+            versionObj.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f) * scale;
+            versionObj.layer = LayerMask.NameToLayer("UI3D");
+
+            var versionMesh = versionObj.AddComponent<TextMesh>();
+            versionMesh.text = "v" + BUILD_VERSION;
+            versionMesh.fontSize = 36;
+            versionMesh.alignment = TextAlignment.Center;
+            versionMesh.anchor = TextAnchor.MiddleCenter;
+            versionMesh.color = new Color(1f, 0.3f, 0.3f); // Red
+
+            // Title
             GameObject titleObj = new GameObject("Title");
             titleObj.transform.SetParent(_menuRoot.transform);
             titleObj.transform.localPosition = new Vector3(0f, yPos, -0.1f);

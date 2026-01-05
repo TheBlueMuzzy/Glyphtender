@@ -420,9 +420,12 @@ namespace Glyphtender.Unity
 
         private void OnConfirmClicked()
         {
+            Debug.Log($"[GameUIController] ========== OnConfirmClicked ==========");
+
             // Check if HandController is in cycle mode
             if (HandController.Instance != null && HandController.Instance.IsInCycleMode)
             {
+                Debug.Log("[GameUIController] OnConfirmClicked: Cycle mode - calling ConfirmCycleDiscard");
                 HandController.Instance.ConfirmCycleDiscard();
                 HideConfirmButton();
                 HideCancelButton();
@@ -433,14 +436,17 @@ namespace Glyphtender.Unity
             if (GameManager.Instance.GameState.Phase == GamePhase.Draft &&
                 GameManager.Instance.PendingDraftPosition.HasValue)
             {
+                Debug.Log("[GameUIController] OnConfirmClicked: Draft phase - calling ConfirmDraftPlacement");
                 GameManager.Instance.ConfirmDraftPlacement();
                 HideConfirmButton();
                 HideCancelButton();
                 return;
             }
 
+            Debug.Log($"[GameUIController] OnConfirmClicked: Play phase - TurnState={GameManager.Instance.CurrentTurnState}");
             if (GameManager.Instance.CurrentTurnState == GameTurnState.ReadyToConfirm)
             {
+                Debug.Log("[GameUIController] OnConfirmClicked: Calling ConfirmMove()");
                 // Don't hide buttons here - ConfirmMove may trigger cycle mode
                 // which needs to show the confirm button. Let EnterCycleMode or
                 // OnSelectionChanged handle button visibility.
