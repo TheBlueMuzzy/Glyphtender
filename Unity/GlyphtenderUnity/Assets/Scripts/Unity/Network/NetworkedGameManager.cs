@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 using UnityEngine;
+using System.Collections.Generic;
 using Unity.Netcode;
 using Glyphtender.Core;
 using Glyphtender.Unity.Network;

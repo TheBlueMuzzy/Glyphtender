@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nFix online glyphling duplication by applying draft locally on host\n\nRoot cause: In online mode, ConfirmDraftPlacement was returning early\nwithout placing the glyphling or confirming the ghost object. This left\nthe ghost orphaned, and RefreshGlyphlings created a duplicate.\n\nFix: Host now applies draft placements locally AND sends to network.\nThe RPC callback''s \"already has glyphling\" check correctly skips.\n\n- GameManager.ConfirmDraftPlacement: Remove early return for online mode\n- NetworkedGameManager: Clean up redundant ghost confirmation code\n- Bump version to 751\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
