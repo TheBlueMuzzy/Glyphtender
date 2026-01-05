@@ -411,19 +411,9 @@ namespace Glyphtender.Unity
             bool draftComplete = state.Phase == GamePhase.Play;
             Debug.Log($"[NetworkedGameManager] Applied draft placement. Phase now: {state.Phase}, CurrentPlayer: {state.CurrentPlayer}, DraftComplete: {draftComplete}");
 
-            // If we're the host, we need to confirm the ghost glyphling to prevent duplication
-            // The ghost was created when we dragged the glyphling, and now we need to register it
-            // as the permanent board object BEFORE RefreshBoard creates a duplicate
-            if (GlyphtenderLobby.Instance?.IsHost == true && BoardRenderer.Instance != null)
-            {
-                // Find the glyphling that was just placed at this position
-                var placedGlyphling = state.GetGlyphlingAt(pos);
-                if (placedGlyphling != null)
-                {
-                    Debug.Log($"[NetworkedGameManager] Host confirming ghost for {placedGlyphling.Owner}_{placedGlyphling.Index}");
-                    BoardRenderer.Instance.ConfirmGhostGlyphling(placedGlyphling);
-                }
-            }
+            // Note: Host applies draft placements locally in GameManager.ConfirmDraftPlacement,
+            // so this code path is only hit by the CLIENT receiving the other player's placement.
+            // The client doesn't have a ghost to confirm - it just creates a new object in RefreshBoard.
 
             // Notify GameManager to fire appropriate events (this updates all subscribers)
             GameManager.Instance.NotifyNetworkDraftPlacement(draftComplete);

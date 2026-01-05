@@ -446,21 +446,17 @@ namespace Glyphtender.Unity
 
             var position = PendingDraftPosition.Value;
 
-            // In online mode, send to network instead of applying locally
-            // The NetworkedGameManager will apply when confirmed
+            // In online mode, send to network AND apply locally
+            // The host applies immediately; the RPC callback will skip since it's already applied
+            // The client receives via RPC (they don't hit this code path - it's not their turn)
             if (NetworkedGameManager.Instance != null &&
                 NetworkedGameManager.Instance.IsOnlineGame)
             {
                 NetworkedGameManager.Instance.SendDraftPlacementToNetwork(position);
 
-                // Clear draft selection state immediately (UI feedback)
-                PendingDraftPosition = null;
-                SelectedDraftGlyphling = null;
-                ValidDraftPlacements.Clear();
-
-                UpdateTurnState();
-                OnSelectionChanged?.Invoke();
-                return;
+                // Host should ALSO apply locally (fall through to normal processing)
+                // The RPC callback's "already has glyphling" check will correctly skip
+                // This ensures the ghost is confirmed before RefreshBoard can orphan it
             }
 
             // Capture the glyphling before placement (for confirming the ghost object)
