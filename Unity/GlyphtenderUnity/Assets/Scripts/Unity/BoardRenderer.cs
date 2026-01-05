@@ -143,7 +143,9 @@ namespace Glyphtender.Unity
                     var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
                     if (renderer != null)
                     {
-                        Color baseColor = glyphling.Owner == Player.Yellow ? Color.yellow : Color.blue;
+                        // Use player material color (supports all 4 players)
+                        var playerMat = GetPlayerMaterial(glyphling.Owner);
+                        Color baseColor = playerMat != null ? playerMat.color : Color.white;
                         Color trappedColor = Color.red;
                         renderer.material.color = Color.Lerp(baseColor, trappedColor, pulse * 0.5f);
                     }
@@ -155,11 +157,11 @@ namespace Glyphtender.Unity
                     {
                         _trappedPulseTime.Remove(glyphling);
 
-                        // Restore original material
+                        // Restore original material (supports all 4 players)
                         var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
                         if (renderer != null)
                         {
-                            Material mat = glyphling.Owner == Player.Yellow ? yellowMaterial : blueMaterial;
+                            Material mat = GetPlayerMaterial(glyphling.Owner);
                             if (mat != null)
                             {
                                 renderer.material = mat;
@@ -451,6 +453,18 @@ namespace Glyphtender.Unity
             {
                 Vector3 spawnPos = HexToWorld(glyphling.Position.Value) + Vector3.up * 0.3f;
                 obj = Instantiate(glyphlingPrefab, spawnPos, Quaternion.identity, transform);
+
+                // Apply player material to prefab
+                var material = GetPlayerMaterial(glyphling.Owner);
+                if (material != null)
+                {
+                    var renderer = obj.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        renderer.material = material;
+                        Debug.Log($"[BoardRenderer] Applied material '{material.name}' to {glyphling.Owner} glyphling at prefab");
+                    }
+                }
             }
             else
             {
@@ -462,9 +476,11 @@ namespace Glyphtender.Unity
                 obj.transform.SetParent(transform);
 
                 // Color by owner
-                var material = GetPlayerMaterial(glyphling.Owner); if (material != null)
+                var material = GetPlayerMaterial(glyphling.Owner);
+                if (material != null)
                 {
                     obj.GetComponent<Renderer>().material = material;
+                    Debug.Log($"[BoardRenderer] Applied material '{material.name}' to {glyphling.Owner} glyphling at sphere");
                 }
 
                 // Remove collider - selection is handled by hex

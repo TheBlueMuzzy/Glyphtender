@@ -525,6 +525,26 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Called by NetworkedGameManager when a draft placement is received from the network.
+        /// Fires appropriate events so all subscribers are notified.
+        /// </summary>
+        public void NotifyNetworkDraftPlacement(bool draftComplete)
+        {
+            if (draftComplete)
+            {
+                // Draft finished - start game history tracking
+                StartGameHistory();
+
+                OnDraftComplete?.Invoke();
+                Debug.Log("[GameManager] NotifyNetworkDraftPlacement: Draft complete, fired OnDraftComplete");
+            }
+
+            UpdateTurnState();
+            OnGameStateChanged?.Invoke();
+            Debug.Log($"[GameManager] NotifyNetworkDraftPlacement: Fired OnGameStateChanged, CurrentPlayer={GameState?.CurrentPlayer}");
+        }
+
+        /// <summary>
         /// Cancels the current draft placement, returning glyphling to hand.
         /// </summary>
         public void CancelDraftPlacement()
