@@ -466,8 +466,8 @@ namespace Glyphtender.Unity
             // Capture the glyphling before placement (for confirming the ghost object)
             var placingGlyphling = SelectedDraftGlyphling;
 
-            // Place the glyphling
-            bool success = GameRules.PlaceDraftGlyphling(GameState, position);
+            // Place the glyphling - pass the specific glyphling to avoid mismatch with ghost
+            bool success = GameRules.PlaceDraftGlyphling(GameState, position, placingGlyphling);
             if (!success)
             {
                 return;

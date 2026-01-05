@@ -311,6 +311,14 @@ namespace Glyphtender.Unity
             var glyphling = state.Glyphlings[turnData.Move.GlyphlingIndex];
             var fromCoord = turnData.Move.From.ToHexCoord();
             var toCoord = turnData.Move.To.ToHexCoord();
+
+            // Check if glyphling is already at destination - means we already processed this locally
+            // (Host receives its own RPC back)
+            if (glyphling.Position.HasValue && glyphling.Position.Value == toCoord)
+            {
+                Debug.Log($"[NetworkedGameManager] Glyphling already at destination - skipping (already processed locally)");
+                return;
+            }
             var castCoord = turnData.Cast.Position.ToHexCoord();
             char letter = turnData.Cast.GetLetter();
 
@@ -402,6 +410,20 @@ namespace Glyphtender.Unity
 
             bool draftComplete = state.Phase == GamePhase.Play;
             Debug.Log($"[NetworkedGameManager] Applied draft placement. Phase now: {state.Phase}, CurrentPlayer: {state.CurrentPlayer}, DraftComplete: {draftComplete}");
+
+            // If we're the host, we need to confirm the ghost glyphling to prevent duplication
+            // The ghost was created when we dragged the glyphling, and now we need to register it
+            // as the permanent board object BEFORE RefreshBoard creates a duplicate
+            if (GlyphtenderLobby.Instance?.IsHost == true && BoardRenderer.Instance != null)
+            {
+                // Find the glyphling that was just placed at this position
+                var placedGlyphling = state.GetGlyphlingAt(pos);
+                if (placedGlyphling != null)
+                {
+                    Debug.Log($"[NetworkedGameManager] Host confirming ghost for {placedGlyphling.Owner}_{placedGlyphling.Index}");
+                    BoardRenderer.Instance.ConfirmGhostGlyphling(placedGlyphling);
+                }
+            }
 
             // Notify GameManager to fire appropriate events (this updates all subscribers)
             GameManager.Instance.NotifyNetworkDraftPlacement(draftComplete);
