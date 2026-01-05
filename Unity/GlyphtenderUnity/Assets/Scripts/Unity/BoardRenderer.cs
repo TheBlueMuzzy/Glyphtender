@@ -49,7 +49,7 @@ namespace Glyphtender.Unity
         public float hexSpacing = 1f;
 
         [Tooltip("Size of glyphling spheres (relative to hexSize)")]
-        public float glyphlingSize = 0.5f;
+        public float glyphlingSize = 1.5f;
 
         [Header("Animation")]
         public float moveDuration = 0.5f;
@@ -66,6 +66,8 @@ namespace Glyphtender.Unity
         private Material _originalHoverMaterial;
 
         private GameObject _ghostTile;
+        private bool _ghostTileIsExternal; // True if ghost tile was passed in from hand
+        private HexCoord? _ghostTilePosition; // Position where ghost tile is placed
         private Dictionary<Glyphling, bool> _trappedGlyphlings = new Dictionary<Glyphling, bool>();
         private Dictionary<Glyphling, float> _trappedPulseTime = new Dictionary<Glyphling, float>();
 
@@ -88,6 +90,9 @@ namespace Glyphtender.Unity
             _glyphlingObjects = new Dictionary<Glyphling, GameObject>();
 
             _glyphlingTargets = new Dictionary<Glyphling, Vector3>();
+
+            // Ensure SpriteLoader exists for runtime texture loading
+            SpriteLoader.EnsureExists();
         }
 
         /// <summary>
@@ -157,11 +162,11 @@ namespace Glyphtender.Unity
                     {
                         _trappedPulseTime.Remove(glyphling);
 
-                        // Restore original material (supports all 4 players)
+                        // Restore glyphling texture material
                         var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
                         if (renderer != null)
                         {
-                            Material mat = GetPlayerMaterial(glyphling.Owner);
+                            Material mat = SpriteLoader.Instance?.GetGlyphlingMaterial(glyphling.Owner) ?? GetPlayerMaterial(glyphling.Owner);
                             if (mat != null)
                             {
                                 renderer.material = mat;
@@ -360,7 +365,15 @@ namespace Glyphtender.Unity
             {
                 if (!_tileObjects.ContainsKey(kvp.Key))
                 {
-                    CreateTile(kvp.Key, kvp.Value);
+                    // Check if a ghost tile exists at this position - if so, confirm it
+                    if (_ghostTile != null && _ghostTilePosition == kvp.Key)
+                    {
+                        ConfirmGhostTile(kvp.Key, kvp.Value);
+                    }
+                    else
+                    {
+                        CreateTile(kvp.Key, kvp.Value);
+                    }
                 }
             }
         }
@@ -380,7 +393,34 @@ namespace Glyphtender.Unity
 
             if (tilePrefab != null)
             {
-                tileObj = Instantiate(tilePrefab, startPos, Quaternion.identity, transform);
+                // Use prefab - rotate 90 degrees on X so quad faces up (like glyphlings)
+                tileObj = Instantiate(tilePrefab, startPos, Quaternion.Euler(90f, 0f, 0f), transform);
+
+                // Scale to board tile size
+                float tileSize = hexSize * 1.5f;
+                tileObj.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
+
+                // Apply runeblossom texture from SpriteLoader
+                var renderer = tileObj.GetComponent<Renderer>();
+                if (renderer != null && SpriteLoader.Instance != null)
+                {
+                    Material mat = SpriteLoader.Instance.GetRuneblossomMaterial(tile.Letter, tile.Owner);
+                    if (mat != null)
+                    {
+                        renderer.material = mat;
+                        Debug.Log($"[BoardRenderer] Applied runeblossom texture for '{tile.Letter}' {tile.Owner}");
+                    }
+                    else
+                    {
+                        // Fallback to solid color material with text
+                        var fallbackMat = GetPlayerMaterial(tile.Owner);
+                        if (fallbackMat != null)
+                        {
+                            renderer.material = fallbackMat;
+                        }
+                        AddLetterTextToTile(tileObj, tile.Letter);
+                    }
+                }
             }
             else
             {
@@ -398,19 +438,7 @@ namespace Glyphtender.Unity
                     tileObj.GetComponent<Renderer>().material = material;
                 }
 
-                // Add letter text
-                GameObject textObj = new GameObject("Letter");
-                textObj.transform.SetParent(tileObj.transform);
-                textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-                textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                textObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
-
-                var textMesh = textObj.AddComponent<TextMesh>();
-                textMesh.text = tile.Letter.ToString();
-                textMesh.fontSize = 32;
-                textMesh.alignment = TextAlignment.Center;
-                textMesh.anchor = TextAnchor.MiddleCenter;
-                textMesh.color = Color.black;
+                AddLetterTextToTile(tileObj, tile.Letter);
             }
 
             tileObj.name = $"Tile_{tile.Letter}_{coord.Column}_{coord.Row}";
@@ -419,6 +447,25 @@ namespace Glyphtender.Unity
 
             // Animate tile from cast origin to destination
             TweenManager.Instance.MoveFromTo(tileObj.transform, startPos, targetPos, tileCastDuration);
+        }
+
+        /// <summary>
+        /// Adds a letter text mesh to a tile (fallback when no texture available).
+        /// </summary>
+        private void AddLetterTextToTile(GameObject tileObj, char letter)
+        {
+            GameObject textObj = new GameObject("Letter");
+            textObj.transform.SetParent(tileObj.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            textObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = letter.ToString();
+            textMesh.fontSize = 32;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.black;
         }
 
         private void RefreshGlyphlings()
@@ -461,15 +508,28 @@ namespace Glyphtender.Unity
                 // Rotate 90 degrees on X so quad faces up
                 obj = Instantiate(glyphlingPrefab, spawnPos, Quaternion.Euler(90f, 0f, 0f), transform);
 
-                // Apply player material to prefab
-                var material = GetPlayerMaterial(glyphling.Owner);
-                if (material != null)
+                // Scale to board size (same as tiles)
+                float size = hexSize * glyphlingSize;
+                obj.transform.localScale = new Vector3(size, size, size);
+
+                // Apply glyphling texture from SpriteLoader
+                var renderer = obj.GetComponent<Renderer>();
+                if (renderer != null && SpriteLoader.Instance != null)
                 {
-                    var renderer = obj.GetComponent<Renderer>();
-                    if (renderer != null)
+                    Material mat = SpriteLoader.Instance.GetGlyphlingMaterial(glyphling.Owner);
+                    if (mat != null)
                     {
-                        renderer.material = material;
-                        Debug.Log($"[BoardRenderer] Applied material '{material.name}' to {glyphling.Owner} glyphling prefab");
+                        renderer.material = mat;
+                        Debug.Log($"[BoardRenderer] Applied glyphling texture for {glyphling.Owner}");
+                    }
+                    else
+                    {
+                        // Fallback to solid color material
+                        var fallbackMat = GetPlayerMaterial(glyphling.Owner);
+                        if (fallbackMat != null)
+                        {
+                            renderer.material = fallbackMat;
+                        }
                     }
                 }
             }
@@ -483,7 +543,8 @@ namespace Glyphtender.Unity
                 obj.transform.SetParent(transform);
 
                 // Color by owner
-                var material = GetPlayerMaterial(glyphling.Owner); if (material != null)
+                var material = GetPlayerMaterial(glyphling.Owner);
+                if (material != null)
                 {
                     obj.GetComponent<Renderer>().material = material;
                 }
@@ -689,50 +750,94 @@ namespace Glyphtender.Unity
 
         #region Ghost Tile
 
-        public void ShowGhostTile(HexCoord position, char letter, Player owner)
+        /// <summary>
+        /// Shows a ghost tile at the pending cast position.
+        /// If existingObject is provided, uses that instead of creating a new one.
+        /// </summary>
+        public void ShowGhostTile(HexCoord position, char letter, Player owner, GameObject existingObject = null)
         {
-            HideGhostTile();
+            // Hide any existing ghost - if it was external, destroy it (it's being replaced)
+            var previousGhost = HideGhostTile();
+            if (previousGhost != null)
+            {
+                Debug.Log($"[BoardRenderer] ShowGhostTile: Destroying previous external ghost '{previousGhost.name}'");
+                Destroy(previousGhost);
+            }
 
             Vector3 pos = HexToWorld(position) + Vector3.up * 0.2f;
+            _ghostTilePosition = position;
 
-            _ghostTile = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            _ghostTile.transform.position = pos;
-            _ghostTile.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            _ghostTile.transform.localScale = new Vector3(hexSize * 1.5f, 0.1f, hexSize * 1.5f);
-            _ghostTile.transform.SetParent(transform);
-            _ghostTile.name = "GhostTile";
+            if (existingObject != null)
+            {
+                // Use the existing object from hand - don't create a new one
+                _ghostTile = existingObject;
+                _ghostTileIsExternal = true;
 
-            // Semi-transparent material
-            var renderer = _ghostTile.GetComponent<Renderer>();
-            Material mat = new Material(GetPlayerMaterial(owner)); Color c = mat.color;
-            c.a = 0.5f;
-            mat.color = c;
+                Debug.Log($"[BoardRenderer] ShowGhostTile: Using existing object '{existingObject.name}' at position {pos}");
 
-            // Enable transparency
-            mat.SetFloat("_Mode", 3);
-            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            mat.SetInt("_ZWrite", 0);
-            mat.DisableKeyword("_ALPHATEST_ON");
-            mat.EnableKeyword("_ALPHABLEND_ON");
-            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-            mat.renderQueue = 3000;
+                // Reparent to board
+                _ghostTile.transform.SetParent(transform);
+                _ghostTile.transform.position = pos;
+                _ghostTile.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Board rotation (face up)
+                float tileSize = hexSize * 1.5f;
+                _ghostTile.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
+                _ghostTile.layer = LayerMask.NameToLayer("Board");
 
-            renderer.material = mat;
+                // Set all children to Board layer too
+                foreach (Transform child in _ghostTile.transform)
+                {
+                    child.gameObject.layer = LayerMask.NameToLayer("Board");
+                }
 
-            // Add letter text
-            GameObject textObj = new GameObject("Letter");
-            textObj.transform.SetParent(_ghostTile.transform);
-            textObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            textObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+                Debug.Log($"[BoardRenderer] Ghost tile placed: pos={_ghostTile.transform.position}, scale={_ghostTile.transform.localScale}, layer={_ghostTile.layer}");
+            }
+            else
+            {
+                // Fallback: create a new object (for tap mode or AI)
+                _ghostTileIsExternal = false;
 
-            var textMesh = textObj.AddComponent<TextMesh>();
-            textMesh.text = letter.ToString();
-            textMesh.fontSize = 32;
-            textMesh.alignment = TextAlignment.Center;
-            textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.color = new Color(0f, 0f, 0f, 0.7f);
+                if (tilePrefab != null)
+                {
+                    _ghostTile = Instantiate(tilePrefab, pos, Quaternion.Euler(90f, 0f, 0f), transform);
+                    float tileSize = hexSize * 1.5f;
+                    _ghostTile.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
+                }
+                else
+                {
+                    _ghostTile = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    _ghostTile.transform.position = pos;
+                    _ghostTile.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+                    _ghostTile.transform.localScale = new Vector3(hexSize * 1.5f, 0.1f, hexSize * 1.5f);
+                    _ghostTile.transform.SetParent(transform);
+                }
+                _ghostTile.name = "GhostTile";
+
+                // Apply semi-transparent runeblossom texture or fallback material
+                var renderer = _ghostTile.GetComponent<Renderer>();
+                Material baseMat = SpriteLoader.Instance?.GetRuneblossomMaterial(letter, owner) ?? GetPlayerMaterial(owner);
+                Material mat = new Material(baseMat);
+                Color c = mat.color;
+                c.a = 0.5f;
+                mat.color = c;
+
+                // Enable transparency
+                mat.SetFloat("_Mode", 3);
+                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                mat.SetInt("_ZWrite", 0);
+                mat.DisableKeyword("_ALPHATEST_ON");
+                mat.EnableKeyword("_ALPHABLEND_ON");
+                mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                mat.renderQueue = 3000;
+
+                renderer.material = mat;
+
+                // Add letter text only for cylinder fallback
+                if (tilePrefab == null)
+                {
+                    AddLetterTextToTile(_ghostTile, letter);
+                }
+            }
         }
 
         private GameObject _ghostGlyphling;
@@ -803,9 +908,10 @@ namespace Glyphtender.Unity
                 }
                 _ghostGlyphling.name = "GhostGlyphling";
 
-                // Semi-transparent material
+                // Apply glyphling texture with semi-transparency
                 var renderer = _ghostGlyphling.GetComponent<Renderer>();
-                Material mat = new Material(GetPlayerMaterial(owner));
+                Material baseMat = SpriteLoader.Instance?.GetGlyphlingMaterial(owner) ?? GetPlayerMaterial(owner);
+                Material mat = new Material(baseMat);
                 Color c = mat.color;
                 c.a = 0.5f;
                 mat.color = c;
@@ -872,11 +978,11 @@ namespace Glyphtender.Unity
             }
             Debug.Log($"[BoardRenderer] ConfirmGhostGlyphling: Confirming ghost '{_ghostGlyphling.name}' for {glyphling.Owner}_{glyphling.Index}");
 
-            // Restore full opacity
+            // Apply full opacity glyphling texture
             var renderer = _ghostGlyphling.GetComponent<Renderer>();
             if (renderer != null)
             {
-                Material mat = GetPlayerMaterial(glyphling.Owner);
+                Material mat = SpriteLoader.Instance?.GetGlyphlingMaterial(glyphling.Owner) ?? GetPlayerMaterial(glyphling.Owner);
                 if (mat != null)
                 {
                     renderer.material = mat;
@@ -903,14 +1009,89 @@ namespace Glyphtender.Unity
             _ghostOriginalMaterial = null;
         }
 
-        public void HideGhostTile()
+        /// <summary>
+        /// Hides the ghost tile. If external, returns the object; otherwise destroys it.
+        /// </summary>
+        /// <returns>The external ghost object if it was passed in, null otherwise.</returns>
+        public GameObject HideGhostTile()
         {
+            GameObject result = null;
+
             if (_ghostTile != null)
             {
-                Destroy(_ghostTile);
+                Debug.Log($"[BoardRenderer] HideGhostTile: ghost exists, isExternal={_ghostTileIsExternal}");
+                if (_ghostTileIsExternal)
+                {
+                    // Return the object so it can be returned to hand
+                    result = _ghostTile;
+                    Debug.Log($"[BoardRenderer] HideGhostTile: Returning external ghost '{result.name}'");
+                }
+                else
+                {
+                    Debug.Log($"[BoardRenderer] HideGhostTile: Destroying internal ghost");
+                    Destroy(_ghostTile);
+                }
                 _ghostTile = null;
+                _ghostTileIsExternal = false;
+                _ghostTilePosition = null;
             }
+
+            return result;
         }
+
+        /// <summary>
+        /// Confirms the ghost tile placement - makes it permanent on the board.
+        /// The object becomes a real board tile (tracked in _tileObjects).
+        /// </summary>
+        public void ConfirmGhostTile(HexCoord position, Tile tile)
+        {
+            if (_ghostTile == null)
+            {
+                Debug.LogWarning("[BoardRenderer] ConfirmGhostTile: No ghost to confirm!");
+                return;
+            }
+            Debug.Log($"[BoardRenderer] ConfirmGhostTile: Confirming ghost '{_ghostTile.name}' for tile {tile.Letter} at {position}");
+
+            // Apply full opacity runeblossom texture
+            var renderer = _ghostTile.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Material mat = SpriteLoader.Instance?.GetRuneblossomMaterial(tile.Letter, tile.Owner);
+                if (mat != null)
+                {
+                    renderer.material = mat;
+                }
+                else
+                {
+                    // Fallback to solid color material
+                    var fallbackMat = GetPlayerMaterial(tile.Owner);
+                    if (fallbackMat != null)
+                    {
+                        renderer.material = fallbackMat;
+                    }
+                }
+            }
+
+            // Remove drag/click handlers that were from the hand
+            var dragHandler = _ghostTile.GetComponent<HandTileDragHandler>();
+            if (dragHandler != null) Destroy(dragHandler);
+            var clickHandler = _ghostTile.GetComponent<HandTileClickHandler>();
+            if (clickHandler != null) Destroy(clickHandler);
+
+            // Track it as a real tile
+            _tileObjects[position] = _ghostTile;
+            _ghostTile.name = $"Tile_{tile.Letter}_{position.Column}_{position.Row}";
+
+            // Clear ghost reference (object is now tracked in _tileObjects)
+            _ghostTile = null;
+            _ghostTileIsExternal = false;
+            _ghostTilePosition = null;
+        }
+
+        /// <summary>
+        /// Gets whether a ghost tile exists and its position.
+        /// </summary>
+        public HexCoord? GhostTilePosition => _ghostTilePosition;
 
         #endregion
 

@@ -50,9 +50,9 @@ After editing .md files in a main repo C:\Users\Muzzy\Documents\UnityProjects\Gl
 
 ## Current Work
 
-**Phase 5.4: Online Draft & Play Phase Sync** (DRAFT WORKING - PLAY PHASE NEXT)
+**Phase 5.4: Online Draft & Play Phase Sync** (UNIFIED PREFAB LIFECYCLE COMPLETE)
 
-Draft phase now working in local 1v1. Glyphling prefab system implemented with proper lifecycle management.
+Both glyphlings AND tiles now use same unified lifecycle: same 3D object from hand → board (no destroy/recreate).
 
 ### What's Working
 - Auth → Lobby → Relay → Connection established
@@ -60,25 +60,25 @@ Draft phase now working in local 1v1. Glyphling prefab system implemented with p
 - NetworkGameBridge spawns and syncs correctly
 - Draft placements sync between players
 - **Glyphling prefab system** - same object from hand → board (no destroy/recreate)
+- **Tile prefab system** - now same lifecycle as glyphlings!
 - Proper material application to prefabs
-- Ghost glyphling lifecycle management
+- Ghost lifecycle management for both tiles and glyphlings
 
 ### What Was Fixed This Session
-1. **Glyphling prefab lifecycle** - Same object from hand to board
-   - HandController creates glyphling with prefab
-   - When dragged to board, object is reparented (not destroyed/recreated)
-   - `BoardRenderer.ShowGhostGlyphling()` now accepts existing object
-   - `BoardRenderer.ConfirmGhostGlyphling()` registers it as permanent
-   - `HandController.UntrackGlyphlingObject()` prevents double-destroy
+1. **Unified Tile Lifecycle** - Same pattern as glyphlings
+   - `BoardRenderer.ShowGhostTile(existingObject)` - accepts existing object from hand
+   - `BoardRenderer.ConfirmGhostTile()` - registers ghost as permanent board tile
+   - `HandController.UntrackTileObject()` - removes from hand tracking without destroy
+   - `HandTileDragHandler.EndDrag()` - now passes object to BoardRenderer
+   - Handlers are destroyed on confirm, object persists
 
-2. **Hand/Board rotation** - Quads need different rotations
-   - Board glyphlings: 90° X rotation (face up at camera)
-   - Hand glyphlings: 180° X rotation (face forward at camera)
-
-3. **Collider for interaction** - Added BoxCollider to prefab glyphlings in hand
-   - Required for `OnMouseDown()` detection in drag/click handlers
+2. **Runeblossom Animation Vision** - Documented in HANDOFF.md
+   - Future: Seeds arc from hand, arrows draw, water splash animations
+   - Architecture now supports this (object transfer, not recreation)
 
 ### What Needs Testing
+- Tile drag → place → confirm flow (should use same object throughout)
+- Cancel/return to hand (object should return correctly)
 - Online play phase (move + cast actions)
 - Turn indicator after draft in online mode
 

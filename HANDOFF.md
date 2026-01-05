@@ -328,6 +328,44 @@ UI Layer:        UI camera renders this (3D UI elements)
 
 This separation prevents zoom/pan from affecting UI elements.
 
+### 3.10 Prefab Lifecycle Pattern
+
+Both glyphlings and tiles follow a **unified lifecycle pattern** where the same 3D object moves from hand to board (no destroy/recreate):
+
+**Glyphlings (implemented):**
+```
+HandController.CreateHandGlyphling() → object in hand (UI3D layer)
+    ↓ drag
+BoardRenderer.ShowGhostGlyphling(existingObject) → reparent to board, ghost mode
+    ↓ drop valid
+Object stays on board as preview
+    ↓ confirm
+BoardRenderer.ConfirmGhostGlyphling() → register as permanent, solid mode
+HandController.UntrackGlyphlingObject() → remove from hand tracking
+```
+
+**Tiles (to implement):**
+```
+HandController.CreateHandTile() → object in hand (UI3D layer)
+    ↓ drag
+BoardRenderer.ShowGhostTile(existingObject) → reparent to board, ghost mode
+    ↓ drop valid
+Object stays on board as preview
+    ↓ confirm
+BoardRenderer.ConfirmGhostTile() → register as permanent, solid mode
+HandController.UntrackTileObject() → remove from hand tracking
+```
+
+**Key Methods:**
+- `ShowGhost*(existingObject)` - Accepts an existing object, reparents it, sets ghost appearance
+- `ConfirmGhost*()` - Converts ghost to permanent, registers in board data structures
+- `Untrack*Object()` - Removes object from hand tracking without destroying it
+
+**Why This Matters:**
+- Enables smooth animations from hand to board (same object, different positions)
+- No jarring destroy/create transitions
+- Required for future runeblossom casting animation (arc from hand to board)
+
 ---
 
 ## 4. UI/UX Philosophy
@@ -904,6 +942,35 @@ When creating files for Muzzy, always copy to `/mnt/user-data/outputs/`.
 | 12 | Score number ticking up | Animated counter |
 | 13 | Animation chaining with delays | Paced sequences |
 | 14 | "Bubbly" feel | Overall animation personality |
+| 14b | Runeblossom casting animation | See vision below |
+
+#### Runeblossom Casting Animation Vision
+
+The runeblossom (letter tile) casting should feel magical and tactile:
+
+1. **In Hand:** Runeblossoms appear as "seeds" with the letter visible
+2. **Drag Start:**
+   - Seed highlights in hand position
+   - Arced arrow draws from hand seed to cursor position
+   - Seed stays in hand (doesn't move yet)
+3. **Drag Over Valid Hex:**
+   - Arrow curves to target hex
+   - Hex shows placement preview
+4. **Drop on Valid Hex:**
+   - Arrow vanishes with moving mask effect (dissolves from hand toward target)
+   - Seed arcs from hand to board (follows arrow path)
+   - Seed "buries" into the hex tile
+5. **Drop on Invalid Hex:**
+   - Arrow simply disappears
+   - Seed never left hand
+6. **Cancel / Select Different Tile:**
+   - If a seed was placed (waiting confirm), it snaps back to hand (straight line, quick)
+   - New selection begins fresh arrow draw
+7. **Confirm:**
+   - Glyphling shoots magic water splash toward the buried seed
+   - Seed grows into letter topiary (the final runeblossom appearance)
+
+**Architecture Requirement:** The hand tile object must BE the board tile object (transferred, not recreated). This enables smooth arc animation from hand position to board position.
 
 ### 11.3 AI System
 
