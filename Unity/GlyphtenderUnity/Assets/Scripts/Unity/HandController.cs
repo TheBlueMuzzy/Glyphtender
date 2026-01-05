@@ -47,6 +47,9 @@ namespace Glyphtender.Unity
         [Tooltip("Prefab for glyphlings in hand during draft. If null, uses sphere fallback.")]
         public GameObject glyphlingPrefab;
 
+        [Tooltip("Prefab for letter tiles in hand. If null, uses cylinder fallback.")]
+        public GameObject tilePrefab;
+
         [Header("Materials")]
         public Material yellowTileMaterial;
         public Material blueTileMaterial;
@@ -150,6 +153,9 @@ namespace Glyphtender.Unity
 
         private void Start()
         {
+            // Ensure SpriteLoader exists for runtime texture loading
+            SpriteLoader.EnsureExists();
+
             // Find UI camera if not set
             if (uiCamera == null)
             {
@@ -475,6 +481,19 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Removes a tile object from hand tracking without destroying it.
+        /// Called when the object is being transferred to the board.
+        /// </summary>
+        public void UntrackTileObject(GameObject obj)
+        {
+            if (_handTileObjects.Contains(obj))
+            {
+                _handTileObjects.Remove(obj);
+                Debug.Log($"[HandController] Untracked tile '{obj.name}' from hand (will not be destroyed on refresh)");
+            }
+        }
+
+        /// <summary>
         /// Gets the player whose hand should be displayed.
         /// In online mode, always show local player's hand.
         /// In local mode, show current player's hand.
@@ -601,22 +620,63 @@ namespace Glyphtender.Unity
 
         private GameObject CreateHandTile(char letter, Vector3 localPos, int index)
         {
-            GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            tile.transform.SetParent(_handAnchor);
-            tile.transform.localPosition = localPos;
-            tile.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            tile.transform.localScale = new Vector3(tileSize, 0.05f, tileSize);
-            tile.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
-            tile.layer = LayerMask.NameToLayer("UI3D");
-
-            // Use display player's material (local player in online mode)
             Player displayPlayer = GetDisplayPlayer();
-            Material mat = GetTileMaterial(displayPlayer);
-            if (mat != null)
+            GameObject tile;
+
+            // Try to use prefab with texture if available
+            if (tilePrefab != null && SpriteLoader.Instance != null)
             {
-                tile.GetComponent<Renderer>().material = mat;
+                // Use prefab - rotate to face camera in hand space (hand anchor is rotated 180° on X)
+                tile = Instantiate(tilePrefab, Vector3.zero, Quaternion.identity);
+                tile.transform.SetParent(_handAnchor);
+                tile.transform.localPosition = localPos;
+                tile.transform.localRotation = Quaternion.Euler(180f, 0f, 0f); // Flip to face camera
+                tile.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
+
+                // Apply runeblossom texture
+                var renderer = tile.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.shadowCastingMode = ShadowCastingMode.Off;
+                    Material mat = SpriteLoader.Instance.GetRuneblossomMaterial(letter, displayPlayer);
+                    if (mat != null)
+                    {
+                        renderer.material = mat;
+                    }
+                    else
+                    {
+                        // Fallback to solid color
+                        Material fallback = GetTileMaterial(displayPlayer);
+                        if (fallback != null) renderer.material = fallback;
+                    }
+                }
+
+                // Add collider if not present (for click/drag detection)
+                if (tile.GetComponent<Collider>() == null)
+                {
+                    tile.AddComponent<BoxCollider>();
+                }
+            }
+            else
+            {
+                // Fallback: cylinder primitive with text
+                tile = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                tile.transform.SetParent(_handAnchor);
+                tile.transform.localPosition = localPos;
+                tile.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                tile.transform.localScale = new Vector3(tileSize, 0.05f, tileSize);
+                tile.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+
+                Material mat = GetTileMaterial(displayPlayer);
+                if (mat != null)
+                {
+                    tile.GetComponent<Renderer>().material = mat;
+                }
+
+                CreateLetterText(tile, letter);
             }
 
+            tile.layer = LayerMask.NameToLayer("UI3D");
             tile.name = $"HandTile_{letter}_{index}";
 
             var clickHandler = tile.AddComponent<HandTileClickHandler>();
@@ -629,8 +689,6 @@ namespace Glyphtender.Unity
             dragHandler.Index = index;
             dragHandler.Letter = letter;
 
-            CreateLetterText(tile, letter);
-
             return tile;
         }
 
@@ -640,12 +698,12 @@ namespace Glyphtender.Unity
 
             if (glyphlingPrefab != null)
             {
-                // Use prefab - rotate 180 degrees on X so quad faces camera (hand view is opposite of board view)
+                // Use prefab - rotate to face camera in hand space (hand anchor is rotated 180° on X)
                 obj = Instantiate(glyphlingPrefab, Vector3.zero, Quaternion.identity);
                 obj.transform.SetParent(_handAnchor);
                 obj.transform.localPosition = localPos;
-                obj.transform.localScale = new Vector3(tileSize * 0.8f, tileSize * 0.8f, tileSize * 0.8f);
-                obj.transform.localRotation = Quaternion.Euler(180f, 0f, 0f);
+                obj.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
+                obj.transform.localRotation = Quaternion.Euler(180f, 0f, 0f); // Flip to face camera
 
                 // Add collider for OnMouseDown detection (Quads don't have colliders by default)
                 if (obj.GetComponent<Collider>() == null)
@@ -659,7 +717,7 @@ namespace Glyphtender.Unity
                 obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 obj.transform.SetParent(_handAnchor);
                 obj.transform.localPosition = localPos;
-                obj.transform.localScale = new Vector3(tileSize * 0.8f, tileSize * 0.8f, tileSize * 0.8f);
+                obj.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
 
                 // Remove collider from primitive
                 var collider = obj.GetComponent<Collider>();
@@ -671,8 +729,8 @@ namespace Glyphtender.Unity
             {
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
 
-                // Use glyphling materials based on owner
-                Material mat = GetGlyphlingMaterial(glyphling.Owner);
+                // Use glyphling texture from SpriteLoader, fallback to solid color material
+                Material mat = SpriteLoader.Instance?.GetGlyphlingMaterial(glyphling.Owner) ?? GetGlyphlingMaterial(glyphling.Owner);
                 if (mat != null)
                 {
                     renderer.material = mat;
@@ -746,9 +804,11 @@ namespace Glyphtender.Unity
                 {
                     renderer.material = selectedMaterial;
                 }
-                else
+                else if (i < _currentHand.Count)
                 {
-                    Material mat = GetTileMaterial(displayPlayer);
+                    // Restore runeblossom texture for the letter at this index
+                    char letter = _currentHand[i];
+                    Material mat = SpriteLoader.Instance?.GetRuneblossomMaterial(letter, displayPlayer) ?? GetTileMaterial(displayPlayer);
                     if (mat != null)
                     {
                         renderer.material = mat;
@@ -776,8 +836,8 @@ namespace Glyphtender.Unity
                 }
                 else
                 {
-                    // Restore original material
-                    Material mat = GetGlyphlingMaterial(drafter);
+                    // Restore glyphling texture
+                    Material mat = SpriteLoader.Instance?.GetGlyphlingMaterial(drafter) ?? GetGlyphlingMaterial(drafter);
                     if (mat != null)
                     {
                         renderer.material = mat;
@@ -948,19 +1008,24 @@ namespace Glyphtender.Unity
 
         private void ToggleTileForDiscard(int index)
         {
+            var tile = _handTileObjects[index];
+
             if (_selectedForDiscard.Contains(index))
             {
+                // Deselecting - return to normal position and scale
                 _selectedForDiscard.Remove(index);
-                var tile = _handTileObjects[index];
                 tile.transform.localPosition += new Vector3(0f, 0.3f, 0f);
-                tile.transform.localScale = new Vector3(tileSize, 0.05f, tileSize);
+                // Restore normal scale - uniform for quad prefabs
+                tile.transform.localScale = new Vector3(tileSize, tileSize, tileSize);
             }
             else
             {
+                // Selecting - move down and scale up slightly
                 _selectedForDiscard.Add(index);
-                var tile = _handTileObjects[index];
                 tile.transform.localPosition -= new Vector3(0f, 0.3f, 0f);
-                tile.transform.localScale = new Vector3(tileSize * 1.2f, 0.05f, tileSize * 1.2f);
+                // Scale up uniformly for quad prefabs (not flat like cylinder fallback)
+                float selectedSize = tileSize * 1.15f;
+                tile.transform.localScale = new Vector3(selectedSize, selectedSize, selectedSize);
             }
         }
 

@@ -466,8 +466,10 @@ namespace Glyphtender.Unity
             // Capture the glyphling before placement (for confirming the ghost object)
             var placingGlyphling = SelectedDraftGlyphling;
 
-            // Place the glyphling
-            bool success = GameRules.PlaceDraftGlyphling(GameState, position);
+            // Place the specific selected glyphling (not just next unplaced)
+            // This ensures the glyphling the player selected is the one placed,
+            // and matches what's tracked in _glyphlingObjects
+            bool success = GameRules.PlaceDraftGlyphling(GameState, position, placingGlyphling);
             if (!success)
             {
                 return;
@@ -796,24 +798,22 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // Hide ghost tile
-            if (BoardRenderer.Instance != null)
-            {
-                BoardRenderer.Instance.HideGhostTile();
-            }
-
             // Store current player before any state changes
             Player currentPlayer = GameState.CurrentPlayer;
 
-            // Place tile
-            GameState.Hands[currentPlayer].Remove(PendingLetter.Value);
-            GameState.Tiles[PendingCastPosition.Value] = new Tile(
-                PendingLetter.Value,
+            // Store pending tile info before clearing (needed for ghost confirmation)
+            var pendingPos = PendingCastPosition.Value;
+            var pendingLetter = PendingLetter.Value;
+
+            // Place tile in game state
+            GameState.Hands[currentPlayer].Remove(pendingLetter);
+            GameState.Tiles[pendingPos] = new Tile(
+                pendingLetter,
                 currentPlayer,
-                PendingCastPosition.Value);
+                pendingPos);
 
             // Score words formed by the new tile
-            var newWords = WordScorer.FindWordsAt(GameState, PendingCastPosition.Value, PendingLetter.Value);
+            var newWords = WordScorer.FindWordsAt(GameState, pendingPos, pendingLetter);
             int turnScore = 0;
             foreach (var word in newWords)
             {
