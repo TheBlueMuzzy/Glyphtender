@@ -44,8 +44,16 @@
 
 ### File Sync (Worktrees)
 Main repo: `C:\Users\Muzzy\Documents\UnityProjects\Glyphtender`
-After editing .md files in a main repo C:\Users\Muzzy\Documents\UnityProjects\Glyphtender , copy to worktree and commit both.
-- Muzzy may do manual editing on the main repo versions, so they are the source of truth!
+Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
+
+**CRITICAL: Unity runs from the main repo, NOT the worktree!**
+- After editing ANY scripts in a worktree, ALWAYS copy them to the main repo so Unity sees the changes
+- Example: After editing `BoardRenderer.cs` in worktree, run:
+  ```
+  cp "C:\Users\Muzzy\.claude-worktrees\Glyphtender\bold-shirley\Unity\GlyphtenderUnity\Assets\Scripts\Unity\BoardRenderer.cs" "C:\Users\Muzzy\Documents\UnityProjects\Glyphtender\Unity\GlyphtenderUnity\Assets\Scripts\Unity\BoardRenderer.cs"
+  ```
+- This applies to ALL script files (.cs), not just .md files
+- Muzzy may do manual editing on the main repo versions, so they are the source of truth for .md files
 ---
 
 ## Current Work
