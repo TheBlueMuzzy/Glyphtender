@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Glyphtender.Core;
+using Glyphtender.Unity.Network;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
@@ -1034,6 +1035,26 @@ namespace Glyphtender.Unity
         /// </summary>
         public void ConfirmCycleDiscard()
         {
+            // In online mode, send to network first
+            if (NetworkedGameManager.Instance != null &&
+                NetworkedGameManager.Instance.IsOnlineGame)
+            {
+                // Build discard mask
+                byte discardMask = 0;
+                foreach (int index in _selectedForDiscard)
+                {
+                    discardMask |= (byte)(1 << index);
+                }
+
+                Debug.Log($"[HandController] Sending cycle to network: mask={discardMask}");
+                NetworkedGameManager.Instance.SendCycleToNetwork(discardMask);
+
+                // Exit cycle mode UI immediately (network will handle the actual discard)
+                ExitCycleMode();
+                return;
+            }
+
+            // Local mode - apply immediately
             var state = GameManager.Instance.GameState;
             var hand = state.Hands[state.CurrentPlayer];
             var toDiscard = new List<char>();

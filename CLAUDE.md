@@ -65,9 +65,9 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 5.4: Online Play Phase Bug Fixes** (IN PROGRESS - BLOCKED)
+**Phase 5.4: Online Play Phase Bug Fixes** (IN PROGRESS)
 
-Working on fixing online multiplayer bugs. Local 1v1 works, but online has critical bugs.
+Working on fixing online multiplayer bugs. Local 1v1 works.
 
 ### What's Working
 - Auth → Lobby → Relay → Connection established
@@ -78,41 +78,36 @@ Working on fixing online multiplayer bugs. Local 1v1 works, but online has criti
 - **Tile prefab system** - same lifecycle as glyphlings!
 - **Runeblossoms visible during refresh phase selection**
 - **Local 1v1 fully working**
+- **FIXED: Glyphling duplication in online mode** (v751)
+- **FIXED: Cycle mode (refresh phase) now works in online mode** (v752)
 
-### Current Testing (v750)
-**Look for v750 in red text at top of main menu** - this confirms Unity compiled the latest code.
+### Current Testing (v752)
+**Look for v752 in red text at top of main menu** - this confirms Unity compiled the latest code.
 
-### CRITICAL BUG - NOT FIXED (Needs Fresh Investigation)
-**Glyphling duplication when host drags during play phase:**
-- When host starts dragging a glyphling, a duplicate remains at the original position
-- Happens in play phase (after draft complete)
-- The dragged glyphling moves with mouse, but original stays behind
-- Multiple fix attempts in `NetworkedGameManager.OnNetworkDraftPlacementConfirmed` have failed
-- Attempted to call `ConfirmGhostGlyphling` before `RefreshBoard` - didn't work
+### Recent Fixes
 
-**Root cause theory (unverified):**
-- Host drags glyphling → creates ghost visual
-- Host confirms → sends to network, but ghost still exists visually
-- Host receives own RPC → `RefreshBoard` creates NEW object
-- Result: BOTH ghost AND new object exist = duplication
+**Glyphling duplication (v751):**
+- Root cause: `ConfirmDraftPlacement()` was returning early in online mode without placing the glyphling or confirming the ghost object
+- This left the ghost orphaned, and `RefreshGlyphlings` created a duplicate
+- Fix: Host now applies draft placements locally AND sends to network (no early return)
+- The RPC callback's "already has glyphling" check correctly skips for host
 
-**Files involved:**
-- `NetworkedGameManager.cs` - lines 414-426 (attempted fix)
-- `BoardRenderer.cs` - `RefreshGlyphlings()`, `ConfirmGhostGlyphling()`
-- `HexDragHandler.cs` - play phase drag handling
+**Cycle mode / Refresh phase (v752):**
+- Root cause: `OnNetworkTurnConfirmed` wasn't checking if words were formed and always ended turn immediately
+- Fix: Added cycle mode detection - if no words formed, enters cycle mode instead of ending turn
+- Added network sync for cycle completion via `SendCycleToNetwork`
+- Added `EnterCycleModeFromNetwork` and `ExitCycleModeFromNetwork` methods
 
-**Bug #2 (pending):**
-- Turn indicator stuck after refresh phase - not yet investigated
+### Remaining Issues
+- Turn indicator may still be stuck after refresh phase - needs testing
 
 ---
 
 ## Known Issues
 
-1. **CRITICAL: Glyphling duplication in online play phase** - When host drags glyphling, duplicate remains at original position. Multiple fix attempts failed. Needs fresh investigation.
+1. **Turn indicator may be stuck after refresh phase** - P2 may show "waiting for player 1..." even though it's P2's turn. Needs testing after v752 cycle mode fix.
 
-2. **Turn indicator stuck after refresh phase** - P2 shows "waiting for player 1..." even though it's P2's turn. Not yet investigated.
-
-3. **Hex directions may be incorrect** - Leyline movement paths may not work correctly. Need to verify `HexCoord.Directions` array.
+2. **Hex directions may be incorrect** - Leyline movement paths may not work correctly. Need to verify `HexCoord.Directions` array.
 
 ---
 
@@ -163,8 +158,8 @@ Working on fixing online multiplayer bugs. Local 1v1 works, but online has criti
 - Fixed ghost tile not converting to permanent on confirm (removed premature HideGhostTile)
 - Updated all tile size calculations to use `hexSize * glyphlingSize`
 - Local 1v1 now fully working!
-- **Attempted fix for online glyphling duplication** - Added ConfirmGhostGlyphling call in NetworkedGameManager - DID NOT WORK
-- Bug still exists: glyphling duplicates when host drags during play phase
+- **FIXED: Online glyphling duplication (v751)** - Host now applies draft locally + sends to network
+- **FIXED: Cycle mode in online play (v752)** - Added network sync for refresh phase
 
 ### 2026-01-04 (Phase 5.4 - Glyphling Prefab Lifecycle)
 - Created glyphling prefab system (Quad-based with materials)

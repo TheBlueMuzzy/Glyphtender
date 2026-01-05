@@ -1031,6 +1031,37 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Called by NetworkedGameManager when a network turn results in no words formed.
+        /// Enters cycle mode so the player can discard tiles before their turn ends.
+        /// </summary>
+        public void EnterCycleModeFromNetwork(Player player)
+        {
+            Debug.Log($"[GameManager] EnterCycleModeFromNetwork for {player}");
+
+            CurrentTurnState = GameTurnState.CycleMode;
+            _enteredCycleMode = true;
+            _tilesCycledThisTurn = 0;
+            _cycleModeTurnPlayer = player;
+
+            ClearSelection();
+            OnSelectionChanged?.Invoke();
+            OnGameStateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Called by NetworkedGameManager when cycle mode is complete from network.
+        /// Exits cycle mode state without ending turn (network handles that).
+        /// </summary>
+        public void ExitCycleModeFromNetwork()
+        {
+            Debug.Log("[GameManager] ExitCycleModeFromNetwork");
+
+            _enteredCycleMode = false;
+            CurrentTurnState = GameTurnState.Idle;
+            ClearSelection();
+        }
+
+        /// <summary>
         /// Sets the cast origin for tile animation.
         /// </summary>
         public void SetLastCastOrigin(HexCoord origin)
