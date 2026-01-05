@@ -34,6 +34,13 @@
 - Commit frequently with descriptive messages
 - Update "Current Work" section as progress is made
 
+### Version Tracking (IMPORTANT)
+**Unity sometimes doesn't recompile code.** To verify changes are active:
+1. Before asking Muzzy to test, increment BUILD_VERSION in `MainMenuScreen.cs:129`
+2. Tell Muzzy which version to look for (e.g., "Look for v744")
+3. The version appears in red text at the top of the main menu
+4. If version doesn't match, Unity needs manual refresh/recompile
+
 ### Ending a Session / Commit Command
 1. Stage all changes: `git add -A`
 2. Commit with descriptive message
@@ -58,9 +65,9 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 5.4: Local Play Phase Bug Fixes** (WORKING!)
+**Phase 5.4: Online Play Phase Bug Fixes** (IN PROGRESS)
 
-Local 1v1 play is now fully working. All major bugs from unified prefab lifecycle have been fixed.
+Working on fixing online multiplayer bugs identified during testing.
 
 ### What's Working
 - Auth → Lobby → Relay → Connection established
@@ -69,35 +76,28 @@ Local 1v1 play is now fully working. All major bugs from unified prefab lifecycl
 - Draft placements sync between players
 - **Glyphling prefab system** - same object from hand → board (no destroy/recreate)
 - **Tile prefab system** - same lifecycle as glyphlings!
-- **Tile drag shows runeblossom texture** (not green square)
-- **Ghost tile properly converts to permanent tile on confirm**
-- **Glyphling identity preserved through draft** (no duplicate objects)
 - **Runeblossoms visible during refresh phase selection**
 
-### What Was Fixed This Session (2026-01-05)
-1. **Glyphling size on board** - Was 67% of tile size, now matches tiles
-   - Scene had `glyphlingSize: 1` instead of `1.5` → changed to `1.8` for 20% larger
+### Current Testing (v744)
+**Look for v744 in red text at top of main menu** - this confirms Unity compiled the latest code.
 
-2. **Runeblossom rotation during refresh phase** - Was using cylinder Y-scale (0.05)
-   - Changed `ToggleTileForDiscard()` to use uniform scaling for quad prefabs
+**Bug Fixed:**
+1. **Yellow glyphling turning blue on confirm (host side)**
+   - Root cause: `ConfirmDraftPlacement` was calling `PlaceDraftGlyphling` without specifying which glyphling
+   - `GetNextUnplacedGlyphling()` could return a different glyphling than the one dragged
+   - Fix: Now passes `placingGlyphling` explicitly to `PlaceDraftGlyphling`
+   - File: `GameManager.cs:470`
 
-3. **Green square during tile drag** - Material was lost when tile unparented
-   - Added material reapplication in `HandTileDragHandler.OnMouseDown()`
-
-4. **Glyphling identity mismatch** - `PlaceDraftGlyphling` used wrong glyphling
-   - Added optional `glyphlingToPlace` parameter
-   - `GameManager.ConfirmDraftPlacement` now passes selected glyphling
-
-5. **Ghost tile not removed on confirm** - `HideGhostTile` cleared before `RefreshTiles`
-   - Removed premature `HideGhostTile` call from `ConfirmMove`
-   - Now `RefreshTiles` properly finds and confirms ghost
-
-6. **Tile sizes updated to use `glyphlingSize`** - Was hardcoded to 1.5
-   - All tile size calculations now use `hexSize * glyphlingSize`
+**Bug Under Investigation:**
+2. **Turn indicator stuck after refresh phase** - P2 shows "waiting for player 1..." even though it's P2's turn
+   - Likely issue: `OnNetworkCycleConfirmed` has TODO - cycle mode not fully synced
+   - TurnIndicator reads `IsLocalPlayerTurn` which compares `CurrentPlayer` to `LocalPlayer`
+   - Needs investigation of turn state after cycle mode completion
 
 ### What Needs Testing
-- Online play phase (move + cast actions)
-- Turn indicator after draft in online mode
+- Does v744 fix the yellow→blue glyphling bug?
+- Does turn indicator work correctly after draft placements?
+- Does turn indicator work correctly after play phase moves?
 
 ---
 
@@ -150,7 +150,7 @@ Local 1v1 play is now fully working. All major bugs from unified prefab lifecycl
 
 ## Session Log
 
-### 2026-01-05 (Phase 5.4 - Play Phase Bug Fixes)
+### 2026-01-05 (Phase 5.4 - Online Play Phase Bug Fixes)
 - Fixed glyphling/tile size on board (changed `glyphlingSize` from 1.0 to 1.8)
 - Fixed runeblossom selection during refresh phase (uniform quad scaling)
 - Fixed green square during tile drag (material reapplication)
@@ -158,6 +158,8 @@ Local 1v1 play is now fully working. All major bugs from unified prefab lifecycl
 - Fixed ghost tile not converting to permanent on confirm (removed premature HideGhostTile)
 - Updated all tile size calculations to use `hexSize * glyphlingSize`
 - Local 1v1 now fully working!
+- **Fixed online refresh phase** - NetworkedGameManager now calls `EnterCycleModeFromNetwork()` when no words formed
+- **Fixed online draft glyphling doubling** - NetworkedGameManager now calls `ConfirmGhostGlyphling()` before RefreshBoard
 
 ### 2026-01-04 (Phase 5.4 - Glyphling Prefab Lifecycle)
 - Created glyphling prefab system (Quad-based with materials)

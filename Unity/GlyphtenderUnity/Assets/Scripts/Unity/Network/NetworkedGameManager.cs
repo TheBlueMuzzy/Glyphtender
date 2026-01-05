@@ -377,6 +377,14 @@ namespace Glyphtender.Unity
 
             var state = GameManager.Instance.GameState;
 
+            // Check if this position already has a glyphling - means we already processed this locally
+            // (Host receives its own RPC back)
+            if (state.HasGlyphling(pos))
+            {
+                Debug.Log($"[NetworkedGameManager] Position already has glyphling - skipping (already processed locally)");
+                return;
+            }
+
             // Only apply if we're in draft phase
             if (state.Phase != GamePhase.Draft)
             {
