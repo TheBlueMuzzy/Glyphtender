@@ -909,6 +909,16 @@ namespace Glyphtender.Unity
         {
             if (GameManager.Instance.IsInCycleMode && !_isInCycleMode)
             {
+                // In online mode, only enter cycle mode if it's our turn to cycle
+                if (NetworkedGameManager.Instance != null && NetworkedGameManager.Instance.IsOnlineGame)
+                {
+                    // Only enter cycle mode if the current player is the local player
+                    if (!NetworkedGameManager.Instance.IsLocalPlayerTurn)
+                    {
+                        // Not our turn - don't enter cycle mode on our side
+                        return;
+                    }
+                }
                 EnterCycleMode();
                 return;
             }
