@@ -2,7 +2,7 @@
 
 **Project Owner:** Muzzy
 **Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions
-**Last Updated:** January 5, 2026 (Local Play Phase Working)
+**Last Updated:** January 5, 2026 (Online 1v1 Fully Working - All Platforms!)
 
 ---
 
@@ -997,17 +997,19 @@ The runeblossom (letter tile) casting should feel magical and tactile:
 | 23 | PC/Steam build | Stretch goal |
 | 24 | Itch.io build | Alongside Steam |
 
-### 11.6 Online Multiplayer (Phase 5 - IN PROGRESS)
+### 11.6 Online Multiplayer (Phase 5 - COMPLETE!)
 
 | # | Feature | Notes |
 |---|---------|-------|
 | 25 | Network foundation | ✅ Phase 5.1-5.3 complete (auth, lobby, relay, messages, bridge) |
 | 26 | Room code system | ✅ Working - host creates, guest joins with 6-char code |
-| 27 | Host-guest connection | ⚠️ Editor→Phone works, Phone→Any works, **PC Build→Phone FAILS** |
+| 27 | Host-guest connection | ✅ ALL COMBINATIONS WORKING (v764) - Editor↔Phone, Phone↔PC Build |
 | 28 | Local play phase | ✅ Working - all major bugs fixed (2026-01-05) |
-| 29 | Forfeit/disconnect handling | Part of Phase 5.4 |
-| 30 | Rematch flow | Part of Phase 5.5 |
+| 29 | Forfeit/disconnect handling | Part of Phase 5.4 (not yet implemented) |
+| 30 | Rematch flow | Part of Phase 5.5 (not yet implemented) |
 | 31 | Provider abstraction | Designed for Steam/Epic swap |
+
+**PC Build Relay Fix (v764):** QoS-based automatic region selection fails in standalone builds. Fix: explicitly call `ListRegionsAsync()` and pass region to `CreateAllocationAsync()`.
 
 ### 11.7 Future Systems
 

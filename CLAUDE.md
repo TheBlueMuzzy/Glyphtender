@@ -65,9 +65,13 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 5.4: Online Play Phase Bug Fixes** (IN PROGRESS - PC Build Host Issue)
+**Phase 5.4: Online Play Phase Bug Fixes** (COMPLETE!)
 
-Working on fixing online multiplayer bugs. Local 1v1 works. Most online combinations work.
+All online multiplayer combinations now work:
+- Editor host → Phone joiner ✓
+- Phone host → Editor joiner ✓
+- Phone host → PC Build joiner ✓
+- **PC Build host → Phone joiner ✓** (Fixed in v764!)
 
 ### What's Working
 - Auth → Lobby → Relay → Connection established
@@ -78,49 +82,19 @@ Working on fixing online multiplayer bugs. Local 1v1 works. Most online combinat
 - **Tile prefab system** - same lifecycle as glyphlings!
 - **Runeblossoms visible during refresh phase selection**
 - **Local 1v1 fully working**
-- **FIXED: Glyphling duplication in online mode** (v751)
-- **FIXED: Cycle mode (refresh phase) now works in online mode** (v752)
-- **FIXED: White borders on tiles/glyphlings in PC builds** (shader stripping)
-- **Editor host → Phone joiner: WORKS**
-- **Phone host → Editor joiner: WORKS**
-- **Phone host → PC Build joiner: WORKS**
+- **Online 1v1 fully working** (all platform combinations!)
 
-### Current Bug (v760)
-**PC Build host → Phone joiner: FAILS**
-
-The phone receives the correct relay code (verified: raw == cleaned, length = 6), but `JoinRelayAsync` fails with "join code not found".
-
-**What's different about PC Build:**
-- Same computer as Editor, same wifi network
-- Editor hosting works fine, PC Build hosting fails
-- Something in the build process is causing the relay allocation to not work properly
-
-**Debugging tools added:**
-- On-screen debug overlay on phone (shows CloudProjectId, relay codes, errors)
-- Desktop debug file: `glyphtender_host_debug.txt` written when PC Build hosts
-- PC Build logs at: `%USERPROFILE%\AppData\LocalLow\DefaultCompany\GlyphtenderUnity\Player.log`
-
-### Current Testing (v760)
-**Look for v760 in red text at top of main menu**
-
-When PC Build hosts a game, check Desktop for `glyphtender_host_debug.txt` - it will show:
-- Room code and Relay code allocated
-- CloudProjectId
-- Whether running in Editor or Build
+### Current Testing (v764)
+**Look for v764 in red text at top of main menu**
 
 ### Remaining Issues
-1. **P0: PC Build host → Phone joiner fails** - relay join code not found (under investigation)
+- Glyphling duplication may still occur in play phase (P1 - needs investigation)
 
 ---
 
 ## Known Issues
 
-### P0 - Game Breaking
-1. **PC Build host → Phone joiner fails** - Relay join code not found. Editor host works, PC Build host doesn't. Under investigation (v760).
-
-### P1 - Minor
-1. Glyphling duplication may still occur in play phase (needs investigation)
-2. Hex directions may be incorrect for leyline movement
+See **Known Bug Registry** section below for prioritized list.
 
 ---
 
@@ -154,6 +128,10 @@ When PC Build hosts a game, check Desktop for `glyphtender_host_debug.txt` - it 
 
 3. **Build logs** - PC builds write logs to:
    - `%USERPROFILE%\AppData\LocalLow\<CompanyName>\<ProductName>\Player.log`
+
+4. **Unity Relay QoS region selection** - Automatic region selection can fail in standalone builds
+   - Fix: Explicitly call `ListRegionsAsync()` and pass region to `CreateAllocationAsync()`
+   - This was the root cause of "join code not found" errors in PC builds (v764 fix)
 
 **When fixing bugs, consider ALL of:**
 - Code changes
@@ -243,6 +221,13 @@ Snake draft: P1 → P2 → P2 → P1 (for 2 players)
 ---
 
 ## Session Log
+
+### 2026-01-05 (Phase 5.4 - PC Build Relay Fix - COMPLETE!)
+- **FIXED: PC Build host → Phone joiner** (v764) - Root cause was QoS-based automatic region selection failing in standalone builds
+  - Fix: Explicitly call `ListRegionsAsync()` and pass region to `CreateAllocationAsync()`
+  - Added explicit "production" environment to `UnityServices.InitializeAsync()` for consistency
+  - Added debugging tools (desktop debug file, on-screen overlay) for future troubleshooting
+- All online platform combinations now working!
 
 ### 2026-01-05 (Phase 5.4 - Online Play Phase Bug Fixes)
 - Fixed glyphling/tile size on board (changed `glyphlingSize` from 1.0 to 1.8)

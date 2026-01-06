@@ -608,6 +608,13 @@ namespace Glyphtender.Unity
                 return;
             }
 
+            // TIMING FIX: Wait for relay to fully register on Unity's servers
+            // PC builds may have slower network or different timing than Editor,
+            // causing "join code not found" errors when guest joins too quickly.
+            // This delay ensures the relay allocation is fully propagated to Unity's servers.
+            Debug.Log($"[OnlineLobbyScreen] Relay allocated: {relayCode}. Waiting 2s for server registration...");
+            await System.Threading.Tasks.Task.Delay(2000);
+
             Debug.Log($"[OnlineLobbyScreen] Relay pre-allocated: {relayCode}. Updating lobby...");
             await GlyphtenderLobby.Instance.UpdateLobbyDataAsync("relayCode", relayCode);
 
@@ -711,11 +718,14 @@ namespace Glyphtender.Unity
                 string timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 string cloudId = UnityEngine.Application.cloudProjectId;
                 string playerId = NetworkServices.Instance?.PlayerId ?? "(unknown)";
+                string relayRegion = GlyphtenderRelay.Instance?.GetAllocatedRegion() ?? "(unknown)";
 
                 string content = $"=== Glyphtender Host Debug ===\n" +
                                  $"Timestamp: {timestamp}\n" +
                                  $"Room Code (Lobby): {roomCode}\n" +
                                  $"Relay Code: {relayCode} (length={relayCode?.Length})\n" +
+                                 $"Relay Region: {relayRegion}\n" +
+                                 $"Environment: production (explicit)\n" +
                                  $"CloudProjectId: {cloudId}\n" +
                                  $"PlayerId: {playerId}\n" +
                                  $"IsEditor: {Application.isEditor}\n" +
@@ -894,9 +904,10 @@ namespace Glyphtender.Unity
                 if (!joined)
                 {
                     string errorDetail = GlyphtenderRelay.Instance.LastError ?? "Unknown error";
+                    string guestPlayerId = NetworkServices.Instance?.PlayerId ?? "(unknown)";
                     Debug.LogError($"[OnlineLobbyScreen] Relay join failed: {errorDetail}");
-                    // Show more detail: raw vs cleaned, and full error
-                    ShowDebugOverlay($"CloudProjectId: {cloudId}\nRaw: '{rawRelayCode}' len={rawRelayCode?.Length}\nCleaned: '{relayCode}' len={relayCode?.Length}\nERROR: {errorDetail}");
+                    // Show more detail: raw vs cleaned, PlayerId, and full error
+                    ShowDebugOverlay($"CloudProjectId: {cloudId}\nPlayerId: {guestPlayerId}\nRaw: '{rawRelayCode}' len={rawRelayCode?.Length}\nCleaned: '{relayCode}' len={relayCode?.Length}\nERROR: {errorDetail}");
                     ShowError($"Failed to join relay: {errorDetail}");
                     return;
                 }

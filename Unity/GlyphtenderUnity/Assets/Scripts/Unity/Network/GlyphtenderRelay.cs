@@ -115,8 +115,29 @@ namespace Glyphtender.Unity.Network
             {
                 Debug.Log("[GlyphtenderRelay] Allocating relay server...");
 
-                // Allocate relay with 1 max connection (1v1)
-                _hostAllocation = await RelayService.Instance.CreateAllocationAsync(MAX_CONNECTIONS);
+                // CRITICAL FIX: Explicitly fetch regions and specify one
+                // QoS-based automatic region selection can fail in standalone builds,
+                // causing "join code not found" errors even though allocation appears to succeed.
+                // By explicitly listing regions and picking one, we ensure a valid allocation.
+                Debug.Log("[GlyphtenderRelay] Fetching available regions...");
+                var regions = await RelayService.Instance.ListRegionsAsync();
+
+                if (regions == null || regions.Count == 0)
+                {
+                    LastError = "No relay regions available";
+                    Debug.LogError($"[GlyphtenderRelay] {LastError}");
+                    SetState(RelayState.Error);
+                    OnError?.Invoke(LastError);
+                    return null;
+                }
+
+                // Log available regions and pick the first one (usually closest)
+                Debug.Log($"[GlyphtenderRelay] Available regions: {string.Join(", ", regions.ConvertAll(r => r.Id))}");
+                string selectedRegion = regions[0].Id;
+                Debug.Log($"[GlyphtenderRelay] Using region: {selectedRegion}");
+
+                // Allocate relay with explicit region (1v1 = 1 max connection)
+                _hostAllocation = await RelayService.Instance.CreateAllocationAsync(MAX_CONNECTIONS, selectedRegion);
 
                 // Get join code
                 JoinCode = await RelayService.Instance.GetJoinCodeAsync(_hostAllocation.AllocationId);
@@ -287,6 +308,22 @@ namespace Glyphtender.Unity.Network
                 return $"{endpoint.IpV4}:{endpoint.Port}";
             }
             return "Not connected";
+        }
+
+        /// <summary>
+        /// Gets the allocated relay region (for debugging).
+        /// </summary>
+        public string GetAllocatedRegion()
+        {
+            if (IsHost && _hostAllocation != null)
+            {
+                return _hostAllocation.Region;
+            }
+            else if (!IsHost && _guestAllocation != null)
+            {
+                return _guestAllocation.Region;
+            }
+            return null;
         }
 
         private void SetState(RelayState newState)

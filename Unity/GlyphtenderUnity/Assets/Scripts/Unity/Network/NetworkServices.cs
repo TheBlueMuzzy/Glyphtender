@@ -26,6 +26,7 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using Unity.Services.Core;
+using Unity.Services.Core.Environments;
 using Unity.Services.Authentication;
 
 namespace Glyphtender.Unity.Network
@@ -111,9 +112,13 @@ namespace Glyphtender.Unity.Network
 
             try
             {
-                // Initialize Unity Services
-                Debug.Log("[NetworkServices] Initializing Unity Services...");
-                await UnityServices.InitializeAsync();
+                // Initialize Unity Services with explicit environment
+                // Using "production" environment to ensure consistency across Editor and builds
+                var options = new InitializationOptions();
+                options.SetEnvironmentName("production");
+
+                Debug.Log($"[NetworkServices] Initializing Unity Services with environment: production, Platform: {Application.platform}, IsEditor: {Application.isEditor}");
+                await UnityServices.InitializeAsync(options);
 
                 // Subscribe to auth events
                 AuthenticationService.Instance.SignedIn += HandleSignedIn;
