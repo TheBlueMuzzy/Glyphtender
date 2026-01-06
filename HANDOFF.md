@@ -2,7 +2,7 @@
 
 **Project Owner:** Muzzy
 **Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions
-**Last Updated:** January 5, 2026 (Online 1v1 Fully Working - All Platforms!)
+**Last Updated:** January 6, 2026 (Online 1v1 Bug Fixes - v767)
 
 ---
 
@@ -787,12 +787,17 @@ Assets/Scripts/Core/
 - Settings persistence
 - Android builds working (IL2CPP + ARM64)
 
-### 7.3 Known Issues / Technical Debt
+### 7.3 Known Bugs
+
+- **P1: Tangled glyphlings missing visual indication** - Since moving to prefab system, tangled glyphlings don't show they're tangled. Consider -25% scale pulse.
+- **P1: Played letters reappearing in refresh phase** - In 3p/4p local mode, letters played by other players on non-scoring turns appear behind hand tiles during refresh phase. Unselectable but visible.
+- **P2: Hex directions may be incorrect** - Leyline movement paths may not work correctly.
+
+### 7.4 Technical Debt
 
 - BoardRenderer is 900+ lines (god class, should be split)
 - Static state in drag handlers (risk for multiplayer)
 - Some `FindObjectOfType<>()` calls despite singletons available
-- Winner text positioning/persistence bugs (may be fixed)
 
 ---
 

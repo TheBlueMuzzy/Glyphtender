@@ -9,6 +9,7 @@
 | **`<handoff>`** | Read HANDOFF.md for deep context from C:\Users\Muzzy\Documents\UnityProjects\Glyphtender |
 | **`<updateclaude>`** | Explicit: add following info to CLAUDE.md |
 | **`<updatehandoff>`** | Explicit: add following info to HANDOFF.md |
+| **`<bug>`** | Add/update known bugs in HANDOFF.md's Known Bugs section. When bugs are fixed, remove them from that section. |
 | **`<refactorcheck>`** | analyze the project for refactor opportunities in |
 
 ---
@@ -84,11 +85,13 @@ All online multiplayer combinations now work:
 - **Local 1v1 fully working**
 - **Online 1v1 fully working** (all platform combinations!)
 
-### Current Testing (v764)
-**Look for v764 in red text at top of main menu**
+### Current Testing (v768)
+**Look for v768 in red text at top of main menu**
 
 ### Remaining Issues
-- Glyphling duplication may still occur in play phase (P1 - needs investigation)
+- P1: Tangled glyphlings missing visual indication
+- P1: Played letters reappearing in refresh phase (3p/4p local)
+- Next: Multiplayer win screen (only shows yellow/blue)
 
 ---
 
@@ -176,7 +179,8 @@ Snake draft: P1 → P2 → P2 → P1 (for 2 players)
 (none currently)
 
 ### P1 - Confusing but playable
-1. **Glyphling duplication (online)** - Sometimes duplicates appear during play phase. Needs investigation.
+1. **Tangled glyphlings have no visual indication** - Since moving to prefab system, tangled glyphlings don't show they're tangled. Consider -25% scale pulse.
+2. **Played letters reappearing in refresh phase** - In 3p/4p local mode, letters played by other players on non-scoring turns appear behind hand tiles during refresh phase. Unselectable but visible.
 
 ### P2 - Minor
 1. **Hex directions may be incorrect** - Leyline movement paths may not work correctly.
@@ -221,6 +225,22 @@ Snake draft: P1 → P2 → P2 → P1 (for 2 players)
 ---
 
 ## Session Log
+
+### 2026-01-06 (Phase 5.4 - Bug Fixes - v768)
+- **FIXED: Play Again button breaks hand state** - OnGameRestarted was calling RefreshHand() creating duplicate tiles
+  - Root cause: OnGameStateChanged fires BEFORE OnGameRestarted in InitializeGame(), so RefreshHand() was already called
+  - Fix: Removed redundant SetActive(true) loops and RefreshHand() call from OnGameRestarted()
+
+### 2026-01-06 (Phase 5.4 - Online Bug Fixes - v767)
+- **FIXED: Ghost glyphling RPC race condition** - ServerRpc executes synchronously on host, causing RPC callback to run before local code
+  - Root cause: `SendDraftPlacementToNetwork()` was called at START of `ConfirmDraftPlacement()`, but RPC handler ran immediately on host
+  - Fix: Moved RPC send to END of method, after all local processing (placement, ghost confirm, state updates)
+- **FIXED: Tile reappearing in hand after confirm** - `OnGameStateChanged` fired before tile removed from hand data
+  - Root cause: Network path fired events without removing tile from `GameState.Hands`, so `RefreshHand()` recreated it
+  - Fix: Remove tile from hand immediately in ConfirmMove's network path, before firing events
+- Hidden yellow debug overlay (relay info) and removed redundant cycle prompt text
+- Fixed orphaned ghost tile handling (destroy returned external ghosts)
+- Fixed opponent move animation to be sequential (move completes, THEN cast) instead of simultaneous
 
 ### 2026-01-05 (Phase 5.4 - PC Build Relay Fix - COMPLETE!)
 - **FIXED: PC Build host → Phone joiner** (v764) - Root cause was QoS-based automatic region selection failing in standalone builds
