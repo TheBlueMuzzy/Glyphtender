@@ -84,11 +84,11 @@ All online multiplayer combinations now work:
 - **Local 1v1 fully working**
 - **Online 1v1 fully working** (all platform combinations!)
 
-### Current Testing (v764)
-**Look for v764 in red text at top of main menu**
+### Current Testing (v767)
+**Look for v767 in red text at top of main menu**
 
 ### Remaining Issues
-- Glyphling duplication may still occur in play phase (P1 - needs investigation)
+(none currently - all major online bugs fixed!)
 
 ---
 
@@ -176,7 +176,7 @@ Snake draft: P1 → P2 → P2 → P1 (for 2 players)
 (none currently)
 
 ### P1 - Confusing but playable
-1. **Glyphling duplication (online)** - Sometimes duplicates appear during play phase. Needs investigation.
+(none currently)
 
 ### P2 - Minor
 1. **Hex directions may be incorrect** - Leyline movement paths may not work correctly.
@@ -221,6 +221,17 @@ Snake draft: P1 → P2 → P2 → P1 (for 2 players)
 ---
 
 ## Session Log
+
+### 2026-01-06 (Phase 5.4 - Online Bug Fixes - v767)
+- **FIXED: Ghost glyphling RPC race condition** - ServerRpc executes synchronously on host, causing RPC callback to run before local code
+  - Root cause: `SendDraftPlacementToNetwork()` was called at START of `ConfirmDraftPlacement()`, but RPC handler ran immediately on host
+  - Fix: Moved RPC send to END of method, after all local processing (placement, ghost confirm, state updates)
+- **FIXED: Tile reappearing in hand after confirm** - `OnGameStateChanged` fired before tile removed from hand data
+  - Root cause: Network path fired events without removing tile from `GameState.Hands`, so `RefreshHand()` recreated it
+  - Fix: Remove tile from hand immediately in ConfirmMove's network path, before firing events
+- Hidden yellow debug overlay (relay info) and removed redundant cycle prompt text
+- Fixed orphaned ghost tile handling (destroy returned external ghosts)
+- Fixed opponent move animation to be sequential (move completes, THEN cast) instead of simultaneous
 
 ### 2026-01-05 (Phase 5.4 - PC Build Relay Fix - COMPLETE!)
 - **FIXED: PC Build host → Phone joiner** (v764) - Root cause was QoS-based automatic region selection failing in standalone builds

@@ -133,7 +133,6 @@ namespace Glyphtender.Unity
         // Cycle mode
         private bool _isInCycleMode;
         private HashSet<int> _selectedForDiscard = new HashSet<int>();
-        private GameObject _cyclePromptText;
 
         // Hand scaling
         private bool _handIsActive = false;
@@ -194,8 +193,6 @@ namespace Glyphtender.Unity
             {
                 UIScaler.Instance.OnLayoutChanged += OnLayoutChanged;
             }
-
-            CreateCyclePrompt();
 
             ApplyHandPosition();
 
@@ -281,30 +278,7 @@ namespace Glyphtender.Unity
 
         #endregion
 
-        #region Cycle Prompt
-
-        private void CreateCyclePrompt()
-        {
-            GameObject textObj = new GameObject("CyclePrompt");
-            textObj.transform.SetParent(_handAnchor);
-            textObj.transform.localPosition = new Vector3(0f, -1f, 0f);
-            textObj.transform.localRotation = Quaternion.Euler(180f, 0f, 0f);
-            textObj.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-            textObj.layer = LayerMask.NameToLayer("UI3D");
-
-            var textMesh = textObj.AddComponent<TextMesh>();
-            textMesh.text = "You may refresh any number of tiles.";
-            textMesh.fontSize = 100;
-            textMesh.characterSize = 0.5f;
-            textMesh.alignment = TextAlignment.Center;
-            textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.color = Color.white;
-
-            _cyclePromptText = textObj;
-            _cyclePromptText.SetActive(false);
-        }
-
-        #endregion
+        // Cycle prompt text removed - TurnIndicator handles cycle mode instructions
 
         #region Hand Visibility
 
@@ -976,7 +950,6 @@ namespace Glyphtender.Unity
         {
             _isInCycleMode = false;
             _selectedForDiscard.Clear();
-            _cyclePromptText.SetActive(false);
 
             // Reset hand to inactive state
             _handIsActive = false;
@@ -1003,8 +976,6 @@ namespace Glyphtender.Unity
         {
             _isInCycleMode = true;
             _selectedForDiscard.Clear();
-
-            _cyclePromptText.SetActive(true);
 
             // Tell GameUIController to show confirm button
             if (GameUIController.Instance != null)
@@ -1091,7 +1062,6 @@ namespace Glyphtender.Unity
         {
             _isInCycleMode = false;
             _selectedForDiscard.Clear();
-            _cyclePromptText.SetActive(false);
 
             if (GameUIController.Instance != null)
             {

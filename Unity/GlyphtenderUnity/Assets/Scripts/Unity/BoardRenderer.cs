@@ -339,7 +339,12 @@ namespace Glyphtender.Unity
             }
             else
             {
-                HideGhostGlyphling();
+                // Hide ghost and destroy if it was external (prevents orphaned ghosts)
+                var orphanedGhost = HideGhostGlyphling();
+                if (orphanedGhost != null)
+                {
+                    Destroy(orphanedGhost);
+                }
             }
         }
 
@@ -481,7 +486,17 @@ namespace Glyphtender.Unity
 
                 if (!_glyphlingObjects.ContainsKey(glyphling))
                 {
-                    CreateGlyphling(glyphling);
+                    // Safety check: if there's a ghost glyphling that matches this one,
+                    // confirm it instead of creating a duplicate
+                    if (_ghostGlyphling != null && _ghostIsExternal)
+                    {
+                        Debug.Log($"[BoardRenderer] RefreshGlyphlings: Found orphaned ghost for {glyphling.Owner}_{glyphling.Index}, confirming it");
+                        ConfirmGhostGlyphling(glyphling);
+                    }
+                    else
+                    {
+                        CreateGlyphling(glyphling);
+                    }
                 }
 
                 var obj = _glyphlingObjects[glyphling];
