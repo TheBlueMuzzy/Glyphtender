@@ -9,6 +9,7 @@
 | **`<handoff>`** | Read HANDOFF.md for deep context from C:\Users\Muzzy\Documents\UnityProjects\Glyphtender |
 | **`<updateclaude>`** | Explicit: add following info to CLAUDE.md |
 | **`<updatehandoff>`** | Explicit: add following info to HANDOFF.md |
+| **`<bug>`** | Add/update known bugs in HANDOFF.md's Known Bugs section. When bugs are fixed, remove them from that section. |
 | **`<refactorcheck>`** | analyze the project for refactor opportunities in |
 
 ---

@@ -787,12 +787,15 @@ Assets/Scripts/Core/
 - Settings persistence
 - Android builds working (IL2CPP + ARM64)
 
-### 7.3 Known Issues / Technical Debt
+### 7.3 Known Bugs
+
+- **Hex directions may be incorrect** - Leyline movement paths may not work correctly (P2)
+
+### 7.4 Technical Debt
 
 - BoardRenderer is 900+ lines (god class, should be split)
 - Static state in drag handlers (risk for multiplayer)
 - Some `FindObjectOfType<>()` calls despite singletons available
-- Winner text positioning/persistence bugs (may be fixed)
 
 ---
 
