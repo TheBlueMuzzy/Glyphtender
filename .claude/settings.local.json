@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nUpdate bug registry with new P0/P1 bugs \\(v767\\)\n\n- P0: Play Again button breaks hand state in 4p local\n- P1: Tangled glyphlings missing visual indication \\(prefab issue\\)\n- P1: Played letters reappearing in refresh phase \\(3p/4p local\\)\n- Note: Multiplayer win screen only shows yellow/blue \\(next task\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}
