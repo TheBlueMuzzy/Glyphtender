@@ -983,16 +983,10 @@ namespace Glyphtender.Unity
             _responsiveScale = CalculateResponsiveScale();
             UpdateHandScale(animate: false);
 
-            foreach (var tile in _handTileObjects)
-            {
-                tile.SetActive(true);
-            }
-            foreach (var obj in _handGlyphlingObjects)
-            {
-                obj.SetActive(true);
-            }
-
-            RefreshHand();
+            // Note: OnGameStateChanged fires BEFORE OnGameRestarted in InitializeGame(),
+            // so RefreshHand() was already called and created new hand objects.
+            // We don't need to do anything with hand objects here - they're already correct.
+            // The old code was calling RefreshHand() again which created duplicates.
         }
 
         #endregion
