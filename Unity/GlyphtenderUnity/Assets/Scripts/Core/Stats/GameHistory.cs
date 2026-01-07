@@ -17,10 +17,15 @@ namespace Glyphtender.Core.Stats
         // Players
         public PlayerInfo YellowPlayer;
         public PlayerInfo BluePlayer;
+        public PlayerInfo PurplePlayer;
+        public PlayerInfo PinkPlayer;
+        public int PlayerCount;              // Number of players in this game (2-4)
 
         // Initial state (for replay from start)
         public List<char> InitialYellowHand;
         public List<char> InitialBlueHand;
+        public List<char> InitialPurpleHand;
+        public List<char> InitialPinkHand;
         public int RandomSeed;               // For tile bag reconstruction
 
         // Move history
@@ -35,30 +40,41 @@ namespace Glyphtender.Core.Stats
             StartTimeUtc = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             InitialYellowHand = new List<char>();
             InitialBlueHand = new List<char>();
+            InitialPurpleHand = new List<char>();
+            InitialPinkHand = new List<char>();
             Moves = new List<MoveRecord>();
         }
 
         /// <summary>
-        /// Creates a new game history with player info.
+        /// Creates a new game history with player info for all active players.
         /// </summary>
-        public static GameHistory Create(PlayerInfo yellow, PlayerInfo blue, int randomSeed = 0)
+        public static GameHistory Create(List<PlayerInfo> players, int randomSeed = 0)
         {
-            return new GameHistory
+            var history = new GameHistory
             {
-                YellowPlayer = yellow,
-                BluePlayer = blue,
+                PlayerCount = players.Count,
                 RandomSeed = randomSeed
             };
+
+            if (players.Count > 0) history.YellowPlayer = players[0];
+            if (players.Count > 1) history.BluePlayer = players[1];
+            if (players.Count > 2) history.PurplePlayer = players[2];
+            if (players.Count > 3) history.PinkPlayer = players[3];
+
+            return history;
         }
 
         /// <summary>
         /// Captures the initial hands for replay capability.
         /// Call this after dealing initial hands.
         /// </summary>
-        public void CaptureInitialHands(List<char> yellowHand, List<char> blueHand)
+        public void CaptureInitialHands(List<char> yellowHand, List<char> blueHand,
+            List<char> purpleHand = null, List<char> pinkHand = null)
         {
-            InitialYellowHand = new List<char>(yellowHand);
-            InitialBlueHand = new List<char>(blueHand);
+            InitialYellowHand = yellowHand != null ? new List<char>(yellowHand) : new List<char>();
+            InitialBlueHand = blueHand != null ? new List<char>(blueHand) : new List<char>();
+            InitialPurpleHand = purpleHand != null ? new List<char>(purpleHand) : new List<char>();
+            InitialPinkHand = pinkHand != null ? new List<char>(pinkHand) : new List<char>();
         }
 
         /// <summary>
@@ -86,13 +102,35 @@ namespace Glyphtender.Core.Stats
         /// <summary>
         /// Returns true if this was a game against AI.
         /// </summary>
-        public bool IsVsAI => YellowPlayer?.IsAI == true || BluePlayer?.IsAI == true;
+        public bool IsVsAI =>
+            YellowPlayer?.IsAI == true ||
+            BluePlayer?.IsAI == true ||
+            PurplePlayer?.IsAI == true ||
+            PinkPlayer?.IsAI == true;
 
         /// <summary>
         /// Gets the AI personality if this was vs AI, null otherwise.
+        /// Returns the first AI personality found.
         /// </summary>
         public string AIPersonality =>
             YellowPlayer?.IsAI == true ? YellowPlayer.AIPersonality :
-            BluePlayer?.IsAI == true ? BluePlayer.AIPersonality : null;
+            BluePlayer?.IsAI == true ? BluePlayer.AIPersonality :
+            PurplePlayer?.IsAI == true ? PurplePlayer.AIPersonality :
+            PinkPlayer?.IsAI == true ? PinkPlayer.AIPersonality : null;
+
+        /// <summary>
+        /// Gets the PlayerInfo for a specific player color.
+        /// </summary>
+        public PlayerInfo GetPlayerInfo(Player player)
+        {
+            switch (player)
+            {
+                case Player.Yellow: return YellowPlayer;
+                case Player.Blue: return BluePlayer;
+                case Player.Purple: return PurplePlayer;
+                case Player.Pink: return PinkPlayer;
+                default: return null;
+            }
+        }
     }
 }

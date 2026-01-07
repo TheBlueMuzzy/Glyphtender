@@ -71,7 +71,7 @@ namespace Glyphtender.Core.Stats
     }
 
     /// <summary>
-    /// Complete stats for a finished game (both players).
+    /// Complete stats for a finished game (all players).
     /// </summary>
     [Serializable]
     public class GameStats
@@ -80,20 +80,43 @@ namespace Glyphtender.Core.Stats
         public long GameEndTimeUtc;
         public bool WasVsAI;
         public string AIPersonality;         // If vs AI
+        public int PlayerCount;              // Number of players in this game (2-4)
 
         public PlayerGameStats YellowStats;
         public PlayerGameStats BlueStats;
+        public PlayerGameStats PurpleStats;
+        public PlayerGameStats PinkStats;
 
         public Player? Winner;
         public int TotalTurns;
-        public int TotalWordsOnBoard;        // Total words scored by both players
+        public int TotalWordsOnBoard;        // Total words scored by all players
 
         /// <summary>
         /// Gets stats for a specific player color.
         /// </summary>
         public PlayerGameStats GetStatsForPlayer(Player player)
         {
-            return player == Player.Yellow ? YellowStats : BlueStats;
+            switch (player)
+            {
+                case Player.Yellow: return YellowStats;
+                case Player.Blue: return BlueStats;
+                case Player.Purple: return PurpleStats;
+                case Player.Pink: return PinkStats;
+                default: return null;
+            }
+        }
+
+        /// <summary>
+        /// Returns a list of all active player stats (non-null stats for the game's player count).
+        /// </summary>
+        public List<PlayerGameStats> GetActivePlayerStats()
+        {
+            var result = new List<PlayerGameStats>();
+            if (YellowStats != null) result.Add(YellowStats);
+            if (BlueStats != null) result.Add(BlueStats);
+            if (PurpleStats != null) result.Add(PurpleStats);
+            if (PinkStats != null) result.Add(PinkStats);
+            return result;
         }
     }
 }
