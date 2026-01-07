@@ -62,9 +62,6 @@ namespace Glyphtender.Unity
         private GameObject _menuButton;
         private TextMesh _menuButtonText;
 
-        // Cycle prompt
-        private GameObject _cyclePromptText;
-
         private void Awake()
         {
             if (Instance == null)
@@ -124,7 +121,6 @@ namespace Glyphtender.Unity
             CreateConfirmButton();
             CreateCancelButton();
             CreateMenuButton();
-            CreateCyclePrompt();
 
             // Initialize positioning
             UpdateUIScale();
@@ -302,23 +298,8 @@ namespace Glyphtender.Unity
             }
         }
 
-        private void CreateCyclePrompt()
-        {
-            _cyclePromptText = new GameObject("CyclePrompt");
-            _cyclePromptText.transform.SetParent(_uiAnchor);
-            _cyclePromptText.transform.localPosition = new Vector3(0f, 2f, 0f);
-            _cyclePromptText.transform.localRotation = Quaternion.identity;
-
-            var textMesh = _cyclePromptText.AddComponent<TextMesh>();
-            textMesh.text = "You may refresh any number of tiles.";
-            textMesh.fontSize = 24;
-            textMesh.characterSize = 0.15f;
-            textMesh.alignment = TextAlignment.Center;
-            textMesh.anchor = TextAnchor.MiddleCenter;
-            textMesh.color = Color.white;
-
-            _cyclePromptText.SetActive(false);
-        }
+        // CreateCyclePrompt removed - "You may refresh any number of tiles" text is redundant
+        // The TurnIndicator already shows cycle mode instructions at top of screen
 
         private GameObject CreateButton(
             Transform parent,
@@ -392,15 +373,9 @@ namespace Glyphtender.Unity
             _cancelButton.SetActive(false);
         }
 
-        public void ShowCyclePrompt()
-        {
-            _cyclePromptText.SetActive(true);
-        }
-
-        public void HideCyclePrompt()
-        {
-            _cyclePromptText.SetActive(false);
-        }
+        // Cycle prompt text removed - TurnIndicator handles cycle mode instructions
+        public void ShowCyclePrompt() { }
+        public void HideCyclePrompt() { }
 
         public void ShowMenuButton()
         {

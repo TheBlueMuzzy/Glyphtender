@@ -131,12 +131,17 @@ namespace Glyphtender.Core.Stats
     [Serializable]
     public class GameResult
     {
-        public Player? Winner;               // Yellow, Blue, or null for tie
+        public Player? Winner;               // Yellow, Blue, Purple, Pink, or null for tie
         public int YellowFinalScore;
         public int BlueFinalScore;
+        public int PurpleFinalScore;
+        public int PinkFinalScore;
         public int YellowTanglePoints;       // End-game tangle bonus
         public int BlueTanglePoints;
+        public int PurpleTanglePoints;
+        public int PinkTanglePoints;
         public int TotalTurns;
+        public int PlayerCount;              // Number of players in this game (2-4)
         public bool WasForfeited;            // Disconnection timeout
         public Player? ForfeitedBy;          // Who forfeited (if applicable)
     }

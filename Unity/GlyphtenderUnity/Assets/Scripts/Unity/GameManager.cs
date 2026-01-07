@@ -855,21 +855,24 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // Hide ghost tile
-            if (BoardRenderer.Instance != null)
-            {
-                BoardRenderer.Instance.HideGhostTile();
-            }
-
             // Store current player before any state changes
             Player currentPlayer = GameState.CurrentPlayer;
 
-            // Place tile
+            // Place tile in game state
             GameState.Hands[currentPlayer].Remove(PendingLetter.Value);
-            GameState.Tiles[PendingCastPosition.Value] = new Tile(
+            var newTile = new Tile(
                 PendingLetter.Value,
                 currentPlayer,
                 PendingCastPosition.Value);
+            GameState.Tiles[PendingCastPosition.Value] = newTile;
+
+            // Confirm ghost tile to make it permanent on the board
+            // This must happen AFTER the tile is added to GameState.Tiles
+            // so RefreshTiles doesn't create a duplicate
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.ConfirmGhostTile(PendingCastPosition.Value, newTile);
+            }
 
             // Score words formed by the new tile
             var newWords = WordScorer.FindWordsAt(GameState, PendingCastPosition.Value, PendingLetter.Value);
@@ -1150,14 +1153,20 @@ namespace Glyphtender.Unity
             // Record game end for stats
             if (GameHistoryManager.Instance != null)
             {
+                int playerCount = GameState.PlayerCount;
                 var result = new GameResult
                 {
                     Winner = winner,
                     YellowFinalScore = GameState.Scores[Player.Yellow],
                     BlueFinalScore = GameState.Scores[Player.Blue],
+                    PurpleFinalScore = playerCount >= 3 ? GameState.Scores[Player.Purple] : 0,
+                    PinkFinalScore = playerCount >= 4 ? GameState.Scores[Player.Pink] : 0,
                     YellowTanglePoints = tanglePoints[Player.Yellow],
                     BlueTanglePoints = tanglePoints[Player.Blue],
+                    PurpleTanglePoints = playerCount >= 3 ? tanglePoints[Player.Purple] : 0,
+                    PinkTanglePoints = playerCount >= 4 ? tanglePoints[Player.Pink] : 0,
                     TotalTurns = GameState.TurnNumber,
+                    PlayerCount = playerCount,
                     WasForfeited = false
                 };
                 GameHistoryManager.Instance.EndGame(result);

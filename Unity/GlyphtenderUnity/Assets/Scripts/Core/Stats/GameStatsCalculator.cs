@@ -19,6 +19,8 @@ namespace Glyphtender.Core.Stats
                 throw new InvalidOperationException("Cannot calculate stats for incomplete game");
             }
 
+            int playerCount = history.PlayerCount > 0 ? history.PlayerCount : 2;
+
             var stats = new GameStats
             {
                 GameId = history.GameId,
@@ -26,25 +28,34 @@ namespace Glyphtender.Core.Stats
                 WasVsAI = history.IsVsAI,
                 AIPersonality = history.AIPersonality,
                 Winner = history.Result.Winner,
-                TotalTurns = history.Result.TotalTurns
+                TotalTurns = history.Result.TotalTurns,
+                PlayerCount = playerCount
             };
 
+            // Calculate stats for active players
             stats.YellowStats = CalculatePlayerStats(history, Player.Yellow);
             stats.BlueStats = CalculatePlayerStats(history, Player.Blue);
 
+            if (playerCount >= 3)
+                stats.PurpleStats = CalculatePlayerStats(history, Player.Purple);
+            if (playerCount >= 4)
+                stats.PinkStats = CalculatePlayerStats(history, Player.Pink);
+
+            // Sum total words from all active players
             stats.TotalWordsOnBoard = stats.YellowStats.TotalWordsScored
-                                    + stats.BlueStats.TotalWordsScored;
+                                    + stats.BlueStats.TotalWordsScored
+                                    + (stats.PurpleStats?.TotalWordsScored ?? 0)
+                                    + (stats.PinkStats?.TotalWordsScored ?? 0);
 
             return stats;
         }
 
         private static PlayerGameStats CalculatePlayerStats(GameHistory history, Player player)
         {
+            var playerInfo = history.GetPlayerInfo(player);
             var stats = new PlayerGameStats
             {
-                PlayerId = player == Player.Yellow
-                    ? history.YellowPlayer.PlayerId
-                    : history.BluePlayer.PlayerId,
+                PlayerId = playerInfo?.PlayerId ?? player.ToString(),
                 Color = player
             };
 
@@ -149,12 +160,25 @@ namespace Glyphtender.Core.Stats
                 : 0f;
 
             // Final score from result
-            stats.FinalScore = player == Player.Yellow
-                ? history.Result.YellowFinalScore
-                : history.Result.BlueFinalScore;
-            stats.TanglePoints = player == Player.Yellow
-                ? history.Result.YellowTanglePoints
-                : history.Result.BlueTanglePoints;
+            switch (player)
+            {
+                case Player.Yellow:
+                    stats.FinalScore = history.Result.YellowFinalScore;
+                    stats.TanglePoints = history.Result.YellowTanglePoints;
+                    break;
+                case Player.Blue:
+                    stats.FinalScore = history.Result.BlueFinalScore;
+                    stats.TanglePoints = history.Result.BlueTanglePoints;
+                    break;
+                case Player.Purple:
+                    stats.FinalScore = history.Result.PurpleFinalScore;
+                    stats.TanglePoints = history.Result.PurpleTanglePoints;
+                    break;
+                case Player.Pink:
+                    stats.FinalScore = history.Result.PinkFinalScore;
+                    stats.TanglePoints = history.Result.PinkTanglePoints;
+                    break;
+            }
             stats.WordPoints = stats.FinalScore - stats.TanglePoints;
 
             stats.PointsPerTurn = stats.TotalTurns > 0

@@ -2,7 +2,7 @@
 
 **Project Owner:** Muzzy
 **Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions
-**Last Updated:** January 5, 2026 (Online 1v1 Fully Working - All Platforms!)
+**Last Updated:** January 6, 2026 (Online 1v1 Bug Fixes - v767)
 
 ---
 
@@ -744,6 +744,186 @@ Assets/Scripts/Core/
 
 ---
 
+## Active Implementation Plan: Full 4-Player Win Screen
+
+**TEMPORARY SECTION** - Remove after implementation is complete.
+
+### Problem
+The end game screen only shows Yellow/Blue stats and winners. In 3-4 player games:
+- Winner banner doesn't show Purple/Pink correctly
+- Stats panel only shows 2 columns (Yellow/Blue)
+- Underlying stats pipeline only calculates Yellow/Blue stats
+
+### Approach
+Update the entire stats pipeline and EndGameScreen to support 2-4 players dynamically.
+
+### Files to Modify
+
+#### 1. StatsDataStructure.cs - GameResult class
+Path: `Core/Stats/StatsDataStructure.cs`
+
+**Add Purple/Pink score fields:**
+```csharp
+public int PurpleFinalScore;
+public int PinkFinalScore;
+public int PurpleTanglePoints;
+public int PinkTanglePoints;
+```
+
+#### 2. GameHistory.cs
+Path: `Core/Stats/GameHistory.cs`
+
+**Add Purple/Pink player info and hands:**
+```csharp
+public PlayerInfo PurplePlayer;
+public PlayerInfo PinkPlayer;
+public List<char> InitialPurpleHand;
+public List<char> InitialPinkHand;
+```
+
+**Update `CaptureInitialHands()` to accept all 4 hands.**
+
+#### 3. GameStatsCalculator.cs
+Path: `Core/Stats/GameStatsCalculator.cs`
+
+**Update `Calculate()` to compute stats for all active players:**
+```csharp
+// Check player count and calculate accordingly
+if (playerCount >= 3) stats.PurpleStats = CalculatePlayerStats(history, Player.Purple);
+if (playerCount >= 4) stats.PinkStats = CalculatePlayerStats(history, Player.Pink);
+stats.PlayerCount = playerCount;
+```
+
+**Update `CalculatePlayerStats()` to handle Purple/Pink player info and scores from GameResult.**
+
+#### 4. GameManager.cs - EndGame method
+Path: `Unity/GameManager.cs`
+
+**Update GameResult creation to include all player scores:**
+```csharp
+var result = new GameResult
+{
+    Winner = winner,
+    YellowFinalScore = GameState.Scores[Player.Yellow],
+    BlueFinalScore = GameState.Scores[Player.Blue],
+    PurpleFinalScore = playerCount >= 3 ? GameState.Scores[Player.Purple] : 0,
+    PinkFinalScore = playerCount >= 4 ? GameState.Scores[Player.Pink] : 0,
+    // ... tangle points for all players
+};
+```
+
+#### 5. GameHistoryManager.cs
+Path: `Unity/Stats/GameHistoryManager.cs`
+
+**Update `StartNewGame()` to store all player info (not just Yellow/Blue).**
+
+#### 6. EndGameScreen.cs - Main UI changes
+Path: `Unity/EndGameScreen.cs`
+
+**Add color definitions:**
+```csharp
+public Color purpleColor = new Color(0.7f, 0.4f, 1f);
+public Color pinkColor = new Color(1f, 0.6f, 0.8f);
+```
+
+**Add helper method:**
+```csharp
+private Color GetColorForPlayer(Player player)
+{
+    switch(player) {
+        case Player.Yellow: return yellowColor;
+        case Player.Blue: return blueColor;
+        case Player.Purple: return purpleColor;
+        case Player.Pink: return pinkColor;
+        default: return Color.white;
+    }
+}
+
+private string GetNameForPlayer(Player player)
+{
+    return player.ToString().ToUpper();
+}
+```
+
+**Update `CreateWinnerBanner()`:**
+- Handle all 4 players using helper methods
+
+**Update `CreateStatsPanel()`:**
+- Get player count from GameState
+- Dynamically adjust panel width based on player count
+- Create column headers for all active players
+- Create stat rows with values for all active players
+
+**Update `CreateColumnHeaders()`:**
+- Accept player count parameter
+- Calculate column positions dynamically (e.g., for 4 players: -1.2, -0.4, 0.4, 1.2)
+
+**Update `CreateStatRow()`:**
+- Accept list of (player, value) pairs instead of hardcoded yellow/blue
+- Position columns dynamically based on player count
+
+#### 7. MainMenuScreen.cs
+**Increment BUILD_VERSION to v770**
+
+### Layout Design for Stats Panel
+
+**2 Players (current):**
+```
+       YELLOW    BLUE
+Score:   45       38
+...
+```
+
+**3 Players:**
+```
+    YELLOW  BLUE  PURPLE
+Score: 45    38     42
+...
+```
+
+**4 Players:**
+```
+  YELLOW BLUE PURPLE PINK
+Score: 45   38    42   35
+...
+```
+
+**Column positioning formula:**
+- 2 players: x = [-0.85, 0.85] * scale
+- 3 players: x = [-1.0, 0.0, 1.0] * scale
+- 4 players: x = [-1.2, -0.4, 0.4, 1.2] * scale
+
+**Panel width adjustment:**
+- 2 players: panelWidth (default 7.0)
+- 3 players: panelWidth * 1.2
+- 4 players: panelWidth * 1.4
+
+### Implementation Order
+
+1. **Data structures first** (no UI impact):
+   - StatsDataStructure.cs (GameResult)
+   - GameHistory.cs
+   - GameStatsCalculator.cs
+
+2. **Game logic** (stores data correctly):
+   - GameManager.cs (EndGame method)
+   - GameHistoryManager.cs
+
+3. **UI last** (displays the data):
+   - EndGameScreen.cs
+
+4. **Version bump and test**:
+   - MainMenuScreen.cs
+
+### Testing Plan
+
+1. 2-player local game → verify existing behavior unchanged
+2. 3-player local game → verify Purple column appears, Purple can win
+3. 4-player local game → verify all 4 columns, any player can win
+4. Verify tie scenario still works
+
+---
+
 ## 7. Current State & Completed Work
 
 ### 7.1 Completed Phases
@@ -787,12 +967,15 @@ Assets/Scripts/Core/
 - Settings persistence
 - Android builds working (IL2CPP + ARM64)
 
-### 7.3 Known Issues / Technical Debt
+### 7.3 Known Bugs
+
+- **P0: Play Again after online 1v1** - Needs testing. May work, may not. Important to verify.
+
+### 7.4 Technical Debt
 
 - BoardRenderer is 900+ lines (god class, should be split)
 - Static state in drag handlers (risk for multiplayer)
 - Some `FindObjectOfType<>()` calls despite singletons available
-- Winner text positioning/persistence bugs (may be fixed)
 
 ---
 

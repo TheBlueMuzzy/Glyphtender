@@ -28,6 +28,8 @@ namespace Glyphtender.Unity
         [Header("Colors")]
         public Color yellowColor = new Color(1f, 0.85f, 0.4f);
         public Color blueColor = new Color(0.4f, 0.7f, 1f);
+        public Color purpleColor = new Color(0.7f, 0.4f, 1f);
+        public Color pinkColor = new Color(1f, 0.6f, 0.8f);
         public Color winnerColor = new Color(1f, 0.95f, 0.6f);
         public Color statLabelColor = new Color(0.7f, 0.7f, 0.75f);
         public Color statValueColor = Color.white;
@@ -291,13 +293,24 @@ namespace Glyphtender.Unity
             _statsPanel.transform.localRotation = Quaternion.identity;
             _statsPanel.layer = LayerMask.NameToLayer("UI3D");
 
+            // Determine player count from stats or default to 2
+            int playerCount = _displayedStats?.PlayerCount ?? 2;
+            if (playerCount < 2) playerCount = 2;
+            if (playerCount > 4) playerCount = 4;
+
+            // Get active players in order
+            Player[] activePlayers = GetActivePlayersArray(playerCount);
+
+            // Adjust panel width based on player count
+            float adjustedPanelWidth = panelWidth * GetPanelWidthMultiplier(playerCount);
+
             // Panel background
             GameObject panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
             panel.name = "PanelBackground";
             panel.transform.SetParent(_statsPanel.transform);
             panel.transform.localPosition = Vector3.zero;
             panel.transform.localRotation = Quaternion.identity;
-            panel.transform.localScale = new Vector3(panelWidth, panelHeight, 0.05f);
+            panel.transform.localScale = new Vector3(adjustedPanelWidth, panelHeight, 0.05f);
             panel.layer = LayerMask.NameToLayer("UI3D");
 
             var renderer = panel.GetComponent<Renderer>();
@@ -320,60 +333,80 @@ namespace Glyphtender.Unity
             yPos -= 0.7f * elementScale;
 
             // Column headers
-            CreateColumnHeaders(yPos, elementScale);
+            CreateColumnHeaders(yPos, elementScale, playerCount, activePlayers);
             yPos -= 0.5f * elementScale;
 
-            // Stats rows - new order as requested
-            var yellowStats = _displayedStats?.YellowStats;
-            var blueStats = _displayedStats?.BlueStats;
+            // Get stats for each active player
+            var playerStats = new PlayerGameStats[playerCount];
+            for (int i = 0; i < playerCount; i++)
+            {
+                playerStats[i] = _displayedStats?.GetStatsForPlayer(activePlayers[i]);
+            }
+
+            // Helper to build stat values array
+            string[] BuildStatValues(System.Func<PlayerGameStats, string> getter)
+            {
+                var values = new string[playerCount];
+                for (int i = 0; i < playerCount; i++)
+                {
+                    values[i] = playerStats[i] != null ? getter(playerStats[i]) : "-";
+                }
+                return values;
+            }
 
             // 1. Final Score
             CreateStatRow("Final Score",
-                yellowStats?.FinalScore.ToString() ?? "-",
-                blueStats?.FinalScore.ToString() ?? "-",
-                yPos, elementScale);
+                BuildStatValues(s => s.FinalScore.ToString()),
+                activePlayers, yPos, elementScale, playerCount);
             yPos -= 0.4f * elementScale;
 
             // 2. Tangle Points
             CreateStatRow("Tangle Pts",
-                yellowStats?.TanglePoints.ToString() ?? "-",
-                blueStats?.TanglePoints.ToString() ?? "-",
-                yPos, elementScale);
+                BuildStatValues(s => s.TanglePoints.ToString()),
+                activePlayers, yPos, elementScale, playerCount);
             yPos -= 0.4f * elementScale;
 
             // 3. Points/Turn
             CreateStatRow("Points/Turn",
-                yellowStats != null ? yellowStats.PointsPerTurn.ToString("F1") : "-",
-                blueStats != null ? blueStats.PointsPerTurn.ToString("F1") : "-",
-                yPos, elementScale);
+                BuildStatValues(s => s.PointsPerTurn.ToString("F1")),
+                activePlayers, yPos, elementScale, playerCount);
             yPos -= 0.4f * elementScale;
 
             // 4. Best Turn
             CreateStatRow("Best Turn",
-                yellowStats?.BestScoringTurn.ToString() ?? "-",
-                blueStats?.BestScoringTurn.ToString() ?? "-",
-                yPos, elementScale);
+                BuildStatValues(s => s.BestScoringTurn.ToString()),
+                activePlayers, yPos, elementScale, playerCount);
             yPos -= 0.4f * elementScale;
 
             // 5. Longest Word
             CreateStatRow("Longest Word",
-                yellowStats?.LongestWord ?? "-",
-                blueStats?.LongestWord ?? "-",
-                yPos, elementScale);
+                BuildStatValues(s => s.LongestWord ?? "-"),
+                activePlayers, yPos, elementScale, playerCount);
             yPos -= 0.4f * elementScale;
 
             // 6. Multi-Words
             CreateStatRow("Multi-Words",
-                yellowStats?.MultiWordPlays.ToString() ?? "-",
-                blueStats?.MultiWordPlays.ToString() ?? "-",
-                yPos, elementScale);
+                BuildStatValues(s => s.MultiWordPlays.ToString()),
+                activePlayers, yPos, elementScale, playerCount);
             yPos -= 0.4f * elementScale;
 
             // 7. Unique Words
             CreateStatRow("Unique Words",
-                yellowStats?.UniqueWordsScored.ToString() ?? "-",
-                blueStats?.UniqueWordsScored.ToString() ?? "-",
-                yPos, elementScale);
+                BuildStatValues(s => s.UniqueWordsScored.ToString()),
+                activePlayers, yPos, elementScale, playerCount);
+        }
+
+        /// <summary>
+        /// Returns an array of active players in turn order.
+        /// </summary>
+        private Player[] GetActivePlayersArray(int playerCount)
+        {
+            var players = new Player[playerCount];
+            players[0] = Player.Yellow;
+            if (playerCount > 1) players[1] = Player.Blue;
+            if (playerCount > 2) players[2] = Player.Purple;
+            if (playerCount > 3) players[3] = Player.Pink;
+            return players;
         }
 
         private void CreateButtons()
@@ -399,6 +432,60 @@ namespace Glyphtender.Unity
             });
         }
 
+        /// <summary>
+        /// Gets the color for a specific player.
+        /// </summary>
+        private Color GetColorForPlayer(Player player)
+        {
+            switch (player)
+            {
+                case Player.Yellow: return yellowColor;
+                case Player.Blue: return blueColor;
+                case Player.Purple: return purpleColor;
+                case Player.Pink: return pinkColor;
+                default: return Color.white;
+            }
+        }
+
+        /// <summary>
+        /// Gets the display name for a specific player.
+        /// </summary>
+        private string GetNameForPlayer(Player player)
+        {
+            return player.ToString().ToUpper();
+        }
+
+        /// <summary>
+        /// Gets column X positions based on player count.
+        /// </summary>
+        private float[] GetColumnPositions(int playerCount, float scale)
+        {
+            switch (playerCount)
+            {
+                case 2:
+                    return new float[] { -0.85f * scale, 0.85f * scale };
+                case 3:
+                    return new float[] { -1.0f * scale, 0f, 1.0f * scale };
+                case 4:
+                    return new float[] { -1.2f * scale, -0.4f * scale, 0.4f * scale, 1.2f * scale };
+                default:
+                    return new float[] { -0.85f * scale, 0.85f * scale };
+            }
+        }
+
+        /// <summary>
+        /// Gets the panel width multiplier based on player count.
+        /// </summary>
+        private float GetPanelWidthMultiplier(int playerCount)
+        {
+            switch (playerCount)
+            {
+                case 3: return 1.2f;
+                case 4: return 1.4f;
+                default: return 1.0f;
+            }
+        }
+
         private void CreateWinnerBanner(Player? winner, float yPos, float scale)
         {
             GameObject bannerObj = new GameObject("WinnerBanner");
@@ -409,15 +496,10 @@ namespace Glyphtender.Unity
             bannerObj.layer = LayerMask.NameToLayer("UI3D");
 
             var textMesh = bannerObj.AddComponent<TextMesh>();
-            if (winner == Player.Yellow)
+            if (winner.HasValue)
             {
-                textMesh.text = "YELLOW WINS!";
-                textMesh.color = yellowColor;
-            }
-            else if (winner == Player.Blue)
-            {
-                textMesh.text = "BLUE WINS!";
-                textMesh.color = blueColor;
+                textMesh.text = $"{GetNameForPlayer(winner.Value)} WINS!";
+                textMesh.color = GetColorForPlayer(winner.Value);
             }
             else
             {
@@ -430,24 +512,29 @@ namespace Glyphtender.Unity
             textMesh.fontStyle = FontStyle.Bold;
         }
 
-        private void CreateColumnHeaders(float yPos, float scale)
+        private void CreateColumnHeaders(float yPos, float scale, int playerCount, Player[] activePlayers)
         {
-            // Yellow header
-            CreateText(_statsPanel, "YELLOW", -0.85f * scale, yPos, 0.045f * scale, yellowColor, TextAlignment.Center);
-            // Blue header
-            CreateText(_statsPanel, "BLUE", 0.85f * scale, yPos, 0.045f * scale, blueColor, TextAlignment.Center);
+            var positions = GetColumnPositions(playerCount, scale);
+            for (int i = 0; i < playerCount && i < activePlayers.Length; i++)
+            {
+                var player = activePlayers[i];
+                CreateText(_statsPanel, GetNameForPlayer(player), positions[i], yPos, 0.045f * scale,
+                    GetColorForPlayer(player), TextAlignment.Center);
+            }
         }
 
-        private void CreateStatRow(string label, string yellowValue, string blueValue, float yPos, float scale)
+        private void CreateStatRow(string label, string[] values, Player[] players, float yPos, float scale, int playerCount)
         {
             // Label (center)
             CreateText(_statsPanel, label, 0f, yPos, 0.035f * scale, statLabelColor, TextAlignment.Center);
 
-            // Yellow value (left)
-            CreateText(_statsPanel, yellowValue, -0.85f * scale, yPos, 0.04f * scale, yellowColor, TextAlignment.Center);
-
-            // Blue value (right)
-            CreateText(_statsPanel, blueValue, 0.85f * scale, yPos, 0.04f * scale, blueColor, TextAlignment.Center);
+            // Player values at dynamic positions
+            var positions = GetColumnPositions(playerCount, scale);
+            for (int i = 0; i < playerCount && i < values.Length && i < players.Length; i++)
+            {
+                CreateText(_statsPanel, values[i], positions[i], yPos, 0.04f * scale,
+                    GetColorForPlayer(players[i]), TextAlignment.Center);
+            }
         }
 
         private void CreateText(GameObject parent, string text, float x, float y, float textScale, Color color, TextAlignment alignment)

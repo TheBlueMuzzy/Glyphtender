@@ -9,6 +9,7 @@
 | **`<handoff>`** | Read HANDOFF.md for deep context from C:\Users\Muzzy\Documents\UnityProjects\Glyphtender |
 | **`<updateclaude>`** | Explicit: add following info to CLAUDE.md |
 | **`<updatehandoff>`** | Explicit: add following info to HANDOFF.md |
+| **`<bug>`** | Add/update known bugs in HANDOFF.md's Known Bugs section. When bugs are fixed, remove them from that section. |
 | **`<refactorcheck>`** | analyze the project for refactor opportunities in |
 
 ---
@@ -65,30 +66,22 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 5.4: Online Play Phase Bug Fixes** (COMPLETE!)
+**Phase 5.5: Full 4-Player Win Screen Support** (COMPLETE)
 
-All online multiplayer combinations now work:
-- Editor host → Phone joiner ✓
-- Phone host → Editor joiner ✓
-- Phone host → PC Build joiner ✓
-- **PC Build host → Phone joiner ✓** (Fixed in v764!)
+### Completed This Session
+- Stats pipeline updated for 2-4 players (StatsDataStructure, GameHistory, GameStatsCalculator, GameManager, GameHistoryManager)
+- EndGameScreen dynamic column layout (2-4 columns based on player count)
+- Panel width scales: 2P=1.0x, 3P=1.2x, 4P=1.4x
+- Fixed orphaned tile bug in cycle mode (HandController.OnGameRestarted)
+- Fixed ghost object cleanup on Play Again (BoardRenderer.OnGameRestarted - v773)
 
 ### What's Working
-- Auth → Lobby → Relay → Connection established
-- Both players see board and can interact
-- NetworkGameBridge spawns and syncs correctly
-- Draft placements sync between players
-- **Glyphling prefab system** - same object from hand → board (no destroy/recreate)
-- **Tile prefab system** - same lifecycle as glyphlings!
-- **Runeblossoms visible during refresh phase selection**
-- **Local 1v1 fully working**
-- **Online 1v1 fully working** (all platform combinations!)
+- Online 1v1 fully working (all platform combinations)
+- Local 1v1, 3p, 4p fully working
+- 4-player win screen with all stats
 
-### Current Testing (v764)
-**Look for v764 in red text at top of main menu**
-
-### Remaining Issues
-- Glyphling duplication may still occur in play phase (P1 - needs investigation)
+### Current Testing (v773)
+**Look for v773 in red text at top of main menu**
 
 ---
 
@@ -112,6 +105,38 @@ See **Known Bug Registry** section below for prioritized list.
 - Check `IsLocalPlayerTurn` before any player-specific UI/logic
 - Ghost objects must be confirmed before RefreshBoard or they get orphaned
 - `_glyphlingObjects` dictionary is the source of truth for preventing duplicates
+
+### CRITICAL: Play Again / Game Restart Cleanup
+
+**Two separate issues can cause orphaned objects on Play Again:**
+
+#### 1. HandController Event Ordering
+In `GameManager.InitializeGame()`, events fire in this order:
+1. `OnGameStateChanged` fires first → triggers `RefreshHand()` (destroys old, creates new)
+2. `OnGameRestarted` fires second
+
+**HandController.OnGameRestarted() must NOT:**
+- Call `RefreshHand()` (already called via OnGameStateChanged)
+- Iterate over `_handTileObjects` or `_handGlyphlingObjects` (reference destroyed objects)
+- Call `SetActive()` on hand objects (they no longer exist)
+
+#### 2. BoardRenderer Ghost Objects (v773 fix)
+Ghost objects (`_ghostGlyphling`, `_ghostTile`) are NOT in the tracked dictionaries, so they won't be destroyed by the normal cleanup loops.
+
+**BoardRenderer.OnGameRestarted() MUST clear ghosts first:**
+```csharp
+private void OnGameRestarted()
+{
+    // CRITICAL: Clear ghost objects first!
+    if (_ghostGlyphling != null) { Destroy(_ghostGlyphling); _ghostGlyphling = null; }
+    _ghostIsExternal = false;
+    if (_ghostTile != null) { Destroy(_ghostTile); _ghostTile = null; }
+    _ghostTileIsExternal = false;
+    _ghostTilePosition = null;
+
+    // Then clear tracked objects...
+}
+```
 
 ---
 
@@ -173,13 +198,13 @@ Snake draft: P1 → P2 → P2 → P1 (for 2 players)
 ## Known Bug Registry
 
 ### P0 - Game Breaking
-(none currently)
+1. **Play Again after online 1v1** - Needs testing. May work, may not. Important to verify.
 
 ### P1 - Confusing but playable
-1. **Glyphling duplication (online)** - Sometimes duplicates appear during play phase. Needs investigation.
+(none currently)
 
 ### P2 - Minor
-1. **Hex directions may be incorrect** - Leyline movement paths may not work correctly.
+(none currently)
 
 ---
 
@@ -217,77 +242,6 @@ Snake draft: P1 → P2 → P2 → P1 (for 2 players)
 - `GameManager.OnGameInitialized` - Game started
 - `GameManager.OnDraftComplete` - Draft phase finished
 - `GameManager.OnTurnEnded` - Turn completed
-
----
-
-## Session Log
-
-### 2026-01-05 (Phase 5.4 - PC Build Relay Fix - COMPLETE!)
-- **FIXED: PC Build host → Phone joiner** (v764) - Root cause was QoS-based automatic region selection failing in standalone builds
-  - Fix: Explicitly call `ListRegionsAsync()` and pass region to `CreateAllocationAsync()`
-  - Added explicit "production" environment to `UnityServices.InitializeAsync()` for consistency
-  - Added debugging tools (desktop debug file, on-screen overlay) for future troubleshooting
-- All online platform combinations now working!
-
-### 2026-01-05 (Phase 5.4 - Online Play Phase Bug Fixes)
-- Fixed glyphling/tile size on board (changed `glyphlingSize` from 1.0 to 1.8)
-- Fixed runeblossom selection during refresh phase (uniform quad scaling)
-- Fixed green square during tile drag (material reapplication)
-- Fixed glyphling identity mismatch during draft (pass selected glyphling to PlaceDraftGlyphling)
-- Fixed ghost tile not converting to permanent on confirm (removed premature HideGhostTile)
-- Updated all tile size calculations to use `hexSize * glyphlingSize`
-- Local 1v1 now fully working!
-- **FIXED: Online glyphling duplication (v751)** - Host now applies draft locally + sends to network
-- **FIXED: Cycle mode in online play (v752)** - Added network sync for refresh phase
-- **FIXED: Cycle mode on wrong player (v753)** - Added IsLocalPlayerTurn check
-- **FIXED: Turn not advancing (v754)** - Reset position BEFORE RPC (ServerRpc is synchronous on host)
-- Added Bug Prevention Protocol and Quick Reference sections to CLAUDE.md
-- **FIXED: White borders on tiles/glyphlings in PC builds** - Shader stripping issue
-  - Changed SpriteLoader to use `Unlit/Transparent` shader (alpha blend instead of cutout)
-  - Added `Unlit/Transparent` to Always Included Shaders in Graphics settings
-  - Updated all texture .meta files with `alphaIsTransparency: 1`
-  - Added "Unity Editor vs Build Differences" section to CLAUDE.md
-
-### 2026-01-04 (Phase 5.4 - Glyphling Prefab Lifecycle)
-- Created glyphling prefab system (Quad-based with materials)
-- Same object from hand → board (no destroy/recreate)
-- Added `ShowGhostGlyphling(existingObject)` for drag mode
-- Added `ConfirmGhostGlyphling()` to register ghost as permanent
-- Added `HandController.UntrackGlyphlingObject()` to prevent double-destroy
-- Fixed rotation: 90° for board, 180° for hand
-- Added BoxCollider for prefab interaction
-
-### 2026-01-04 (Phase 5.4 - Glyphling Color & Turn Sync Fix)
-- Fixed glyphling prefab not getting material applied (was white on host)
-- Fixed `Update()` trapped pulsing to use `GetPlayerMaterial()` for all 4 players
-- Added `GameManager.NotifyNetworkDraftPlacement()` for network to fire events
-- Now `OnNetworkDraftPlacementConfirmed` properly fires `OnDraftComplete` and `OnGameStateChanged`
-
-### 2026-01-04 (Phase 5.4 - Play Phase Sync)
-- Simplified ConfirmMove network condition (was requiring 7 conditions, now just IsOnlineGame)
-- Added DontDestroyOnLoad to NetworkedGameManager
-- Added debug logging for material assignment in BoardRenderer
-- Fixed Update loop to use GetPlayerMaterial for all 4 players (was hardcoded Yellow/Blue)
-- TurnIndicator now subscribes to OnOnlineModeInitialized event
-
-### 2026-01-04 (Phase 5.4 - Draft Sync)
-- Fixed NetworkGameBridge RPC error (added NetworkObject, host spawns it)
-- Improved IsOnlineGame detection (checks lobby/relay state too)
-- Added TurnIndicator.cs for "Your turn" / "Waiting for..." UI
-- HandController hides glyphlings when not local player's turn
-- GameManager routes draft placement through network in online mode
-- NetworkedGameManager applies received draft placements
-
-### 2026-01-04 (Phase 5.1-5.3)
-- NetworkServices, GlyphtenderLobby, GlyphtenderRelay created
-- NetworkMessages, NetworkGameBridge created
-- OnlineLobbyScreen UI with room codes
-- Pre-allocate relay before showing room code (race condition fix)
-
-### 2026-01-04 (Phase 4 Complete)
-- AI Goal-Selection Model implemented
-- 7 goals, 7 traits (0-100), priority cascade
-- Bully personality tested - feels threatening!
 
 ---
 
