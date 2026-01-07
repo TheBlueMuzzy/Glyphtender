@@ -789,7 +789,6 @@ Assets/Scripts/Core/
 
 ### 7.3 Known Bugs
 
-- **P1: Tangled glyphlings missing visual indication** - Since moving to prefab system, tangled glyphlings don't show they're tangled. Consider -25% scale pulse.
 - **P1: Played letters reappearing in refresh phase** - In 3p/4p local mode, letters played by other players on non-scoring turns appear behind hand tiles during refresh phase. Unselectable but visible.
 - **P2: Hex directions may be incorrect** - Leyline movement paths may not work correctly.
 
