@@ -132,10 +132,14 @@ namespace Glyphtender.Unity
             // Don't process if game hasn't started yet
             if (GameManager.Instance?.GameState == null) return;
 
-            // Pulse trapped glyphlings
+            // Pulse trapped glyphlings with scale (more visible than color with textured prefabs)
+            float baseSize = hexSize * glyphlingSize;
+            Vector3 normalScale = new Vector3(baseSize, baseSize, baseSize);
+
             foreach (var glyphling in _glyphlingObjects.Keys)
             {
                 bool isTrapped = TangleChecker.IsTangled(GameManager.Instance.GameState, glyphling);
+                var obj = _glyphlingObjects[glyphling];
 
                 if (isTrapped)
                 {
@@ -145,35 +149,19 @@ namespace Glyphtender.Unity
                     }
 
                     _trappedPulseTime[glyphling] += Time.deltaTime;
-                    float pulse = (Mathf.Sin(_trappedPulseTime[glyphling] * 4f) + 1f) / 2f;
+                    // Pulse between 75% and 100% of normal size (oscillates ~2x per second)
+                    float pulse = (Mathf.Sin(_trappedPulseTime[glyphling] * 4f) + 1f) / 2f; // 0 to 1
+                    float scaleFactor = 0.75f + (pulse * 0.25f); // 0.75 to 1.0
 
-                    var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
-                    if (renderer != null)
-                    {
-                        // Get base color from player material (supports all 4 players)
-                        var playerMaterial = GetPlayerMaterial(glyphling.Owner);
-                        Color baseColor = playerMaterial != null ? playerMaterial.color : Color.white;
-                        Color trappedColor = Color.red;
-                        renderer.material.color = Color.Lerp(baseColor, trappedColor, pulse * 0.5f);
-                    }
+                    obj.transform.localScale = normalScale * scaleFactor;
                 }
                 else
                 {
-                    // Reset color when no longer trapped
+                    // Reset scale when no longer trapped
                     if (_trappedPulseTime.ContainsKey(glyphling))
                     {
                         _trappedPulseTime.Remove(glyphling);
-
-                        // Restore glyphling texture material
-                        var renderer = _glyphlingObjects[glyphling].GetComponent<Renderer>();
-                        if (renderer != null)
-                        {
-                            Material mat = SpriteLoader.Instance?.GetGlyphlingMaterial(glyphling.Owner) ?? GetPlayerMaterial(glyphling.Owner);
-                            if (mat != null)
-                            {
-                                renderer.material = mat;
-                            }
-                        }
+                        obj.transform.localScale = normalScale;
                     }
                 }
             }
