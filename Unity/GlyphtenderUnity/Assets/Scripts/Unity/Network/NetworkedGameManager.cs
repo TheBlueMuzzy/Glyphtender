@@ -380,8 +380,17 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // Draw new tile and end turn
+            // Draw new tile
             GameRules.DrawTile(state, currentPlayer);
+
+            // Check for tangles and end game if needed
+            if (TangleChecker.ShouldEndGame(state))
+            {
+                Debug.Log($"[NetworkedGameManager] Own turn: Tangle detected - ending game");
+                GameManager.Instance.EndGame();
+                return;
+            }
+
             GameRules.EndTurn(state);
 
             Debug.Log($"[NetworkedGameManager] Own turn applied. NewCurrentPlayer: {state.CurrentPlayer}");
@@ -500,8 +509,16 @@ namespace Glyphtender.Unity
                 yield break;
             }
 
-            // Step 4: Draw new tile and end turn
+            // Step 4: Draw new tile
             GameRules.DrawTile(state, currentPlayer);
+
+            // Check for tangles and end game if needed
+            if (TangleChecker.ShouldEndGame(state))
+            {
+                Debug.Log($"[NetworkedGameManager] Opponent turn: Tangle detected - ending game");
+                GameManager.Instance.EndGame();
+                yield break;
+            }
 
             Player playerBeforeEndTurn = state.CurrentPlayer;
             GameRules.EndTurn(state);
@@ -623,6 +640,15 @@ namespace Glyphtender.Unity
             while (hand.Count < GameRules.HandSize && state.TileBag.Count > 0)
             {
                 GameRules.DrawTile(state, currentPlayer);
+            }
+
+            // Check for tangles and end game if needed
+            if (TangleChecker.ShouldEndGame(state))
+            {
+                Debug.Log($"[NetworkedGameManager] Cycle: Tangle detected - ending game");
+                GameManager.Instance.ExitCycleModeFromNetwork();
+                GameManager.Instance.EndGame();
+                return;
             }
 
             // Now end the turn

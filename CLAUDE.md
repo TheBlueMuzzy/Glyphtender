@@ -66,28 +66,35 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 5.5: Full 4-Player Win Screen Support** (COMPLETE)
+**Phase 5: Online Multiplayer** - Core 1v1 online working (v777)
 
 ### Completed This Session
-- Stats pipeline updated for 2-4 players (StatsDataStructure, GameHistory, GameStatsCalculator, GameManager, GameHistoryManager)
-- EndGameScreen dynamic column layout (2-4 columns based on player count)
-- Panel width scales: 2P=1.0x, 3P=1.2x, 4P=1.4x
-- Fixed orphaned tile bug in cycle mode (HandController.OnGameRestarted)
-- Fixed ghost object cleanup on Play Again (BoardRenderer.OnGameRestarted - v773)
+- Fixed online multiplayer sync bugs (v776-v777):
+  - Draft RPC timing race condition (send AFTER local processing)
+  - Play phase host/client position handling differentiation
+  - Orphaned ghost tiles (destroy returned objects)
+  - Tile reappearing in hand after cast
+  - Tangle detection now works in online mode (was completely missing!)
+- Cleaned up documentation (Known Bugs tracking moved to CLAUDE.md only)
 
 ### What's Working
 - Online 1v1 fully working (all platform combinations)
 - Local 1v1, 3p, 4p fully working
 - 4-player win screen with all stats
+- Tangle detection and game end in online mode
 
-### Current Testing (v773)
-**Look for v773 in red text at top of main menu**
+### Next Up
+- Phase 5.4: Forfeit/disconnect handling
+- Phase 5.5: Rematch flow
+
+### Current Testing (v777)
+**Look for v777 in red text at top of main menu**
 
 ---
 
-## Known Issues
+## Known Bugs
 
-See **Known Bug Registry** section below for prioritized list.
+(none currently tracked - bugs discovered during testing will be added here)
 
 ---
 
@@ -105,38 +112,6 @@ See **Known Bug Registry** section below for prioritized list.
 - Check `IsLocalPlayerTurn` before any player-specific UI/logic
 - Ghost objects must be confirmed before RefreshBoard or they get orphaned
 - `_glyphlingObjects` dictionary is the source of truth for preventing duplicates
-
-### CRITICAL: Play Again / Game Restart Cleanup
-
-**Two separate issues can cause orphaned objects on Play Again:**
-
-#### 1. HandController Event Ordering
-In `GameManager.InitializeGame()`, events fire in this order:
-1. `OnGameStateChanged` fires first → triggers `RefreshHand()` (destroys old, creates new)
-2. `OnGameRestarted` fires second
-
-**HandController.OnGameRestarted() must NOT:**
-- Call `RefreshHand()` (already called via OnGameStateChanged)
-- Iterate over `_handTileObjects` or `_handGlyphlingObjects` (reference destroyed objects)
-- Call `SetActive()` on hand objects (they no longer exist)
-
-#### 2. BoardRenderer Ghost Objects (v773 fix)
-Ghost objects (`_ghostGlyphling`, `_ghostTile`) are NOT in the tracked dictionaries, so they won't be destroyed by the normal cleanup loops.
-
-**BoardRenderer.OnGameRestarted() MUST clear ghosts first:**
-```csharp
-private void OnGameRestarted()
-{
-    // CRITICAL: Clear ghost objects first!
-    if (_ghostGlyphling != null) { Destroy(_ghostGlyphling); _ghostGlyphling = null; }
-    _ghostIsExternal = false;
-    if (_ghostTile != null) { Destroy(_ghostTile); _ghostTile = null; }
-    _ghostTileIsExternal = false;
-    _ghostTilePosition = null;
-
-    // Then clear tracked objects...
-}
-```
 
 ---
 
@@ -192,19 +167,6 @@ Snake draft: P1 → P2 → P2 → P1 (for 2 players)
 - Draft placement: `SendDraftToNetwork()` → `OnNetworkDraftPlacementConfirmed()`
 - Turn confirmation: `SendTurnToNetwork()` → `OnNetworkTurnConfirmed()`
 - Cycle completion: `SendCycleToNetwork()` → `OnNetworkCycleConfirmed()`
-
----
-
-## Known Bug Registry
-
-### P0 - Game Breaking
-1. **Play Again after online 1v1** - Needs testing. May work, may not. Important to verify.
-
-### P1 - Confusing but playable
-(none currently)
-
-### P2 - Minor
-(none currently)
 
 ---
 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 using Glyphtender.Core;
 using Glyphtender.Core.Stats;
 using Glyphtender.Unity.Stats;
@@ -446,18 +447,10 @@ namespace Glyphtender.Unity
 
             var position = PendingDraftPosition.Value;
 
-            // In online mode, send to network AND apply locally
-            // The host applies immediately; the RPC callback will skip since it's already applied
-            // The client receives via RPC (they don't hit this code path - it's not their turn)
-            if (NetworkedGameManager.Instance != null &&
-                NetworkedGameManager.Instance.IsOnlineGame)
-            {
-                NetworkedGameManager.Instance.SendDraftPlacementToNetwork(position);
-
-                // Host should ALSO apply locally (fall through to normal processing)
-                // The RPC callback's "already has glyphling" check will correctly skip
-                // This ensures the ghost is confirmed before RefreshBoard can orphan it
-            }
+            // Check if we're in online mode - we'll send RPC AFTER local processing
+            // to avoid race condition where ServerRpc runs synchronously on host
+            bool isOnline = NetworkedGameManager.Instance != null &&
+                NetworkedGameManager.Instance.IsOnlineGame;
 
             // Capture the glyphling before placement (for confirming the ghost object)
             var placingGlyphling = SelectedDraftGlyphling;
@@ -527,6 +520,14 @@ namespace Glyphtender.Unity
             UpdateTurnState();
             OnSelectionChanged?.Invoke();
             OnGameStateChanged?.Invoke();
+
+            // Send to network AFTER all local processing to avoid race condition
+            // (ServerRpc executes synchronously on host, causing RPC callback to run
+            // before local code continues, which would make PlaceDraftGlyphling fail)
+            if (isOnline)
+            {
+                NetworkedGameManager.Instance.SendDraftPlacementToNetwork(position);
+            }
         }
 
         /// <summary>
@@ -820,18 +821,24 @@ namespace Glyphtender.Unity
                 // Find which glyphling was selected
                 int glyphlingIndex = GameState.Glyphlings.IndexOf(SelectedGlyphling);
 
-                // IMPORTANT: Reset glyphling position BEFORE sending RPC!
-                // The RPC executes immediately on host (server-side), and the
-                // "already at destination" check would incorrectly skip processing
-                // if the glyphling is still at PendingDestination when the RPC runs.
+                // Capture move data before any changes
                 HexCoord originalPos = _originalPosition ?? SelectedGlyphling.Position.Value;
                 HexCoord destPos = PendingDestination.Value;
                 HexCoord castPos = PendingCastPosition.Value;
                 char letter = PendingLetter.Value;
 
-                if (_originalPosition != null && SelectedGlyphling != null)
+                // For HOST: Reset position before RPC because ServerRpc executes synchronously
+                // The RPC handler will then process and move it to destination
+                // For CLIENT: Keep at destination so "already at destination" check skips animation
+                bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
+                if (isHost && _originalPosition != null && SelectedGlyphling != null)
                 {
                     SelectedGlyphling.Position = _originalPosition.Value;
+                }
+                else if (!isHost && SelectedGlyphling != null)
+                {
+                    // Client: Set position to destination so we skip animation when RPC returns
+                    SelectedGlyphling.Position = destPos;
                 }
 
                 NetworkedGameManager.Instance.SendTurnToNetwork(
@@ -841,11 +848,19 @@ namespace Glyphtender.Unity
                     letter,
                     glyphlingIndex);
 
-                // Hide ghost tile
+                // Hide ghost tile and destroy the returned object (prevents orphaned tiles)
                 if (BoardRenderer.Instance != null)
                 {
-                    BoardRenderer.Instance.HideGhostTile();
+                    var orphanedTile = BoardRenderer.Instance.HideGhostTile();
+                    if (orphanedTile != null)
+                    {
+                        Destroy(orphanedTile);
+                    }
                 }
+
+                // Remove tile from hand immediately so RefreshHand doesn't re-show it
+                // (The network handler will skip this removal since it's already gone)
+                GameState.Hands[GameState.CurrentPlayer].Remove(letter);
 
                 // Clear selection state (UI feedback)
                 ClearSelection();
@@ -1112,7 +1127,7 @@ namespace Glyphtender.Unity
         /// <summary>
         /// Ends the game, calculates final tangle points, and determines winner.
         /// </summary>
-        private void EndGame()
+        public void EndGame()
         {
             GameState.IsGameOver = true;
 

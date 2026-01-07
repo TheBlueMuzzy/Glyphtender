@@ -457,20 +457,30 @@ namespace Glyphtender.Unity
 
         /// <summary>
         /// Gets column X positions based on player count.
+        /// Columns are shifted right to make room for left-aligned labels.
         /// </summary>
         private float[] GetColumnPositions(int playerCount, float scale)
         {
+            // Labels on left, player columns to the right but more centered overall
             switch (playerCount)
             {
                 case 2:
-                    return new float[] { -0.85f * scale, 0.85f * scale };
+                    return new float[] { 0.2f * scale, 1.0f * scale };
                 case 3:
-                    return new float[] { -1.0f * scale, 0f, 1.0f * scale };
+                    return new float[] { 0.1f * scale, 0.65f * scale, 1.2f * scale };
                 case 4:
-                    return new float[] { -1.2f * scale, -0.4f * scale, 0.4f * scale, 1.2f * scale };
+                    return new float[] { -0.05f * scale, 0.4f * scale, 0.85f * scale, 1.3f * scale };
                 default:
-                    return new float[] { -0.85f * scale, 0.85f * scale };
+                    return new float[] { 0.2f * scale, 1.0f * scale };
             }
+        }
+
+        /// <summary>
+        /// Gets the X position for stat labels (left side of panel).
+        /// </summary>
+        private float GetLabelXPosition(float scale)
+        {
+            return -1.5f * scale;
         }
 
         /// <summary>
@@ -515,20 +525,23 @@ namespace Glyphtender.Unity
         private void CreateColumnHeaders(float yPos, float scale, int playerCount, Player[] activePlayers)
         {
             var positions = GetColumnPositions(playerCount, scale);
+            // Smaller text for 4 players to prevent overlap
+            float headerScale = playerCount >= 4 ? 0.032f : 0.04f;
             for (int i = 0; i < playerCount && i < activePlayers.Length; i++)
             {
                 var player = activePlayers[i];
-                CreateText(_statsPanel, GetNameForPlayer(player), positions[i], yPos, 0.045f * scale,
+                CreateText(_statsPanel, GetNameForPlayer(player), positions[i], yPos, headerScale * scale,
                     GetColorForPlayer(player), TextAlignment.Center);
             }
         }
 
         private void CreateStatRow(string label, string[] values, Player[] players, float yPos, float scale, int playerCount)
         {
-            // Label (center)
-            CreateText(_statsPanel, label, 0f, yPos, 0.035f * scale, statLabelColor, TextAlignment.Center);
+            // Label on left, left-aligned
+            float labelX = GetLabelXPosition(scale);
+            CreateText(_statsPanel, label, labelX, yPos, 0.035f * scale, statLabelColor, TextAlignment.Left);
 
-            // Player values at dynamic positions
+            // Player values at dynamic positions (shifted right)
             var positions = GetColumnPositions(playerCount, scale);
             for (int i = 0; i < playerCount && i < values.Length && i < players.Length; i++)
             {
@@ -550,7 +563,8 @@ namespace Glyphtender.Unity
             textMesh.text = text;
             textMesh.fontSize = 36;
             textMesh.alignment = alignment;
-            textMesh.anchor = TextAnchor.MiddleCenter;
+            // Use appropriate anchor based on alignment
+            textMesh.anchor = alignment == TextAlignment.Left ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter;
             textMesh.color = color;
         }
 

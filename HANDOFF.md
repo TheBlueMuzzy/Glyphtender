@@ -2,7 +2,7 @@
 
 **Project Owner:** Muzzy
 **Document Purpose:** Comprehensive reference for maintaining project vision and continuity across development sessions
-**Last Updated:** January 6, 2026 (Online 1v1 Bug Fixes - v767)
+**Last Updated:** January 6, 2026
 
 ---
 
@@ -967,11 +967,7 @@ Score: 45   38    42   35
 - Settings persistence
 - Android builds working (IL2CPP + ARM64)
 
-### 7.3 Known Bugs
-
-- **P0: Play Again after online 1v1** - Needs testing. May work, may not. Important to verify.
-
-### 7.4 Technical Debt
+### 7.3 Technical Debt
 
 - BoardRenderer is 900+ lines (god class, should be split)
 - Static state in drag handlers (risk for multiplayer)
