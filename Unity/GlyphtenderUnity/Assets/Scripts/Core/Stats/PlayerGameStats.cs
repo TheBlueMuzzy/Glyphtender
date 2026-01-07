@@ -71,7 +71,7 @@ namespace Glyphtender.Core.Stats
     }
 
     /// <summary>
-    /// Complete stats for a finished game (both players).
+    /// Complete stats for a finished game (all players).
     /// </summary>
     [Serializable]
     public class GameStats
@@ -83,17 +83,27 @@ namespace Glyphtender.Core.Stats
 
         public PlayerGameStats YellowStats;
         public PlayerGameStats BlueStats;
+        public PlayerGameStats PurpleStats;
+        public PlayerGameStats PinkStats;
 
         public Player? Winner;
         public int TotalTurns;
         public int TotalWordsOnBoard;        // Total words scored by both players
+        public int PlayerCount;              // Number of players in this game (2-4)
 
         /// <summary>
         /// Gets stats for a specific player color.
         /// </summary>
         public PlayerGameStats GetStatsForPlayer(Player player)
         {
-            return player == Player.Yellow ? YellowStats : BlueStats;
+            switch (player)
+            {
+                case Player.Yellow: return YellowStats;
+                case Player.Blue: return BlueStats;
+                case Player.Purple: return PurpleStats;
+                case Player.Pink: return PinkStats;
+                default: return YellowStats;
+            }
         }
     }
 }
