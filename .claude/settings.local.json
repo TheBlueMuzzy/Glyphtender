@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd 4-player win screen support & fix orphaned tile bug \\(v772\\)\n\nStats Pipeline Updates:\n- StatsDataStructure.cs: Add Purple/Pink score fields to GameResult\n- GameHistory.cs: Add Purple/Pink player info and initial hands\n- PlayerGameStats.cs: Add PurpleStats/PinkStats to GameStats class\n- GameStatsCalculator.cs: Calculate stats for all active players \\(2-4\\)\n- GameManager.cs: Store all player scores in EndGame method\n- GameHistoryManager.cs: Store all player info in StartNewGame\n\nEndGameScreen Updates:\n- Dynamic column layout \\(2-4 columns based on player count\\)\n- Panel width scales: 2P=1.0x, 3P=1.2x, 4P=1.4x\n- Added purple/pink colors\n- Winner banner supports all 4 players\n\nBug Fixes:\n- Fix orphaned tile bug in cycle mode \\(HandController.OnGameRestarted\\)\n- Use ConfirmGhostTile instead of HideGhostTile in ConfirmMove\n\nAdded CRITICAL warning to CLAUDE.md about event ordering bug pattern.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd 4-player win screen support & fix orphaned tile bug \\(v772\\)\n\nStats Pipeline Updates:\n- StatsDataStructure.cs: Add Purple/Pink score fields to GameResult\n- GameHistory.cs: Add Purple/Pink player info and initial hands\n- PlayerGameStats.cs: Add PurpleStats/PinkStats to GameStats class\n- GameStatsCalculator.cs: Calculate stats for all active players \\(2-4\\)\n- GameManager.cs: Store all player scores in EndGame method\n- GameHistoryManager.cs: Store all player info in StartNewGame\n\nEndGameScreen Updates:\n- Dynamic column layout \\(2-4 columns based on player count\\)\n- Panel width scales: 2P=1.0x, 3P=1.2x, 4P=1.4x\n- Added purple/pink colors\n- Winner banner supports all 4 players\n\nBug Fixes:\n- Fix orphaned tile bug in cycle mode \\(HandController.OnGameRestarted\\)\n- Use ConfirmGhostTile instead of HideGhostTile in ConfirmMove\n\nAdded CRITICAL warning to CLAUDE.md about event ordering bug pattern.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git show:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

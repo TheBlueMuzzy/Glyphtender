@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using Glyphtender.Core;
@@ -310,27 +311,40 @@ namespace Glyphtender.Unity
             }
 
             var glyphling = state.Glyphlings[turnData.Move.GlyphlingIndex];
-            var fromCoord = turnData.Move.From.ToHexCoord();
             var toCoord = turnData.Move.To.ToHexCoord();
 
-            // Check if glyphling is already at destination - means we already processed this locally
-            // (Host receives its own RPC back)
-            if (glyphling.Position.HasValue && glyphling.Position.Value == toCoord)
+            // Check if glyphling is already at destination - means this is our OWN turn coming back
+            // (Host receives its own RPC back, or client set position to dest before sending)
+            bool isOwnTurn = glyphling.Position.HasValue && glyphling.Position.Value == toCoord;
+
+            if (isOwnTurn)
             {
-                Debug.Log($"[NetworkedGameManager] Glyphling already at destination - skipping (already processed locally)");
+                Debug.Log($"[NetworkedGameManager] Own turn detected - applying without animation");
+                // Apply tile placement and scoring without animation (glyphling already moved)
+                ApplyTurnWithoutAnimation(turnData);
                 return;
             }
+
+            // Start coroutine to animate the opponent's turn sequentially (like AI does)
+            StartCoroutine(AnimateNetworkTurn(turnData, glyphling));
+        }
+
+        /// <summary>
+        /// Applies a turn without animation (for when it's our own turn coming back from network).
+        /// The glyphling is already at destination, we just need to place tile and handle scoring.
+        /// </summary>
+        private void ApplyTurnWithoutAnimation(NetworkTurnData turnData)
+        {
+            var state = GameManager.Instance.GameState;
+            var toCoord = turnData.Move.To.ToHexCoord();
             var castCoord = turnData.Cast.Position.ToHexCoord();
             char letter = turnData.Cast.GetLetter();
-
             Player currentPlayer = state.CurrentPlayer;
 
-            Debug.Log($"[NetworkedGameManager] Applying turn: Glyphling {turnData.Move.GlyphlingIndex} ({glyphling.Owner}) from {fromCoord} to {toCoord}, cast '{letter}' at {castCoord}");
+            // Set cast origin for tile animation
+            GameManager.Instance.SetLastCastOrigin(toCoord);
 
-            // Move glyphling
-            glyphling.Position = toCoord;
-
-            // Place tile
+            // Place tile and remove from hand
             state.Hands[currentPlayer].Remove(letter);
             state.Tiles[castCoord] = new Tile(letter, currentPlayer, castCoord);
 
@@ -346,6 +360,121 @@ namespace Glyphtender.Unity
 
             // Track words formed
             GameManager.Instance.LastTurnWordCount = newWords.Count;
+
+            // If no words formed, enter cycle mode
+            if (newWords.Count == 0)
+            {
+                Debug.Log($"[NetworkedGameManager] Own turn: No words formed - entering cycle mode");
+                GameManager.Instance.EnterCycleModeFromNetwork(currentPlayer);
+
+                if (BoardRenderer.Instance != null)
+                {
+                    BoardRenderer.Instance.RefreshBoard();
+                    BoardRenderer.Instance.RefreshHighlights();
+                }
+
+                if (HandController.Instance != null)
+                {
+                    HandController.Instance.RefreshHand();
+                }
+                return;
+            }
+
+            // Draw new tile and end turn
+            GameRules.DrawTile(state, currentPlayer);
+            GameRules.EndTurn(state);
+
+            Debug.Log($"[NetworkedGameManager] Own turn applied. NewCurrentPlayer: {state.CurrentPlayer}");
+
+            // Refresh visuals
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshBoard();
+                BoardRenderer.Instance.RefreshHighlights();
+            }
+
+            if (HandController.Instance != null)
+            {
+                HandController.Instance.RefreshHand();
+            }
+
+            GameManager.Instance.NotifyNetworkTurnComplete();
+        }
+
+        /// <summary>
+        /// Animates a network turn with proper timing (move, then cast, then score).
+        /// Similar to AIController.ExecuteMoveAnimated to create a consistent experience.
+        /// </summary>
+        private IEnumerator AnimateNetworkTurn(NetworkTurnData turnData, Glyphling glyphling)
+        {
+            var state = GameManager.Instance.GameState;
+            var toCoord = turnData.Move.To.ToHexCoord();
+            var castCoord = turnData.Cast.Position.ToHexCoord();
+            char letter = turnData.Cast.GetLetter();
+            Player currentPlayer = state.CurrentPlayer;
+
+            Debug.Log($"[NetworkedGameManager] Animating turn: Glyphling {turnData.Move.GlyphlingIndex} ({glyphling.Owner}) to {toCoord}, cast '{letter}' at {castCoord}");
+
+            // Step 1: Move the glyphling
+            glyphling.Position = toCoord;
+
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshBoard();
+            }
+
+            // Wait for move animation to complete
+            yield return new WaitForSeconds(0.6f);
+
+            // Step 2: Place the tile
+            GameManager.Instance.SetLastCastOrigin(toCoord);
+            state.Hands[currentPlayer].Remove(letter);
+            state.Tiles[castCoord] = new Tile(letter, currentPlayer, castCoord);
+
+            if (BoardRenderer.Instance != null)
+            {
+                BoardRenderer.Instance.RefreshBoard();
+            }
+
+            // Wait for tile placement to be visible
+            yield return new WaitForSeconds(0.5f);
+
+            // Step 3: Score words and show highlights
+            var newWords = GameManager.Instance.WordScorer.FindWordsAt(state, castCoord, letter);
+            int turnScore = 0;
+            foreach (var word in newWords)
+            {
+                int wordScore = Core.WordScorer.ScoreWordForPlayer(word.Letters, word.Positions, state, currentPlayer);
+                turnScore += wordScore;
+            }
+
+            // Track words formed
+            GameManager.Instance.LastTurnWordCount = newWords.Count;
+
+            // Show score preview and word highlights if words were formed
+            if (newWords.Count > 0 && turnScore > 0)
+            {
+                if (ScoreDisplay.Instance != null)
+                {
+                    ScoreDisplay.Instance.ShowPreview(turnScore);
+                }
+
+                if (WordHighlighter.Instance != null)
+                {
+                    WordHighlighter.Instance.HighlightWordsAt(castCoord, letter);
+                }
+
+                yield return new WaitForSeconds(1.0f);
+
+                // Clear highlights
+                if (WordHighlighter.Instance != null)
+                {
+                    WordHighlighter.Instance.ClearHighlights();
+                }
+            }
+
+            // Apply score
+            state.Scores[currentPlayer] += turnScore;
 
             // If no words formed, enter cycle mode instead of ending turn
             if (newWords.Count == 0)
@@ -368,17 +497,18 @@ namespace Glyphtender.Unity
                 }
 
                 // Don't fire NotifyNetworkTurnComplete - turn isn't complete yet
-                return;
+                yield break;
             }
 
-            // Draw new tile (only when words were formed)
+            // Step 4: Draw new tile and end turn
             GameRules.DrawTile(state, currentPlayer);
 
-            // End turn
             Player playerBeforeEndTurn = state.CurrentPlayer;
             GameRules.EndTurn(state);
 
             Debug.Log($"[NetworkedGameManager] Turn applied. PlayerBefore: {playerBeforeEndTurn}, NewCurrentPlayer: {state.CurrentPlayer}");
+
+            yield return new WaitForSeconds(0.3f);
 
             // Refresh visuals
             if (BoardRenderer.Instance != null)

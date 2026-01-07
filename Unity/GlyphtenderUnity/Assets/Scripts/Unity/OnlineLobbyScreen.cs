@@ -843,9 +843,9 @@ namespace Glyphtender.Unity
             {
                 Debug.Log("[OnlineLobbyScreen] Guest path: Waiting for relay code from host...");
 
-                // Show debug overlay with CloudProjectId
-                string cloudId = UnityEngine.Application.cloudProjectId;
-                ShowDebugOverlay($"CloudProjectId: {cloudId}\nWaiting for relay code...");
+                // Debug overlay disabled - uncomment these ShowDebugOverlay calls when debugging relay issues
+                // string cloudId = UnityEngine.Application.cloudProjectId;
+                // ShowDebugOverlay($"CloudProjectId: {cloudId}\nWaiting for relay code...");
 
                 // Guest: Get relay code from lobby and join
                 // The lobby data needs to be refreshed to get the relay code
@@ -860,13 +860,13 @@ namespace Glyphtender.Unity
                     await GlyphtenderLobby.Instance.RefreshLobbyAsync();
                     relayCode = GlyphtenderLobby.Instance.GetLobbyData("relayCode");
                     Debug.Log($"[OnlineLobbyScreen] Attempt {attempts + 1}: relayCode = '{relayCode ?? "(null)"}'");
-                    ShowDebugOverlay($"CloudProjectId: {cloudId}\nRelayCode: {relayCode ?? "(waiting)"}\nAttempt: {attempts + 1}");
+                    // ShowDebugOverlay($"CloudProjectId: {cloudId}\nRelayCode: {relayCode ?? "(waiting)"}\nAttempt: {attempts + 1}");
                     attempts++;
                 }
 
                 if (string.IsNullOrEmpty(relayCode))
                 {
-                    ShowDebugOverlay($"CloudProjectId: {cloudId}\nERROR: No relay code received");
+                    // ShowDebugOverlay($"CloudProjectId: {cloudId}\nERROR: No relay code received");
                     ShowError("Failed to get relay connection from host");
                     return;
                 }
@@ -887,7 +887,7 @@ namespace Glyphtender.Unity
                 relayCode = cleanedRelayCode;
 
                 Debug.Log($"[OnlineLobbyScreen] Got relay code from lobby: raw='{rawRelayCode}' (len={rawRelayCode?.Length}), cleaned='{relayCode}' (len={relayCode?.Length})");
-                ShowDebugOverlay($"CloudProjectId: {cloudId}\nRaw code: '{rawRelayCode}' (len={rawRelayCode?.Length})\nCleaned: '{relayCode}' (len={relayCode?.Length})\nJoining relay...");
+                // ShowDebugOverlay($"CloudProjectId: {cloudId}\nRaw code: '{rawRelayCode}' (len={rawRelayCode?.Length})\nCleaned: '{relayCode}' (len={relayCode?.Length})\nJoining relay...");
 
                 // Debug: Log the exact relay code characters to check for hidden chars
                 if (!string.IsNullOrEmpty(rawRelayCode))
@@ -904,10 +904,9 @@ namespace Glyphtender.Unity
                 if (!joined)
                 {
                     string errorDetail = GlyphtenderRelay.Instance.LastError ?? "Unknown error";
-                    string guestPlayerId = NetworkServices.Instance?.PlayerId ?? "(unknown)";
+                    // string guestPlayerId = NetworkServices.Instance?.PlayerId ?? "(unknown)";
                     Debug.LogError($"[OnlineLobbyScreen] Relay join failed: {errorDetail}");
-                    // Show more detail: raw vs cleaned, PlayerId, and full error
-                    ShowDebugOverlay($"CloudProjectId: {cloudId}\nPlayerId: {guestPlayerId}\nRaw: '{rawRelayCode}' len={rawRelayCode?.Length}\nCleaned: '{relayCode}' len={relayCode?.Length}\nERROR: {errorDetail}");
+                    // ShowDebugOverlay($"CloudProjectId: {cloudId}\nPlayerId: {guestPlayerId}\nRaw: '{rawRelayCode}' len={rawRelayCode?.Length}\nCleaned: '{relayCode}' len={relayCode?.Length}\nERROR: {errorDetail}");
                     ShowError($"Failed to join relay: {errorDetail}");
                     return;
                 }
