@@ -24,16 +24,22 @@ None (no domain skills installed)
 ## Phase Details
 
 ### Phase 1: Online Multiplayer Polish
-**Goal**: Complete the online 1v1 experience with rematch, forfeit, and connection monitoring
+**Goal**: Seamless rematch flow for online games
 **Depends on**: Nothing (builds on working v0.4.1)
 **Research**: Unlikely (existing network patterns)
 **Plans**: TBD
 
 Key work:
-- Fix Play Again/rematch flow (currently broken)
-- Implement forfeit handling (OnNetworkForfeitReceived has TODO)
-- Add connection monitoring/heartbeat (ConnectionMonitor missing)
-- Handle disconnections gracefully
+- Rematch button with toggle state ("Rematch?" → "Rematch! XXs")
+- Timer starts when first player clicks (30s, tunable)
+- Decline via button, leaving, or timeout
+- Visual feedback showing player status (confirmed/declined)
+- Flexible player count (4p can become 3p or 2p rematch)
+
+Deferred to later phases:
+- Forfeit handling
+- Connection monitoring/heartbeat
+- Mid-game disconnect handling
 
 ### Phase 2: 3-4 Player Online
 **Goal**: Extend online multiplayer to support 3 and 4 players
