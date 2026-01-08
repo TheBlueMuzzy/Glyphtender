@@ -548,7 +548,8 @@ namespace Glyphtender.Unity
             if (!IsOnlineGame) return;
 
             var pos = placement.Position.ToHexCoord();
-            Debug.Log($"[NetworkedGameManager] Draft placement confirmed at ({pos.Column},{pos.Row})");
+            int glyphlingIndex = placement.GlyphlingIndex;
+            Debug.Log($"[NetworkedGameManager] Draft placement confirmed at ({pos.Column},{pos.Row}), glyphlingIndex={glyphlingIndex}");
 
             // Apply draft placement to GameManager
             if (GameManager.Instance?.GameState == null) return;
@@ -570,8 +571,16 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // Apply the placement directly to game state (bypass GameManager validation since host already validated)
-            bool success = GameRules.PlaceDraftGlyphling(state, pos);
+            // Get the specific glyphling being placed by index
+            if (glyphlingIndex < 0 || glyphlingIndex >= state.Glyphlings.Count)
+            {
+                Debug.LogError($"[NetworkedGameManager] Invalid glyphling index: {glyphlingIndex}");
+                return;
+            }
+            var glyphlingToPlace = state.Glyphlings[glyphlingIndex];
+
+            // Apply the placement with the specific glyphling (critical for sync!)
+            bool success = GameRules.PlaceDraftGlyphling(state, pos, glyphlingToPlace);
             if (!success)
             {
                 Debug.LogError($"[NetworkedGameManager] Failed to place draft glyphling at {pos}");
@@ -742,16 +751,18 @@ namespace Glyphtender.Unity
         /// <summary>
         /// Sends a draft placement to the host for validation.
         /// </summary>
-        public void SendDraftPlacementToNetwork(HexCoord position)
+        public void SendDraftPlacementToNetwork(HexCoord position, int glyphlingIndex)
         {
             if (!IsOnlineGame) return;
             if (NetworkGameBridge.Instance == null) return;
 
             var placement = new NetworkDraftPlacement
             {
-                Position = new NetworkHexCoord(position)
+                Position = new NetworkHexCoord(position),
+                GlyphlingIndex = glyphlingIndex
             };
 
+            Debug.Log($"[NetworkedGameManager] Sending draft placement: pos={position}, glyphlingIndex={glyphlingIndex}");
             NetworkGameBridge.Instance.RequestDraftPlacementServerRpc(placement);
         }
 

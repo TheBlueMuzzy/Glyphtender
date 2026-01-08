@@ -452,8 +452,9 @@ namespace Glyphtender.Unity
             bool isOnline = NetworkedGameManager.Instance != null &&
                 NetworkedGameManager.Instance.IsOnlineGame;
 
-            // Capture the glyphling before placement (for confirming the ghost object)
+            // Capture the glyphling and its index before placement (for confirming the ghost object and network sync)
             var placingGlyphling = SelectedDraftGlyphling;
+            int glyphlingIndex = GameState.Glyphlings.IndexOf(placingGlyphling);
 
             // Place the glyphling - pass the specific glyphling to avoid mismatch with ghost
             bool success = GameRules.PlaceDraftGlyphling(GameState, position, placingGlyphling);
@@ -526,7 +527,7 @@ namespace Glyphtender.Unity
             // before local code continues, which would make PlaceDraftGlyphling fail)
             if (isOnline)
             {
-                NetworkedGameManager.Instance.SendDraftPlacementToNetwork(position);
+                NetworkedGameManager.Instance.SendDraftPlacementToNetwork(position, glyphlingIndex);
             }
         }
 

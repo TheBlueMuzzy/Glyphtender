@@ -115,10 +115,12 @@ namespace Glyphtender.Unity.Network
     public struct NetworkDraftPlacement : INetworkSerializable
     {
         public NetworkHexCoord Position;
+        public int GlyphlingIndex;  // Index into the full Glyphlings list (not per-player)
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             Position.NetworkSerialize(serializer);
+            serializer.SerializeValue(ref GlyphlingIndex);
         }
     }
 
