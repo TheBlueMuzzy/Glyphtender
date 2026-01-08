@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 using System;
 using System.Collections.Generic;
 using Glyphtender.Core;
+using Glyphtender.Unity.Network;
 
 namespace Glyphtender.Unity
 {
@@ -404,6 +405,10 @@ namespace Glyphtender.Unity
                 GameManager.Instance.WaitingForMainMenu = true;
             }
 
+            // CRITICAL: Clean up network state before returning to menu
+            // This ensures fresh relay/lobby state for the next online game
+            CleanupNetworkState();
+
             // Clear the board
             if (BoardRenderer.Instance != null)
             {
@@ -421,6 +426,27 @@ namespace Glyphtender.Unity
             if (MainMenuScreen.Instance != null)
             {
                 MainMenuScreen.Instance.Show();
+            }
+        }
+
+        /// <summary>
+        /// Cleans up all network state (relay, lobby, NetworkManager) for a fresh start.
+        /// Called when returning to main menu after an online game.
+        /// </summary>
+        private void CleanupNetworkState()
+        {
+            // Disconnect from relay (shuts down NetworkManager)
+            if (GlyphtenderRelay.Instance != null)
+            {
+                GlyphtenderRelay.Instance.Disconnect();
+                Debug.Log("[MenuController] Disconnected from relay");
+            }
+
+            // Leave lobby
+            if (GlyphtenderLobby.Instance?.CurrentLobby != null)
+            {
+                _ = GlyphtenderLobby.Instance.LeaveLobbyAsync();
+                Debug.Log("[MenuController] Left lobby");
             }
         }
 

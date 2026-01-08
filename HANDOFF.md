@@ -1182,7 +1182,7 @@ The runeblossom (letter tile) casting should feel magical and tactile:
 |---|---------|-------|
 | 25 | Network foundation | ✅ Phase 5.1-5.3 complete (auth, lobby, relay, messages, bridge) |
 | 26 | Room code system | ✅ Working - host creates, guest joins with 6-char code |
-| 27 | Host-guest connection | ✅ Same-WiFi working (v764), Cross-network fix in testing (v778) |
+| 27 | Host-guest connection | ✅ Cross-network working (v780) |
 | 28 | Local play phase | ✅ Working - all major bugs fixed (2026-01-05) |
 | 29 | Forfeit/disconnect handling | Part of Phase 5.4 (not yet implemented) |
 | 30 | Rematch flow | Part of Phase 5.5 (not yet implemented) |

@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix cross-network relay \"join code not found\" error \\(v778\\)\n\nRoot cause: Host wasn''t binding to relay until guest joined lobby.\nThe relay allocation existed but wasn''t \"active\" until StartHost\\(\\) was called.\nOn same-WiFi, timing was favorable. On cross-network, guest''s JoinRelayAsync\nfired before host was bound.\n\nFix: Start host immediately after relay allocation, before sharing join code.\n- OnCreateRoomClicked\\(\\) now calls ConfigureTransportAndStart\\(\\) right after AllocateRelayAsync\\(\\)\n- NetworkGameBridge spawned immediately after host starts\n- 1-second delay before storing join code in lobby \\(ensures host is ready\\)\n- StartGame\\(\\) host path simplified \\(no longer starts host there\\)\n\nNew flow:\n1. Host: AllocateRelay → StartHost\\(\\) → wait 1s → store join code\n2. Guest joins lobby → gets relay code → JoinRelayAsync\\(\\) → SUCCESS\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

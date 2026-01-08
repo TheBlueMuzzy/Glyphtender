@@ -66,33 +66,33 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 5: Online Multiplayer** - Cross-network fix in testing (v778)
+**Phase 5: Online Multiplayer** - Cross-network working (v780)
 
 ### Completed This Session
 - Fixed cross-network "join code not found" error (v778):
   - Root cause: Host wasn't binding to relay until guest joined lobby
-  - The relay allocation existed but wasn't "active" until `StartHost()` called
-  - On same-WiFi, timing was favorable; on cross-network, guest's `JoinRelayAsync` fired before host bound
   - Fix: Start host immediately after relay allocation, before sharing join code
   - See "Unity Relay Cross-Network Fix" section below for details
+- Fixed network cleanup when returning to menu (v779):
+  - Added `CleanupNetworkState()` to disconnect relay and leave lobby
+- Fixed glyphling desync bug during online draft (v780):
+  - Root cause: `NetworkDraftPlacement` only sent position, not which glyphling
+  - If players placed glyphlings out of order, remote side used wrong one
+  - Fix: Added `GlyphlingIndex` to `NetworkDraftPlacement` message
 
 ### What's Working
-- Online 1v1 working on same WiFi (all platform combinations)
+- Online 1v1 fully working (cross-network confirmed!)
 - Local 1v1, 3p, 4p fully working
 - 4-player win screen with all stats
 - Tangle detection and game end in online mode
-
-### Testing Needed
-- Cross-network connections (different WiFi networks, mobile data)
-- Phone with WiFi off joining desktop host
 
 ### Next Up
 - Phase 5.4: Forfeit/disconnect handling
 - Phase 5.5: Rematch flow
 - 3-4 player online support
 
-### Current Testing (v778)
-**Look for v778 in red text at top of main menu**
+### Current Testing (v780)
+**Look for v780 in red text at top of main menu**
 
 ---
 
