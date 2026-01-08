@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash([ -f .planning/ROADMAP.md ])",
+      "Bash(git add:*)",
+      "SlashCommand(/gsd:plan-phase:*)"
+    ]
+  }
+}

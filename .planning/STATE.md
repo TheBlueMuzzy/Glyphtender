@@ -10,24 +10,24 @@ See: .planning/PROJECT.md (updated 2026-01-08)
 ## Current Position
 
 Phase: 1 of 6 (Online Multiplayer Polish)
-Plan: 1 of 2 (Rematch State & Network Sync)
+Plan: 2 of 2 (Rematch UI & Completion Logic)
 Status: Ready to execute
-Last activity: 2026-01-08 — Phase 1 planned (2 plans)
+Last activity: 2026-01-08 — Plan 01-01 completed
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █████░░░░░ 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
+- Total plans completed: 1
 - Average duration: —
-- Total execution time: 0 hours
+- Total execution time: —
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| — | — | — | — |
+| 1 | 1/2 | — | — |
 
 **Recent Trend:**
 - Last 5 plans: —
@@ -40,7 +40,8 @@ Progress: ░░░░░░░░░░ 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-(None yet)
+- RematchManager uses host-authoritative model (clients send via ServerRpc, host validates and broadcasts)
+- Timer starts when first player confirms, not when end screen shows
 
 ### Deferred Issues
 
@@ -53,5 +54,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-08
-Stopped at: Project initialization complete
+Stopped at: Plan 01-01 completed (RematchManager + network sync)
 Resume file: None

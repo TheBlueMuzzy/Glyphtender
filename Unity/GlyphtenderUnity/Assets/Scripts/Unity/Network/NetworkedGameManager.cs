@@ -140,6 +140,7 @@ namespace Glyphtender.Unity
             NetworkGameBridge.Instance.OnCycleConfirmed += OnNetworkCycleConfirmed;
             NetworkGameBridge.Instance.OnGameStartReceived += OnNetworkGameStartReceived;
             NetworkGameBridge.Instance.OnForfeitReceived += OnNetworkForfeitReceived;
+            NetworkGameBridge.Instance.OnRematchStatusReceived += OnNetworkRematchStatusReceived;
             _subscribedToNetworkEvents = true;
             Debug.Log("[NetworkedGameManager] Subscribed to network events");
         }
@@ -153,6 +154,7 @@ namespace Glyphtender.Unity
             NetworkGameBridge.Instance.OnCycleConfirmed -= OnNetworkCycleConfirmed;
             NetworkGameBridge.Instance.OnGameStartReceived -= OnNetworkGameStartReceived;
             NetworkGameBridge.Instance.OnForfeitReceived -= OnNetworkForfeitReceived;
+            NetworkGameBridge.Instance.OnRematchStatusReceived -= OnNetworkRematchStatusReceived;
         }
 
         private void OnGameInitialized()
@@ -691,6 +693,23 @@ namespace Glyphtender.Unity
             Debug.Log($"[NetworkedGameManager] {forfeit.GetPlayer()} forfeited");
 
             // TODO: Handle forfeit - end game, show message, maybe AI takeover option
+        }
+
+        private void OnNetworkRematchStatusReceived(NetworkRematchStatus status)
+        {
+            Debug.Log($"[NetworkedGameManager] Rematch status received: {status.GetPlayer()} = {status.GetStatus()}");
+
+            // Update local RematchManager with received status
+            if (RematchManager.Instance != null)
+            {
+                RematchManager.Instance.SetPlayerStatus(status.GetPlayer(), status.GetStatus());
+
+                // If timer info included and timer not yet active locally, sync it
+                if (status.TimerStartTime > 0 && !RematchManager.Instance.IsTimerActive)
+                {
+                    RematchManager.Instance.SyncTimer(status.TimerStartTime, status.TimerDuration);
+                }
+            }
         }
 
         #endregion

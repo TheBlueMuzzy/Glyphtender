@@ -30,7 +30,7 @@ None (no domain skills installed)
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Rematch state management and network sync
+- [x] 01-01: Rematch state management and network sync
 - [ ] 01-02: Rematch UI and completion logic
 
 Key work:
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Online Multiplayer Polish | 0/2 | Not started | - |
+| 1. Online Multiplayer Polish | 1/2 | In progress | - |
 | 2. 3-4 Player Online | 0/TBD | Not started | - |
 | 3. Menu System Rework | 0/TBD | Not started | - |
 | 4. Animation System | 0/TBD | Not started | - |

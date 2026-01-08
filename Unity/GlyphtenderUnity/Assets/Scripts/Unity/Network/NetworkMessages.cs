@@ -194,7 +194,7 @@ namespace Glyphtender.Unity.Network
     }
 
     /// <summary>
-    /// Rematch request/response.
+    /// Rematch request/response (legacy - kept for backwards compatibility).
     /// </summary>
     public struct NetworkRematch : INetworkSerializable
     {
@@ -205,6 +205,29 @@ namespace Glyphtender.Unity.Network
         {
             serializer.SerializeValue(ref IsRequest);
             serializer.SerializeValue(ref Accepted);
+        }
+    }
+
+    /// <summary>
+    /// Per-player rematch status with timer sync.
+    /// Used for the new rematch flow where each player can confirm/decline independently.
+    /// </summary>
+    public struct NetworkRematchStatus : INetworkSerializable
+    {
+        public byte PlayerIndex;        // 0=Yellow, 1=Blue, 2=Purple, 3=Pink
+        public byte Status;             // 0=Pending, 1=Confirmed, 2=Declined
+        public float TimerStartTime;    // Server time when timer started (0 if not started)
+        public float TimerDuration;     // Duration in seconds
+
+        public Player GetPlayer() => (Player)PlayerIndex;
+        public RematchStatus GetStatus() => (RematchStatus)Status;
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref PlayerIndex);
+            serializer.SerializeValue(ref Status);
+            serializer.SerializeValue(ref TimerStartTime);
+            serializer.SerializeValue(ref TimerDuration);
         }
     }
 }

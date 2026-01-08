@@ -48,6 +48,7 @@ namespace Glyphtender.Unity.Network
         public event Action<NetworkGameStart> OnGameStartReceived;
         public event Action<NetworkForfeit> OnForfeitReceived;
         public event Action<NetworkRematch> OnRematchReceived;
+        public event Action<NetworkRematchStatus> OnRematchStatusReceived;
 
         // Event for validation failures (client-side feedback)
         public event Action<string> OnActionRejected;
@@ -162,7 +163,7 @@ namespace Glyphtender.Unity.Network
         }
 
         /// <summary>
-        /// Client requests or responds to rematch.
+        /// Client requests or responds to rematch (legacy).
         /// </summary>
         [ServerRpc(RequireOwnership = false)]
         public void RequestRematchServerRpc(NetworkRematch rematch, ServerRpcParams rpcParams = default)
@@ -170,6 +171,34 @@ namespace Glyphtender.Unity.Network
             Debug.Log($"[NetworkGameBridge] Rematch request: IsRequest={rematch.IsRequest}, Accepted={rematch.Accepted}");
 
             BroadcastRematchClientRpc(rematch);
+        }
+
+        /// <summary>
+        /// Client requests a rematch status change (new per-player flow).
+        /// Host validates the sender and broadcasts to all clients.
+        /// </summary>
+        [ServerRpc(RequireOwnership = false)]
+        public void RequestRematchStatusServerRpc(NetworkRematchStatus status, ServerRpcParams rpcParams = default)
+        {
+            // Validate sender matches the player in the status
+            Player senderPlayer = GetPlayerFromClientId(rpcParams.Receive.SenderClientId);
+            if ((int)senderPlayer != status.PlayerIndex)
+            {
+                Debug.LogWarning($"[NetworkGameBridge] Rematch status mismatch: sender is {senderPlayer} but status is for {status.GetPlayer()}");
+                return;
+            }
+
+            // If this is first Confirmed and timer not started, set timer fields
+            if (status.GetStatus() == RematchStatus.Confirmed && status.TimerStartTime == 0)
+            {
+                status.TimerStartTime = Time.time;
+                status.TimerDuration = RematchManager.Instance?.RematchTimerDuration ?? 30f;
+                Debug.Log($"[NetworkGameBridge] Starting rematch timer: {status.TimerDuration}s");
+            }
+
+            Debug.Log($"[NetworkGameBridge] Rematch status from {senderPlayer}: {status.GetStatus()}");
+
+            BroadcastRematchStatusClientRpc(status);
         }
 
         #endregion
@@ -209,6 +238,13 @@ namespace Glyphtender.Unity.Network
         {
             Debug.Log($"[NetworkGameBridge] Rematch broadcast: IsRequest={rematch.IsRequest}, Accepted={rematch.Accepted}");
             OnRematchReceived?.Invoke(rematch);
+        }
+
+        [ClientRpc]
+        private void BroadcastRematchStatusClientRpc(NetworkRematchStatus status)
+        {
+            Debug.Log($"[NetworkGameBridge] Rematch status broadcast: {status.GetPlayer()} = {status.GetStatus()}");
+            OnRematchStatusReceived?.Invoke(status);
         }
 
         [ClientRpc]

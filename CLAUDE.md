@@ -66,30 +66,27 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 5: Online Multiplayer** - Cross-network working (v780)
+**Phase 1: Online Multiplayer Polish** - Rematch flow (using GSD planning system)
 
 ### Completed This Session
-- Fixed cross-network "join code not found" error (v778):
-  - Root cause: Host wasn't binding to relay until guest joined lobby
-  - Fix: Start host immediately after relay allocation, before sharing join code
-  - See "Unity Relay Cross-Network Fix" section below for details
-- Fixed network cleanup when returning to menu (v779):
-  - Added `CleanupNetworkState()` to disconnect relay and leave lobby
-- Fixed glyphling desync bug during online draft (v780):
-  - Root cause: `NetworkDraftPlacement` only sent position, not which glyphling
-  - If players placed glyphlings out of order, remote side used wrong one
-  - Fix: Added `GlyphlingIndex` to `NetworkDraftPlacement` message
+- Plan 01-01: Rematch State & Network Sync (COMPLETE)
+  - Created `RematchManager.cs` with per-player status tracking, timer, events
+  - Added `NetworkRematchStatus` struct for network sync
+  - Added RPCs to NetworkGameBridge for rematch status sync
+  - Subscribed NetworkedGameManager to rematch status events
 
 ### What's Working
 - Online 1v1 fully working (cross-network confirmed!)
 - Local 1v1, 3p, 4p fully working
 - 4-player win screen with all stats
 - Tangle detection and game end in online mode
+- RematchManager backend (ready for UI integration)
 
 ### Next Up
-- Phase 5.4: Forfeit/disconnect handling
-- Phase 5.5: Rematch flow
-- 3-4 player online support
+- Plan 01-02: Rematch UI & Completion Logic
+  - Update EndGameScreen with rematch toggle button
+  - Add player status indicators (X/Check marks)
+  - Wire completion logic (restart game or return to menu)
 
 ### Current Testing (v780)
 **Look for v780 in red text at top of main menu**
