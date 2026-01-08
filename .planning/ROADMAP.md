@@ -14,7 +14,7 @@ None (no domain skills installed)
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Online Multiplayer Polish** - Fix rematch flow, forfeit/disconnect handling
+- [x] **Phase 1: Online Multiplayer Polish** - Fix rematch flow, forfeit/disconnect handling
 - [ ] **Phase 2: 3-4 Player Online** - Extend network architecture for multiplayer
 - [ ] **Phase 3: Menu System Rework** - Layout improvements, flow reorganization
 - [ ] **Phase 4: Animation System** - Rework animations, AI human-like timing
@@ -31,7 +31,7 @@ None (no domain skills installed)
 
 Plans:
 - [x] 01-01: Rematch state management and network sync
-- [ ] 01-02: Rematch UI and completion logic
+- [x] 01-02: Rematch UI and completion logic
 
 Key work:
 - Rematch button with toggle state ("Rematch?" → "Rematch! XXs")
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Online Multiplayer Polish | 1/2 | In progress | - |
+| 1. Online Multiplayer Polish | 2/2 | Complete | 2026-01-08 |
 | 2. 3-4 Player Online | 0/TBD | Not started | - |
 | 3. Menu System Rework | 0/TBD | Not started | - |
 | 4. Animation System | 0/TBD | Not started | - |

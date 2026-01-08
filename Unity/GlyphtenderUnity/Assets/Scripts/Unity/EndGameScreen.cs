@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Glyphtender.Core;
 using Glyphtender.Core.Stats;
 using Glyphtender.Unity.Stats;
+using Glyphtender.Unity.Network;
 
 namespace Glyphtender.Unity
 {
@@ -50,6 +51,20 @@ namespace Glyphtender.Unity
         // Button references for text swapping
         private TextMesh _viewButtonText;
 
+        // Rematch UI
+        private GameObject _rematchButton;
+        private TextMesh _rematchButtonText;
+        private Renderer _rematchButtonRenderer;
+        private GameObject _declineButton;
+        private GameObject _timerDisplay;
+        private TextMesh _timerText;
+        private bool _localPlayerConfirmed;
+        private Dictionary<Player, TextMesh> _playerStatusIndicators = new Dictionary<Player, TextMesh>();
+
+        // Rematch colors
+        private Color _confirmedColor = new Color(0.3f, 0.8f, 0.3f);  // Green
+        private Color _pendingColor = new Color(0.3f, 0.3f, 0.35f);   // Gray (matches button)
+
         // Animation
         private bool _isAnimating;
         private float _animationTime;
@@ -80,6 +95,9 @@ namespace Glyphtender.Unity
                 GameManager.Instance.OnGameEnded += OnGameEnded;
                 GameManager.Instance.OnGameRestarted += OnGameRestarted;
             }
+
+            // Subscribe to rematch events
+            SubscribeToRematchEvents();
         }
 
         private void OnDestroy()
@@ -89,6 +107,8 @@ namespace Glyphtender.Unity
                 GameManager.Instance.OnGameEnded -= OnGameEnded;
                 GameManager.Instance.OnGameRestarted -= OnGameRestarted;
             }
+
+            UnsubscribeFromRematchEvents();
         }
 
         private void Update()
@@ -109,6 +129,31 @@ namespace Glyphtender.Unity
                     {
                         _statsPanel.SetActive(false);
                     }
+                }
+            }
+
+            // Update rematch timer display
+            if (_isVisible && RematchManager.Instance != null && RematchManager.Instance.IsTimerActive)
+            {
+                float remaining = RematchManager.Instance.GetTimeRemaining();
+                int seconds = Mathf.CeilToInt(remaining);
+
+                // Update timer text
+                if (_timerText != null)
+                {
+                    _timerText.text = $"Waiting... {seconds}s";
+                }
+
+                // Update rematch button text if local player confirmed
+                if (_localPlayerConfirmed && _rematchButtonText != null)
+                {
+                    _rematchButtonText.text = $"Rematch! {seconds}s";
+                }
+
+                // Show timer display if not visible
+                if (_timerDisplay != null && !_timerDisplay.activeSelf)
+                {
+                    _timerDisplay.SetActive(true);
                 }
             }
 
@@ -152,6 +197,12 @@ namespace Glyphtender.Unity
                 Destroy(_screenRoot);
             }
 
+            // Initialize rematch state
+            int playerCount = _displayedStats?.PlayerCount ?? 2;
+            RematchManager.Instance?.Initialize(playerCount);
+            _localPlayerConfirmed = false;
+            _playerStatusIndicators.Clear();
+
             CreateScreen(winner);
 
             // Hide hand
@@ -184,9 +235,16 @@ namespace Glyphtender.Unity
                 _buttonsContainer = null;
                 _backgroundBlocker = null;
                 _viewButtonText = null;
+                _rematchButton = null;
+                _rematchButtonText = null;
+                _rematchButtonRenderer = null;
+                _declineButton = null;
+                _timerDisplay = null;
+                _timerText = null;
             }
 
             _screenItems.Clear();
+            _playerStatusIndicators.Clear();
 
             // Show hand
             HandController.Instance?.ShowHand();
@@ -420,16 +478,213 @@ namespace Glyphtender.Unity
             float elementScale = panelHeight / 5.0f;
             float buttonY = -(panelHeight / 2f) + (0.5f * elementScale);
 
-            // Play Again button (left)
-            CreateButton(_buttonsContainer, "Play Again", -0.9f * elementScale, buttonY, elementScale, () => {
-                Hide();
-                GameManager.Instance?.InitializeGame();
-            });
+            // Check if this is an online game
+            bool isOnlineGame = NetworkedGameManager.Instance != null && NetworkedGameManager.Instance.IsOnlineGame;
 
-            // View Board / View Stats button (right)
-            _viewButtonText = CreateButton(_buttonsContainer, "View Board", 0.9f * elementScale, buttonY, elementScale, () => {
-                ToggleStatsPanel();
-            });
+            if (isOnlineGame)
+            {
+                // Create rematch flow buttons for online games
+
+                // Timer display (above buttons, hidden initially)
+                CreateTimerDisplay(buttonY + 0.5f * elementScale, elementScale);
+
+                // Rematch button (left)
+                CreateRematchButton(-0.9f * elementScale, buttonY, elementScale);
+
+                // Decline button (center-left, smaller)
+                CreateDeclineButton(0f, buttonY, elementScale);
+
+                // View Board / View Stats button (right)
+                _viewButtonText = CreateButton(_buttonsContainer, "View Board", 0.9f * elementScale, buttonY, elementScale, () => {
+                    ToggleStatsPanel();
+                });
+            }
+            else
+            {
+                // Local game - use simple Play Again button
+                CreateButton(_buttonsContainer, "Play Again", -0.9f * elementScale, buttonY, elementScale, () => {
+                    Hide();
+                    GameManager.Instance?.InitializeGame();
+                });
+
+                // View Board / View Stats button (right)
+                _viewButtonText = CreateButton(_buttonsContainer, "View Board", 0.9f * elementScale, buttonY, elementScale, () => {
+                    ToggleStatsPanel();
+                });
+            }
+        }
+
+        private void CreateTimerDisplay(float y, float scale)
+        {
+            _timerDisplay = new GameObject("TimerDisplay");
+            _timerDisplay.transform.SetParent(_buttonsContainer.transform);
+            _timerDisplay.transform.localPosition = new Vector3(0f, y, -0.1f);
+            _timerDisplay.transform.localRotation = Quaternion.identity;
+            _timerDisplay.transform.localScale = new Vector3(0.04f * scale, 0.04f * scale, 0.04f * scale);
+            _timerDisplay.layer = LayerMask.NameToLayer("UI3D");
+
+            _timerText = _timerDisplay.AddComponent<TextMesh>();
+            _timerText.text = "";
+            _timerText.fontSize = 36;
+            _timerText.alignment = TextAlignment.Center;
+            _timerText.anchor = TextAnchor.MiddleCenter;
+            _timerText.color = Color.white;
+
+            // Hidden initially - shown when timer starts
+            _timerDisplay.SetActive(false);
+        }
+
+        private void CreateRematchButton(float x, float y, float scale)
+        {
+            _rematchButton = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _rematchButton.name = "Button_Rematch";
+            _rematchButton.transform.SetParent(_buttonsContainer.transform);
+            _rematchButton.transform.localPosition = new Vector3(x, y, -0.08f);
+            _rematchButton.transform.localRotation = Quaternion.identity;
+            _rematchButton.transform.localScale = new Vector3(1.4f * scale, 0.35f * scale, 0.05f);
+            _rematchButton.layer = LayerMask.NameToLayer("UI3D");
+
+            _rematchButtonRenderer = _rematchButton.GetComponent<Renderer>();
+            if (buttonMaterial != null)
+                _rematchButtonRenderer.material = new Material(buttonMaterial);
+            else
+                _rematchButtonRenderer.material = new Material(Shader.Find("Standard"));
+            _rematchButtonRenderer.material.color = _pendingColor;
+            _rematchButtonRenderer.shadowCastingMode = ShadowCastingMode.Off;
+
+            // Button text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(_rematchButton.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0f, -1.5f);
+            textObj.transform.localRotation = Quaternion.identity;
+            textObj.transform.localScale = new Vector3(0.035f, 0.12f, 1f);
+            textObj.layer = LayerMask.NameToLayer("UI3D");
+
+            _rematchButtonText = textObj.AddComponent<TextMesh>();
+            _rematchButtonText.text = "Rematch?";
+            _rematchButtonText.fontSize = 36;
+            _rematchButtonText.alignment = TextAlignment.Center;
+            _rematchButtonText.anchor = TextAnchor.MiddleCenter;
+            _rematchButtonText.color = Color.white;
+
+            var handler = _rematchButton.AddComponent<MenuButtonClickHandler>();
+            handler.OnClick = OnRematchButtonClicked;
+
+            _screenItems.Add(_rematchButton);
+        }
+
+        private void CreateDeclineButton(float x, float y, float scale)
+        {
+            _declineButton = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _declineButton.name = "Button_Decline";
+            _declineButton.transform.SetParent(_buttonsContainer.transform);
+            _declineButton.transform.localPosition = new Vector3(x, y, -0.08f);
+            _declineButton.transform.localRotation = Quaternion.identity;
+            _declineButton.transform.localScale = new Vector3(0.9f * scale, 0.35f * scale, 0.05f);  // Smaller
+            _declineButton.layer = LayerMask.NameToLayer("UI3D");
+
+            var renderer = _declineButton.GetComponent<Renderer>();
+            if (buttonMaterial != null)
+                renderer.material = buttonMaterial;
+            else
+                renderer.material.color = new Color(0.4f, 0.25f, 0.25f);  // Reddish gray
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+
+            // Button text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(_declineButton.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0f, -1.5f);
+            textObj.transform.localRotation = Quaternion.identity;
+            textObj.transform.localScale = new Vector3(0.045f, 0.12f, 1f);
+            textObj.layer = LayerMask.NameToLayer("UI3D");
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = "Decline";
+            textMesh.fontSize = 36;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.white;
+
+            var handler = _declineButton.AddComponent<MenuButtonClickHandler>();
+            handler.OnClick = OnDeclineButtonClicked;
+
+            _screenItems.Add(_declineButton);
+        }
+
+        private void OnRematchButtonClicked()
+        {
+            _localPlayerConfirmed = !_localPlayerConfirmed;
+
+            var status = _localPlayerConfirmed ? RematchStatus.Confirmed : RematchStatus.Pending;
+
+            if (NetworkedGameManager.Instance?.IsOnlineGame == true)
+            {
+                // Send via network
+                var netStatus = new NetworkRematchStatus
+                {
+                    PlayerIndex = (byte)NetworkedGameManager.Instance.LocalPlayer,
+                    Status = (byte)status,
+                    TimerStartTime = 0,  // Host will set if needed
+                    TimerDuration = 0
+                };
+                NetworkGameBridge.Instance?.RequestRematchStatusServerRpc(netStatus);
+            }
+            else
+            {
+                // Local game - directly update RematchManager
+                if (GameManager.Instance?.GameState != null)
+                {
+                    RematchManager.Instance?.SetPlayerStatus(
+                        GameManager.Instance.GameState.CurrentPlayer,
+                        status
+                    );
+                }
+            }
+
+            UpdateRematchButtonVisual();
+        }
+
+        private void OnDeclineButtonClicked()
+        {
+            // Set declined status
+            if (NetworkedGameManager.Instance?.IsOnlineGame == true)
+            {
+                var netStatus = new NetworkRematchStatus
+                {
+                    PlayerIndex = (byte)NetworkedGameManager.Instance.LocalPlayer,
+                    Status = (byte)RematchStatus.Declined,
+                    TimerStartTime = 0,
+                    TimerDuration = 0
+                };
+                NetworkGameBridge.Instance?.RequestRematchStatusServerRpc(netStatus);
+            }
+
+            // Return to main menu
+            Hide();
+            CleanupAndReturnToMenu();
+        }
+
+        private void UpdateRematchButtonVisual()
+        {
+            if (_rematchButton == null || _rematchButtonRenderer == null) return;
+
+            if (_localPlayerConfirmed)
+            {
+                _rematchButtonRenderer.material.color = _confirmedColor;
+                // Text updated in Update() loop with timer if active
+                if (RematchManager.Instance?.IsTimerActive != true && _rematchButtonText != null)
+                {
+                    _rematchButtonText.text = "Rematch!";
+                }
+            }
+            else
+            {
+                _rematchButtonRenderer.material.color = _pendingColor;
+                if (_rematchButtonText != null)
+                {
+                    _rematchButtonText.text = "Rematch?";
+                }
+            }
         }
 
         /// <summary>
@@ -532,7 +787,32 @@ namespace Glyphtender.Unity
                 var player = activePlayers[i];
                 CreateText(_statsPanel, GetNameForPlayer(player), positions[i], yPos, headerScale * scale,
                     GetColorForPlayer(player), TextAlignment.Center);
+
+                // Add status indicator above player name (only for online games)
+                if (NetworkedGameManager.Instance?.IsOnlineGame == true)
+                {
+                    CreatePlayerStatusIndicator(player, positions[i], yPos + 0.25f * scale, scale);
+                }
             }
+        }
+
+        private void CreatePlayerStatusIndicator(Player player, float x, float y, float scale)
+        {
+            GameObject indicatorObj = new GameObject($"StatusIndicator_{player}");
+            indicatorObj.transform.SetParent(_statsPanel.transform);
+            indicatorObj.transform.localPosition = new Vector3(x, y, -0.1f);
+            indicatorObj.transform.localRotation = Quaternion.identity;
+            indicatorObj.transform.localScale = new Vector3(0.05f * scale, 0.05f * scale, 0.05f * scale);
+            indicatorObj.layer = LayerMask.NameToLayer("UI3D");
+
+            var indicatorText = indicatorObj.AddComponent<TextMesh>();
+            indicatorText.text = "";  // Hidden initially
+            indicatorText.fontSize = 36;
+            indicatorText.alignment = TextAlignment.Center;
+            indicatorText.anchor = TextAnchor.MiddleCenter;
+            indicatorText.color = Color.white;
+
+            _playerStatusIndicators[player] = indicatorText;
         }
 
         private void CreateStatRow(string label, string[] values, Player[] players, float yPos, float scale, int playerCount)
@@ -610,5 +890,122 @@ namespace Glyphtender.Unity
 
             return textMesh;
         }
+
+        #region Rematch Event Handling
+
+        private void SubscribeToRematchEvents()
+        {
+            // Ensure RematchManager exists
+            if (RematchManager.Instance == null)
+            {
+                var managerObj = new GameObject("RematchManager");
+                managerObj.AddComponent<RematchManager>();
+                DontDestroyOnLoad(managerObj);
+            }
+
+            if (RematchManager.Instance != null)
+            {
+                RematchManager.Instance.OnPlayerStatusChanged += OnPlayerRematchStatusChanged;
+                RematchManager.Instance.OnRematchConfirmed += OnRematchConfirmed;
+                RematchManager.Instance.OnRematchCancelled += OnRematchCancelled;
+                RematchManager.Instance.OnTimerExpired += OnRematchTimerExpired;
+            }
+        }
+
+        private void UnsubscribeFromRematchEvents()
+        {
+            if (RematchManager.Instance != null)
+            {
+                RematchManager.Instance.OnPlayerStatusChanged -= OnPlayerRematchStatusChanged;
+                RematchManager.Instance.OnRematchConfirmed -= OnRematchConfirmed;
+                RematchManager.Instance.OnRematchCancelled -= OnRematchCancelled;
+                RematchManager.Instance.OnTimerExpired -= OnRematchTimerExpired;
+            }
+        }
+
+        private void OnPlayerRematchStatusChanged(Player player, RematchStatus status)
+        {
+            // Update the status indicator for this player
+            if (_playerStatusIndicators.TryGetValue(player, out var indicator))
+            {
+                switch (status)
+                {
+                    case RematchStatus.Confirmed:
+                        indicator.text = "\u2713";  // Checkmark
+                        indicator.color = _confirmedColor;
+                        break;
+                    case RematchStatus.Declined:
+                        indicator.text = "\u2717";  // X mark
+                        indicator.color = Color.red;
+                        break;
+                    case RematchStatus.Pending:
+                    default:
+                        indicator.text = "";  // Hidden
+                        break;
+                }
+            }
+
+            // Also update rematch button if this is the local player
+            if (NetworkedGameManager.Instance?.IsOnlineGame == true)
+            {
+                if (player == NetworkedGameManager.Instance.LocalPlayer)
+                {
+                    _localPlayerConfirmed = (status == RematchStatus.Confirmed);
+                    UpdateRematchButtonVisual();
+                }
+            }
+        }
+
+        private void OnRematchConfirmed(System.Collections.Generic.List<Player> confirmedPlayers)
+        {
+            Debug.Log($"[EndGameScreen] Rematch confirmed with {confirmedPlayers.Count} players");
+
+            Hide();
+
+            // Start new game with confirmed players
+            if (NetworkedGameManager.Instance?.IsOnlineGame == true)
+            {
+                if (GlyphtenderLobby.IsHost)
+                {
+                    // Host starts new game with confirmed player count
+                    GameManager.Instance?.InitializeGame();
+                }
+                // Non-host waits for host to send NetworkGameStart
+            }
+            else
+            {
+                // Local game - just restart
+                GameManager.Instance?.InitializeGame();
+            }
+        }
+
+        private void OnRematchCancelled()
+        {
+            Debug.Log("[EndGameScreen] Rematch cancelled - not enough players");
+
+            Hide();
+            CleanupAndReturnToMenu();
+        }
+
+        private void OnRematchTimerExpired()
+        {
+            Debug.Log("[EndGameScreen] Rematch timer expired");
+            // The RematchManager will fire OnRematchConfirmed or OnRematchCancelled
+        }
+
+        private void CleanupAndReturnToMenu()
+        {
+            // Clean up network if online
+            if (NetworkedGameManager.Instance?.IsOnlineGame == true)
+            {
+                // Leave lobby and disconnect relay
+                GlyphtenderLobby.Instance?.LeaveLobby();
+                GlyphtenderRelay.Instance?.Disconnect();
+            }
+
+            MenuController.Instance?.ShowMainMenu();
+        }
+
+        #endregion
     }
 }

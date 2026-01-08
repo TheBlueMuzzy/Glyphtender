@@ -66,7 +66,7 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 1: Online Multiplayer Polish** - Rematch flow (using GSD planning system)
+**Phase 1: Online Multiplayer Polish** - COMPLETE
 
 ### Completed This Session
 - Plan 01-01: Rematch State & Network Sync (COMPLETE)
@@ -75,18 +75,27 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
   - Added RPCs to NetworkGameBridge for rematch status sync
   - Subscribed NetworkedGameManager to rematch status events
 
+- Plan 01-02: Rematch UI & Completion Logic (COMPLETE)
+  - Updated EndGameScreen with Rematch/Decline buttons for online games
+  - Added timer display showing countdown
+  - Added player status indicators (X/Check marks above player names)
+  - Wired completion logic (2+ confirmed starts new game, else returns to menu)
+
 ### What's Working
 - Online 1v1 fully working (cross-network confirmed!)
 - Local 1v1, 3p, 4p fully working
 - 4-player win screen with all stats
 - Tangle detection and game end in online mode
-- RematchManager backend (ready for UI integration)
+- **NEW: Rematch flow for online games**
+  - "Rematch?" button toggles to green "Rematch! XXs"
+  - Timer starts when first player confirms (30s)
+  - Players can toggle on/off (change mind)
+  - Decline button returns to menu
+  - X/Check indicators show player status
 
 ### Next Up
-- Plan 01-02: Rematch UI & Completion Logic
-  - Update EndGameScreen with rematch toggle button
-  - Add player status indicators (X/Check marks)
-  - Wire completion logic (restart game or return to menu)
+- Human verification of rematch flow
+- Phase 2: 3-4 Player Online
 
 ### Current Testing (v780)
 **Look for v780 in red text at top of main menu**
