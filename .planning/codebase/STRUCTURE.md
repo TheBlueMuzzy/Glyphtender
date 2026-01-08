@@ -1,0 +1,151 @@
+# Codebase Structure
+
+**Analysis Date:** 2026-01-08
+
+## Directory Layout
+
+```
+Glyphtender/
+├── Unity/GlyphtenderUnity/           # Unity project root
+│   ├── Assets/
+│   │   ├── Scenes/                   # Unity scenes
+│   │   ├── Scripts/                  # All C# code
+│   │   │   ├── Core/                 # Pure C# game logic
+│   │   │   └── Unity/                # Unity-specific code
+│   │   │       └── Network/          # Multiplayer networking
+│   │   ├── Materials/                # Hex, tile, glyphling materials
+│   │   ├── Sprites/                  # Letter tile sprites
+│   │   └── Prefabs/                  # Reusable objects
+│   ├── Packages/                     # UPM packages
+│   └── ProjectSettings/              # Unity configuration
+├── Documents/                        # Design documentation
+├── CLAUDE.md                         # Claude Code instructions
+├── HANDOFF.md                        # Full project context
+└── .planning/                        # GSD planning files
+```
+
+## Directory Purposes
+
+**Scripts/Core/**
+- Purpose: Pure C# game logic with zero Unity dependencies
+- Contains: GameState, GameRules, Board, WordScorer, AIBrain, Stats
+- Key files:
+  - `GameState.cs` - Immutable game snapshot
+  - `GameRules.cs` - Static rules engine
+  - `Board.cs` - Hex grid and coordinates
+  - `AIBrain.cs` - AI decision-making
+  - `WordScorer.cs` - Dictionary and word validation
+- Subdirectories:
+  - `Stats/` - Statistics tracking classes
+  - `Future/` - Archived/deprecated AI code
+
+**Scripts/Unity/**
+- Purpose: Unity-specific code (rendering, input, UI)
+- Contains: Managers, Renderers, Controllers, Screens, Handlers
+- Key files:
+  - `GameManager.cs` - Central game controller
+  - `BoardRenderer.cs` - Board visualization (900+ lines, needs refactor)
+  - `HandController.cs` - Hand UI management
+  - `MainMenuScreen.cs` - Play mode selection
+  - `OnlineLobbyScreen.cs` - Room code entry
+  - `EndGameScreen.cs` - Results display
+- Subdirectories:
+  - `Network/` - Multiplayer networking code
+  - `Stats/` - Stats UI and persistence
+
+**Scripts/Unity/Network/**
+- Purpose: Online multiplayer synchronization
+- Contains: Network services, lobby, relay, game bridge
+- Key files:
+  - `NetworkBootstrap.cs` - Auto-initializes network singletons
+  - `NetworkServices.cs` - UGS authentication
+  - `GlyphtenderLobby.cs` - Room code matchmaking
+  - `GlyphtenderRelay.cs` - NAT traversal
+  - `NetworkGameBridge.cs` - RPC handler (NetworkBehaviour)
+  - `NetworkedGameManager.cs` - Online game coordination
+  - `NetworkMessages.cs` - Serializable data structures
+
+## Key File Locations
+
+**Entry Points:**
+- `Assets/Scenes/GameScene.unity` - Main game scene
+- `Assets/Scripts/Unity/Network/NetworkBootstrap.cs` - Network initialization
+- `Assets/Scripts/Unity/MainMenuScreen.cs` - User entry point
+
+**Configuration:**
+- `ProjectSettings/ProjectVersion.txt` - Unity version
+- `Packages/manifest.json` - UPM dependencies
+- `Assembly-CSharp.csproj` - Main assembly config
+
+**Core Logic:**
+- `Assets/Scripts/Core/GameRules.cs` - Turn validation, execution
+- `Assets/Scripts/Core/GameState.cs` - Game data
+- `Assets/Scripts/Core/Board.cs` - Hex grid math
+
+**Testing:**
+- None configured (manual testing only)
+
+**Documentation:**
+- `CLAUDE.md` - Development workflow, current status
+- `HANDOFF.md` - Full project context, game rules, roadmap
+- `Documents/ARCHITECTURE.md` - Technical architecture
+
+## Naming Conventions
+
+**Files:**
+- PascalCase for all C# files: `GameManager.cs`, `BoardRenderer.cs`
+- `*Screen.cs` - Menu screens: `MainMenuScreen.cs`, `EndGameScreen.cs`
+- `*Handler.cs` - Input handlers: `HexClickHandler.cs`, `HexDragHandler.cs`
+- `*Controller.cs` - Controllers: `AIController.cs`, `HandController.cs`
+- `*Manager.cs` - Managers: `GameManager.cs`, `AIManager.cs`
+
+**Directories:**
+- PascalCase: `Core/`, `Unity/`, `Network/`, `Stats/`
+
+**Special Patterns:**
+- `Glyphtender*` prefix for UGS wrappers: `GlyphtenderLobby.cs`, `GlyphtenderRelay.cs`
+- `Network*` prefix for network types: `NetworkMessages.cs`, `NetworkGameBridge.cs`
+
+## Where to Add New Code
+
+**New Game Logic:**
+- Primary code: `Assets/Scripts/Core/`
+- Must be pure C# (no Unity references)
+- Follow existing patterns in GameRules.cs
+
+**New UI Screen:**
+- Implementation: `Assets/Scripts/Unity/`
+- Name as `*Screen.cs`
+- Use 3D UI pattern (not Canvas)
+
+**New Network Feature:**
+- Implementation: `Assets/Scripts/Unity/Network/`
+- Add message types to `NetworkMessages.cs`
+- Add RPCs to `NetworkGameBridge.cs`
+- Handle in `NetworkedGameManager.cs`
+
+**New AI Behavior:**
+- Core logic: `Assets/Scripts/Core/AIBrain.cs` or new AI*.cs file
+- Controller: `Assets/Scripts/Unity/AIController.cs`
+
+## Special Directories
+
+**Packages/**
+- Purpose: Unity Package Manager cache
+- Source: Downloaded from UPM registry
+- Committed: Partially (manifest.json only)
+
+**Library/**
+- Purpose: Unity build cache, compiled assemblies
+- Source: Auto-generated by Unity
+- Committed: No (.gitignore)
+
+**ProjectSettings/**
+- Purpose: Unity editor configuration
+- Source: Unity Editor
+- Committed: Yes
+
+---
+
+*Structure analysis: 2026-01-08*
+*Update when directory structure changes*
