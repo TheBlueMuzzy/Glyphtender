@@ -598,7 +598,6 @@ namespace Glyphtender.Unity
             }
 
             // IMPORTANT: Allocate relay NOW so guest can connect immediately when they join
-            // This prevents race condition where guest joins but relay isn't ready yet
             Debug.Log("[OnlineLobbyScreen] Pre-allocating relay before guest joins...");
             string relayCode = await GlyphtenderRelay.Instance.AllocateRelayAsync();
             if (relayCode == null)
@@ -608,14 +607,35 @@ namespace Glyphtender.Unity
                 return;
             }
 
-            // TIMING FIX: Wait for relay to fully register on Unity's servers
-            // PC builds may have slower network or different timing than Editor,
-            // causing "join code not found" errors when guest joins too quickly.
-            // This delay ensures the relay allocation is fully propagated to Unity's servers.
-            Debug.Log($"[OnlineLobbyScreen] Relay allocated: {relayCode}. Waiting 2s for server registration...");
-            await System.Threading.Tasks.Task.Delay(2000);
+            // CRITICAL FIX: Start the host IMMEDIATELY after allocation, BEFORE sharing the join code.
+            // The relay allocation exists but isn't "active" until the host binds to it via StartHost().
+            // Previously, we waited until the guest joined the lobby before calling StartHost(),
+            // which caused a race condition: guest would try to join the relay before host was bound.
+            // This was the root cause of "join code not found" errors on cross-network connections.
+            Debug.Log("[OnlineLobbyScreen] Starting host on relay immediately after allocation...");
+            if (!GlyphtenderRelay.Instance.ConfigureTransportAndStart())
+            {
+                ShowError("Failed to start network host");
+                await GlyphtenderLobby.Instance.LeaveLobbyAsync();
+                return;
+            }
 
-            Debug.Log($"[OnlineLobbyScreen] Relay pre-allocated: {relayCode}. Updating lobby...");
+            // Spawn NetworkGameBridge so RPCs work when guest connects
+            if (NetworkGameBridge.Instance != null)
+            {
+                var networkObject = NetworkGameBridge.Instance.GetComponent<NetworkObject>();
+                if (networkObject != null && !networkObject.IsSpawned)
+                {
+                    networkObject.Spawn();
+                    Debug.Log("[OnlineLobbyScreen] NetworkGameBridge spawned on network");
+                }
+            }
+
+            // Small delay to ensure host is fully ready before advertising the relay code
+            Debug.Log($"[OnlineLobbyScreen] Host started. Waiting 1s before sharing relay code...");
+            await System.Threading.Tasks.Task.Delay(1000);
+
+            Debug.Log($"[OnlineLobbyScreen] Updating lobby with relay code: {relayCode}");
             await GlyphtenderLobby.Instance.UpdateLobbyDataAsync("relayCode", relayCode);
 
             // Write debug info to desktop for PC build debugging
@@ -795,34 +815,15 @@ namespace Glyphtender.Unity
 
             Debug.Log($"[OnlineLobbyScreen] StartGame called. IsHost={GlyphtenderLobby.Instance?.IsHost}");
 
-            // Host: relay already allocated in OnCreateRoomClicked, just start host
+            // Host: relay already started in OnCreateRoomClicked, just wait for guest connection
             // Guest: get relay code from lobby and join
             if (GlyphtenderLobby.Instance.IsHost)
             {
-                Debug.Log("[OnlineLobbyScreen] Host path: Configuring transport and starting host...");
+                // Host already called ConfigureTransportAndStart() and spawned NetworkGameBridge
+                // in OnCreateRoomClicked(). Now we just wait for the guest to connect via relay.
+                Debug.Log("[OnlineLobbyScreen] Host path: Relay already started, waiting for guest to connect...");
 
-                // Relay was already allocated in OnCreateRoomClicked
-                // Just start the host
-                if (!GlyphtenderRelay.Instance.ConfigureTransportAndStart())
-                {
-                    ShowError("Failed to start network host");
-                    return;
-                }
-
-                // CRITICAL: Host must spawn the NetworkGameBridge so RPCs work
-                if (NetworkGameBridge.Instance != null)
-                {
-                    var networkObject = NetworkGameBridge.Instance.GetComponent<NetworkObject>();
-                    if (networkObject != null && !networkObject.IsSpawned)
-                    {
-                        networkObject.Spawn();
-                        Debug.Log("[OnlineLobbyScreen] NetworkGameBridge spawned on network");
-                    }
-                }
-
-                Debug.Log("[OnlineLobbyScreen] Host started. Waiting for guest to connect via relay...");
-
-                // Wait for guest to connect
+                // Wait for guest to connect via relay
                 int connectAttempts = 0;
                 while (NetworkManager.Singleton.ConnectedClientsIds.Count < 2 && connectAttempts < 60) // 60 * 200ms = 12 seconds
                 {

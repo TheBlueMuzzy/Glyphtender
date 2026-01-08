@@ -1182,13 +1182,15 @@ The runeblossom (letter tile) casting should feel magical and tactile:
 |---|---------|-------|
 | 25 | Network foundation | ✅ Phase 5.1-5.3 complete (auth, lobby, relay, messages, bridge) |
 | 26 | Room code system | ✅ Working - host creates, guest joins with 6-char code |
-| 27 | Host-guest connection | ✅ ALL COMBINATIONS WORKING (v764) - Editor↔Phone, Phone↔PC Build |
+| 27 | Host-guest connection | ✅ Same-WiFi working (v764), Cross-network fix in testing (v778) |
 | 28 | Local play phase | ✅ Working - all major bugs fixed (2026-01-05) |
 | 29 | Forfeit/disconnect handling | Part of Phase 5.4 (not yet implemented) |
 | 30 | Rematch flow | Part of Phase 5.5 (not yet implemented) |
 | 31 | Provider abstraction | Designed for Steam/Epic swap |
 
 **PC Build Relay Fix (v764):** QoS-based automatic region selection fails in standalone builds. Fix: explicitly call `ListRegionsAsync()` and pass region to `CreateAllocationAsync()`.
+
+**Cross-Network Relay Fix (v778):** Host must bind to relay (`StartHost()`) before sharing join code. The allocation exists but isn't "active" until bound. See CLAUDE.md "Unity Relay Cross-Network Fix" section for details.
 
 ### 11.7 Future Systems
 
