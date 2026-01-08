@@ -27,7 +27,11 @@ None (no domain skills installed)
 **Goal**: Seamless rematch flow for online games
 **Depends on**: Nothing (builds on working v0.4.1)
 **Research**: Unlikely (existing network patterns)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01: Rematch state management and network sync
+- [ ] 01-02: Rematch UI and completion logic
 
 Key work:
 - Rematch button with toggle state ("Rematch?" → "Rematch! XXs")
@@ -109,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Online Multiplayer Polish | 0/TBD | Not started | - |
+| 1. Online Multiplayer Polish | 0/2 | Not started | - |
 | 2. 3-4 Player Online | 0/TBD | Not started | - |
 | 3. Menu System Rework | 0/TBD | Not started | - |
 | 4. Animation System | 0/TBD | Not started | - |
