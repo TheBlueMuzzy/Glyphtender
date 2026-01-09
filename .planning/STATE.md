@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-01-08)
 
 **Core value:** A polished online multiplayer word-strategy game that works seamlessly across networks with 2-4 players
-**Current focus:** Phase 1 Complete — Ready for Phase 2
+**Current focus:** Phase 2 — Extending online play to 3-4 players
 
 ## Current Position
 
-Phase: 1 of 6 (Online Multiplayer Polish) - COMPLETE
-Plan: 2 of 2 (Rematch UI & Completion Logic) - COMPLETE
-Status: Ready for human verification, then Phase 2
-Last activity: 2026-01-08 — Phase 1 complete
+Phase: 2 of 6 (3-4 Player Online)
+Plan: 1 of 3 (Lobby Player Count Selection) - COMPLETE
+Status: Plan 02-01 complete, ready for 02-02
+Last activity: 2026-01-09 — Lobby player count selector implemented
 
-Progress: ██████████ 100%
+Progress: ███░░░░░░░ 33%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: —
+- Total plans completed: 3
+- Average duration: ~15 min
 - Total execution time: —
 
 **By Phase:**
@@ -28,9 +28,10 @@ Progress: ██████████ 100%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 2/2 | — | — |
+| 2 | 1/3 | 15 min | 15 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 01-02
+- Last 5 plans: 01-01, 01-02, 02-01
 - Trend: —
 
 ## Accumulated Context
@@ -54,6 +55,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-08
-Stopped at: Phase 1 complete, awaiting human verification
+Last session: 2026-01-09
+Stopped at: Plan 02-01 complete, ready for 02-02 (client-player mapping)
 Resume file: None

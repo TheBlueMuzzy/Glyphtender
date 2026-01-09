@@ -48,14 +48,20 @@ Deferred to later phases:
 ### Phase 2: 3-4 Player Online
 **Goal**: Extend online multiplayer to support 3 and 4 players
 **Depends on**: Phase 1
-**Research**: Likely (multi-player lobby patterns)
-**Research topics**: Unity Lobby 3-4 player setup, network message broadcasting to multiple clients, turn order management for 3-4 players
-**Plans**: TBD
+**Research**: Complete (02-RESEARCH.md)
+**Plans**: 3 plans
+
+Plans:
+- [x] 02-01: Lobby player count selection
+- [ ] 02-02: Network client-player mapping
+- [ ] 02-03: Integration and rematch for 3-4 players
 
 Key work:
-- Extend lobby to support 3-4 players
+- Extend lobby to support 3-4 players (DONE)
+- Map client IDs to player colors (Purple, Pink)
 - Update network messages for multi-client broadcast
 - Handle draft order for 3-4 players online
+- Update rematch for 3-4 players
 - Test cross-network with 3-4 players
 
 ### Phase 3: Menu System Rework
@@ -114,7 +120,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Online Multiplayer Polish | 2/2 | Complete | 2026-01-08 |
-| 2. 3-4 Player Online | 0/TBD | Not started | - |
+| 2. 3-4 Player Online | 1/3 | In progress | - |
 | 3. Menu System Rework | 0/TBD | Not started | - |
 | 4. Animation System | 0/TBD | Not started | - |
 | 5. User Preferences | 0/TBD | Not started | - |
