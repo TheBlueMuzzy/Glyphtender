@@ -965,7 +965,7 @@ namespace Glyphtender.Unity
             // Start new game with confirmed players
             if (NetworkedGameManager.Instance?.IsOnlineGame == true)
             {
-                if (GlyphtenderLobby.IsHost)
+                if (GlyphtenderLobby.Instance?.IsHost == true)
                 {
                     // Host starts new game with confirmed player count
                     GameManager.Instance?.InitializeGame();
@@ -995,15 +995,27 @@ namespace Glyphtender.Unity
 
         private void CleanupAndReturnToMenu()
         {
+            // Set flag so game waits for main menu
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.WaitingForMainMenu = true;
+            }
+
             // Clean up network if online
             if (NetworkedGameManager.Instance?.IsOnlineGame == true)
             {
-                // Leave lobby and disconnect relay
-                GlyphtenderLobby.Instance?.LeaveLobby();
+                // Disconnect relay (this shuts down NetworkManager)
                 GlyphtenderRelay.Instance?.Disconnect();
+
+                // Leave lobby (fire and forget the async call)
+                _ = GlyphtenderLobby.Instance?.LeaveLobbyAsync();
             }
 
-            MenuController.Instance?.ShowMainMenu();
+            // Clear the board
+            BoardRenderer.Instance?.ClearBoard();
+
+            // Show main menu
+            MainMenuScreen.Instance?.Show();
         }
 
         #endregion
