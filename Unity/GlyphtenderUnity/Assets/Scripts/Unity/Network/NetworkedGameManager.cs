@@ -729,7 +729,8 @@ namespace Glyphtender.Unity
 
                 // If timer info included and timer not yet active locally, sync it
                 // BUT don't sync if the game already restarted (SetPlayerStatus may have triggered rematch completion)
-                bool gameRestarted = GameManager.Instance?.GameState?.Phase != GamePhase.GameOver;
+                // Check CurrentTurnState - if not GameOver, the new game already started
+                bool gameRestarted = GameManager.Instance?.CurrentTurnState != GameTurnState.GameOver;
                 if (status.TimerStartTime > 0 && !RematchManager.Instance.IsTimerActive && !gameRestarted)
                 {
                     RematchManager.Instance.SyncTimer(status.TimerStartTime, status.TimerDuration);
