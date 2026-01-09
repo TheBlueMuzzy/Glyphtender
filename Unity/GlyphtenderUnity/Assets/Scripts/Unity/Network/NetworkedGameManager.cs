@@ -214,7 +214,16 @@ namespace Glyphtender.Unity
                     Debug.Log($"[NetworkedGameManager] NetworkManager state: IsHost={netManager.IsHost}, IsClient={netManager.IsClient}, IsServer={netManager.IsServer}, IsListening={netManager.IsListening}");
                 }
 
-                LocalPlayer = isHost ? Player.Yellow : Player.Blue;
+                // Determine LocalPlayer from client ID (0=Yellow, 1=Blue, 2=Purple, 3=Pink)
+                if (netManager != null && netManager.IsClient)
+                {
+                    LocalPlayer = GetPlayerFromClientId(netManager.LocalClientId);
+                }
+                else
+                {
+                    // Fallback for edge cases
+                    LocalPlayer = isHost ? Player.Yellow : Player.Blue;
+                }
                 Debug.Log($"[NetworkedGameManager] Online game started. isHost={isHost}, LocalPlayer={LocalPlayer}, isRematch={isRematch}");
 
                 // Log draft state for debugging
@@ -238,7 +247,8 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
-        /// Host broadcasts the initial game state to the client.
+        /// Host broadcasts the initial game state to all clients.
+        /// Supports 2, 3, or 4 player games.
         /// </summary>
         private void BroadcastInitialGameState()
         {
@@ -248,25 +258,31 @@ namespace Glyphtender.Unity
             if (GameManager.Instance?.GameState == null) return;
 
             var gameState = GameManager.Instance.GameState;
+            int playerCount = gameState.PlayerCount;
 
             // Build tile bag string
             string tileBag = new string(gameState.TileBag.ToArray());
 
-            // Build hand strings
+            // Build hand strings for all active players
             string yellowHand = new string(gameState.Hands[Player.Yellow].ToArray());
             string blueHand = new string(gameState.Hands[Player.Blue].ToArray());
+            string purpleHand = playerCount >= 3 ? new string(gameState.Hands[Player.Purple].ToArray()) : "";
+            string pinkHand = playerCount >= 4 ? new string(gameState.Hands[Player.Pink].ToArray()) : "";
 
             var gameStart = new NetworkGameStart
             {
                 TileBagOrder = tileBag,
                 YellowHand = yellowHand,
                 BlueHand = blueHand,
+                PurpleHand = purpleHand,
+                PinkHand = pinkHand,
                 BoardSizeIndex = SettingsManager.Instance?.BoardSizeIndex ?? 1,
-                Allow2LetterWords = SettingsManager.Instance?.Allow2LetterWords ?? true
+                Allow2LetterWords = SettingsManager.Instance?.Allow2LetterWords ?? true,
+                PlayerCount = playerCount
             };
 
             NetworkGameBridge.Instance?.BroadcastGameStart(gameStart);
-            Debug.Log("[NetworkedGameManager] Broadcast initial game state to client");
+            Debug.Log($"[NetworkedGameManager] Broadcast initial game state to {playerCount} players");
         }
 
         #region Network Event Handlers
@@ -274,7 +290,8 @@ namespace Glyphtender.Unity
         private void OnNetworkGameStartReceived(NetworkGameStart gameStart)
         {
             // Client receives initial game state from host
-            Debug.Log($"[NetworkedGameManager] Received game start: TileBag={gameStart.TileBagOrder.Length} chars");
+            int playerCount = gameStart.PlayerCount > 0 ? gameStart.PlayerCount : 2;  // Default to 2 for backward compat
+            Debug.Log($"[NetworkedGameManager] Received game start: TileBag={gameStart.TileBagOrder.Length} chars, PlayerCount={playerCount}");
 
             if (GameManager.Instance?.GameState == null)
             {
@@ -284,7 +301,7 @@ namespace Glyphtender.Unity
 
             var state = GameManager.Instance.GameState;
 
-            // Apply tile bag from host (so both clients draw in same order)
+            // Apply tile bag from host (so all clients draw in same order)
             state.TileBag.Clear();
             string tileBagStr = gameStart.TileBagOrder.ToString();
             for (int i = 0; i < tileBagStr.Length; i++)
@@ -292,27 +309,37 @@ namespace Glyphtender.Unity
                 state.TileBag.Add(tileBagStr[i]);
             }
 
-            // Apply hands from host
-            state.Hands[Player.Yellow].Clear();
-            string yellowHandStr = gameStart.YellowHand.ToString();
-            for (int i = 0; i < yellowHandStr.Length; i++)
+            // Apply hands from host for all active players
+            ApplyHandFromNetwork(state, Player.Yellow, gameStart.YellowHand.ToString());
+            ApplyHandFromNetwork(state, Player.Blue, gameStart.BlueHand.ToString());
+
+            if (playerCount >= 3)
             {
-                state.Hands[Player.Yellow].Add(yellowHandStr[i]);
+                ApplyHandFromNetwork(state, Player.Purple, gameStart.PurpleHand.ToString());
+            }
+            if (playerCount >= 4)
+            {
+                ApplyHandFromNetwork(state, Player.Pink, gameStart.PinkHand.ToString());
             }
 
-            state.Hands[Player.Blue].Clear();
-            string blueHandStr = gameStart.BlueHand.ToString();
-            for (int i = 0; i < blueHandStr.Length; i++)
-            {
-                state.Hands[Player.Blue].Add(blueHandStr[i]);
-            }
-
-            Debug.Log($"[NetworkedGameManager] Applied game state: TileBag={state.TileBag.Count}, YellowHand={state.Hands[Player.Yellow].Count}, BlueHand={state.Hands[Player.Blue].Count}");
+            Debug.Log($"[NetworkedGameManager] Applied game state: TileBag={state.TileBag.Count}, Players={playerCount}");
 
             // Refresh the hand display to show the correct hand
             if (HandController.Instance != null)
             {
                 HandController.Instance.RefreshHand();
+            }
+        }
+
+        /// <summary>
+        /// Helper to apply a hand from network data.
+        /// </summary>
+        private void ApplyHandFromNetwork(GameState state, Player player, string handStr)
+        {
+            state.Hands[player].Clear();
+            for (int i = 0; i < handStr.Length; i++)
+            {
+                state.Hands[player].Add(handStr[i]);
             }
         }
 
@@ -736,6 +763,20 @@ namespace Glyphtender.Unity
                     RematchManager.Instance.SyncTimer(status.TimerStartTime, status.TimerDuration);
                 }
             }
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Maps client ID to Player enum.
+        /// Client IDs are assigned in join order: 0=Yellow, 1=Blue, 2=Purple, 3=Pink
+        /// </summary>
+        private Player GetPlayerFromClientId(ulong clientId)
+        {
+            int playerIndex = (int)System.Math.Min(clientId, 3);  // Clamp to valid range
+            return (Player)playerIndex;
         }
 
         #endregion

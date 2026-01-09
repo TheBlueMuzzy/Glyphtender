@@ -164,16 +164,22 @@ namespace Glyphtender.Unity.Network
         public FixedString512Bytes TileBagOrder;
         public FixedString32Bytes YellowHand;
         public FixedString32Bytes BlueHand;
+        public FixedString32Bytes PurpleHand;  // For 3-4 player games
+        public FixedString32Bytes PinkHand;    // For 4 player games
         public int BoardSizeIndex;
         public bool Allow2LetterWords;
+        public int PlayerCount;                 // 2, 3, or 4
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref TileBagOrder);
             serializer.SerializeValue(ref YellowHand);
             serializer.SerializeValue(ref BlueHand);
+            serializer.SerializeValue(ref PurpleHand);
+            serializer.SerializeValue(ref PinkHand);
             serializer.SerializeValue(ref BoardSizeIndex);
             serializer.SerializeValue(ref Allow2LetterWords);
+            serializer.SerializeValue(ref PlayerCount);
         }
     }
 
