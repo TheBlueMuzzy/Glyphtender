@@ -126,7 +126,7 @@ namespace Glyphtender.Unity
         private string[] _boardSizeNames = { "Small", "Large" };
 
         // BUILD VERSION - Change this number each time to verify recompile
-        private const string BUILD_VERSION = "780";
+        private const string BUILD_VERSION = "781";
 
         private void Awake()
         {

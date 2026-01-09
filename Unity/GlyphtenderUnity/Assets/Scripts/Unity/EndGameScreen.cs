@@ -484,20 +484,27 @@ namespace Glyphtender.Unity
             if (isOnlineGame)
             {
                 // Create rematch flow buttons for online games
+                // Layout: View Board centered on top row
+                //         Rematch and Decline on second row
+                //         Timer below second row
 
-                // Timer display (above buttons, hidden initially)
-                CreateTimerDisplay(buttonY + 0.5f * elementScale, elementScale);
+                float topRowY = buttonY + 0.45f * elementScale;
+                float bottomRowY = buttonY;
+                float timerY = buttonY - 0.4f * elementScale;
 
-                // Rematch button (left)
-                CreateRematchButton(-0.9f * elementScale, buttonY, elementScale);
-
-                // Decline button (center-left, smaller)
-                CreateDeclineButton(0f, buttonY, elementScale);
-
-                // View Board / View Stats button (right)
-                _viewButtonText = CreateButton(_buttonsContainer, "View Board", 0.9f * elementScale, buttonY, elementScale, () => {
+                // View Board / View Stats button (centered, top row)
+                _viewButtonText = CreateButton(_buttonsContainer, "View Board", 0f, topRowY, elementScale, () => {
                     ToggleStatsPanel();
                 });
+
+                // Rematch button (left side of bottom row)
+                CreateRematchButton(-0.55f * elementScale, bottomRowY, elementScale);
+
+                // Decline button (right side of bottom row)
+                CreateDeclineButton(0.55f * elementScale, bottomRowY, elementScale);
+
+                // Timer display (below buttons, hidden initially)
+                CreateTimerDisplay(timerY, elementScale);
             }
             else
             {
@@ -962,15 +969,17 @@ namespace Glyphtender.Unity
 
             Hide();
 
-            // Start new game with confirmed players
+            // Reset RematchManager for the new game
+            RematchManager.Instance?.Reset();
+
+            // Start new game - BOTH host and client need to initialize
+            // Host will broadcast state, client will receive and sync
             if (NetworkedGameManager.Instance?.IsOnlineGame == true)
             {
-                if (GlyphtenderLobby.Instance?.IsHost == true)
-                {
-                    // Host starts new game with confirmed player count
-                    GameManager.Instance?.InitializeGame();
-                }
-                // Non-host waits for host to send NetworkGameStart
+                // Both players initialize the game locally
+                // The host will broadcast NetworkGameStart which the client will receive and apply
+                Debug.Log($"[EndGameScreen] Starting rematch game (IsHost: {GlyphtenderLobby.Instance?.IsHost})");
+                GameManager.Instance?.InitializeGame();
             }
             else
             {
