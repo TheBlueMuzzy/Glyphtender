@@ -76,6 +76,7 @@ namespace Glyphtender.Unity
         public LobbyScreenState State { get; private set; } = LobbyScreenState.Hidden;
         private string _enteredCode = "";
         private string _errorMessage = "";
+        private int _selectedPlayerCount = 2;  // For player count selector (2, 3, or 4)
 
         // Debug overlay for on-screen diagnostics
         private static string _debugInfo = "";
@@ -94,6 +95,12 @@ namespace Glyphtender.Unity
         private GameObject _backButton;
         private GameObject _confirmJoinButton;
         private GameObject _inputFieldButton;  // Clickable area to open keyboard
+
+        // Player count selector
+        private TextMesh _playerCountLabel;
+        private GameObject _playerCount2Btn;
+        private GameObject _playerCount3Btn;
+        private GameObject _playerCount4Btn;
 
         // Keyboard input
         private TouchScreenKeyboard _touchKeyboard;
@@ -176,6 +183,16 @@ namespace Glyphtender.Unity
             if (State == LobbyScreenState.EnteringCode)
             {
                 HandleKeyboardInput();
+            }
+
+            // Refresh slot count display when waiting for players
+            if (State == LobbyScreenState.WaitingForGuest)
+            {
+                // The lobby polls in GlyphtenderLobby.PollLobbyAsync(), but we need
+                // to refresh our UI to show updated player count
+                int target = GlyphtenderLobby.Instance?.TargetPlayerCount ?? 2;
+                int current = GlyphtenderLobby.Instance?.PlayerCount ?? 1;
+                _statusText.text = $"Waiting for players ({current}/{target})";
             }
         }
 
@@ -378,7 +395,7 @@ namespace Glyphtender.Unity
             float contentTop = (panelHeight / 2f) - (0.4f * elementScale);
 
             // Title
-            _titleText = CreateText("ONLINE 1v1", new Vector3(0f, contentTop, -0.1f), 0.08f * elementScale, titleColor, true);
+            _titleText = CreateText("ONLINE PLAY", new Vector3(0f, contentTop, -0.1f), 0.08f * elementScale, titleColor, true);
 
             // Status text (shows current state message)
             _statusText = CreateText("", new Vector3(0f, contentTop - 0.6f * elementScale, -0.1f), 0.05f * elementScale, labelColor, false);
@@ -392,8 +409,20 @@ namespace Glyphtender.Unity
             // Create clickable input field background (for mobile keyboard)
             _inputFieldButton = CreateInputFieldButton(new Vector3(0f, contentTop - 1.3f * elementScale, -0.05f), 3f * elementScale, 0.5f * elementScale);
 
+            // Player count selector (for host when creating room)
+            float selectorY = contentTop - 1.5f * elementScale;
+            _playerCountLabel = CreateText("Players:", new Vector3(-1.2f * elementScale, selectorY, -0.1f), 0.04f * elementScale, labelColor, false);
+
+            // Small buttons for 2, 3, 4 player count
+            float btnWidth = 0.5f * elementScale;
+            float btnSpacing = 0.55f * elementScale;
+            float btnX = 0.3f * elementScale;
+            _playerCount2Btn = CreateSmallButton("2", new Vector3(btnX, selectorY, -0.08f), btnWidth, () => SetPlayerCount(2));
+            _playerCount3Btn = CreateSmallButton("3", new Vector3(btnX + btnSpacing, selectorY, -0.08f), btnWidth, () => SetPlayerCount(3));
+            _playerCount4Btn = CreateSmallButton("4", new Vector3(btnX + 2 * btnSpacing, selectorY, -0.08f), btnWidth, () => SetPlayerCount(4));
+
             // Create buttons
-            float buttonY = contentTop - 2.2f * elementScale;
+            float buttonY = contentTop - 2.5f * elementScale;
             _createButton = CreateButton("CREATE ROOM", new Vector3(0f, buttonY, -0.08f), 2f * elementScale, OnCreateRoomClicked);
             _joinButton = CreateButton("JOIN ROOM", new Vector3(0f, buttonY - 0.6f * elementScale, -0.08f), 2f * elementScale, OnJoinRoomClicked);
 
@@ -506,6 +535,74 @@ namespace Glyphtender.Unity
             return btn;
         }
 
+        /// <summary>
+        /// Creates a small square button (for player count selector).
+        /// </summary>
+        private GameObject CreateSmallButton(string text, Vector3 localPos, float size, Action onClick)
+        {
+            float elementScale = panelHeight / 5.0f;
+
+            GameObject btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            btn.name = $"PlayerCount_{text}";
+            btn.transform.SetParent(_menuRoot.transform);
+            btn.transform.localPosition = localPos;
+            btn.transform.localRotation = Quaternion.identity;
+            btn.transform.localScale = new Vector3(size, 0.35f * elementScale, 0.05f);
+            btn.layer = LayerMask.NameToLayer("UI3D");
+
+            var renderer = btn.GetComponent<Renderer>();
+            if (buttonMaterial != null)
+                renderer.material = new Material(buttonMaterial);  // Clone to allow individual coloring
+            else
+                renderer.material = new Material(Shader.Find("Standard"));
+            renderer.material.color = new Color(0.25f, 0.25f, 0.3f);
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(btn.transform);
+            textObj.transform.localPosition = new Vector3(0f, 0f, -1.5f);
+            textObj.transform.localRotation = Quaternion.identity;
+            textObj.transform.localScale = new Vector3(0.05f, 0.12f, 1f);
+            textObj.layer = LayerMask.NameToLayer("UI3D");
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = text;
+            textMesh.fontSize = 36;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.white;
+
+            var handlerComponent = btn.AddComponent<MenuButtonClickHandler>();
+            handlerComponent.OnClick = onClick;
+
+            return btn;
+        }
+
+        /// <summary>
+        /// Sets the selected player count and updates button highlighting.
+        /// </summary>
+        private void SetPlayerCount(int count)
+        {
+            _selectedPlayerCount = count;
+            UpdatePlayerCountButtonColors();
+        }
+
+        /// <summary>
+        /// Updates player count button colors based on selection.
+        /// </summary>
+        private void UpdatePlayerCountButtonColors()
+        {
+            Color selectedColor = new Color(0.3f, 0.6f, 0.4f);  // Greenish for selected
+            Color unselectedColor = new Color(0.25f, 0.25f, 0.3f);  // Dark gray
+
+            if (_playerCount2Btn != null)
+                _playerCount2Btn.GetComponent<Renderer>().material.color = (_selectedPlayerCount == 2) ? selectedColor : unselectedColor;
+            if (_playerCount3Btn != null)
+                _playerCount3Btn.GetComponent<Renderer>().material.color = (_selectedPlayerCount == 3) ? selectedColor : unselectedColor;
+            if (_playerCount4Btn != null)
+                _playerCount4Btn.GetComponent<Renderer>().material.color = (_selectedPlayerCount == 4) ? selectedColor : unselectedColor;
+        }
+
         private void UpdateUI()
         {
             if (_menuRoot == null) return;
@@ -518,15 +615,28 @@ namespace Glyphtender.Unity
             _inputText?.gameObject.SetActive(false);
             _inputFieldButton?.SetActive(false);
 
+            // Hide player count selector by default
+            _playerCountLabel?.gameObject.SetActive(false);
+            _playerCount2Btn?.SetActive(false);
+            _playerCount3Btn?.SetActive(false);
+            _playerCount4Btn?.SetActive(false);
+
             // Reset status text color
             _statusText.color = labelColor;
 
             switch (State)
             {
                 case LobbyScreenState.ChooseRole:
+                    _titleText.text = "ONLINE PLAY";
                     _statusText.text = "Choose an option";
                     _createButton.SetActive(true);
                     _joinButton.SetActive(true);
+                    // Show player count selector
+                    _playerCountLabel?.gameObject.SetActive(true);
+                    _playerCount2Btn?.SetActive(true);
+                    _playerCount3Btn?.SetActive(true);
+                    _playerCount4Btn?.SetActive(true);
+                    UpdatePlayerCountButtonColors();
                     break;
 
                 case LobbyScreenState.CreatingRoom:
@@ -534,12 +644,18 @@ namespace Glyphtender.Unity
                     break;
 
                 case LobbyScreenState.WaitingForGuest:
-                    _statusText.text = "Share this code:";
+                    // Update title based on player count
+                    int target = GlyphtenderLobby.Instance?.TargetPlayerCount ?? 2;
+                    _titleText.text = target == 2 ? "ONLINE 1v1" : $"ONLINE {target}P";
+                    // Show slot status
+                    int current = GlyphtenderLobby.Instance?.PlayerCount ?? 1;
+                    _statusText.text = $"Waiting for players ({current}/{target})";
                     _roomCodeText.gameObject.SetActive(true);
                     _roomCodeText.text = GlyphtenderLobby.Instance?.RoomCode ?? "------";
                     break;
 
                 case LobbyScreenState.EnteringCode:
+                    _titleText.text = "JOIN ROOM";
                     _statusText.text = TouchScreenKeyboard.isSupported
                         ? "Tap below to enter code:"
                         : "Type room code:";
@@ -558,10 +674,17 @@ namespace Glyphtender.Unity
                     break;
 
                 case LobbyScreenState.Error:
+                    _titleText.text = "ONLINE PLAY";
                     _statusText.text = _errorMessage;
                     _statusText.color = errorColor;
                     _createButton.SetActive(true);
                     _joinButton.SetActive(true);
+                    // Show player count selector on error too
+                    _playerCountLabel?.gameObject.SetActive(true);
+                    _playerCount2Btn?.SetActive(true);
+                    _playerCount3Btn?.SetActive(true);
+                    _playerCount4Btn?.SetActive(true);
+                    UpdatePlayerCountButtonColors();
                     break;
             }
         }
@@ -583,14 +706,15 @@ namespace Glyphtender.Unity
                 }
             }
 
-            // Create lobby with current game settings
+            // Create lobby with current game settings and selected player count
             var settings = new LobbyGameSettings
             {
                 BoardSizeIndex = SettingsManager.Instance?.BoardSizeIndex ?? 1,
                 Allow2LetterWords = SettingsManager.Instance?.Allow2LetterWords ?? true
             };
 
-            string roomCode = await GlyphtenderLobby.Instance.CreateLobbyAsync(settings);
+            Debug.Log($"[OnlineLobbyScreen] Creating lobby with {_selectedPlayerCount} players");
+            string roomCode = await GlyphtenderLobby.Instance.CreateLobbyAsync(settings, _selectedPlayerCount);
             if (roomCode == null)
             {
                 ShowError(GlyphtenderLobby.Instance?.LastError ?? "Failed to create room");
@@ -815,29 +939,31 @@ namespace Glyphtender.Unity
 
             Debug.Log($"[OnlineLobbyScreen] StartGame called. IsHost={GlyphtenderLobby.Instance?.IsHost}");
 
-            // Host: relay already started in OnCreateRoomClicked, just wait for guest connection
+            // Host: relay already started in OnCreateRoomClicked, just wait for all players to connect
             // Guest: get relay code from lobby and join
+            int targetPlayerCount = GlyphtenderLobby.Instance?.TargetPlayerCount ?? 2;
+
             if (GlyphtenderLobby.Instance.IsHost)
             {
                 // Host already called ConfigureTransportAndStart() and spawned NetworkGameBridge
-                // in OnCreateRoomClicked(). Now we just wait for the guest to connect via relay.
-                Debug.Log("[OnlineLobbyScreen] Host path: Relay already started, waiting for guest to connect...");
+                // in OnCreateRoomClicked(). Now we just wait for all players to connect via relay.
+                Debug.Log($"[OnlineLobbyScreen] Host path: Relay already started, waiting for {targetPlayerCount} players to connect...");
 
-                // Wait for guest to connect via relay
+                // Wait for all players to connect via relay
                 int connectAttempts = 0;
-                while (NetworkManager.Singleton.ConnectedClientsIds.Count < 2 && connectAttempts < 60) // 60 * 200ms = 12 seconds
+                while (NetworkManager.Singleton.ConnectedClientsIds.Count < targetPlayerCount && connectAttempts < 60) // 60 * 200ms = 12 seconds
                 {
                     await System.Threading.Tasks.Task.Delay(200);
                     connectAttempts++;
                 }
 
-                if (NetworkManager.Singleton.ConnectedClientsIds.Count < 2)
+                if (NetworkManager.Singleton.ConnectedClientsIds.Count < targetPlayerCount)
                 {
-                    Debug.LogWarning("[OnlineLobbyScreen] Guest didn't connect in time, starting game anyway");
+                    Debug.LogWarning($"[OnlineLobbyScreen] Not all players connected in time ({NetworkManager.Singleton.ConnectedClientsIds.Count}/{targetPlayerCount}), starting game anyway");
                 }
                 else
                 {
-                    Debug.Log("[OnlineLobbyScreen] Guest connected!");
+                    Debug.Log($"[OnlineLobbyScreen] All {targetPlayerCount} players connected!");
                 }
             }
             else
