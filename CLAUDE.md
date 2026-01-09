@@ -34,6 +34,7 @@
 - Use TodoWrite to track multi-step tasks
 - Commit frequently with descriptive messages
 - Update "Current Work" section as progress is made
+- **Context awareness:** Proactively commit and update docs before context fills up - don't leave Muzzy stranded mid-task
 
 ### Version Tracking (IMPORTANT)
 **Unity sometimes doesn't recompile code.** To verify changes are active:
