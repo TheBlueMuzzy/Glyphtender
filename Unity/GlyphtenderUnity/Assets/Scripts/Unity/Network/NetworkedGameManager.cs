@@ -174,39 +174,48 @@ namespace Glyphtender.Unity
             bool hasNetworkSession = GlyphtenderLobby.Instance?.CurrentLobby != null ||
                                      GlyphtenderRelay.Instance?.State == RelayState.Connected;
 
-            Debug.Log($"[NetworkedGameManager] OnGameInitialized called. PlayMode={playMode}, HasNetworkSession={hasNetworkSession}");
+            Debug.Log($"[NetworkedGameManager] OnGameInitialized called. PlayMode={playMode}, HasNetworkSession={hasNetworkSession}, IsOnlineGame={IsOnlineGame}");
 
             // Consider it online if either PlayMode says so OR we have an active network session
             if (playMode == PlayMode.Online1v1 || hasNetworkSession)
             {
+                // Check if this is a rematch (already online, just restarting)
+                bool isRematch = IsOnlineGame;
                 IsOnlineGame = true;
 
                 // Determine if we're host or guest
-                // Check multiple sources for reliability
+                // For rematch, use NetworkManager.IsHost as primary (most stable during active session)
+                // For new game, use GlyphtenderLobby.IsHost
                 bool isHost = false;
+                var netManager = global::Unity.Netcode.NetworkManager.Singleton;
 
-                // Primary: Check GlyphtenderLobby (most reliable - set when creating/joining lobby)
-                if (GlyphtenderLobby.Instance != null)
+                if (isRematch && netManager != null && netManager.IsListening)
                 {
+                    // During rematch, NetworkManager.IsHost is the authoritative source
+                    isHost = netManager.IsHost;
+                    Debug.Log($"[NetworkedGameManager] REMATCH: Using NetworkManager.IsHost = {isHost}");
+                }
+                else if (GlyphtenderLobby.Instance != null)
+                {
+                    // New game: Check GlyphtenderLobby (set when creating/joining lobby)
                     isHost = GlyphtenderLobby.Instance.IsHost;
                     Debug.Log($"[NetworkedGameManager] GlyphtenderLobby.IsHost = {isHost}");
                 }
-                // Secondary: Check GlyphtenderRelay (set during allocation/join)
                 else if (GlyphtenderRelay.Instance != null)
                 {
+                    // Fallback: Check GlyphtenderRelay (set during allocation/join)
                     isHost = GlyphtenderRelay.Instance.IsHost;
                     Debug.Log($"[NetworkedGameManager] Using GlyphtenderRelay.IsHost = {isHost}");
                 }
 
-                // Debug: also log NetworkManager state
-                var netManager = global::Unity.Netcode.NetworkManager.Singleton;
+                // Debug: log all sources for comparison
                 if (netManager != null)
                 {
-                    Debug.Log($"[NetworkedGameManager] NetworkManager.IsHost = {netManager.IsHost}, IsClient = {netManager.IsClient}, IsServer = {netManager.IsServer}");
+                    Debug.Log($"[NetworkedGameManager] NetworkManager state: IsHost={netManager.IsHost}, IsClient={netManager.IsClient}, IsServer={netManager.IsServer}, IsListening={netManager.IsListening}");
                 }
 
                 LocalPlayer = isHost ? Player.Yellow : Player.Blue;
-                Debug.Log($"[NetworkedGameManager] Online game started. isHost={isHost}, LocalPlayer={LocalPlayer}");
+                Debug.Log($"[NetworkedGameManager] Online game started. isHost={isHost}, LocalPlayer={LocalPlayer}, isRematch={isRematch}");
 
                 // Log draft state for debugging
                 if (GameManager.Instance?.GameState?.Phase == GamePhase.Draft)

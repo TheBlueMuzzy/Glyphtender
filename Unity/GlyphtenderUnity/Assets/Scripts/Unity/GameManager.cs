@@ -117,7 +117,15 @@ namespace Glyphtender.Unity
         {
             // Reset RematchManager to stop any running timer
             // This ensures timer stops even if rematch event chain was interrupted
-            RematchManager.Instance?.Reset();
+            if (RematchManager.Instance != null)
+            {
+                Debug.Log("[GameManager] InitializeGame: Resetting RematchManager");
+                RematchManager.Instance.Reset();
+            }
+            else
+            {
+                Debug.Log("[GameManager] InitializeGame: RematchManager.Instance is null");
+            }
 
             // Load dictionary (only if not already loaded)
             if (WordScorer == null)
