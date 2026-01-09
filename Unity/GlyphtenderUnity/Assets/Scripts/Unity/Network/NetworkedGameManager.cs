@@ -728,7 +728,9 @@ namespace Glyphtender.Unity
                 RematchManager.Instance.SetPlayerStatus(status.GetPlayer(), status.GetStatus());
 
                 // If timer info included and timer not yet active locally, sync it
-                if (status.TimerStartTime > 0 && !RematchManager.Instance.IsTimerActive)
+                // BUT don't sync if the game already restarted (SetPlayerStatus may have triggered rematch completion)
+                bool gameRestarted = GameManager.Instance?.GameState?.Phase != GamePhase.GameOver;
+                if (status.TimerStartTime > 0 && !RematchManager.Instance.IsTimerActive && !gameRestarted)
                 {
                     RematchManager.Instance.SyncTimer(status.TimerStartTime, status.TimerDuration);
                 }
