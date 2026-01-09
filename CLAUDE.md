@@ -97,8 +97,8 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 - Human verification of rematch flow
 - Phase 2: 3-4 Player Online
 
-### Current Testing (v780)
-**Look for v780 in red text at top of main menu**
+### Current Testing (v781)
+**Look for v781 in red text at top of main menu**
 
 ---
 
