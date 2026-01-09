@@ -53,7 +53,7 @@ Deferred to later phases:
 
 Plans:
 - [x] 02-01: Lobby player count selection
-- [ ] 02-02: Network client-player mapping
+- [x] 02-02: Network client-player mapping
 - [ ] 02-03: Integration and rematch for 3-4 players
 
 Key work:
@@ -120,7 +120,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Online Multiplayer Polish | 2/2 | Complete | 2026-01-08 |
-| 2. 3-4 Player Online | 1/3 | In progress | - |
+| 2. 3-4 Player Online | 2/3 | In progress | - |
 | 3. Menu System Rework | 0/TBD | Not started | - |
 | 4. Animation System | 0/TBD | Not started | - |
 | 5. User Preferences | 0/TBD | Not started | - |
