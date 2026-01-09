@@ -53,12 +53,43 @@ namespace Glyphtender.Unity.Network
         // Event for validation failures (client-side feedback)
         public event Action<string> OnActionRejected;
 
-        // Track if we're the host player (Yellow) or guest player (Blue)
+        // Track if we're the host player (Yellow)
         // Note: Use GlyphtenderLobby.IsHost instead of NetworkBehaviour.IsHost
         // because NetworkBehaviour.IsHost only works after network session starts
         public bool IsHostPlayer => GlyphtenderLobby.Instance?.IsHost ?? IsHost;
-        public Player LocalPlayer => IsHostPlayer ? Player.Yellow : Player.Blue;
-        public Player RemotePlayer => IsHostPlayer ? Player.Blue : Player.Yellow;
+
+        /// <summary>
+        /// Gets the local player based on client ID.
+        /// Client IDs are assigned in join order: 0=Host=Yellow, 1=Blue, 2=Purple, 3=Pink
+        /// </summary>
+        public Player LocalPlayer
+        {
+            get
+            {
+                if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsClient)
+                    return Player.Yellow;  // Fallback for offline/not connected
+                return GetPlayerFromClientId(NetworkManager.Singleton.LocalClientId);
+            }
+        }
+
+        /// <summary>
+        /// Returns all remote players (everyone except LocalPlayer).
+        /// For 2-player games returns single player, for 3-4 player games returns 2-3 players.
+        /// </summary>
+        public System.Collections.Generic.IEnumerable<Player> RemotePlayers
+        {
+            get
+            {
+                Player local = LocalPlayer;
+                int playerCount = GameManager.Instance?.GameState?.PlayerCount ?? 2;
+                for (int i = 0; i < playerCount; i++)
+                {
+                    Player p = (Player)i;
+                    if (p != local)
+                        yield return p;
+                }
+            }
+        }
 
         private void Awake()
         {
@@ -310,11 +341,16 @@ namespace Glyphtender.Unity.Network
             return true;
         }
 
+        /// <summary>
+        /// Maps client ID to Player enum.
+        /// Client IDs are assigned in join order: 0=Yellow, 1=Blue, 2=Purple, 3=Pink
+        /// </summary>
         private Player GetPlayerFromClientId(ulong clientId)
         {
-            // Host (clientId 0 or OwnerClientId for host) is Yellow
-            // Guest client is Blue
-            return clientId == NetworkManager.ServerClientId ? Player.Yellow : Player.Blue;
+            // Client IDs are assigned in join order by Unity Netcode
+            // Host = 0 = Yellow, Guest1 = 1 = Blue, Guest2 = 2 = Purple, Guest3 = 3 = Pink
+            int playerIndex = (int)System.Math.Min(clientId, 3);  // Clamp to valid range
+            return (Player)playerIndex;
         }
 
         private ClientRpcParams CreateClientRpcParams(ulong targetClientId)
