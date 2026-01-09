@@ -269,32 +269,33 @@ namespace Glyphtender.Unity.Network
 
         /// <summary>
         /// Checks if all players have decided, enabling early resolution.
+        /// For rematch to happen, ALL players must confirm.
         /// </summary>
         private void CheckEarlyCompletion()
         {
             if (_isResolved) return;
 
             int confirmed = 0;
-            int decided = 0;
+            int declined = 0;
 
             foreach (var kvp in _playerStatuses)
             {
                 if (kvp.Value == RematchStatus.Confirmed) confirmed++;
-                if (kvp.Value != RematchStatus.Pending) decided++;
+                if (kvp.Value == RematchStatus.Declined) declined++;
             }
 
-            // If all players have decided, resolve immediately
-            if (decided == _playerStatuses.Count)
+            // If ALL players confirmed, rematch immediately
+            if (confirmed == _playerStatuses.Count)
             {
-                Debug.Log($"[RematchManager] All players decided ({confirmed} confirmed)");
+                Debug.Log($"[RematchManager] All {confirmed} players confirmed - starting rematch");
                 _timerActive = false;
                 _isResolved = true;
                 ResolveRematch();
             }
-            // If it's impossible to get 2+ confirmed (too many declined), cancel early
-            else if (_playerStatuses.Count - decided + confirmed < 2)
+            // If ANY player declined, cancel immediately
+            else if (declined > 0)
             {
-                Debug.Log("[RematchManager] Impossible to get 2+ confirmed - cancelling");
+                Debug.Log("[RematchManager] A player declined - cancelling rematch");
                 _timerActive = false;
                 _isResolved = true;
                 OnRematchCancelled?.Invoke();
@@ -303,20 +304,23 @@ namespace Glyphtender.Unity.Network
 
         /// <summary>
         /// Resolves the rematch - either starts new game or returns to menu.
+        /// ALL players must have confirmed for rematch to happen.
         /// </summary>
         private void ResolveRematch()
         {
             var confirmedPlayers = GetConfirmedPlayers();
             int confirmedCount = confirmedPlayers.Count;
 
-            Debug.Log($"[RematchManager] Resolving rematch: {confirmedCount} confirmed players");
+            Debug.Log($"[RematchManager] Resolving rematch: {confirmedCount}/{_playerStatuses.Count} confirmed players");
 
-            if (confirmedCount >= 2)
+            // ALL players must confirm for rematch
+            if (confirmedCount == _playerStatuses.Count)
             {
                 OnRematchConfirmed?.Invoke(confirmedPlayers);
             }
             else
             {
+                Debug.Log($"[RematchManager] Not all players confirmed - cancelling rematch");
                 OnRematchCancelled?.Invoke();
             }
         }
