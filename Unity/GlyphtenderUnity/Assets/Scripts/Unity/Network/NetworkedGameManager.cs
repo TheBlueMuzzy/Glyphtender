@@ -60,7 +60,14 @@ namespace Glyphtender.Unity
 
                 if (GameManager.Instance.GameState.Phase == GamePhase.Draft)
                 {
-                    return GameManager.Instance.GameState.CurrentDrafter == LocalPlayer;
+                    var currentDrafter = GameManager.Instance.GameState.CurrentDrafter;
+                    bool result = currentDrafter == LocalPlayer;
+                    // Debug logging for draft turn check
+                    if (!result)
+                    {
+                        Debug.Log($"[NetworkedGameManager] IsLocalPlayerTurn (Draft): false. CurrentDrafter={currentDrafter}, LocalPlayer={LocalPlayer}");
+                    }
+                    return result;
                 }
 
                 return GameManager.Instance.GameState.CurrentPlayer == LocalPlayer;
@@ -200,6 +207,13 @@ namespace Glyphtender.Unity
 
                 LocalPlayer = isHost ? Player.Yellow : Player.Blue;
                 Debug.Log($"[NetworkedGameManager] Online game started. isHost={isHost}, LocalPlayer={LocalPlayer}");
+
+                // Log draft state for debugging
+                if (GameManager.Instance?.GameState?.Phase == GamePhase.Draft)
+                {
+                    var drafter = GameManager.Instance.GameState.CurrentDrafter;
+                    Debug.Log($"[NetworkedGameManager] Draft phase. CurrentDrafter={drafter}, IsLocalPlayerTurn={drafter == LocalPlayer}");
+                }
 
                 // If host, broadcast initial game state
                 if (isHost)
