@@ -3,6 +3,7 @@ using Unity.Netcode;
 using Glyphtender.Core;
 using Glyphtender.Core.Stats;
 using Glyphtender.Unity.Stats;
+using Glyphtender.Unity.Network;
 using System.Collections.Generic;
 
 namespace Glyphtender.Unity
@@ -114,6 +115,10 @@ namespace Glyphtender.Unity
 
         public void InitializeGame()
         {
+            // Reset RematchManager to stop any running timer
+            // This ensures timer stops even if rematch event chain was interrupted
+            RematchManager.Instance?.Reset();
+
             // Load dictionary (only if not already loaded)
             if (WordScorer == null)
             {
