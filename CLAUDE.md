@@ -70,36 +70,28 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 **Phase 1: Online Multiplayer Polish** - COMPLETE
 
 ### Completed This Session
-- Plan 01-01: Rematch State & Network Sync (COMPLETE)
-  - Created `RematchManager.cs` with per-player status tracking, timer, events
-  - Added `NetworkRematchStatus` struct for network sync
-  - Added RPCs to NetworkGameBridge for rematch status sync
-  - Subscribed NetworkedGameManager to rematch status events
-
-- Plan 01-02: Rematch UI & Completion Logic (COMPLETE)
-  - Updated EndGameScreen with Rematch/Decline buttons for online games
-  - Added timer display showing countdown
-  - Added player status indicators (X/Check marks above player names)
-  - Wired completion logic (2+ confirmed starts new game, else returns to menu)
+- Rematch flow bugs fixed and verified working (v786):
+  - Fixed orphaned tile on cancel (RetrackTileObject)
+  - Fixed LocalPlayer wrong after rematch (use NetworkManager.IsHost for rematch)
+  - Fixed timer restarting after rematch resolved (check GameTurnState.GameOver)
 
 ### What's Working
 - Online 1v1 fully working (cross-network confirmed!)
 - Local 1v1, 3p, 4p fully working
 - 4-player win screen with all stats
 - Tangle detection and game end in online mode
-- **NEW: Rematch flow for online games**
+- **Rematch flow for online games** (VERIFIED v786)
   - "Rematch?" button toggles to green "Rematch! XXs"
   - Timer starts when first player confirms (30s)
   - Players can toggle on/off (change mind)
   - Decline button returns to menu
   - X/Check indicators show player status
+  - New game starts correctly with proper player assignments
 
 ### Next Up
-- Human verification of rematch flow
 - Phase 2: 3-4 Player Online
 
-### Current Testing (v786)
-**Look for v786 in red text at top of main menu**
+### Current Version: v786
 
 ---
 
