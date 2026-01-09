@@ -495,6 +495,19 @@ namespace Glyphtender.Unity
         }
 
         /// <summary>
+        /// Re-adds a tile object to hand tracking so it will be destroyed on next RefreshHand.
+        /// Called when a tile returns to hand after being cancelled from board placement.
+        /// </summary>
+        public void RetrackTileObject(GameObject obj)
+        {
+            if (!_handTileObjects.Contains(obj))
+            {
+                _handTileObjects.Add(obj);
+                Debug.Log($"[HandController] Re-tracked tile '{obj.name}' in hand (will be destroyed on refresh)");
+            }
+        }
+
+        /// <summary>
         /// Gets the player whose hand should be displayed.
         /// In online mode, always show local player's hand.
         /// In local mode, show current player's hand.

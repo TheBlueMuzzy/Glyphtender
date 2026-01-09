@@ -351,6 +351,10 @@ namespace Glyphtender.Unity
                 InputStateManager.Instance.CurrentlyPlacedTile = null;
             }
 
+            // Re-track this tile so RefreshHand() will properly destroy it
+            // (we untracked it when placing on board, now we need to track again)
+            Controller.RetrackTileObject(gameObject);
+
             GameManager.Instance.ClearPendingLetter();
             GameManager.Instance.ClearPendingCastPosition();
             Controller.ClearSelectedIndex();
