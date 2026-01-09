@@ -63,7 +63,6 @@ namespace Glyphtender.Unity.Network
         public static GlyphtenderLobby Instance { get; private set; }
 
         // Lobby settings
-        private const int MAX_PLAYERS = 2;
         private const float HEARTBEAT_INTERVAL = 15f;  // Lobby timeout prevention
         private const float LOBBY_POLL_INTERVAL = 1.5f;  // Check for updates
 
@@ -73,6 +72,12 @@ namespace Glyphtender.Unity.Network
         public string RoomCode => CurrentLobby?.LobbyCode ?? "";
         public bool IsHost { get; private set; }
         public string LastError { get; private set; }
+
+        /// <summary>
+        /// Target number of players for this lobby (2, 3, or 4).
+        /// Set by host when creating, read from lobby data by guests.
+        /// </summary>
+        public int TargetPlayerCount { get; private set; } = 2;
 
         // Events
         public event Action<string> OnLobbyCreated;       // Room code
@@ -136,7 +141,9 @@ namespace Glyphtender.Unity.Network
         /// <summary>
         /// Creates a new lobby and returns the room code.
         /// </summary>
-        public async Task<string> CreateLobbyAsync(LobbyGameSettings settings)
+        /// <param name="settings">Game settings (board size, 2-letter words)</param>
+        /// <param name="playerCount">Number of players (2, 3, or 4)</param>
+        public async Task<string> CreateLobbyAsync(LobbyGameSettings settings, int playerCount = 2)
         {
             if (!NetworkServices.Instance.IsSignedIn)
             {
@@ -144,6 +151,10 @@ namespace Glyphtender.Unity.Network
                 OnError?.Invoke(LastError);
                 return null;
             }
+
+            // Clamp player count to valid range
+            playerCount = Mathf.Clamp(playerCount, 2, 4);
+            TargetPlayerCount = playerCount;
 
             SetState(LobbyState.Creating);
 
@@ -157,6 +168,7 @@ namespace Glyphtender.Unity.Network
                     {
                         { "boardSize", new DataObject(DataObject.VisibilityOptions.Public, settings.BoardSizeIndex.ToString()) },
                         { "allow2Letter", new DataObject(DataObject.VisibilityOptions.Public, settings.Allow2LetterWords.ToString()) },
+                        { "playerCount", new DataObject(DataObject.VisibilityOptions.Public, playerCount.ToString()) },
                         { "relayCode", new DataObject(DataObject.VisibilityOptions.Member, "") }  // Set later
                     }
                 };
@@ -164,7 +176,7 @@ namespace Glyphtender.Unity.Network
                 // Create the lobby
                 CurrentLobby = await LobbyService.Instance.CreateLobbyAsync(
                     "Glyphtender Match",
-                    MAX_PLAYERS,
+                    playerCount,
                     options
                 );
 
@@ -215,8 +227,11 @@ namespace Glyphtender.Unity.Network
                 IsHost = false;
                 _pollTimer = LOBBY_POLL_INTERVAL;
 
+                // Read target player count from lobby data
+                TargetPlayerCount = GetTargetPlayerCountFromLobby();
+
                 SetState(LobbyState.Ready);
-                Debug.Log($"[GlyphtenderLobby] Joined lobby: {RoomCode}");
+                Debug.Log($"[GlyphtenderLobby] Joined lobby: {RoomCode}, Target players: {TargetPlayerCount}");
 
                 OnLobbyJoined?.Invoke();
                 return true;
@@ -370,9 +385,27 @@ namespace Glyphtender.Unity.Network
         public int PlayerCount => CurrentLobby?.Players?.Count ?? 0;
 
         /// <summary>
-        /// Returns true if lobby has 2 players.
+        /// Returns true if lobby has reached target player count.
         /// </summary>
-        public bool IsFull => PlayerCount >= MAX_PLAYERS;
+        public bool IsFull => PlayerCount >= TargetPlayerCount;
+
+        /// <summary>
+        /// Reads target player count from lobby data.
+        /// Defaults to 2 if not set or invalid.
+        /// </summary>
+        private int GetTargetPlayerCountFromLobby()
+        {
+            if (CurrentLobby?.Data == null) return 2;
+
+            if (CurrentLobby.Data.TryGetValue("playerCount", out var data) &&
+                int.TryParse(data.Value, out int count) &&
+                count >= 2 && count <= 4)
+            {
+                return count;
+            }
+
+            return 2;  // Default
+        }
 
         private async Task SendHeartbeatAsync()
         {
