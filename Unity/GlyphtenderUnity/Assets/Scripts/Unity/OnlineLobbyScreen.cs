@@ -1074,6 +1074,12 @@ namespace Glyphtender.Unity
                 SettingsManager.Instance.Allow2LetterWords = lobbySettings.Allow2LetterWords;
             }
 
+            // Set online player count from lobby (2, 3, or 4)
+            if (SettingsManager.Instance != null)
+            {
+                SettingsManager.Instance.OnlinePlayerCount = GlyphtenderLobby.Instance?.TargetPlayerCount ?? 2;
+            }
+
             // CRITICAL: Set PlayMode to Online1v1 so NetworkedGameManager activates
             if (SettingsManager.Instance != null)
             {

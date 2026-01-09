@@ -200,6 +200,13 @@ namespace Glyphtender.Unity
             }
         }
 
+        /// <summary>
+        /// Player count for online games (2, 3, or 4).
+        /// Set when creating/joining a lobby, used by GameManager.InitializeGame().
+        /// Not persisted to disk since it's session-specific.
+        /// </summary>
+        public int OnlinePlayerCount { get; set; } = 2;
+
         // ========== In-Game Menu Settings ==========
 
         public int AISpeedIndex

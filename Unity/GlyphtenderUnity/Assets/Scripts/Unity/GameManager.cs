@@ -159,6 +159,10 @@ namespace Glyphtender.Unity
                     case PlayMode.Local4P:
                         playerCount = 4;
                         break;
+                    case PlayMode.Online1v1:
+                        // For online games, use OnlinePlayerCount (set from lobby)
+                        playerCount = SettingsManager.Instance.OnlinePlayerCount;
+                        break;
                     default:
                         playerCount = 2;
                         break;
