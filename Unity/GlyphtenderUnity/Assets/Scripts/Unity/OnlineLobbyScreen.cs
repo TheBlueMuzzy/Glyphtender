@@ -833,8 +833,58 @@ namespace Glyphtender.Unity
 
         private void OnLobbyJoined()
         {
-            Debug.Log("[OnlineLobbyScreen] Joined lobby as guest");
-            StartGame();
+            int target = GlyphtenderLobby.Instance?.TargetPlayerCount ?? 2;
+            int current = GlyphtenderLobby.Instance?.PlayerCount ?? 0;
+            Debug.Log($"[OnlineLobbyScreen] Joined lobby as guest ({current}/{target} players)");
+
+            // For 3-4 player games, guest needs to wait for lobby to fill
+            if (GlyphtenderLobby.Instance?.IsFull == true)
+            {
+                Debug.Log("[OnlineLobbyScreen] Lobby is full, starting game");
+                StartGame();
+            }
+            else
+            {
+                Debug.Log("[OnlineLobbyScreen] Waiting for more players to join...");
+                SetState(LobbyScreenState.WaitingForGuest);  // Re-use waiting state for guests too
+                StartGuestWaitForFull();
+            }
+        }
+
+        /// <summary>
+        /// Guest waits for lobby to fill before starting game.
+        /// </summary>
+        private async void StartGuestWaitForFull()
+        {
+            // Poll until lobby is full
+            int attempts = 0;
+            int maxAttempts = 120;  // 120 * 500ms = 60 seconds max wait
+
+            while (GlyphtenderLobby.Instance != null &&
+                   !GlyphtenderLobby.Instance.IsFull &&
+                   attempts < maxAttempts)
+            {
+                await System.Threading.Tasks.Task.Delay(500);
+                await GlyphtenderLobby.Instance.RefreshLobbyAsync();
+
+                // Update UI
+                int target = GlyphtenderLobby.Instance?.TargetPlayerCount ?? 2;
+                int current = GlyphtenderLobby.Instance?.PlayerCount ?? 0;
+                _statusText.text = $"Waiting for players ({current}/{target})";
+
+                attempts++;
+            }
+
+            if (GlyphtenderLobby.Instance?.IsFull == true)
+            {
+                Debug.Log("[OnlineLobbyScreen] Lobby is now full, guest starting game");
+                StartGame();
+            }
+            else
+            {
+                Debug.LogWarning("[OnlineLobbyScreen] Guest timed out waiting for lobby to fill");
+                ShowError("Timed out waiting for players");
+            }
         }
 
         private void OnLobbyError(string error)

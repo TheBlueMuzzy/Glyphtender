@@ -126,7 +126,7 @@ namespace Glyphtender.Unity
         private string[] _boardSizeNames = { "Small", "Large" };
 
         // BUILD VERSION - Change this number each time to verify recompile
-        private const string BUILD_VERSION = "787";
+        private const string BUILD_VERSION = "788";
 
         private void Awake()
         {
@@ -684,7 +684,7 @@ namespace Glyphtender.Unity
                 case PlayMode.Local2P: return "Local 2P";
                 case PlayMode.VsAI: return "vs AI";
                 case PlayMode.AIvsAI: return "AI vs AI";
-                case PlayMode.Online1v1: return "Online 1v1";
+                case PlayMode.Online1v1: return "Online";
                 case PlayMode.Local3P: return "Local 3P";
                 case PlayMode.Local4P: return "Local 4P";
                 default: return "vs AI";
