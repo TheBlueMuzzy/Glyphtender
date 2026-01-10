@@ -48,6 +48,12 @@ namespace Glyphtender.Unity
         /// </summary>
         public Player LocalPlayer { get; private set; }
 
+        // Track when we're waiting for our own turn/draft/cycle to come back from network
+        // This is more reliable than checking glyphling position which can have race conditions
+        private bool _awaitingOwnTurnConfirmation;
+        private bool _awaitingOwnDraftConfirmation;
+        private bool _awaitingOwnCycleConfirmation;
+
         /// <summary>
         /// True if it's the local player's turn.
         /// </summary>
@@ -182,6 +188,11 @@ namespace Glyphtender.Unity
                 // Check if this is a rematch (already online, just restarting)
                 bool isRematch = IsOnlineGame;
                 IsOnlineGame = true;
+
+                // Reset awaiting flags for new game/rematch
+                _awaitingOwnTurnConfirmation = false;
+                _awaitingOwnDraftConfirmation = false;
+                _awaitingOwnCycleConfirmation = false;
 
                 // Determine if we're host or guest
                 // For rematch, use NetworkManager.IsHost as primary (most stable during active session)
@@ -369,14 +380,17 @@ namespace Glyphtender.Unity
             // DIAGNOSTIC: Log glyphling info
             Debug.Log($"[NetworkedGameManager] Glyphling: index={turnData.Move.GlyphlingIndex}, owner={glyphling.Owner}, pos={glyphling.Position}, dest={toCoord}");
 
-            // Check if glyphling is already at destination - means this is our OWN turn coming back
-            // (Host receives its own RPC back, or client set position to dest before sending)
-            bool isOwnTurn = glyphling.Position.HasValue && glyphling.Position.Value == toCoord;
+            // Use the awaiting flag to determine if this is our own turn coming back
+            // This is more reliable than checking glyphling position which can have race conditions
+            bool isOwnTurn = _awaitingOwnTurnConfirmation;
 
-            Debug.Log($"[NetworkedGameManager] isOwnTurn={isOwnTurn} (pos at dest: {glyphling.Position.HasValue && glyphling.Position.Value == toCoord})");
+            Debug.Log($"[NetworkedGameManager] isOwnTurn={isOwnTurn} (using _awaitingOwnTurnConfirmation flag)");
 
             if (isOwnTurn)
             {
+                // Clear the flag now that we've received our confirmation
+                _awaitingOwnTurnConfirmation = false;
+
                 Debug.Log($"[NetworkedGameManager] Own turn path - CurrentPlayer={state.CurrentPlayer}");
                 // Apply tile placement and scoring without animation (glyphling already moved)
                 ApplyTurnWithoutAnimation(turnData);
@@ -615,11 +629,13 @@ namespace Glyphtender.Unity
 
             var state = GameManager.Instance.GameState;
 
-            // Check if this position already has a glyphling - means we already processed this locally
-            // (Host receives its own RPC back)
-            if (state.HasGlyphling(pos))
+            // Use the awaiting flag to determine if this is our own placement coming back
+            // Also keep the HasGlyphling check as a safety fallback
+            bool isOwnPlacement = _awaitingOwnDraftConfirmation || state.HasGlyphling(pos);
+            if (isOwnPlacement)
             {
-                Debug.Log($"[NetworkedGameManager] Position already has glyphling - skipping (already processed locally)");
+                _awaitingOwnDraftConfirmation = false;
+                Debug.Log($"[NetworkedGameManager] Own draft placement - skipping (already processed locally)");
                 return;
             }
 
@@ -673,7 +689,11 @@ namespace Glyphtender.Unity
         {
             if (!IsOnlineGame) return;
 
-            Debug.Log($"[NetworkedGameManager] Cycle confirmed with mask {cycleData.DiscardMask}");
+            // Clear the flag if we were awaiting our own cycle
+            bool wasOwnCycle = _awaitingOwnCycleConfirmation;
+            _awaitingOwnCycleConfirmation = false;
+
+            Debug.Log($"[NetworkedGameManager] Cycle confirmed with mask {cycleData.DiscardMask} (wasOwnCycle={wasOwnCycle})");
 
             if (GameManager.Instance?.GameState == null) return;
 
@@ -836,7 +856,10 @@ namespace Glyphtender.Unity
                 }
             };
 
-            Debug.Log($"[NetworkedGameManager] Calling RequestTurnServerRpc...");
+            // Set flag BEFORE sending so we know the confirmation is ours
+            _awaitingOwnTurnConfirmation = true;
+
+            Debug.Log($"[NetworkedGameManager] Calling RequestTurnServerRpc... (awaiting confirmation)");
             NetworkGameBridge.Instance.RequestTurnServerRpc(turnData);
             Debug.Log($"[NetworkedGameManager] RequestTurnServerRpc called successfully");
         }
@@ -855,7 +878,10 @@ namespace Glyphtender.Unity
                 GlyphlingIndex = glyphlingIndex
             };
 
-            Debug.Log($"[NetworkedGameManager] Sending draft placement: pos={position}, glyphlingIndex={glyphlingIndex}");
+            // Set flag BEFORE sending so we know the confirmation is ours
+            _awaitingOwnDraftConfirmation = true;
+
+            Debug.Log($"[NetworkedGameManager] Sending draft placement: pos={position}, glyphlingIndex={glyphlingIndex} (awaiting confirmation)");
             NetworkGameBridge.Instance.RequestDraftPlacementServerRpc(placement);
         }
 
@@ -872,6 +898,10 @@ namespace Glyphtender.Unity
                 DiscardMask = discardMask
             };
 
+            // Set flag BEFORE sending so we know the confirmation is ours
+            _awaitingOwnCycleConfirmation = true;
+
+            Debug.Log($"[NetworkedGameManager] Sending cycle: mask={discardMask} (awaiting confirmation)");
             NetworkGameBridge.Instance.RequestCycleServerRpc(cycleData);
         }
 
