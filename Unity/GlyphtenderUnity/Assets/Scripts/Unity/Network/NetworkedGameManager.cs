@@ -349,11 +349,12 @@ namespace Glyphtender.Unity
 
             if (!IsOnlineGame) return;
 
-            Debug.Log($"[NetworkedGameManager] Turn confirmed from network");
-
             if (GameManager.Instance?.GameState == null) return;
 
             var state = GameManager.Instance.GameState;
+
+            // DIAGNOSTIC: Log current state when turn is received
+            Debug.Log($"[NetworkedGameManager] TURN RECEIVED - CurrentPlayer={state.CurrentPlayer}, LocalPlayer={LocalPlayer}, Phase={state.Phase}");
 
             // Get the glyphling
             if (turnData.Move.GlyphlingIndex < 0 || turnData.Move.GlyphlingIndex >= state.Glyphlings.Count)
@@ -365,18 +366,24 @@ namespace Glyphtender.Unity
             var glyphling = state.Glyphlings[turnData.Move.GlyphlingIndex];
             var toCoord = turnData.Move.To.ToHexCoord();
 
+            // DIAGNOSTIC: Log glyphling info
+            Debug.Log($"[NetworkedGameManager] Glyphling: index={turnData.Move.GlyphlingIndex}, owner={glyphling.Owner}, pos={glyphling.Position}, dest={toCoord}");
+
             // Check if glyphling is already at destination - means this is our OWN turn coming back
             // (Host receives its own RPC back, or client set position to dest before sending)
             bool isOwnTurn = glyphling.Position.HasValue && glyphling.Position.Value == toCoord;
 
+            Debug.Log($"[NetworkedGameManager] isOwnTurn={isOwnTurn} (pos at dest: {glyphling.Position.HasValue && glyphling.Position.Value == toCoord})");
+
             if (isOwnTurn)
             {
-                Debug.Log($"[NetworkedGameManager] Own turn detected - applying without animation");
+                Debug.Log($"[NetworkedGameManager] Own turn path - CurrentPlayer={state.CurrentPlayer}");
                 // Apply tile placement and scoring without animation (glyphling already moved)
                 ApplyTurnWithoutAnimation(turnData);
                 return;
             }
 
+            Debug.Log($"[NetworkedGameManager] Remote turn path - animating for CurrentPlayer={state.CurrentPlayer}");
             // Start coroutine to animate the opponent's turn sequentially (like AI does)
             StartCoroutine(AnimateNetworkTurn(turnData, glyphling));
         }
@@ -416,7 +423,7 @@ namespace Glyphtender.Unity
             // If no words formed, enter cycle mode
             if (newWords.Count == 0)
             {
-                Debug.Log($"[NetworkedGameManager] Own turn: No words formed - entering cycle mode");
+                Debug.Log($"[NetworkedGameManager] Own turn: No words formed - entering cycle mode for {currentPlayer} (state.CurrentPlayer was {state.CurrentPlayer})");
                 GameManager.Instance.EnterCycleModeFromNetwork(currentPlayer);
 
                 if (BoardRenderer.Instance != null)
@@ -540,7 +547,7 @@ namespace Glyphtender.Unity
             // If no words formed, enter cycle mode instead of ending turn
             if (newWords.Count == 0)
             {
-                Debug.Log($"[NetworkedGameManager] No words formed - entering cycle mode for {currentPlayer}");
+                Debug.Log($"[NetworkedGameManager] Remote turn: No words formed - entering cycle mode for {currentPlayer} (state.CurrentPlayer is {state.CurrentPlayer})");
 
                 // Enter cycle mode through GameManager so UI updates properly
                 GameManager.Instance.EnterCycleModeFromNetwork(currentPlayer);
