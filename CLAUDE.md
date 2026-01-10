@@ -67,7 +67,7 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 2: 3-4 Player Online** - IN PROGRESS
+**Phase 2: 3-4 Player Online** - COMPLETE
 
 ### Completed This Session
 - Plan 02-01: Lobby Player Count Selection (COMPLETE)
@@ -76,7 +76,7 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 - Plan 02-02: Network Client-Player Mapping (COMPLETE)
   - Updated NetworkGameBridge for 4 players (0=Yellow, 1=Blue, 2=Purple, 3=Pink)
   - Updated NetworkedGameManager to sync all player hands
-- Plan 02-03: Integration & Rematch (IN PROGRESS)
+- Plan 02-03: Integration & Rematch (COMPLETE)
   - Wired player count from lobby to game initialization
   - Updated RematchManager: ALL players must confirm (not 2+), cancel if ANY declines
   - **Fixed relay connection limit bug**: Was hardcoded to MAX_CONNECTIONS=1
@@ -84,18 +84,12 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
     - Allocates correct slots: playerCount-1 (2 slots for 3p, 3 slots for 4p)
 
 ### What's Working
+- **3-Player Online VERIFIED (v791)**
 - Online 1v1 fully working (cross-network confirmed!)
 - Local 1v1, 3p, 4p fully working
-- Rematch flow for online 1v1 games
+- Rematch flow for online games
 
-### Testing (v790)
-**Look for v790 in red text at top of main menu**
-
-Testing 3-player online:
-1. Host creates room with "3" selected
-2. First guest joins (should see 2/3)
-3. Second guest joins (should see 3/3, game starts)
-4. All three players should connect to relay and start game
+### Current Version: v791
 
 ---
 
