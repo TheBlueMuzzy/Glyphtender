@@ -722,8 +722,9 @@ namespace Glyphtender.Unity
             }
 
             // IMPORTANT: Allocate relay NOW so guest can connect immediately when they join
-            Debug.Log("[OnlineLobbyScreen] Pre-allocating relay before guest joins...");
-            string relayCode = await GlyphtenderRelay.Instance.AllocateRelayAsync();
+            // Pass player count so relay allocates enough connection slots (playerCount - 1)
+            Debug.Log($"[OnlineLobbyScreen] Pre-allocating relay for {_selectedPlayerCount} players...");
+            string relayCode = await GlyphtenderRelay.Instance.AllocateRelayAsync(_selectedPlayerCount);
             if (relayCode == null)
             {
                 ShowError("Failed to create relay connection");

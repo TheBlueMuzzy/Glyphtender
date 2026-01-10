@@ -5,7 +5,12 @@
       "Bash(git push)",
       "Bash([ -f .planning/ROADMAP.md ])",
       "Bash(git add:*)",
-      "SlashCommand(/gsd:plan-phase:*)"
+      "SlashCommand(/gsd:plan-phase:*)",
+      "Skill(gsd:new-milestone)",
+      "Skill(gsd:discuss-phase)",
+      "Bash(ls -la \"C:\\\\Users\\\\Muzzy\\\\Documents\\\\UnityProjects\\\\Glyphtender\\\\.planning\\\\phases\"\" 2>/dev/null || echo \"No phases directory yet \")",
+      "Skill(gsd:plan-phase)",
+      "Skill(gsd:execute-plan)"
     ]
   }
 }

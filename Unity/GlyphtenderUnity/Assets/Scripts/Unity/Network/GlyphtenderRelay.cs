@@ -57,8 +57,8 @@ namespace Glyphtender.Unity.Network
     {
         public static GlyphtenderRelay Instance { get; private set; }
 
-        // Relay settings
-        private const int MAX_CONNECTIONS = 1;  // 1v1 only
+        // Relay settings - max connections is set dynamically based on player count
+        private int _maxConnections = 1;
 
         // State
         public RelayState State { get; private set; } = RelayState.Disconnected;
@@ -100,8 +100,13 @@ namespace Glyphtender.Unity.Network
         /// Allocates a relay server and returns the join code.
         /// Call this as host after creating a lobby.
         /// </summary>
-        public async Task<string> AllocateRelayAsync()
+        /// <param name="playerCount">Total number of players (2-4). Relay needs playerCount-1 connection slots.</param>
+        public async Task<string> AllocateRelayAsync(int playerCount = 2)
         {
+            // Calculate max connections: total players minus the host
+            _maxConnections = Mathf.Clamp(playerCount - 1, 1, 3);
+            Debug.Log($"[GlyphtenderRelay] Allocating relay for {playerCount} players ({_maxConnections} connection slots)");
+
             if (!NetworkServices.Instance.IsSignedIn)
             {
                 LastError = "Not signed in. Call NetworkServices.InitializeAsync() first.";
@@ -136,8 +141,8 @@ namespace Glyphtender.Unity.Network
                 string selectedRegion = regions[0].Id;
                 Debug.Log($"[GlyphtenderRelay] Using region: {selectedRegion}");
 
-                // Allocate relay with explicit region (1v1 = 1 max connection)
-                _hostAllocation = await RelayService.Instance.CreateAllocationAsync(MAX_CONNECTIONS, selectedRegion);
+                // Allocate relay with explicit region and correct number of connection slots
+                _hostAllocation = await RelayService.Instance.CreateAllocationAsync(_maxConnections, selectedRegion);
 
                 // Get join code
                 JoinCode = await RelayService.Instance.GetJoinCodeAsync(_hostAllocation.AllocationId);

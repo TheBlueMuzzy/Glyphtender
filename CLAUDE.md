@@ -67,31 +67,35 @@ Worktrees are at: `C:\Users\Muzzy\.claude-worktrees\Glyphtender\<worktree-name>`
 
 ## Current Work
 
-**Phase 1: Online Multiplayer Polish** - COMPLETE
+**Phase 2: 3-4 Player Online** - IN PROGRESS
 
 ### Completed This Session
-- Rematch flow bugs fixed and verified working (v786):
-  - Fixed orphaned tile on cancel (RetrackTileObject)
-  - Fixed LocalPlayer wrong after rematch (use NetworkManager.IsHost for rematch)
-  - Fixed timer restarting after rematch resolved (check GameTurnState.GameOver)
+- Plan 02-01: Lobby Player Count Selection (COMPLETE)
+  - Made GlyphtenderLobby player count configurable (2, 3, or 4)
+  - Added player count selector UI to OnlineLobbyScreen
+- Plan 02-02: Network Client-Player Mapping (COMPLETE)
+  - Updated NetworkGameBridge for 4 players (0=Yellow, 1=Blue, 2=Purple, 3=Pink)
+  - Updated NetworkedGameManager to sync all player hands
+- Plan 02-03: Integration & Rematch (IN PROGRESS)
+  - Wired player count from lobby to game initialization
+  - Updated RematchManager: ALL players must confirm (not 2+), cancel if ANY declines
+  - **Fixed relay connection limit bug**: Was hardcoded to MAX_CONNECTIONS=1
+    - Now passes playerCount to AllocateRelayAsync
+    - Allocates correct slots: playerCount-1 (2 slots for 3p, 3 slots for 4p)
 
 ### What's Working
 - Online 1v1 fully working (cross-network confirmed!)
 - Local 1v1, 3p, 4p fully working
-- 4-player win screen with all stats
-- Tangle detection and game end in online mode
-- **Rematch flow for online games** (VERIFIED v786)
-  - "Rematch?" button toggles to green "Rematch! XXs"
-  - Timer starts when first player confirms (30s)
-  - Players can toggle on/off (change mind)
-  - Decline button returns to menu
-  - X/Check indicators show player status
-  - New game starts correctly with proper player assignments
+- Rematch flow for online 1v1 games
 
-### Next Up
-- Phase 2: 3-4 Player Online
+### Testing (v790)
+**Look for v790 in red text at top of main menu**
 
-### Current Version: v786
+Testing 3-player online:
+1. Host creates room with "3" selected
+2. First guest joins (should see 2/3)
+3. Second guest joins (should see 3/3, game starts)
+4. All three players should connect to relay and start game
 
 ---
 
