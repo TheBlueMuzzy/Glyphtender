@@ -831,7 +831,7 @@ namespace Glyphtender.Unity
             StartGame();
         }
 
-        private void OnLobbyJoined()
+        private async void OnLobbyJoined()
         {
             int target = GlyphtenderLobby.Instance?.TargetPlayerCount ?? 2;
             int current = GlyphtenderLobby.Instance?.PlayerCount ?? 0;
@@ -840,7 +840,11 @@ namespace Glyphtender.Unity
             // For 3-4 player games, guest needs to wait for lobby to fill
             if (GlyphtenderLobby.Instance?.IsFull == true)
             {
-                Debug.Log("[OnlineLobbyScreen] Lobby is full, starting game");
+                // We're the last guest - stagger our connection to let earlier guests connect first
+                // Earlier guests have been waiting and will connect with less delay
+                int staggerDelay = 100;  // Small delay for last guest
+                Debug.Log($"[OnlineLobbyScreen] Lobby is full (we completed it), waiting {staggerDelay}ms before connecting");
+                await System.Threading.Tasks.Task.Delay(staggerDelay);
                 StartGame();
             }
             else
@@ -860,6 +864,10 @@ namespace Glyphtender.Unity
             int attempts = 0;
             int maxAttempts = 120;  // 120 * 500ms = 60 seconds max wait
 
+            // Track when we joined to calculate our "slot" for staggered connection
+            int ourJoinSlot = GlyphtenderLobby.Instance?.PlayerCount ?? 1;
+            Debug.Log($"[OnlineLobbyScreen] Guest waiting, we are player {ourJoinSlot}");
+
             while (GlyphtenderLobby.Instance != null &&
                    !GlyphtenderLobby.Instance.IsFull &&
                    attempts < maxAttempts)
@@ -877,7 +885,18 @@ namespace Glyphtender.Unity
 
             if (GlyphtenderLobby.Instance?.IsFull == true)
             {
-                Debug.Log("[OnlineLobbyScreen] Lobby is now full, guest starting game");
+                // Stagger connection based on join order to avoid race conditions
+                // Earlier guests wait longer to let later guests connect first
+                // This prevents simultaneous relay connections
+                int target = GlyphtenderLobby.Instance?.TargetPlayerCount ?? 2;
+                int staggerDelay = (target - ourJoinSlot) * 500;  // Later joiners connect first
+                Debug.Log($"[OnlineLobbyScreen] Lobby is now full, waiting {staggerDelay}ms before connecting (slot {ourJoinSlot}/{target})");
+
+                if (staggerDelay > 0)
+                {
+                    await System.Threading.Tasks.Task.Delay(staggerDelay);
+                }
+
                 StartGame();
             }
             else
@@ -1098,14 +1117,19 @@ namespace Glyphtender.Unity
                 // Wait for client to actually connect to host
                 Debug.Log("[OnlineLobbyScreen] Waiting for connection to host...");
                 int connectAttempts = 0;
-                while (!NetworkManager.Singleton.IsConnectedClient && connectAttempts < 30) // 30 * 200ms = 6 seconds
+                while (!NetworkManager.Singleton.IsConnectedClient && connectAttempts < 50) // 50 * 200ms = 10 seconds
                 {
                     await System.Threading.Tasks.Task.Delay(200);
                     connectAttempts++;
+                    if (connectAttempts % 10 == 0)
+                    {
+                        Debug.Log($"[OnlineLobbyScreen] Still waiting for connection... attempt {connectAttempts}");
+                    }
                 }
 
                 if (!NetworkManager.Singleton.IsConnectedClient)
                 {
+                    Debug.LogError($"[OnlineLobbyScreen] Failed to connect after {connectAttempts} attempts");
                     ShowError("Failed to connect to host");
                     return;
                 }
