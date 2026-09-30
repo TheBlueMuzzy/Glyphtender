@@ -49,7 +49,7 @@ describe('move (GDD §4.4)', () => {
   it('refuses a move that is not in a straight line or is blocked', () => {
     const s = position({ glyphlings: { 0: 'C6-5', 1: 'C1-1', 2: 'C11-1', 3: 'C11-4' }, seeds: [{ 'C6-3': 'A' }], hands: [['T']] })
     const bent = { type: 'turn' as const, glyphling: 0, to: addHex(step('C6-5', 3), DIRECTIONS[2]), seed: 0, target: hexAt('C6-5') }
-    expect(checkAction(s, bent, words)).toMatch(/straight line/)
+    expect(checkAction(s, bent)).toMatch(/straight line/)
     const blocked = { type: 'turn' as const, glyphling: 0, to: hexAt('C6-2'), seed: 0, target: hexAt('C6-5') }
     expect(() => applyAction(s, blocked, words)).toThrow(/straight line/)
   })
@@ -57,8 +57,8 @@ describe('move (GDD §4.4)', () => {
   it('only lets you move your own glyphling, on your turn', () => {
     const s = position({ glyphlings: { 0: 'C6-5', 1: 'C1-1', 2: 'C11-1', 3: 'C3-4' }, hands: [['A'], ['B']] })
     const action = { type: 'turn' as const, glyphling: 3, to: step('C3-4', 3), seed: 0, target: hexAt('C3-4') }
-    expect(checkAction(s, action, words)).toMatch(/another player/)
-    expect(checkAction({ ...s, current: 1 }, action, words)).toBeNull()
+    expect(checkAction(s, action)).toMatch(/another player/)
+    expect(checkAction({ ...s, current: 1 }, action)).toBeNull()
   })
 })
 
@@ -93,8 +93,8 @@ describe('cast (GDD §4.5)', () => {
     const s = position({ glyphlings: { 0: 'C6-5', 1: 'C1-1', 2: 'C6-8', 3: 'C11-4' }, hands: [['A']] })
     const action = { type: 'turn' as const, glyphling: 0, to: hexAt('C6-4'), seed: 0, target: hexAt('C6-9') }
     expect(() => applyAction(s, action, words)).toThrow(/straight line onto an empty hex/)
-    expect(checkAction(s, { ...action, target: hexAt('C6-8') }, words)).not.toBeNull() // a glyphling stands there
-    expect(checkAction(s, { ...action, seed: 3, target: hexAt('C6-5') }, words)).toMatch(/not in your hand/)
+    expect(checkAction(s, { ...action, target: hexAt('C6-8') })).not.toBeNull() // a glyphling stands there
+    expect(checkAction(s, { ...action, seed: 3, target: hexAt('C6-5') })).toMatch(/not in your hand/)
   })
 })
 
@@ -102,7 +102,7 @@ describe('you must cast if you can (GDD §4.8)', () => {
   it('refuses move-only when a cast is possible', () => {
     const s = position({ glyphlings: { 0: 'C6-5', 1: 'C1-1', 2: 'C11-1', 3: 'C11-4' }, hands: [['A']] })
     const action = { type: 'turn' as const, glyphling: 0, to: hexAt('C6-4'), seed: null, target: null }
-    expect(checkAction(s, action, words)).toMatch(/must cast/)
+    expect(checkAction(s, action)).toMatch(/must cast/)
   })
 
   it('allows move-only with an empty hand', () => {

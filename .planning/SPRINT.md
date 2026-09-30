@@ -17,7 +17,7 @@ Done when: the original's words.txt is in the game byte-for-byte and every scori
 
 ## F06 🧱 Magic + draw / refresh
 - [x] 🤖 7. Magic = seeds + 1 per own seed; shared letters count per word; made Magic → draw 1 — src/engine/turn.ts
-- [ ] 🤖 8. Refresh: set aside any number, refill to 8, return set-aside seeds to the bag; bag empty → stop drawing — src/engine/turn.ts
+- [x] 🤖 8. Refresh: set aside any number, refill to 8, return set-aside seeds to the bag; bag empty → stop drawing — src/engine/turn.ts
 
 ## F03 🧱 UI kit (Cozy, night colours)
 - [x] 🤖 9. Install the UI kit (Cozy), wire applyStyle + check:ui — src/ui/kit, content/ui/style.json, src/main.tsx
@@ -33,6 +33,7 @@ Notes:
 - F04 surprise: "can move but can't cast" only ever means "no seeds in hand" — after any move, the hexes the glyphling just crossed (at least the one it left) are always open to cast into. Tested.
 - F05: the word list has **63,657** words, not 63,656 — the file has 63,656 line breaks but no line break after the last word (ROMAN), so counting lines comes up one short. Zipf tiers match exactly (1000 / 6342 / 21805 / 43997). `.gitattributes` marks `public/words/*.csv` binary so git can never touch its bytes; a test checks its SHA-256.
 - Order change: task 4 (sim) needs draw + refresh (tasks 7–8) — without them hands run dry and glyphlings wander forever — so the sim is committed after task 8.
+- F06 refresh: when the bag is already empty, a no-Magic turn skips the refresh step (there's nothing to refill from; setting seeds aside would only shrink the hand). Set-aside seeds go back into the bag at seeded-random places *after* the refill, so you never draw them straight back. The tangle check runs after the refresh.
 - F03 task 9: kit 0.2.2 (framework db90181) installed with the Cozy preset; applyStyle + applyAccessibility wired in src/main.tsx; `npm run check:ui` passes. content/ui/settings.json = the kit's standard rows (accessibility tab kept).
 - F03 task 10: night palette = Cozy tweaks in content/ui/style.json (TDD D09). Home page = kit MainMenu (title, tagline, "Prototype: move → cast" → sketches/move-cast/, Settings) in src/ui/menus.tsx; words in content/text/en.json; Settings → About → Credits opens the kit Credits screen. Settings rows switched off (not real yet): language (English only), change name, analytics, and the example.com privacy/feedback links. body has class="kit-page"; index.css placeholder styles removed.
 - F03 task 11: `npm run e2e:menu <outDir> [url]` (e2e/menu-shots.mjs) shoots home, Settings, Settings → Accessibility at 390×844, 844×390, 1440×900 — all 9 pass: nothing past a screen edge, every button ≥ 44px, Esc closes Settings, the Prototype button reaches sketches/move-cast/, no console errors. check:ui, test, build, check:devkit all pass.

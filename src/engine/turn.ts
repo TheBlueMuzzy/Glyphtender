@@ -80,5 +80,7 @@ export function applyTurn(state: GameState, action: TurnAction, words: WordList)
     const hands = after.hands.map((h, s) => (s === seat ? [...h, ...drawn] : h))
     return endTurn({ ...after, magic, hands, bag: after.bag.slice(drawn.length), lastTurn: { ...lastTurn, drew: drawn.length } })
   }
+  // No Magic → the same player may refresh their hand (skipped when the bag is empty: nothing to refill from).
+  if (after.bag.length > 0) return { ...after, magic, lastTurn, phase: 'refresh' }
   return endTurn({ ...after, magic, lastTurn })
 }
