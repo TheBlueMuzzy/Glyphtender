@@ -25,7 +25,8 @@
     "scorePopHold": "Score pops: how long all the pops stay above their seeds before flying together, in seconds.",
     "scoreFlyTime": "Score pops: how long the pops take to fly into the total over the glyphling that cast, in seconds.",
     "scoreTotalHold": "Score pops: how long the turn's total (\"+6\") stays over the glyphling that cast, in seconds. With reduce motion only this total shows.",
-    "scoreTotalFade": "Score pops: how long the total takes to fade away, in seconds."
+    "scoreTotalFade": "Score pops: how long the total takes to fade away, in seconds.",
+    "turnPulseTime": "Whose turn: how long one slow pulse of the current player's glyphlings takes, in seconds (they pulse until one is moved). How much they swell: feel.json → turnPulse."
   },
   "_ranges": {
     "flightBase": [
@@ -157,6 +158,11 @@
       0.1,
       1.5,
       0.05
+    ],
+    "turnPulseTime": [
+      0.6,
+      4,
+      0.1
     ]
   },
   "flightBase": 0.3,
@@ -184,5 +190,6 @@
   "scorePopHold": 0.4,
   "scoreFlyTime": 0.45,
   "scoreTotalHold": 1,
-  "scoreTotalFade": 0.4
+  "scoreTotalFade": 0.4,
+  "turnPulseTime": 1.6
 }

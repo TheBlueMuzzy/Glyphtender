@@ -37,6 +37,8 @@
   .game-board > svg { grid-area: 1 / 1; inline-size: 100%; block-size: 100%; display: block; contain: size; } /* contain: never pushes the layout */
   /* a new runeblossom grows up out of the ground (useThrow animates the scale) */
   .game-seed { transform-box: fill-box; transform-origin: 50% 80%; }
+  /* whose turn: a glyphling pulses from its own middle (useTurnPulse animates the scale) */
+  .game-pulse { transform-box: fill-box; transform-origin: center; }
   /* a "+3" tangle bonus pops from its own middle (RevealMarks animates the scale) */
   .game-pop { transform-box: fill-box; transform-origin: center; }
 
