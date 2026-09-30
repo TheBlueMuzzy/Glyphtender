@@ -81,7 +81,7 @@ try {
 
     // ---- menu → Play → New game: 3 players, the Large garden ----
     await page.goto(`http://127.0.0.1:${PORT}/`)
-    await page.getByRole('button', { name: 'Play' }).click()
+    await page.getByRole('button', { name: 'Play', exact: true }).click()
     await page.getByRole('button', { name: 'Next Players' }).click()
     check('3 players picks the Large garden', (await page.locator('.kit-picker-value', { hasText: 'Large' }).count()) === 1)
     await shot('1-new-game')
@@ -159,7 +159,7 @@ try {
     await page.keyboard.press('Escape')
     await page.getByRole('button', { name: 'Leave game' }).click()
     await page.getByRole('dialog', { name: 'Leave this game?' }).getByRole('button', { name: 'Leave game' }).click()
-    await page.getByRole('button', { name: 'Play' }).click()
+    await page.getByRole('button', { name: 'Play', exact: true }).click()
     check('the new-game screen remembers 3 players', (await page.locator('.kit-picker-value', { hasText: '3' }).count()) === 1)
     console.log(`ok   ${size.name} play again → menu → leave → remembered`)
 

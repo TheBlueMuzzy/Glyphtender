@@ -5,7 +5,8 @@
     "subtitle": "The best speller doesn't always win.",
     "play": "Play",
     "prototype": "Prototype: move → cast",
-    "settings": "Settings"
+    "settings": "Settings",
+    "playOnline": "Play online"
   },
   "game": {
     "players": {
@@ -28,7 +29,11 @@
       "refreshDetail": "Tap seeds to set them aside",
       "over": "The garden is tangled",
       "loading": "Gathering the words…",
-      "handoff": "Pass to {player}"
+      "handoff": "Pass to {player}",
+      "othersTurn": "{player} is playing…",
+      "othersDraft": "{player} is placing a glyphling…",
+      "othersRefresh": "{player} is refreshing seeds…",
+      "waitingHost": "Waiting for the host to start the next game…"
     },
     "notes": {
       "moveFirst": "Move a glyphling first",
@@ -141,5 +146,60 @@
     "hideSeedsDetail": "Pass the device between turns",
     "start": "Start",
     "back": "Back"
+  },
+  "online": {
+    "lobby": {
+      "title": "Play online",
+      "create": "Create a room",
+      "or": "or join a friend’s room",
+      "join": "Join",
+      "name": "Your name",
+      "room": "Room {code}",
+      "share": "Share this code",
+      "host": "Host",
+      "ready": "Ready",
+      "notReady": "Not ready",
+      "imReady": "I’m ready",
+      "notYet": "Not ready yet",
+      "start": "Start game",
+      "leave": "Leave",
+      "back": "Back",
+      "copy": "Copy",
+      "copied": "Code copied!",
+      "waitingHost": "Waiting for the host to start…",
+      "needPlayers": "Need at least {n} players",
+      "waitingReady": "Waiting for everyone to be ready"
+    },
+    "options": {
+      "board": "Garden",
+      "auto": "Auto",
+      "boardDetail": "Auto: Small for 2 · Large for 3–4",
+      "twoLetterWords": "2-letter words",
+      "twoLetterDetail": "Off: words need 3+ letters",
+      "timer": "Turn timer",
+      "timerOff": "Off",
+      "timerSeconds": "{n} s",
+      "timerDetail": "When time runs out, a turn is played for them"
+    },
+    "errors": {
+      "nameNeeded": "Pick a name first",
+      "no_room": "There’s no room with that code — check the letters",
+      "room_full": "That room is full (4 players)",
+      "game_started": "That room’s game has already started",
+      "kicked": "The host removed you from the room",
+      "connected_elsewhere": "You opened the game in another tab — it has your seat now",
+      "room_closed": "The room closed",
+      "code_taken": "That code is in use — making another…",
+      "name_needed": "Pick a name first",
+      "left": "You left the room",
+      "notHost": "Only the host can do that",
+      "problem": "That didn’t work — {reason}",
+      "badCode": "A room code is 4 letters, like BAKU"
+    },
+    "reconnect": {
+      "title": "Reconnecting…",
+      "message": "Connection lost — getting you back into the garden.",
+      "quit": "Leave"
+    }
   }
 }

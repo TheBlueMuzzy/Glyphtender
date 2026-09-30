@@ -8,11 +8,14 @@ import { useGameStore } from '../store/gameStore'
 import { castOptions } from '../store/turnPlan'
 import { addTurn } from '../store/stats'
 import { dangers } from '../store/danger'
+import { useOnline } from '../ui/online/session'
 import type { GameState } from '../engine/types'
 
 export function installDevHook() {
   const hook = {
     store: useGameStore,
+    /** The online session (room code, the live room) — read-only use by the online e2e. */
+    online: useOnline,
     /** For the planned move: a seed (hand index) and target hex that make Magic (or, with false, none). */
     findCast(wantMagic: boolean) {
       const { game, move, words } = useGameStore.getState()

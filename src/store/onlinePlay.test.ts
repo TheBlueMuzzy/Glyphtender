@@ -85,6 +85,7 @@ beforeEach(() => {
   connectOnline((message) => {
     sent.push(message)
     toServer(me, { type: 'action', action: message })
+    return true
   })
   toServer(me, { type: 'join', name: 'Ada', persistentId: 'persistent-me', create: true })
   toServer(blue, { type: 'join', name: 'Bo', persistentId: 'persistent-blue', create: false })
@@ -184,6 +185,19 @@ describe('online store — turns', () => {
     expect(store().online!.version).toBe(blueView().version)
     expect(store().game!.hands[1].every((s) => s === HIDDEN)).toBe(true)
     expect(store().move).toBeNull()
+  })
+
+  it('a sync answered with the same version means my action was lost: the plan comes back to play again', () => {
+    finishDraft()
+    yellowPlansAndCasts()
+    server.game = { ...server.game!, version: server.game!.version - 1 } // (pretend the server never got it)
+    me.mail = []
+    store().finishCast()
+    vi.advanceTimersByTime(3000)
+    server.game = { ...server.game!, version: store().online!.version }
+    deliver()
+    expect(store().waiting).toBe(false)
+    expect(store().note).toBe('problem')
   })
 
   it('a refused action drops the plan, says "problem" and asks for the true view', () => {

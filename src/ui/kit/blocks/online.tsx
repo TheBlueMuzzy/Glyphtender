@@ -2,8 +2,9 @@
 // and Reconnecting (lost connection / can't connect). The game does the networking and
 // passes in what's true right now; these screens only show it and report button presses.
 // Optional: onBack (a Back button on the create / join card), onReady (leave it out for games
-// that mark players ready by themselves: no Ready button, and Start doesn't wait for it).
-import { useRef, useState } from 'react'
+// that mark players ready by themselves: no Ready button, and Start doesn't wait for it),
+// children (the room: extra rows under the players, e.g. the host's game options — they scroll with the list).
+import { useRef, useState, type ReactNode } from 'react'
 import { Panel, Row, Screen, Stack } from '../layout'
 import { Avatar, Badge, Button, ListRow, RoomCodeInput, ScrollArea, Text, TextInput } from '../controls'
 import { Modal, Spinner, toast } from './dialogs'
@@ -27,6 +28,7 @@ type LobbyProps = {
   onStart: () => void; onLeave: () => void
   onBack?: () => void // shows a Back button on the create / join card
   words?: Partial<typeof lobbyWords>
+  children?: ReactNode // the room only: extra rows under the players (e.g. the host's game options)
 }
 
 export function Lobby(props: LobbyProps) {
@@ -88,7 +90,7 @@ export async function copyText(text: string, shown?: HTMLElement | null): Promis
   }
 }
 
-function Room({ w, roomCode, players = [], meId, hostId, minPlayers = 2, onReady, onStart, onLeave }: LobbyProps & { w: typeof lobbyWords; roomCode: string }) {
+function Room({ w, roomCode, players = [], meId, hostId, minPlayers = 2, onReady, onStart, onLeave, children }: LobbyProps & { w: typeof lobbyWords; roomCode: string }) {
   const codeBox = useRef<HTMLSpanElement>(null)
   const me = players.find((p) => p.id === meId)
   const iAmHost = meId !== undefined && meId === hostId
@@ -107,7 +109,9 @@ function Room({ w, roomCode, players = [], meId, hostId, minPlayers = 2, onReady
         </Stack>
         <Button variant="secondary" onClick={copy}>{w.copy}</Button>
       </Row>
-      <ScrollArea label={w.title} max="m">
+      {/* The players (and any extra rows) share one scroll area that fills the card: on a phone on its side
+          a fixed-height list showed only a row and a half */}
+      <ScrollArea label={w.title}>
         {players.map((p) => (
           <ListRow key={p.id} label={
             <Row gap="s" className="kit-nowrap">
@@ -118,6 +122,7 @@ function Room({ w, roomCode, players = [], meId, hostId, minPlayers = 2, onReady
             {onReady && p.id !== hostId && <Badge variant={p.ready ? 'primary' : 'neutral'}>{p.ready ? `✓ ${w.ready}` : w.notReady}</Badge>}
           </ListRow>
         ))}
+        {children}
       </ScrollArea>
       {waiting && <Text kind="caption">{waiting}</Text>}
       <Row gap="s" justify="between">

@@ -5,6 +5,7 @@ import rulesJson from '../../content/tuning/rules.json'
 import { boardNames, defaultBoardFor } from '../engine/boards'
 import { useGameStore } from '../store/gameStore'
 import { screens } from './kit'
+import { leaveOnline, onlineBackToLobby, onlinePlayAgain } from './online/session'
 
 /** What the new-game screen asks. */
 export interface NewGameChoices {
@@ -83,23 +84,26 @@ export function startNewGame(choices: NewGameChoices) {
   })
 }
 
-/** Play again: the same table options as the game just played, a fresh garden. */
+/** Play again: the same table options as the game just played, a fresh garden. (Online: the host's rematch.) */
 export function playAgain() {
+  if (useGameStore.getState().online) return onlinePlayAgain()
   const options = useGameStore.getState().options
   closeAllScreens()
   if (!options) return startNewGame(loadChoices())
   useGameStore.getState().startGame({ ...options, seed: randomSeed() })
 }
 
-/** End table → New game: back to the menu with the new-game screen open. */
+/** End table → New game: back to the menu with the new-game screen open. (Online: the host takes everyone to the lobby.) */
 export function newGameFromEnd() {
+  if (useGameStore.getState().online) return onlineBackToLobby()
   leaveToMenu()
   openNewGame()
 }
 
-/** Back to the main menu. */
+/** Back to the main menu (online: leaving the room — the seat is played for you so the others can finish). */
 export function leaveToMenu() {
   closeAllScreens()
+  if (useGameStore.getState().online) leaveOnline()
   useGameStore.getState().leaveGame()
 }
 

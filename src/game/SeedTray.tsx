@@ -4,6 +4,7 @@
 // an empty slot with a pulsing halo · waiting (move first) = dimmed. In refresh mode, set-aside seeds look held.
 // During the draft it shows the glyphlings still waiting to be placed instead. While the device is being
 // passed on (handoff) it shows empty slots: nobody sees the next player's seeds until they tap.
+// Online it always shows THIS device's seeds (dimmed while it's someone else's turn).
 // Taps and drags are handled by usePieceInput (data-hand / data-tray-pos / data-draft).
 import type { ReactNode } from 'react'
 import { hexCorners } from '../engine/hex'
@@ -23,9 +24,11 @@ export function SeedTray({ layout, boxWidth }: Props) {
   const setAside = useGameStore((s) => s.setAside)
   const trayOrder = useGameStore((s) => s.trayOrder)
   const hidden = useGameStore((s) => s.handoff !== null) // passing the device: the next player's seeds stay hidden
+  const mySeat = useGameStore((s) => s.online?.mySeat ?? null)
   const colours = useGardenTuning()
   const timing = useAnimTuning()
-  const seat = game.current
+  const seat = mySeat ?? game.current
+  const myTurn = seat === game.current // online, the plan on the board may be another player's replay
   const player = colours[colourOf(seat)]
   const { tile, columns, width, height } = layout
   const gap = columns > 1 ? (width - columns * tile) / (columns - 1) : 0
@@ -59,8 +62,8 @@ export function SeedTray({ layout, boxWidth }: Props) {
       return (
         <g key={pos} data-draft={pos === 0 ? 'next' : undefined}>
           {slot(x, y)}
-          <image href={glyphlingArt(seat)} x={x - art / 2} y={y - art / 2} width={art} height={art} opacity={pos === 0 ? 1 : 0.55} />
-          {pos === 0 && ring(x, y, false)}
+          <image href={glyphlingArt(seat)} x={x - art / 2} y={y - art / 2} width={art} height={art} opacity={pos === 0 && myTurn ? 1 : 0.55} />
+          {pos === 0 && myTurn && ring(x, y, false)}
         </g>
       )
     })
@@ -72,10 +75,10 @@ export function SeedTray({ layout, boxWidth }: Props) {
       const { x, y } = centre(pos)
       const index = order[pos]
       if (index === undefined || index >= hand.length) return <g key={`empty-${pos}`}>{slot(x, y)}</g>
-      const aimed = cast?.seed === index // on the board, waiting for Cast
+      const aimed = myTurn && cast?.seed === index // on the board, waiting for Cast
       if (aimed) return <g key={`hand-${index}`} data-hand={index} data-tray-pos={pos} opacity={0.8}>{slot(x, y)}{ring(x, y, true)}</g>
-      const held = (selected?.kind === 'seed' && selected.index === index) || setAside.includes(index)
-      const waiting = game.phase === 'play' && !move
+      const held = myTurn && ((selected?.kind === 'seed' && selected.index === index) || setAside.includes(index))
+      const waiting = !myTurn || (game.phase === 'play' && !move)
       const lift = held ? -tile * 0.08 : 0
       return (
         <g key={`hand-${index}`} data-hand={index} data-tray-pos={pos} data-held={held || undefined}

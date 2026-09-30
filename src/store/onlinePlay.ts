@@ -27,12 +27,12 @@ const set = (part: Partial<ReturnType<typeof store>>) => useGameStore.setState(p
 let inbox: GameView[] = []
 let replaying: GameView | null = null // another player's turn being played out on the old view
 let sent: Action | null = null // my last action (to keep my own tray order when its view comes back)
-let toServer: (message: OnlineAction) => void = () => {}
+let toServer: (message: OnlineAction) => boolean = () => false
 let syncTimer: ReturnType<typeof setTimeout> | null = null
 let replayTimer: ReturnType<typeof setTimeout> | null = null
 
-/** Where this device's messages go (useRoom's send). Set by the online screens when the room opens. */
-export function connectOnline(post: (message: OnlineAction) => void) {
+/** Where this device's messages go (useRoom's send: false = not connected right now). Set by OnlineSession.tsx. */
+export function connectOnline(post: (message: OnlineAction) => boolean) {
   toServer = post
 }
 
@@ -82,7 +82,11 @@ function showNext() {
     const { flying, online, game } = store()
     if (flying || replaying || !online || !game) return
     const view = inbox.shift()!
-    if (view.version <= online.version) continue // old news (or a repeat after a sync)
+    if (view.version <= online.version) {
+      // The server answered a sync (or a rejoin) with the game as it was: it never got my action
+      if (view.version === online.version && store().waiting) actionLost()
+      continue // old news
+    }
     if (isOthersTurn(game, view, online.mySeat)) return startReplay(view)
     apply(view)
   }
@@ -150,8 +154,15 @@ function post(action: Action) {
   const online = store().online
   if (!online) return
   sent = action
-  toServer({ kind: 'play', action, version: online.version })
-  waitForMyView()
+  if (toServer({ kind: 'play', action, version: online.version })) waitForMyView()
+  else actionLost() // not connected right now (the Reconnecting box is up)
+}
+
+/** My action never reached the server: give the plan back so the player can simply play it again. */
+function actionLost() {
+  sent = null
+  clearTimers()
+  set({ move: null, cast: null, selected: null, setAside: [], flying: false, waiting: false, note: 'problem' })
 }
 
 /** A seed landed (Board → finishCast → here): finish a replay, or show my own action's view once it's here. */

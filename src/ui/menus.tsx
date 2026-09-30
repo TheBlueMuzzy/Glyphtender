@@ -3,6 +3,8 @@
 import { Credits, HowToPlay, MainMenu, Pause, Settings, screens } from './kit'
 import { GameOverScreen } from '../game/GameOver'
 import { leaveToMenu, newGameFromEnd, openNewGame, playAgain } from './newGame'
+import { LobbyScreen } from './online/LobbyScreen'
+import { OnlineStartScreen } from './online/OnlineStartScreen'
 import text from '../../content/text/en.json'
 import settings from '../../content/ui/settings.json'
 import credits from '../../content/credits.json'
@@ -20,12 +22,16 @@ export function MainMenuScreen() {
       subtitle={w.subtitle}
       items={[
         { label: w.play, onClick: openNewGame, primary: true },
+        { label: w.playOnline, onClick: () => screens.push('online') },
         { label: w.prototype, onClick: () => window.location.assign(prototypeUrl) },
         { label: w.settings, onClick: () => screens.push('settings') },
       ]}
     />
   )
 }
+
+// PLAY ONLINE (src/ui/online/) — name + Create / Join, then the lobby while in a room.
+export { LobbyScreen, OnlineStartScreen }
 
 // SETTINGS — rows come from content/ui/settings.json ("on": false hides a row).
 export function SettingsScreen() {

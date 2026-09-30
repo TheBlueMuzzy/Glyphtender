@@ -120,7 +120,7 @@ try {
 
     // ---- menu → Play ----
     await page.goto(`http://127.0.0.1:${PORT}/`)
-    await page.getByRole('button', { name: 'Play' }).click()
+    await page.getByRole('button', { name: 'Play', exact: true }).click()
     await page.getByRole('button', { name: 'Start' }).click() // the new-game screen's defaults: 2 players, Small
     await page.waitForFunction(() => window.__glyphtender?.store.getState().wordsStatus === 'ready', null, { timeout: 15000 })
     await shot('1-draft')
@@ -245,7 +245,7 @@ try {
     await shot('12-pause')
     await page.getByRole('button', { name: 'Leave game' }).click()
     await page.getByRole('dialog', { name: 'Leave this game?' }).getByRole('button', { name: 'Leave game' }).click()
-    await page.getByRole('button', { name: 'Play' }).waitFor({ timeout: 3000 })
+    await page.getByRole('button', { name: 'Play', exact: true }).waitFor({ timeout: 3000 })
     console.log(`ok   ${size.name} menu → leave → main menu`)
 
     if (errors.length) fail(`${size.name} console errors: ${errors.join(' | ')}`)

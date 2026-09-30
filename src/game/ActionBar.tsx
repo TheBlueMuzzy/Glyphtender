@@ -16,12 +16,14 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
   const preview = usePreview()
   const game = s.game!
   if (game.phase === 'draft') return null
+  // Online: another device's turn, or my move is on its way to the server — the buttons wait
+  const notNow = s.waiting || (s.online !== null && s.online.mySeat !== game.current)
 
   if (game.phase === 'refresh') {
     return (
       <Row gap="s" justify="center" className="game-actions">
-        <Button variant="secondary" onClick={() => s.refresh(true)}>{w.keepAll}</Button>
-        <Button disabled={s.setAside.length === 0} onClick={() => s.refresh()}>{fill(w.refresh, { n: s.setAside.length })}</Button>
+        <Button variant="secondary" disabled={notNow} onClick={() => s.refresh(true)}>{w.keepAll}</Button>
+        <Button disabled={notNow || s.setAside.length === 0} onClick={() => s.refresh()}>{fill(w.refresh, { n: s.setAside.length })}</Button>
       </Row>
     )
   }
@@ -39,9 +41,10 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
     )
   }
 
-  const moveOnly = !s.cast && mayMoveOnly(game, s.move)
-  const busy = s.flying || s.handoff !== null // a seed in the air, or the device being passed on
-  const castLabel = moveOnly ? w.endTurn : preview ? fill(w.castMagic, { n: preview.magic }) : w.cast
+  // (online, another player's replayed plan is on the board — it's not mine to preview)
+  const moveOnly = !notNow && !s.cast && mayMoveOnly(game, s.move)
+  const busy = s.flying || s.handoff !== null || notNow // a seed in the air, the device being passed on, or not my turn online
+  const castLabel = moveOnly ? w.endTurn : preview && !notNow ? fill(w.castMagic, { n: preview.magic }) : w.cast
   return (
     <Row gap="s" justify="center" className="game-actions">
       <Button variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
