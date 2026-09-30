@@ -6,7 +6,7 @@ Done when: `npm run dev` gives a phone link on Wi-Fi, `npm test` and `npm run bu
 - [x] 🤖 1. Vite + React + TS app, `base: '/glyphtender/'`, `server.host: true` — package.json, vite.config.ts, src/main.tsx
 - [x] 🤖 2. vitest wired, first test — src/engine/hex.test.ts
 - [x] 🤖 3. GitHub Pages workflow (test + build + deploy on main) + PWA (`registerSW({immediate:true})`) — .github/workflows/deploy.yml, vite.config.ts
-- [ ] 🤖 4. Dev Kit install + wiring — `node ~/Documents/dev/framework/devkit/scripts/install-devkit.mjs .`, content/devkit.json, content/tuning/
+- [x] 🤖 4. Dev Kit install + wiring — `node ~/Documents/dev/framework/devkit/scripts/install-devkit.mjs .`, content/devkit.json, content/tuning/
 - [ ] 🤖 5. Stand-in art: runeblossoms (A–Z × 4) + glyphlings → 256 px WebP — public/art/, content/credits.json (stand-in)
 Check: build passes; dev link loads on a phone; Dev Kit opens.
 

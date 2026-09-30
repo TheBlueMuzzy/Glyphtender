@@ -2,12 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'node:path'
+import { devkit } from './vite-plugins/devkit/devkitVite'
 
 // https://vite.dev/config/
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? '/glyphtender/' : '/',
   plugins: [
     react(),
+    devkit(), // Dev Kit: release switch (content/devkit.json) + Save button (dev server only)
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
