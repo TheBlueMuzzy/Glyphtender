@@ -6,13 +6,16 @@
 //   held     — the piece you're holding: solid ring in the player's colour
 //   planned  — moved/targeted but not cast yet: pulsing halo at the hex edge (a targeted seed is also faded)
 //   done     — plain piece
+// DANGER CUES (DangerCue.tsx): 1 move left = dashed thorny ring in the owner's colour · tangled = a vine wraps it
 // Colours: content/tuning/garden.json · timings: anim.json · margin: layout.json.
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { getBoard } from '../engine/boards'
 import { hexCorners, hexKey, hexToPixel, type Hex } from '../engine/hex'
 import { useGameStore } from '../store/gameStore'
 import { highlightFor } from '../store/turnPlan'
+import { dangers } from '../store/danger'
 import { colourOf, glyphlingArt, seedArt } from './art'
+import { DangerCue } from './DangerCue'
 import { usePreview } from './usePreview'
 import { HEX, useThrow } from './useThrow'
 import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
@@ -68,6 +71,9 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
     [flying, move, cast],
   )
   useThrow({ svgRef, seedRef, flight, onLanded: finishCast, landed, timing, colours })
+
+  // Glyphlings with 0–1 moves left (everyone's — it's on the board for all to see, and never shows Magic)
+  const inDanger = useMemo(() => dangers(game), [game])
 
   // ---- what's where, with the planned move and cast shown ----
   const seat = game.current
@@ -150,12 +156,16 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
         const hex = move?.glyphling === g.id ? move.to : g.hex
         const { x, y } = at(hex)
         const held = selected?.kind === 'glyphling' && selected.id === g.id
+        const planned = move?.glyphling === g.id
+        const danger = held || planned ? undefined : inDanger.get(g.id) // held/planned rings win over the danger cue
         return (
           <g key={g.id}>
             <g data-hop={g.id} className="game-hop">
-              <image data-glyph={g.id} data-hex={hexKey(hex)} href={glyphlingArt(g.seat)} x={x - s} y={y - s} width={2 * s} height={2 * s} />
+              <image data-glyph={g.id} data-hex={hexKey(hex)} href={glyphlingArt(g.seat)} x={x - s} y={y - s} width={2 * s} height={2 * s}
+                opacity={danger === 'tangled' ? colours.tangledDim : 1} />
             </g>
-            {held ? ring(hex, colours[colourOf(g.seat)], false) : move?.glyphling === g.id && ring(hex, colours[colourOf(g.seat)], true)}
+            {held ? ring(hex, colours[colourOf(g.seat)], false) : planned && ring(hex, colours[colourOf(g.seat)], true)}
+            {danger && <DangerCue danger={danger} x={x} y={y} hex={HEX} owner={colours[colourOf(g.seat)]} colours={colours} glyphling={g.id} />}
           </g>
         )
       })}

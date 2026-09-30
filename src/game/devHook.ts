@@ -7,6 +7,8 @@ import { randomAction } from '../engine/sim'
 import { useGameStore } from '../store/gameStore'
 import { castOptions } from '../store/turnPlan'
 import { addTurn } from '../store/stats'
+import { dangers } from '../store/danger'
+import type { GameState } from '../engine/types'
 
 export function installDevHook() {
   const hook = {
@@ -25,20 +27,29 @@ export function installDevHook() {
     },
     /** Plays random legal actions until the game is over. */
     playRest(seed = 1) {
-      const { game, words, stats: before } = useGameStore.getState()
-      if (!game || !words) return false
-      let state = game
-      let stats = before
-      let rng = seed
-      for (let i = 0; i < 5000 && state.phase !== 'over'; i++) {
-        const pick = randomAction(state, rng)
-        rng = pick.rng
-        state = applyAction(state, pick.action, words)
-        if (pick.action.type === 'turn' && state.lastTurn) stats = addTurn(stats, state.lastTurn) // for the end table
-      }
-      useGameStore.getState().loadState(state, stats)
-      return state.phase === 'over'
+      return playUntil(seed, (state) => state.phase === 'over')
+    },
+    /** Plays random legal actions until some glyphling has only 1 move left, on a player's turn (for the danger cue). */
+    playUntilDanger(seed = 1) {
+      return playUntil(seed, (state) => state.phase === 'play' && [...dangers(state).values()].includes('warning'))
     },
   }
   ;(window as unknown as { __glyphtender: typeof hook }).__glyphtender = hook
+}
+
+/** Random legal actions (the engine's sim player) until done(state) or the game ends; the store jumps there. */
+function playUntil(seed: number, done: (state: GameState) => boolean) {
+  const { game, words, stats: before } = useGameStore.getState()
+  if (!game || !words) return false
+  let state = game
+  let stats = before
+  let rng = seed
+  for (let i = 0; i < 5000 && state.phase !== 'over' && !done(state); i++) {
+    const pick = randomAction(state, rng)
+    rng = pick.rng
+    state = applyAction(state, pick.action, words)
+    if (pick.action.type === 'turn' && state.lastTurn) stats = addTurn(stats, state.lastTurn) // for the end table
+  }
+  useGameStore.getState().loadState(state, stats)
+  return done(state)
 }
