@@ -47,6 +47,15 @@
   3. **Cast** commits the turn — only then does the story play: the glyphling hops and **throws** the seed, it **arcs** to the target, lands, and the runeblossom **grows** out of the ground. Nothing can be touched while a seed is in the air.
   - Pinch/scroll zoom is optional; a Fit button snaps back.
 - **Seed tray size:** seeds in the tray are **real size — the same as a seed on the board** (Muzzy, 2026-09-30: "they were way too small on my desktop… they should be basically real size to how they'll look on the board"). Never smaller than a finger (44 px); if a phone can't fit 8 at board size, the tray wraps to 2 rows rather than shrinking.
+- **Muzzy's feel notes (2026-09-30, after playing the alpha build):**
+  - **Score pops:** when a word grows, each seed shows its Magic above it (+1, or +2 for your own seed — HELP with H and P yours: +2 +1 +1 +2), then they fly together into one bigger total (+6) over the glyphling that cast the seed. (Only this turn's Magic — running totals stay secret.)
+  - **Word indicators** (new-game option, on/off): on = a made word is highlighted **behind** its seeds, thick like a border, in **white** (neutral, never a player colour); off = nothing tells you a word was made (no outline, no "+N", no pops — you spot words yourself).
+  - **Cast ranges show right after the move** — don't wait for a seed to be picked.
+  - **Drop target:** while dragging, the hex it would land on lights up (the zone reacts, not the piece).
+  - **Whose turn:** the current player's glyphlings pulse gently (small) until one is moved.
+  - **"No" shake:** tapping anything you can't move gives a quick shake.
+  - **Layout:** buttons finger-sized like a glyphling (also on PC); the seed tray about half as far from the board; a setting flips board ↔ tray; the prompt sits just above the tray in larger letters (not in the top bar).
+  - **End screen:** just "New game" (no "Play again" — fewer, clearer options).
 - **Piece states — one look for every piece** (glyphlings, seeds, tray): **options** = glowing hexes with a dot (teal move · gold cast) · **held** = solid ring in the player's colour · **planned** = pulsing halo at the hex edge in the player's colour (a targeted seed is also faded) · **done** = plain.
 - **Mechanics:**
 | Mechanic | What players end up doing → Target |
