@@ -40,10 +40,7 @@ export function promptFor(s: PromptState): { text: string; detail: string } {
 function revealPrompt(game: GameState, at: number | null): string {
   const view = revealView(revealSteps(game), at)
   const r = w.reveal
-  if (view.announced) {
-    const names = game.winners.map(playerName).join(r.and)
-    return fill(game.winners.length > 1 ? r.winners : r.winner, { names })
-  }
+  if (view.announced) return winnerTitle(game)
   if (view.current?.kind === 'bonus') return fill(r.bonus, { n: view.current.amount, player: playerName(view.current.seat) })
   if (view.current?.kind === 'count') return fill(r.counting, { player: playerName(view.current.seat) })
   return r.tangles
@@ -60,4 +57,10 @@ export function promptSeat(s: PromptState): number {
   if (view.current?.kind === 'count') return view.current.seat
   if (view.current?.kind === 'bonus') return view.current.seat
   return game.current
+}
+
+/** "Grand Glyphtender: Yellow!" — or, for a shared win, "Grand Glyphtenders: Yellow & Blue!" */
+export function winnerTitle(game: GameState): string {
+  const names = game.winners.map(playerName).join(w.reveal.and)
+  return fill(game.winners.length > 1 ? w.reveal.winners : w.reveal.winner, { names })
 }

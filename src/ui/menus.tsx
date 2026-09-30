@@ -2,7 +2,7 @@
 // Words: content/text/en.json · settings rows: content/ui/settings.json · look: content/ui/style.json
 import { Credits, HowToPlay, MainMenu, Pause, Settings, screens } from './kit'
 import { GameOverScreen } from '../game/GameOver'
-import { leaveToMenu, openNewGame, playAgain } from './newGame'
+import { leaveToMenu, newGameFromEnd, openNewGame, playAgain } from './newGame'
 import text from '../../content/text/en.json'
 import settings from '../../content/ui/settings.json'
 import credits from '../../content/credits.json'
@@ -52,7 +52,7 @@ export function RulesScreen() {
   return <HowToPlay pages={pages} words={words} />
 }
 
-// GAME OVER — the results over the tangled garden (src/game/GameOver.tsx).
+// GAME OVER — the end table over the tangled garden (src/game/GameOver.tsx).
 export function GameOverDialog() {
-  return <GameOverScreen onPlayAgain={playAgain} onMenu={leaveToMenu} />
+  return <GameOverScreen onPlayAgain={playAgain} onNewGame={newGameFromEnd} onMenu={leaveToMenu} />
 }

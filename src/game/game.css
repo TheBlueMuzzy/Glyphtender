@@ -44,4 +44,9 @@
 
   /* The dragged piece floats in this layer, over everything, never catching taps itself */
   .game-drag-layer { grid-area: 1 / 1 / -1 / -1; inline-size: 100%; block-size: 100%; pointer-events: none; overflow: visible; z-index: 1; contain: size; }
+
+  /* The end table's buttons: side by side, sharing the width; when they don't fit (a phone), they wrap and
+     the last one (Play again) goes on its own line ON TOP (wrap-reverse) */
+  .game-end-buttons { display: flex; flex-wrap: wrap-reverse; gap: var(--gap-s); }
+  .game-end-buttons > * { flex: 1 1 auto; }
 }

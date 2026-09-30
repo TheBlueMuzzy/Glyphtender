@@ -64,7 +64,14 @@
       "message": "Most Magic wins — ties share the win.",
       "points": "{n} Magic",
       "winner": "Winner",
+      "tangleMagic": "Tangles +{n}",
+      "bestTurn": "Best turn +{n}",
+      "longestWord": "Longest {word}",
+      "noWord": "no words yet",
+      "wordsMade": "{n} words",
+      "separator": " · ",
       "playAgain": "Play again",
+      "newGame": "New game",
       "menu": "Menu"
     },
     "handoff": {
