@@ -22,7 +22,7 @@ Done when: the original's words.txt is in the game byte-for-byte and every scori
 ## F03 🧱 UI kit (Cozy, night colours)
 - [x] 🤖 9. Install the UI kit (Cozy), wire applyStyle + check:ui — src/ui/kit, content/ui/style.json, src/main.tsx
 - [x] 🤖 10. Night colours as Cozy tweaks (readable contrast), home page = kit MainMenu (Prototype, Settings) — content/ui/style.json, src/App.tsx
-- [ ] 🤖 11. Screenshots at 390×844, 844×390, 1440×900; nothing clipped
+- [x] 🤖 11. Screenshots at 390×844, 844×390, 1440×900; nothing clipped
 - [ ] 🙋 12. Look at the Cozy night menus; tweak colours in Dev Kit → Color if wanted
 
 Ask Muzzy:
@@ -32,4 +32,7 @@ Notes:
 - F04 surprise: "can move but can't cast" only ever means "no seeds in hand" — after any move, the hexes the glyphling just crossed (at least the one it left) are always open to cast into. Tested.
 - F03 task 9: kit 0.2.2 (framework db90181) installed with the Cozy preset; applyStyle + applyAccessibility wired in src/main.tsx; `npm run check:ui` passes. content/ui/settings.json = the kit's standard rows (accessibility tab kept).
 - F03 task 10: night palette = Cozy tweaks in content/ui/style.json (TDD D09). Home page = kit MainMenu (title, tagline, "Prototype: move → cast" → sketches/move-cast/, Settings) in src/ui/menus.tsx; words in content/text/en.json; Settings → About → Credits opens the kit Credits screen. Settings rows switched off (not real yet): language (English only), change name, analytics, and the example.com privacy/feedback links. body has class="kit-page"; index.css placeholder styles removed.
+- F03 task 11: `npm run e2e:menu <outDir> [url]` (e2e/menu-shots.mjs) shoots home, Settings, Settings → Accessibility at 390×844, 844×390, 1440×900 — all 9 pass: nothing past a screen edge, every button ≥ 44px, Esc closes Settings, the Prototype button reaches sketches/move-cast/, no console errors. check:ui, test, build, check:devkit all pass.
+- Kit gap (framework-first, not fixed in the game): the kit's fonts.css bundles all 7 style fonts, so the offline cache (PWA precache) carries ~118 KB of fonts Cozy never uses (only Nunito, 39 KB). Fix belongs in the framework kit (load only the chosen style's fonts).
+- Kit note: on a phone on its side, Settings shows ~1.5 rows under the tabs before scrolling (kit layout, readable; scrolls fine).
 - Word Play (GMTK) feel reference being researched → .planning/research/wordplay.md
