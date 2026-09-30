@@ -1,0 +1,11 @@
+[
+  {
+    "paths": ["public/art/runeblossoms/", "public/art/glyphlings/", "public/pwa-192x192.png", "public/pwa-512x512.png"],
+    "source": "Glyphtender (Unity original) — Muzzy's own art, stand-in until redrawn",
+    "author": "Muzzy (TheBlueMuzzy)",
+    "licence": "own work",
+    "light": "🟢",
+    "url": "",
+    "credit": ""
+  }
+]
