@@ -1,22 +1,17 @@
 ## ▶ RESUME HERE
-Sprint 06 "Feel pass" done (autonomous, 2026-09-30): all of Muzzy's playtest notes built — score pops → total over the caster, word indicators option (white border behind words), gold cast hexes right after the move, drop-target highlight, turn pulse, "no" shake, finger-sized buttons, prompt above the tray, Tray position setting, end screen = New game. Alpha feature-complete on dev/alpha; nothing deployed. Next: Muzzy plays → approvals → `/deliver` alpha.
-**Muzzy — list:**
-1. Play again (`npm run dev` → http://192.168.1.152:5180; online also `npm run party:dev`). Feel check: pops, word borders, pulse, shake, drop target, big buttons, flipped tray (Settings → Gameplay). Every timing is in Dev Kit → Tuning.
-2. Sprint 06 questions (defaults built): indicators OFF hides "+N" + pops too? · desktop buttons 83 px — keep or cap? · tall phones: prompt sits between board and tray (can't also halve that gap) OK? · empty hexes don't shake, no pulse in the draft OK?
-3. Earlier decisions (defaults built): Magic only as secret as a real table · online timer Off, dropped player 60 s → auto-play, leaver auto-played, 2 missed turns = away, rematch/New game = host · word list B001 (ZYGOTESAA + 7 proper nouns) · refresh near an empty bag.
-4. Framework: merge branch dev/rooms (Dev Kit 0.3.0, Rooms 0.1.1, UI kit 0.2.5) into main.
-5. Roll Better (live) leaks players' persistentIds (BMUZ finding 39).
-6. BMUZ stress test: 45 findings in ~/.claude/config/bmuz/reviews/2026-09-30-glyphtender-remake/FINDINGS.md.
+Released v0.1.0 (alpha) 2026-09-30 — live at https://thebluemuzzy.github.io/glyphtender/ (Pages deploys on push to main) + online server https://glyphtender.thebluemuzzy.partykit.dev. Online (F20–F22) still 🎛️ until tested with friends on real devices. Next: Muzzy tests with friends → `/bug` anything → then `/define` beta (AI opponents).
+Muzzy: open decisions (defaults built): word list B001 · online timer/away rules · Magic secrecy · desktop button size · framework merge of dev/rooms · Roll Better persistentId leak.
 
 ## Where we are
-Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: waiting on Muzzy (play + decisions, then /deliver alpha) · Branch: dev/alpha · Version: 0.0.0.2 · Live: none yet
+Stage: deliver · Milestone: alpha released · Sprint: — · Doing: friends testing · Branch: main · Version: 0.1.0.0 · Live: https://thebluemuzzy.github.io/glyphtender/ (alpha)
 
 ## Key facts
 **Remake.** Web remake of the Unity game. The original is read-only reference at `../glyphtender-original` (GitHub `TheBlueMuzzy/glyphtender-original`, renamed from `Glyphtender` 2026-09-30). Never copy it wholesale — pull ideas/assets across deliberately. Digest: `.planning/research/original-digest.md`.
 **AI source of truth** is the original's branch `festive-booth` (goal-selection model), not its `main`.
 **Muzzy's direction (2026-09-30):** phone (portrait AND landscape) + desktop — do responsive properly · first release = strong pass-and-play (AI replaces a seat next; online = "P0.5", reuse Roll Better's rooms if cheap) · tutorial not yet · UI kit **Cozy** style · think critically vs industry standards, don't just port.
 **BMUZ stress test:** log BMUZ gaps in `~/.claude/config/bmuz/reviews/2026-09-30-glyphtender-remake/FINDINGS.md` as we go.
-**Default branch:** main. Work branch: `dev/alpha`.
+**Default branch:** main (deploys to GitHub Pages on push). Next work branch: `dev/beta` (made by /develop).
+**Release:** GitHub Pages (recipe ~/.claude/config/bmuz/release/github-pages.md) + PartyKit `npx partykit deploy` (server first, only when party/ or engine/content it uses changed) → glyphtender.thebluemuzzy.partykit.dev.
 **Sims:** `npm run sim` (research/sims.md): bag runs out in 0–1.6% of games; games 42–67 turns.
 **Online dev:** `npm run party:dev` (PartyKit on port 1997 — Roll Better uses 1999) + `npm run dev`; e2e: `e2e:game`, `e2e:pass`, `e2e:online` (each starts its own servers; run one at a time).
 **Run:** `npx vite --host --port 5180` (dev port 5180) · tests `npm test` · sketch check `npm run e2e:sketch` (needs the dev server).

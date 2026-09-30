@@ -1,12 +1,17 @@
 {
   "name": "Glyphtender",
-  "version": "0.0.0",
-  "build": 2,
+  "version": "0.1.0",
+  "build": 0,
   "history": [
     {
       "version": "0.0.0",
       "date": "2026-09-30",
       "summary": "Project created — web remake of the Unity game (now glyphtender-original)"
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-09-30",
+      "summary": "Alpha — play Glyphtender in your browser: 2–4 player pass-and-play and online rooms, seeds that fly and grow, score pops, tangle cues and the Magic reveal"
     }
   ]
 }
