@@ -11,7 +11,10 @@
     "ghostOpacity": "How visible the faded glyphling left where it started (tap it to send the glyphling back).",
     "yellow": "Yellow player's colour — used for their 'held' and 'planned' rings and their thrown seed.",
     "blue": "Blue player's colour — same uses as yellow.",
-    "plannedSeedOpacity": "How faded a targeted (not yet thrown) seed looks. 1 = solid.",
+    "plannedSeedLook": "How a targeted (not yet thrown) seed looks — always solid, nothing shows through it: dimmed = faded over a patch of hex colour · greyed = grey and darker · misty (default) = under a pale wash, like a ghost.",
+    "plannedMist": "\"misty\" look: the colour of the pale wash over a targeted seed.",
+    "plannedMistStrength": "\"misty\" look: how thick the wash is. 0 = none (looks planted), 1 = the seed is hidden.",
+    "plannedSeedOpacity": "\"dimmed\" look only: how strong the targeted seed's picture is over its hex-coloured patch. 1 = full colour.",
     "purple": "Purple player colour — same uses as yellow.",
     "pink": "Pink player colour — same uses as yellow.",
     "wordBorder": "Colour of the border round a made word — neutral (never a player colour).",
@@ -50,6 +53,11 @@
     "ghostOpacity": [
       0,
       0.8,
+      0.05
+    ],
+    "plannedMistStrength": [
+      0.1,
+      0.9,
       0.05
     ],
     "plannedSeedOpacity": [
@@ -125,6 +133,9 @@
   "ghostOpacity": 0.3,
   "yellow": "#f2c14e",
   "blue": "#5fd4f2",
+  "plannedSeedLook": "misty",
+  "plannedMist": "#dce8ff",
+  "plannedMistStrength": 0.55,
   "plannedSeedOpacity": 0.45,
   "purple": "#b48cf2",
   "pink": "#f28cc4",

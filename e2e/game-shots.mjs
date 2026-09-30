@@ -14,6 +14,7 @@ import { mkdirSync } from 'node:fs'
 import { createServer } from 'vite'
 import { chromium } from 'playwright-core'
 import layout from '../content/tuning/layout.json' with { type: 'json' }
+import garden from '../content/tuning/garden.json' with { type: 'json' }
 import { leftoverPops } from './leftover-pops.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
@@ -206,6 +207,22 @@ try {
       }
       fail(`${size.name}: found no word to make with indicators off`)
     }
+    // B010: the targeted seed (next to real seeds) in each planned look — solid, nothing shows through — for Muzzy to compare.
+    // Each look is sent the way the Dev Kit's Tuning tab sends an edit; the file's own look comes back at the end.
+    const plannedLookShots = async () => {
+      const planned = page.locator('[data-planned-seed] image')
+      if ((await planned.getAttribute('opacity')) !== null) fail(`${size.name}: B010: the targeted seed is see-through (opacity)`)
+      if (!(await planned.getAttribute('filter'))) fail(`${size.name}: B010: the targeted seed has no planned look`)
+      if (size.name === 'phone-wide') return
+      const tune = (data) => page.evaluate((data) => window.dispatchEvent(new CustomEvent('devkit:tuning', { detail: { file: 'garden', data } })), data)
+      for (const look of ['dimmed', 'greyed', 'misty']) {
+        await tune({ ...garden, plannedSeedLook: look })
+        await page.waitForTimeout(200)
+        await page.screenshot({ path: `${OUT}/b010-${look}-${size.width}x${size.height}.png` })
+      }
+      await tune(garden)
+      console.log(`ok   ${size.name} B010 planned seed looks · solid (filter, no opacity) · shots b010-*`)
+    }
     // While dragging over a legal hex: its "drop here" mark shows on that hex
     const checkDropTarget = async () => {
       const lit = await page.evaluate(() => document.querySelector('[data-drop-target][visibility="visible"]')?.getAttribute('data-drop-hex') ?? null)
@@ -338,6 +355,7 @@ try {
           await shot('7-planned-words')
           const borders = await page.locator('[data-planned-words] [data-word-hex]').count()
           if (borders < 2) fail(`${size.name}: the planned word has no white border (${borders} hexes)`)
+          await plannedLookShots()
         }
         if (turn === 3 && !undoChecked) {
           undoChecked = true

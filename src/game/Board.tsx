@@ -4,7 +4,8 @@
 // PIECE STATES — one look for every piece (GDD §4 "Piece states"):
 //   options  — hexes you could pick: soft glow + dot (teal = move there, gold = cast there)
 //   held     — the piece you're holding: solid ring in the player's colour
-//   planned  — moved/targeted but not cast yet: pulsing halo at the hex edge (a targeted seed is also faded)
+//   planned  — moved/targeted but not cast yet: pulsing halo at the hex edge (a targeted seed also gets a solid
+//              "not planted yet" look — garden.json plannedSeedLook, PlannedSeedLook.tsx)
 //   done     — plain piece
 //   drop here — while dragging, the legal hex under the piece: a brighter, filled option (dropTarget.ts)
 // WORDS (word indicators on): a white border behind the seeds — planned while aiming, then after they grow (WordBorders.tsx).
@@ -22,6 +23,8 @@ import { revealSteps } from '../store/revealPlan'
 import { colourOf, glyphlingArt, seedArt } from './art'
 import { boardShift, type TraySide } from './boardPlace'
 import { DangerCue } from './DangerCue'
+import { PLANNED_FILTER_ID } from './plannedLook'
+import { PlannedSeedFilter } from './PlannedSeedLook'
 import { RevealMarks } from './RevealMarks'
 import { useGlide } from './useGlide'
 import { useTurnPulse } from './useTurnPulse'
@@ -144,6 +147,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   return (
     <svg ref={svgRef} className="game-garden" viewBox={`${view.minX - shift.x} ${view.minY - shift.y} ${view.w} ${view.h}`}
       preserveAspectRatio="xMidYMid meet" role="img" aria-label="Garden">
+      <defs><PlannedSeedFilter colours={colours} /></defs>
       {board.cells.map((h) => {
         const { x, y } = at(h)
         return <polygon key={hexKey(h)} data-hex={hexKey(h)} points={hexCorners(x, y, HEX * 0.97)}
@@ -191,7 +195,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
       {cast && plannedLetter && (
         <g data-planned-seed>
           <image data-hex={hexKey(cast.target)} href={seedArt(plannedLetter, seat)} x={at(cast.target).x - s} y={at(cast.target).y - s}
-            width={2 * s} height={2 * s} opacity={colours.plannedSeedOpacity} />
+            width={2 * s} height={2 * s} filter={`url(#${PLANNED_FILTER_ID})`} />
           {ring(cast.target, player, true)}
         </g>
       )}
