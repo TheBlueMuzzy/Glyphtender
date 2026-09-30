@@ -37,7 +37,10 @@ export function promptFor(s: PromptState): { text: string; detail: string } {
   if (s.flying) return { text: w.prompts.flying, detail: turnOf }
   if (s.selected?.kind === 'glyphling') return { text: w.prompts.moveHeld, detail: hint }
   if (s.selected?.kind === 'seed') return { text: w.prompts.castHeld, detail: hint }
-  if (s.cast) return { text: s.wordsStatus === 'ready' ? w.prompts.ready : w.prompts.loading, detail: hint }
+  if (s.cast) {
+    const text = s.wordsStatus === 'ready' ? w.prompts.ready : s.wordsStatus === 'failed' ? w.prompts.wordsFailed : w.prompts.loading
+    return { text, detail: hint }
+  }
   if (s.move) return { text: mayMoveOnly(game, s.move) ? w.prompts.moveOnly : w.prompts.cast, detail: hint }
   return { text: w.prompts.move, detail: hint }
 }

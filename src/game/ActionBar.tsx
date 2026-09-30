@@ -1,5 +1,6 @@
 // THE BUTTONS under the tray — change with the moment:
 //   play:    Shuffle · Undo · "Cast · +N" (N = Magic from THIS cast only; totals stay secret) or End turn
+//            (Retry instead of Cast if the word list couldn't be loaded — End turn never needs it)
 //   refresh: Keep all · Refresh N
 //   over:    Skip (while the Magic reveal plays) → then Results · Play again
 import text from '../../content/text/en.json'
@@ -7,6 +8,7 @@ import { useGameStore } from '../store/gameStore'
 import { mayMoveOnly } from '../store/turnPlan'
 import { revealSteps } from '../store/revealPlan'
 import { Button, Row, fill, screens } from '../ui/kit'
+import { wordListUrl } from './art'
 import { usePreview } from './usePreview'
 
 const w = text.game.buttons
@@ -44,6 +46,16 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
   // (online, another player's replayed plan is on the board — it's not mine to preview)
   const moveOnly = !notNow && !s.cast && mayMoveOnly(game, s.move)
   const busy = s.flying || s.handoff !== null || notNow // a seed in the air, the device being passed on, or not my turn online
+  // The word list couldn't be loaded: a cast can't be scored, so the main button fetches it again
+  if (!moveOnly && s.wordsStatus === 'failed') {
+    return (
+      <Row gap="s" justify="center" className="game-actions">
+        <Button variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
+        <Button variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
+        <Button onClick={() => s.loadWords(wordListUrl())}>{w.retryWords}</Button>
+      </Row>
+    )
+  }
   const castLabel = moveOnly ? w.endTurn : preview && !notNow ? fill(w.castMagic, { n: preview.magic }) : w.cast
   return (
     <Row gap="s" justify="center" className="game-actions">

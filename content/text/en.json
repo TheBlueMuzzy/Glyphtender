@@ -29,6 +29,7 @@
       "refreshDetail": "Tap seeds to set them aside",
       "over": "The garden is tangled",
       "loading": "Gathering the words…",
+      "wordsFailed": "Couldn't load the words",
       "handoff": "Pass to {player}",
       "othersTurn": "{player} is playing…",
       "othersDraft": "{player} is placing a glyphling…",
@@ -40,6 +41,7 @@
       "notYours": "That one isn't yours",
       "tangled": "That glyphling is tangled — it can't move",
       "wordsLoading": "Still gathering the words — one moment",
+      "wordsFailed": "Couldn't load the words — tap Retry",
       "problem": "That can't be done — try again"
     },
     "buttons": {
@@ -53,7 +55,8 @@
       "menu": "Menu",
       "results": "Results",
       "playAgain": "Play again",
-      "skip": "Skip"
+      "skip": "Skip",
+      "retryWords": "Retry"
     },
     "pause": {
       "title": "Paused",

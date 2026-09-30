@@ -20,7 +20,7 @@ import { addTurn, emptyStats, type PlayerStats } from './stats'
 import { revealSteps } from './revealPlan'
 
 /** Short messages for taps that can't do anything (their words live in content/text/en.json → game.notes). */
-export type Note = 'moveFirst' | 'notYours' | 'tangled' | 'wordsLoading' | 'problem'
+export type Note = 'moveFirst' | 'notYours' | 'tangled' | 'wordsLoading' | 'wordsFailed' | 'problem'
 
 /** The table options a game starts with (the new-game screen). Play again reuses them. */
 export interface GameOptions {
@@ -115,8 +115,8 @@ export const useGameStore = create<GameStore>()((set, get) => {
   const send = (action: Parameters<typeof applyAction>[1]) => {
     const { game, words } = get()
     if (!game) return null
-    if (action.type === 'turn' && !words) {
-      set({ note: 'wordsLoading' })
+    if (action.type === 'turn' && action.seed !== null && !words) { // only a cast grows words; a move-only turn never reads them
+      set({ note: wordsNote() })
       return null
     }
     const problem = checkAction(game, action)
@@ -127,6 +127,9 @@ export const useGameStore = create<GameStore>()((set, get) => {
     }
     return applyAction(game, action, words ?? NO_WORDS)
   }
+
+  // Why a cast can't go yet: the words are still coming, or they couldn't be loaded (the screen offers Retry)
+  const wordsNote = (): Note => (get().wordsStatus === 'failed' ? 'wordsFailed' : 'wordsLoading')
 
   // Online: check it here too (so a mistake shows at once), then the server plays it and sends the new view.
   const sendOnline = (action: Action): boolean => {
@@ -193,7 +196,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
       if (game?.phase === 'over') set({ revealAt: revealSteps(game).length })
     },
 
-    // The official word list, fetched once (about 250 KB gzipped)
+    // The official word list, fetched once (about 250 KB gzipped). After a failed load, calling it again is Retry.
     loadWords: async (url) => {
       if (get().wordsStatus === 'loading' || get().wordsStatus === 'ready') return
       set({ wordsStatus: 'loading' })
@@ -282,7 +285,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
     startCast: () => {
       const { game, move, cast, words } = get()
       if (!game || !move || !canPlay()) return
-      if (!words) return set({ note: 'wordsLoading' })
+      if (cast && !words) return set({ note: wordsNote() }) // End turn (move only) doesn't need the words
       // Online: the action leaves the moment Cast is pressed, so the trip to the server hides inside the throw
       if (get().online && (cast || mayMoveOnly(game, move))) {
         if (cast) set({ flying: true }) // the throw starts now; the server's view waits for it to land

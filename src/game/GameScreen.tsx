@@ -3,7 +3,9 @@
 // tray BELOW the board ("stacked"); otherwise tray BESIDE it ("side", taking sidePanelShare of the width).
 // The board always fits its box; the tray is real size (trayLayout.ts).
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
+import { toast } from '../ui/kit'
 import { ActionBar } from './ActionBar'
 import { wordListUrl } from './art'
 import { Board } from './Board'
@@ -19,10 +21,15 @@ import './game.css'
 export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   const game = useGameStore((s) => s.game)!
   const loadWords = useGameStore((s) => s.loadWords)
+  const wordsStatus = useGameStore((s) => s.wordsStatus)
   const layout = useLayoutTuning()
   const colours = useGardenTuning()
 
   useEffect(() => { loadWords(wordListUrl()) }, [loadWords])
+  // Couldn't load the words (a first visit on a bad connection): say so — the Cast button becomes Retry
+  useEffect(() => {
+    if (wordsStatus === 'failed') toast(text.game.notes.wordsFailed, { variant: 'danger', dismissible: true })
+  }, [wordsStatus])
 
   // The free space (inside the padding), watched as the window changes
   const rootRef = useRef<HTMLDivElement>(null)
