@@ -123,6 +123,11 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D33 · 2026-09-30 · Online rooms drop floods: max 10 messages/second per connection (content/rooms.json maxMessagesPerSecond)
+  Proposed by: Claude (security review)   Chose: drop extras unread, one log line — design §8 asked for it; PartyKit counts messages
+D32 · 2026-09-30 · Online bag from secure randomness, shuffled twice; config.seed no longer rebuilds an online game
+  Proposed by: Claude (security review found a cheater could brute-force the single 31-bit seed from their own hand in ~27 min)
+  Chose: crypto.getRandomValues for every server random number + a second secret shuffle of the bag
 D31 · 2026-09-30 · Online end table: the host drives what's next
   Proposed by: Claude (autonomous)   Options: everyone votes for a rematch (design §3) / the host decides
   Chose: the host — the rooms module already lets the host start again (same seats) or go back to the lobby; others see "Waiting for the host…". A rematch vote can come later if friends want it
