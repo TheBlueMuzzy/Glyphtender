@@ -4,14 +4,14 @@
 // (the dev hook fast-forwards to one) → fast-forward to the end → the Magic reveal plays by itself (mid + end shots)
 // → the end table → Play again (same options) → Menu → Leave → the new-game screen remembers 3 players.
 // Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px, no console errors.
-// Starts its OWN dev server (default port 5191 — never Muzzy's 5180) and closes only that one at the end.
+// Starts its OWN dev server (default port 5193 — never Muzzy's 5180) and closes only that one at the end.
 //   npm run e2e:pass [outDir] [port]
 import { mkdirSync } from 'node:fs'
 import { createServer } from 'vite'
 import { chromium } from 'playwright-core'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
-const PORT = Number(process.argv[3] ?? 5191)
+const PORT = Number(process.argv[3] ?? 5193)
 const SIZES = [
   { name: 'phone-tall', width: 390, height: 844, mobile: true },
   { name: 'phone-wide', width: 844, height: 390, mobile: true },
