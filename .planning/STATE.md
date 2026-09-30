@@ -1,6 +1,6 @@
 ## ▶ RESUME HERE
-Discovery in progress for the web remake: original digested (`research/original-digest.md`), reference research running, GDD drafted. Next: finish /discover (references + directions), then `/define` — GDD scope, TDD, feature map.
-Muzzy: answer the open questions in GDD §9 when we get to /define (hidden hands in pass-and-play? board size? Strategist personality?).
+Discovery done — original digested, 7 references broken down, 4 directions on the table (`research/discovery.md`). Next: `/define` — pick a direction, answer GDD §9, lock scope, write the TDD and feature map.
+Muzzy: skim `research/discovery.md` (1 page) and pick a direction A–D, or say "your call".
 
 ## Where we are
 Stage: discover · Milestone: — · Sprint: — · Branch: main · Version: 0.0.0 · Live: none yet
@@ -13,4 +13,4 @@ Stage: discover · Milestone: — · Sprint: — · Branch: main · Version: 0.0
 **Default branch:** main.
 
 ## Log
-- 2026-09-30 — Project created (remake). Old repo/folder renamed to glyphtender-original. Original digested. /discover started.
+- 2026-09-30 — Project created (remake). Old repo/folder renamed to glyphtender-original. /discover done: digest, references, directions.
