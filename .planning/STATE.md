@@ -1,9 +1,9 @@
 ## ▶ RESUME HERE
-AUTONOMOUS (Muzzy asleep, 2026-09-30): Sprints 02 + 03 done — engine, word list, UI kit, and a playable 2-player game (menu → Play). Sprint 04 — A full pass-and-play game (F11 handoff, F14 menus, F12 danger, F13 reveal ∥ F16/F17 Dev Kit tools in the framework, branch dev/devkit-tools). Status board = SPRINT.md.
-Muzzy: play a 2-player game (dev server → Play) and judge the turn flow · look at the night menus · answer Ask Muzzy in archive/sprints/sprint-02.md + sprint-03.md.
+AUTONOMOUS (Muzzy asleep, 2026-09-30): Sprints 02–04 done — a full 2–4 player pass-and-play game (menu → new game → draft → turns with handoff → danger cues → Magic reveal → end table) + Dev Kit Snapshots/Bug capture. Sprint 05 — Play online (local server): F15 move glide, F18 rooms module (framework branch dev/rooms), F19 server, F20 lobby. Status board = SPRINT.md.
+Muzzy: play pass-and-play on your phone (dev server → Play) and judge turn flow, handoff, danger cues, reveal · look at the night menus · merge framework branch dev/devkit-tools (Dev Kit 0.3.0) when happy · answer Ask Muzzy in archive/sprints/sprint-02..04.md · deploying online is yours (/deliver).
 
 ## Where we are
-Stage: develop · Milestone: v0.2 Plant a garden · Sprint: 04 · Doing: F11 + F16 · Branch: dev/alpha · Version: 0.0.0 · Live: none yet
+Stage: develop · Milestone: v0.4 Play online · Sprint: 05 · Doing: F15 + F18 · Branch: dev/alpha · Version: 0.0.0 · Live: none yet
 
 ## Key facts
 **Remake.** Web remake of the Unity game. The original is read-only reference at `../glyphtender-original` (GitHub `TheBlueMuzzy/glyphtender-original`, renamed from `Glyphtender` 2026-09-30). Never copy it wholesale — pull ideas/assets across deliberately. Digest: `.planning/research/original-digest.md`.
@@ -15,6 +15,7 @@ Stage: develop · Milestone: v0.2 Plant a garden · Sprint: 04 · Doing: F11 + F
 **Run:** `npx vite --host --port 5180` (dev port 5180) · tests `npm test` · sketch check `npm run e2e:sketch` (needs the dev server).
 
 ## Log
+- 2026-09-30 — Sprint 04 done (autonomous): seats + handoff, new game screen, pause/rules, danger cues, staged Magic reveal, end table; Dev Kit 0.3.0 Snapshots + Bug capture (framework branch). Review fixed 2 bugs.
 - 2026-09-30 — Sprint 03 done (autonomous): playable 2-player game — board, real-size tray, draft, turn flow + throw, basic results; review fixed 2 bugs.
 - 2026-09-30 — Sprint 02 done (autonomous): rules engine (84 tests, 6,000 sim games), official word list byte-for-byte, Magic + refresh, UI kit Cozy night. Word Play researched.
 - 2026-09-30 — Sprint 01 done: skeleton (Vite/React/TS, Dev Kit, PWA, Pages workflow), art, F01 prototype approved + throw story.
