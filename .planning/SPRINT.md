@@ -3,9 +3,9 @@ Started 2026-09-30 · Milestone v0.1 Sketch · Features: F02, F01 (in this order
 
 ## F02 🧱 Project skeleton
 Done when: `npm run dev` gives a phone link on Wi-Fi, `npm test` and `npm run build` pass, the Dev Kit opens with ` (or triple-tap), and the deploy workflow is ready for /deliver.
-- [ ] 🤖 1. Vite + React + TS app, `base: '/glyphtender/'`, `server.host: true` — package.json, vite.config.ts, src/main.tsx
-- [ ] 🤖 2. vitest wired, first test — src/engine/hex.test.ts
-- [ ] 🤖 3. GitHub Pages workflow (test + build + deploy on main) + PWA (`registerSW({immediate:true})`) — .github/workflows/deploy.yml, vite.config.ts
+- [x] 🤖 1. Vite + React + TS app, `base: '/glyphtender/'`, `server.host: true` — package.json, vite.config.ts, src/main.tsx
+- [x] 🤖 2. vitest wired, first test — src/engine/hex.test.ts
+- [x] 🤖 3. GitHub Pages workflow (test + build + deploy on main) + PWA (`registerSW({immediate:true})`) — .github/workflows/deploy.yml, vite.config.ts
 - [ ] 🤖 4. Dev Kit install + wiring — `node ~/Documents/dev/framework/devkit/scripts/install-devkit.mjs .`, content/devkit.json, content/tuning/
 - [ ] 🤖 5. Stand-in art: runeblossoms (A–Z × 4) + glyphlings → 256 px WebP — public/art/, content/credits.json (stand-in)
 Check: build passes; dev link loads on a phone; Dev Kit opens.
@@ -23,4 +23,6 @@ Check: screenshots look right to Claude first; then Muzzy's feel call.
 Ask Muzzy: —
 Notes:
 - Dev Kit moved from F03 into F02 so the sketch's hex size / colours are tweakable live (F03 = UI kit only).
+- D07: tool versions match Roll Better (Vite 7, TS 5.9, React 19, vitest 4) — the kits are proven there.
+- Hex maths written as real engine code (`src/engine/hex.ts` + tests), not sketch code — the sketch borrows it.
 - Live Pages link only updates at /deliver; sketch testing uses the Wi-Fi dev link.

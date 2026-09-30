@@ -1,0 +1,42 @@
+{
+  "_help": "Board shapes as column heights, left to right \u00e2\u20ac\u201d like Muzzy's paper board. Neighbouring columns must alternate odd/even.",
+  "small": {
+    "name": "Small",
+    "columns": [
+      4,
+      7,
+      8,
+      9,
+      10,
+      9,
+      10,
+      9,
+      8,
+      7,
+      4
+    ]
+  },
+  "large": {
+    "name": "Large",
+    "columns": [
+      5,
+      8,
+      9,
+      10,
+      11,
+      10,
+      11,
+      10,
+      11,
+      10,
+      9,
+      8,
+      5
+    ]
+  },
+  "defaultForPlayers": {
+    "2": "small",
+    "3": "large",
+    "4": "large"
+  }
+}

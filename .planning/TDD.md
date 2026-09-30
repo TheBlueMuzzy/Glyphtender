@@ -100,6 +100,9 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D07 · 2026-09-30 · Tool versions match Roll Better (Vite 7, TypeScript 5.9, React 19, vitest 4)
+  Proposed by: Claude   Options: newest (framework dev env: Vite 8 / TS 7) / Roll Better's
+  Chose: Roll Better's — the UI kit + Dev Kit are proven on them; upgrade together later
 D06 · 2026-09-30 · Online hides information in the data, not just on screen
   Proposed by: Claude   Options: send full state, hide in UI / per-player views
   Chose: per-player views — the original's online sent all hands to everyone
