@@ -35,12 +35,13 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
   }
 
   const moveOnly = !s.cast && mayMoveOnly(game, s.move)
+  const busy = s.flying || s.handoff !== null // a seed in the air, or the device being passed on
   const castLabel = moveOnly ? w.endTurn : preview ? fill(w.castMagic, { n: preview.magic }) : w.cast
   return (
     <Row gap="s" justify="center" className="game-actions">
-      <Button variant="ghost" disabled={s.flying} onClick={s.shuffleTray}>{w.shuffle}</Button>
-      <Button variant="secondary" disabled={s.flying || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
-      <Button disabled={s.flying || !(s.cast || moveOnly) || (s.cast !== null && !preview)} onClick={s.startCast}>{castLabel}</Button>
+      <Button variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
+      <Button variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
+      <Button disabled={busy || !(s.cast || moveOnly) || (s.cast !== null && !preview)} onClick={s.startCast}>{castLabel}</Button>
     </Row>
   )
 }

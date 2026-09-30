@@ -2,7 +2,8 @@
 // drawn as one SVG so every size comes from content/tuning/layout.json and every colour from garden.json.
 // Same piece-state look as the board: held = solid ring (lifted a little) · planned (aimed at the board) =
 // an empty slot with a pulsing halo · waiting (move first) = dimmed. In refresh mode, set-aside seeds look held.
-// During the draft it shows the glyphlings still waiting to be placed instead.
+// During the draft it shows the glyphlings still waiting to be placed instead. While the device is being
+// passed on (handoff) it shows empty slots: nobody sees the next player's seeds until they tap.
 // Taps and drags are handled by usePieceInput (data-hand / data-tray-pos / data-draft).
 import type { ReactNode } from 'react'
 import { hexCorners } from '../engine/hex'
@@ -21,6 +22,7 @@ export function SeedTray({ layout, boxWidth }: Props) {
   const selected = useGameStore((s) => s.selected)
   const setAside = useGameStore((s) => s.setAside)
   const trayOrder = useGameStore((s) => s.trayOrder)
+  const hidden = useGameStore((s) => s.handoff !== null) // passing the device: the next player's seeds stay hidden
   const colours = useGardenTuning()
   const timing = useAnimTuning()
   const seat = game.current
@@ -47,7 +49,9 @@ export function SeedTray({ layout, boxWidth }: Props) {
   )
 
   let tiles: ReactNode[]
-  if (game.phase === 'draft') {
+  if (hidden) {
+    tiles = Array.from({ length: game.config.rules.handSize }, (_, pos) => <g key={`hidden-${pos}`}>{slot(centre(pos).x, centre(pos).y)}</g>)
+  } else if (game.phase === 'draft') {
     // The glyphlings this player still has to place; the next one is "held"
     const placed = game.glyphlings.filter((g) => g.seat === seat).length
     tiles = Array.from({ length: 2 - placed }, (_, pos) => {

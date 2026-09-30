@@ -7,6 +7,7 @@ import { useGameStore } from '../store/gameStore'
 import { ActionBar } from './ActionBar'
 import { wordListUrl } from './art'
 import { Board } from './Board'
+import { Handoff } from './Handoff'
 import { SeedTray } from './SeedTray'
 import { TurnBar } from './TurnBar'
 import { trayLayout } from './trayLayout'
@@ -68,6 +69,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   }, [over])
 
   return (
+    <>
     <div ref={rootRef} className="game" data-layout={stacked ? 'stacked' : 'side'} data-phase={game.phase} {...input}>
       <header className="game-bar"><TurnBar /></header>
       <div className="game-board">
@@ -82,5 +84,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
         <image ref={dragImage} visibility="hidden" />
       </svg>
     </div>
+    <Handoff stacked={stacked} />
+    </>
   )
 }

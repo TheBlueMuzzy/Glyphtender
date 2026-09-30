@@ -1,0 +1,49 @@
+// PASS THE DEVICE — between two players on one device, when "hide seeds" is on: "Pass to Blue" in Blue's
+// colour, over the garden (still visible, dimmed). The tray stays hidden until Blue taps "Show my seeds".
+// The store decides WHEN (store.handoff — after the draft, and whenever play passes to another local player,
+// after any refresh). This screen only waits for a thrown seed to finish growing, so everyone sees the move.
+// Kit parts only: Screen (dialog = dims what's under it), Panel, Avatar, Text, Button.
+import { useEffect, useState, type CSSProperties } from 'react'
+import text from '../../content/text/en.json'
+import { useGameStore } from '../store/gameStore'
+import { Avatar, Button, Panel, Screen, Text, fill, reduceMotion } from '../ui/kit'
+import { colourOf, glyphlingArt } from './art'
+import { playerName } from './prompt'
+import { useAnimTuning, useGardenTuning } from './useTuning'
+
+const w = text.game.handoff
+
+/** stacked: the tall layout — the box sits over the (hidden) tray at the bottom, so more of the garden shows. */
+export function Handoff({ stacked }: { stacked: boolean }) {
+  const handoff = useGameStore((s) => s.handoff)
+  const showSeeds = useGameStore((s) => s.showSeeds)
+  const timing = useAnimTuning()
+  const colours = useGardenTuning()
+
+  // After a throw, wait until the runeblossom has grown and its words have glowed
+  const [ready, setReady] = useState<typeof handoff>(null)
+  useEffect(() => {
+    if (!handoff) return
+    const wait = handoff.afterGrow && !reduceMotion() ? (timing.growTime + timing.wordGlowTime) * 1000 : 0
+    const timer = setTimeout(() => setReady(handoff), wait)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handoff])
+  if (!handoff || ready !== handoff) return null
+
+  const player = playerName(handoff.seat)
+  const colour = colours[colourOf(handoff.seat)]
+  // The button wears the player's colour, with dark words on it so every player colour reads
+  const box = (
+    <Panel depth={2} gap="m" className="kit-modal kit-centred" style={{ '--primary': colour, '--on-primary': colours.background } as CSSProperties}>
+      <span><Avatar name={player} src={glyphlingArt(handoff.seat)} color={colour} active /></span>
+      <Text kind="title">{fill(w.title, { player })}</Text>
+      <Text>{fill(w.message, { player })}</Text>
+      <Button onClick={showSeeds}>{w.show}</Button>
+    </Panel>
+  )
+  // Tall screens: over the tray at the bottom. Wide: bottom right, over the tray column.
+  return stacked
+    ? <Screen dialog label={fill(w.title, { player })} bottom={box} />
+    : <Screen dialog label={fill(w.title, { player })} bottomRight={box} />
+}

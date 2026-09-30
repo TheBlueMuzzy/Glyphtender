@@ -10,7 +10,7 @@ const w = text.game
 /** The current player's name, e.g. "Yellow". */
 export const playerName = (seat: number) => w.players[colourOf(seat)]
 
-type PromptState = Pick<GameStore, 'game' | 'move' | 'cast' | 'selected' | 'flying' | 'note' | 'wordsStatus'>
+type PromptState = Pick<GameStore, 'game' | 'move' | 'cast' | 'selected' | 'flying' | 'note' | 'wordsStatus' | 'handoff'>
 
 /** The main line and a smaller line under it (whose turn / a hint). */
 export function promptFor(s: PromptState): { text: string; detail: string } {
@@ -23,6 +23,7 @@ export function promptFor(s: PromptState): { text: string; detail: string } {
     const placed = game.glyphlings.filter((g) => g.seat === game.current).length
     return { text: fill(w.prompts.draft, { player, n: placed + 1, total: 2 }), detail: '' }
   }
+  if (s.handoff) return { text: fill(w.prompts.handoff, { player: playerName(s.handoff.seat) }), detail: '' }
   if (game.phase === 'refresh') return { text: w.prompts.refresh, detail: w.prompts.refreshDetail }
   const hint = s.note ? w.notes[s.note] : turnOf
   if (s.flying) return { text: w.prompts.flying, detail: turnOf }

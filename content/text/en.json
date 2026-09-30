@@ -27,7 +27,8 @@
       "refresh": "No Magic this turn — refresh seeds?",
       "refreshDetail": "Tap seeds to set them aside",
       "over": "The garden is tangled",
-      "loading": "Gathering the words…"
+      "loading": "Gathering the words…",
+      "handoff": "Pass to {player}"
     },
     "notes": {
       "moveFirst": "Move a glyphling first",
@@ -54,7 +55,8 @@
       "settings": "Settings",
       "quit": "Leave game",
       "quitTitle": "Leave this game?",
-      "quitMessage": "The garden will be lost."
+      "quitMessage": "The garden will be lost.",
+      "howToPlay": "Rules"
     },
     "gameOver": {
       "title": "The garden is tangled",
@@ -63,6 +65,32 @@
       "winner": "Winner",
       "playAgain": "Play again",
       "menu": "Menu"
+    },
+    "handoff": {
+      "title": "Pass to {player}",
+      "message": "{player}, the garden is yours. Tap when only you can see.",
+      "show": "Show my seeds"
+    },
+    "rules": {
+      "title": "How to play",
+      "next": "Next",
+      "back": "Back",
+      "done": "Got it",
+      "page": "Page {n} of {total}",
+      "pages": [
+        {
+          "title": "Your turn",
+          "body": "Move one of your glyphlings any distance along a leyline — it can’t pass through anything. Then cast a seed from where it landed, along any leyline, onto an empty hex."
+        },
+        {
+          "title": "Words make Magic",
+          "body": "Every word the new seed makes, on every leyline, grows Magic: one per letter, plus one for each of your own seeds in it. Made Magic? Draw a seed. Made none? You may refresh your seeds."
+        },
+        {
+          "title": "A tangled garden",
+          "body": "A glyphling with nowhere to move is tangled. When two are tangled the game ends: each rival piece next to a tangled glyphling earns its owner +3. Magic stays secret until the end — most Magic becomes Grand Glyphtender!"
+        }
+      ]
     }
   },
   "credits": {
@@ -74,5 +102,21 @@
         ]
       }
     ]
+  },
+  "newGame": {
+    "title": "New game",
+    "players": "Players",
+    "board": "Garden",
+    "boards": {
+      "small": "Small",
+      "large": "Large"
+    },
+    "boardDetail": "Small suits 2 players; Large suits 3–4",
+    "twoLetterWords": "2-letter words",
+    "twoLetterDetail": "Off = words need 3 letters or more",
+    "hideSeeds": "Hide seeds between turns",
+    "hideSeedsDetail": "Pass the device and tap to see your seeds",
+    "start": "Start",
+    "back": "Back"
   }
 }

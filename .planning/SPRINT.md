@@ -5,7 +5,7 @@ What Muzzy will see change: New game screen (2–4 players, board, 2-letter word
 
 ## F11 🧱 Seats + pass-the-device handoff
 - [x] 🤖 1. Seats in the store: each seat local-human for now (the type allows online/AI later) — src/store/seats.ts
-- [ ] 🤖 2. Handoff screen between local players: "Pass to Blue" in their colour, board visible + dimmed, seeds hidden until tapped; skipped when "hide seeds" is off — src/game/Handoff.tsx
+- [x] 🤖 2. Handoff screen between local players: "Pass to Blue" in their colour, board visible + dimmed, seeds hidden until tapped; skipped when "hide seeds" is off — src/game/Handoff.tsx
 
 ## F14 🎮 Menus
 - [ ] 🤖 3. New game screen (kit): players 2–4, board (Small / Large / default for player count), 2-letter words on/off, hide seeds on/off → Start — src/ui/newGame*.tsx
@@ -30,3 +30,4 @@ Check: npm test, build, check:ui, check:devkit, e2e:game + new e2e green; Claude
 Ask Muzzy:
 Notes:
 - Task 1 (seats): src/store/seats.ts — a seat is local | online | ai + name + colour; the store holds seats (all local for now). Every tap goes through one question in the store, canPlay(): a game, no seed in the air, no handoff waiting, and the current seat is a local human on this device (online/AI seats plug in there). The store also keeps the table options (Play again reuses them) and the end table numbers (src/store/stats.ts: best turn, longest word, words made — gathered from each turn the engine reports; the rules never needed them). +11 tests.
+- Task 2 (handoff): src/game/Handoff.tsx — kit Screen dialog (dims the garden, still visible) with a Panel: the next player's glyphling portrait ringed in their colour, "Pass to Blue", one cozy line, and a "Show my seeds" button in the player's colour (the Panel sets the kit's --primary to the player colour and --on-primary to the night background, so every player colour reads). Tall screens: the box sits over the tray at the bottom (more garden shows); wide: bottom right over the tray column. While waiting, the tray shows empty slots, the buttons are greyed and the turn bar says "Pass to Blue". The store decides when: after the draft (before turn 1), and whenever play passes to another local player — after a refresh, which the player who just played does first. After a throw the box waits growTime + wordGlowTime so everyone sees the move. Hide seeds off → never.
