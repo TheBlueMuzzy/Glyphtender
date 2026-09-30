@@ -46,28 +46,28 @@ flowchart LR
 
 ## v0.3 — A full pass-and-play game  ← current  (→ alpha)
 Goal: 2–4 friends play a complete game on one phone, from the main menu to the Magic reveal, without seeing each other's seeds.
-- 🟢 F11 🧱 Seats + "pass to Blue" handoff screen — must:alpha · needs: ~F09
+- 🔨 F11 🧱 Seats + "pass to Blue" handoff screen — must:alpha · needs: ~F09 · sprint 4
   why: seeds stay secret on one device → Fellowship without peeking; seats let online + AI plug in later
-- 🟢 F12 🎮 Tangle danger cues — must:alpha · needs: ~F09
+- 🔨 F12 🎮 Tangle danger cues — must:alpha · needs: ~F09 · sprint 4
   why: shows risk instead of scores → Secret-Magic tension stays, board stays readable
-- 🟢 F13 🎮 Magic reveal + end table + play again — must:alpha · needs: ~F09
+- 🔨 F13 🎮 Magic reveal + end table + play again — must:alpha · needs: ~F09 · sprint 4
   why: staged reveal (bonuses pop, totals count up lowest-first) → the gasp at the end → Secret-Magic tension
-- ⏳ F14 🎮 Menus: main, new game (players, board, 2-letter), settings, pause — must:alpha · needs: F03, F11
+- ⏳ F14 🎮 Menus: main, new game (players, board, 2-letter), settings, pause — must:alpha · needs: F03, F11 · sprint 4
 - ⏳ F15 ✨ Grow + move animations (basic) — must:alpha · needs: ~F09
   why: a pause to see what grew → *A cozy garden*, everyone follows the move
-- 🟢 F16 🔧 Dev Kit Snapshots — save/restore any board position (framework-first) — must:alpha · needs: F03, F04
-- 🟢 F17 🔧 Dev Kit Bug capture (framework-first) — must:alpha · needs: F03
+- 🔨 F16 🔧 Dev Kit Snapshots — save/restore any board position (framework-first) — must:alpha · needs: F03, F04 · sprint 4
+- 🔨 F17 🔧 Dev Kit Bug capture (framework-first) — must:alpha · needs: F03 · sprint 4
 ```mermaid
 flowchart LR
-  F09[🎛️ F09 Turn flow] --> F11[🟢 F11 Seats + handoff]
-  F09 -.-> F12[🟢 F12 Danger cues]
-  F09 -.-> F13[🟢 F13 Reveal]
+  F09[🎛️ F09 Turn flow] -.-> F11[🔨 F11 Seats + handoff]
+  F09 -.-> F12[🔨 F12 Danger cues]
+  F09 -.-> F13[🔨 F13 Reveal]
   F09 -.-> F15[⏳ F15 Animations]
   F11 --> F14[⏳ F14 Menus]
   F03[🎛️ F03 Kits] --> F14
-  F03 --> F16[🟢 F16 Snapshots]
+  F03 --> F16[🔨 F16 Snapshots]
   F04[✅ F04 Engine] --> F16
-  F03 --> F17[🟢 F17 Bug capture]
+  F03 --> F17[🔨 F17 Bug capture]
 ```
 
 ## v0.4 — Play online  (→ alpha release)
@@ -81,12 +81,12 @@ Goal: 2–4 players on different devices join by room code and play a full game;
 ```mermaid
 flowchart LR
   F18[🟢 F18 Rooms module] --> F19[⏳ F19 Server]
-  F11[🟢 F11 Seats] --> F19
+  F11[🔨 F11 Seats] --> F19
   F19 --> F20[⏳ F20 Lobby]
   F14[⏳ F14 Menus] --> F20
   F20 --> F21[⏳ F21 Rejoin / idle]
   F20 --> F22[⏳ F22 Rematch]
-  F13[🟢 F13 Reveal] --> F22
+  F13[🔨 F13 Reveal] --> F22
 ```
 
 ## Later

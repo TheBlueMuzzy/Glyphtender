@@ -1,0 +1,31 @@
+# Sprint 04 — A full pass-and-play game
+Started 2026-09-30 (autonomous — Muzzy asleep) · Milestone v0.3 · Features: F11, F14, F12, F13 (game) ∥ F16, F17 (framework Dev Kit tools)
+Goal: 2–4 friends play a complete game on one phone — main menu → new game (players, board) → draft → turns with seeds kept secret between players → the Magic reveal → play again.
+What Muzzy will see change: New game screen (2–4 players, board, 2-letter words), a "Pass to Blue" screen between turns, glyphlings close to tangled get a warning look, and a staged Magic reveal at the end. In the Dev Kit: Snapshots (save/restore any moment) and Bug capture. Stays the same: no online, no AI, no sound.
+
+## F11 🧱 Seats + pass-the-device handoff
+- [ ] 🤖 1. Seats in the store: each seat local-human for now (the type allows online/AI later) — src/store/seats.ts
+- [ ] 🤖 2. Handoff screen between local players: "Pass to Blue" in their colour, board visible + dimmed, seeds hidden until tapped; skipped when "hide seeds" is off — src/game/Handoff.tsx
+
+## F14 🎮 Menus
+- [ ] 🤖 3. New game screen (kit): players 2–4, board (Small / Large / default for player count), 2-letter words on/off, hide seeds on/off → Start — src/ui/newGame*.tsx
+- [ ] 🤖 4. Pause: Resume, Rules (short how-to-play from en.json), Settings, Leave game — kit screens
+
+## F12 🎮 Tangle danger cues
+- [ ] 🤖 5. A glyphling with 0–1 moves left shows a warning look (same language: a thorny/dashed ring in its owner's colour, never scores) + a tangled look — src/game/Board.tsx, garden.json
+
+## F13 🎮 Magic reveal + end table
+- [ ] 🤖 6. Staged, skippable reveal (research/wordplay.md + references.md): tangle bonuses pop hex by hex (+3), then each total counts up lowest first, then the winner — src/game/Reveal.tsx, anim.json
+- [ ] 🤖 7. End table: Magic, tangle Magic, best turn, longest word, words made; Play again / New game / Menu — src/game/GameOver.tsx
+
+## F16 🔧 Dev Kit Snapshots (framework-first)  ∥  F17 🔧 Dev Kit Bug capture (framework-first)
+- [ ] 🤖 8. Framework devkit: Snapshots tab (save / name / restore / delete moments; game supplies get/set state) + Bug capture (● record · 📍 mark · send → a file /bug can read: last ~60 s of actions, state, version, device) — dev/framework/devkit (branch dev/devkit-tools)
+- [ ] 🤖 9. Install into Glyphtender + wire the game's adapter (engine state + action log) — src/devkit-game/
+
+## Checks
+- [ ] 🤖 10. e2e: a 3-player game with handoffs + new-game screen + reveal at 390×844, 844×390, 1440×900; nothing clipped; console clean — e2e/
+- [ ] 🙋 11. Play 2–4 player pass-and-play on your phone; judge the handoff and the reveal (and Sprint 03's turn flow + night menus)
+Check: npm test, build, check:ui, check:devkit, e2e:game + new e2e green; Claude looks at the screenshots first.
+
+Ask Muzzy:
+Notes:
