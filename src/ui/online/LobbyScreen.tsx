@@ -1,5 +1,5 @@
 // THE LOBBY — who's in the room (name, their glyphling colour, ready), the room code big with Copy, and for
-// the host the table options (garden, 2-letter words, turn timer) + Start. Everyone else: I'm ready.
+// the host the table options (garden, 2-letter words, turn timer, word indicators) + Start. Everyone else: I'm ready.
 // Leave goes through useRoom.leave(). Kit Lobby with a room code; the option rows are kit ListRows.
 import { useState } from 'react'
 import text from '../../../content/text/en.json'
@@ -53,6 +53,9 @@ function TableOptions({ options, onChange }: { options: OnlineOptions; onChange:
       <ListRow label={w.options.timer} detail={w.options.timerDetail}>
         <Selector label={w.options.timer} options={timers.map(timerLabel)} value={timerLabel(options.turnSeconds)}
           onChange={(label) => onChange({ ...options, turnSeconds: timers.find((t) => timerLabel(t) === label) ?? options.turnSeconds })} />
+      </ListRow>
+      <ListRow label={w.options.wordIndicators} detail={w.options.wordIndicatorsDetail}>
+        <Toggle label={w.options.wordIndicators} on={options.wordIndicators} onChange={(on) => onChange({ ...options, wordIndicators: on })} />
       </ListRow>
     </>
   )

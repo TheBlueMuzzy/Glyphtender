@@ -1,5 +1,6 @@
 // THE BUTTONS under the tray — change with the moment:
 //   play:    Shuffle · Undo · "Cast · +N" (N = Magic from THIS cast only; totals stay secret) or End turn
+//            (word indicators off: plain "Cast" — the +N would tell you a word is there)
 //            (Retry instead of Cast if the word list couldn't be loaded — End turn never needs it)
 //   refresh: Keep all · Refresh N
 //   over:    Skip (while the Magic reveal plays) → then Results · Play again
@@ -56,7 +57,8 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
       </Row>
     )
   }
-  const castLabel = moveOnly ? w.endTurn : preview && !notNow ? fill(w.castMagic, { n: preview.magic }) : w.cast
+  const showMagic = preview && !notNow && (s.options?.wordIndicators ?? true)
+  const castLabel = moveOnly ? w.endTurn : showMagic ? fill(w.castMagic, { n: preview.magic }) : w.cast
   return (
     <Row gap="s" justify="center" className="game-actions">
       <Button variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>

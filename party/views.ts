@@ -40,6 +40,7 @@ export function viewOf(state: ServerGame, seatId: string): GameView {
     change: state.change,
     by: state.by,
     game: hideSecrets(state.game, mySeat),
+    options: state.options,
     turnEndsAt: state.turnEndsAt,
     results,
   }

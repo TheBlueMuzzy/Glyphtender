@@ -147,6 +147,8 @@
     "twoLetterDetail": "Off: words need 3+ letters",
     "hideSeeds": "Hide seeds between turns",
     "hideSeedsDetail": "Pass the device between turns",
+    "wordIndicators": "Word indicators",
+    "wordIndicatorsDetail": "Off: no word borders, no Magic numbers",
     "start": "Start",
     "back": "Back"
   },
@@ -182,7 +184,9 @@
       "timer": "Turn timer",
       "timerOff": "Off",
       "timerSeconds": "{n} s",
-      "timerDetail": "When time runs out, a turn is played for them"
+      "timerDetail": "When time runs out, a turn is played for them",
+      "wordIndicators": "Word indicators",
+      "wordIndicatorsDetail": "Off: no word borders, no Magic numbers"
     },
     "errors": {
       "nameNeeded": "Pick a name first",

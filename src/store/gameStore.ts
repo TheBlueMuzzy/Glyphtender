@@ -30,6 +30,8 @@ export interface GameOptions {
   minWordLength: number
   /** Pass-and-play: hide the tray between turns until the next player taps "Show my seeds". */
   hideSeeds: boolean
+  /** Made words get a white border, Cast shows "+N" and the Magic pops. Off = players spot words themselves. */
+  wordIndicators: boolean
 }
 
 /** Waiting for the device to be passed to `seat` (their seeds stay hidden until they tap). */
@@ -177,10 +179,11 @@ export const useGameStore = create<GameStore>()((set, get) => {
     online: null,
     waiting: false,
 
-    startGame: ({ players, seed, boardName, minWordLength, hideSeeds }) => {
+    startGame: ({ players, seed, boardName, minWordLength, hideSeeds, wordIndicators }) => {
       const game = newGame({ players, seed, boardName, rules: minWordLength ? { minWordLength } : undefined })
       const options: GameOptions = {
         players, boardName: game.config.boardName, minWordLength: game.config.rules.minWordLength, hideSeeds: hideSeeds ?? true,
+        wordIndicators: wordIndicators ?? true,
       }
       set({
         ...noPlan(), game, options, flying: false, landed: null, handoff: null, revealAt: null,

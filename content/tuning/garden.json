@@ -14,8 +14,9 @@
     "plannedSeedOpacity": "How faded a targeted (not yet thrown) seed looks. 1 = solid.",
     "purple": "Purple player colour — same uses as yellow.",
     "pink": "Pink player colour — same uses as yellow.",
-    "wordOutlineWidth": "Thickness of the outline around the words a planned cast would make, in hex sizes.",
-    "grownGlowStrength": "How bright the words that just grew glow for a moment after the seed lands. 0 = no glow.",
+    "wordBorder": "Colour of the border round a made word — neutral (never a player colour).",
+    "wordBorderWidth": "Thickness of the white border round a made word (planned while aiming, and just after it grows), in hex sizes. It sits BEHIND the seeds, so only the part outside the letters shows. Word indicators on only.",
+    "grownGlowStrength": "How strong the word border is right after the words grow, before it fades (1 = as strong as while aiming). 0 = none.",
     "seedShine": "The little highlight on a seed flying through the air.",
     "warningWidth": "Thickness of the dashed \"thorny\" ring round a glyphling with only ONE move left, in hex sizes. Drawn in its owner's colour.",
     "warningDash": "Length of each dash in that ring, in hex sizes (the gaps are a little shorter).",
@@ -51,9 +52,9 @@
       1,
       0.05
     ],
-    "wordOutlineWidth": [
-      0.02,
-      0.2,
+    "wordBorderWidth": [
+      0.04,
+      0.4,
       0.01
     ],
     "grownGlowStrength": [
@@ -101,8 +102,9 @@
   "plannedSeedOpacity": 0.45,
   "purple": "#b48cf2",
   "pink": "#f28cc4",
-  "wordOutlineWidth": 0.07,
-  "grownGlowStrength": 0.6,
+  "wordBorder": "#ffffff",
+  "wordBorderWidth": 0.2,
+  "grownGlowStrength": 1,
   "seedShine": "#ffffff",
   "warningWidth": 0.08,
   "warningDash": 0.16,

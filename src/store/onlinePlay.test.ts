@@ -110,6 +110,7 @@ describe('online store — starting and the draft', () => {
     expect(store().online?.mySeat).toBe(0)
     expect(store().seats.map((s) => [s.kind, s.name])).toEqual([['local', 'Ada'], ['online', 'Bo']])
     expect(store().options?.hideSeeds).toBe(false)
+    expect(store().options?.wordIndicators).toBe(true) // the host's lobby option (on unless turned off)
   })
 
   it('my placement goes to the server and nothing can be touched until its view comes back', () => {

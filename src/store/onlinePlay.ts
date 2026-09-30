@@ -70,7 +70,10 @@ function startFrom(view: GameView) {
   set({
     game, online, seats, waiting: false, flying: false, handoff: null, revealAt: null, landed: null,
     move: null, cast: null, selected: null, setAside: [], note: null,
-    options: { players: game.config.players, boardName: game.config.boardName, minWordLength: game.config.rules.minWordLength, hideSeeds: false },
+    options: {
+      players: game.config.players, boardName: game.config.boardName, minWordLength: game.config.rules.minWordLength, hideSeeds: false,
+      wordIndicators: view.options?.wordIndicators ?? true, // the host's choice, the same on every screen
+    },
     stats: view.results?.stats ?? emptyStats(game.config.players),
     trayOrder: game.hands.map((hand) => inHandOrder(hand.length)),
   })

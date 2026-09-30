@@ -12,8 +12,8 @@ describe('new game choices', () => {
     expect(boardNames()).toEqual(['small', 'large'])
   })
 
-  it('first time: 2 players on the Small garden, 2-letter words on, seeds hidden', () => {
-    expect(defaultChoices()).toEqual({ players: 2, boardName: 'small', twoLetterWords: true, hideSeeds: true })
+  it('first time: 2 players on the Small garden, 2-letter words on, seeds hidden, word indicators on', () => {
+    expect(defaultChoices()).toEqual({ players: 2, boardName: 'small', twoLetterWords: true, hideSeeds: true, wordIndicators: true })
     expect(loadChoices(memory())).toEqual(defaultChoices())
     expect(loadChoices(null)).toEqual(defaultChoices()) // no storage at all
   })
@@ -25,7 +25,7 @@ describe('new game choices', () => {
 
   it('the last choices are remembered', () => {
     const storage = memory()
-    const mine = { players: 3, boardName: 'small', twoLetterWords: false, hideSeeds: false }
+    const mine = { players: 3, boardName: 'small', twoLetterWords: false, hideSeeds: false, wordIndicators: false }
     saveChoices(mine, storage)
     expect(loadChoices(storage)).toEqual(mine)
   })

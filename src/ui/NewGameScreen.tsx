@@ -1,5 +1,6 @@
 // NEW GAME — the table options before a pass-and-play game: players 2–4, garden size (defaults to the size
-// boards.json names for that many players), 2-letter words on/off, hide seeds between turns on/off → Start.
+// boards.json names for that many players), 2-letter words on/off, hide seeds between turns on/off,
+// word indicators on/off → Start.
 // Built like the kit's Settings screen: Panel, a title row with Back, rows (ListRow + Stepper / Selector /
 // Toggle) that scroll on short screens, and the Start button. Words: content/text/en.json → newGame.
 import { useState } from 'react'
@@ -35,6 +36,9 @@ export function NewGameScreen() {
           </ListRow>
           <ListRow label={w.hideSeeds} detail={w.hideSeedsDetail}>
             <Toggle label={w.hideSeeds} on={choices.hideSeeds} onChange={(on) => change({ hideSeeds: on })} />
+          </ListRow>
+          <ListRow label={w.wordIndicators} detail={w.wordIndicatorsDetail}>
+            <Toggle label={w.wordIndicators} on={choices.wordIndicators} onChange={(on) => change({ wordIndicators: on })} />
           </ListRow>
         </ScrollArea>
         <Button onClick={() => startNewGame(choices)}>{w.start}</Button>

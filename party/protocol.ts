@@ -13,6 +13,8 @@ export interface OnlineOptions {
   minWordLength: number
   /** Seconds per turn, 0 = no timer (content/rooms.json → turnTimerChoices). */
   turnSeconds: number
+  /** Word indicators: made words get a white border, Cast shows "+N" and the Magic pops. Off = spot words yourself. */
+  wordIndicators: boolean
 }
 
 /** What a player sends: a move planned on `version` of the game, or "send me my view again". */
@@ -43,6 +45,8 @@ export interface GameView {
   by: number | null
   /** The game: your own hand; other hands and the bag as '?' × count; rng, seed and Magic zeroed — until game over. */
   game: GameState
+  /** The host's table options for this game (nothing secret — every player's screen follows them, e.g. word indicators). */
+  options: OnlineOptions
   /** When the current turn's timer runs out (server time, ms), or null when there's no timer. */
   turnEndsAt: number | null
   /** Only once the game is over. */

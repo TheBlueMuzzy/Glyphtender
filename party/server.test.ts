@@ -190,6 +190,15 @@ describe('online server — says no, and changes nothing', () => {
     expect(ok.game!.game.config.rules.minWordLength).toBe(3)
     const { server: timer } = startRoom(2, { turnSeconds: 45 })
     expect(timer.game).toBeNull()
+    const { server: yes } = startRoom(2, { wordIndicators: 'yes' } as unknown as Partial<OnlineOptions>)
+    expect(yes.game).toBeNull()
+  })
+
+  it('word indicators: on unless the host turns them off, and every player’s view carries the choice', () => {
+    const { conns } = startRoom(2)
+    expect(conns.map((c) => c.lastView()!.options.wordIndicators)).toEqual([true, true])
+    const { conns: off } = startRoom(2, { wordIndicators: false })
+    expect(off.map((c) => c.lastView()!.options.wordIndicators)).toEqual([false, false])
   })
 })
 

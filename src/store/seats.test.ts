@@ -101,8 +101,13 @@ describe('game store — passing the device (handoff)', () => {
 
   it('a new game remembers its table options (for Play again)', () => {
     store().startGame({ players: 3, seed: 1, boardName: 'small', minWordLength: 3, hideSeeds: false })
-    expect(store().options).toEqual({ players: 3, boardName: 'small', minWordLength: 3, hideSeeds: false })
+    expect(store().options).toEqual({ players: 3, boardName: 'small', minWordLength: 3, hideSeeds: false, wordIndicators: true })
     expect(store().game?.config.rules.minWordLength).toBe(3)
     expect(store().seats.map((s) => s.name)).toEqual(['Yellow', 'Blue', 'Purple'])
+  })
+
+  it('word indicators are a table option: on unless the new-game screen turned them off', () => {
+    store().startGame({ players: 2, seed: 1, wordIndicators: false })
+    expect(store().options?.wordIndicators).toBe(false)
   })
 })

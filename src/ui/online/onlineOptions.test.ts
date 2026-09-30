@@ -10,14 +10,14 @@ const memory = () => {
 describe('the host’s online table options', () => {
   it('first time: the garden picked by player count, the timer off', () => {
     expect(loadOnlineOptions(memory())).toEqual(defaultOnlineOptions())
-    expect(defaultOnlineOptions()).toMatchObject({ boardName: 'auto', turnSeconds: 0 })
+    expect(defaultOnlineOptions()).toMatchObject({ boardName: 'auto', turnSeconds: 0, wordIndicators: true })
   })
 
   it('remembers the last choices, and falls back where a saved value no longer fits', () => {
     const storage = memory()
-    saveOnlineOptions({ boardName: 'large', minWordLength: 3, turnSeconds: 90 }, storage)
-    expect(loadOnlineOptions(storage)).toEqual({ boardName: 'large', minWordLength: 3, turnSeconds: 90 })
-    storage.setItem('glyphtender:online-options', JSON.stringify({ boardName: 'huge', minWordLength: 9, turnSeconds: 45 }))
+    saveOnlineOptions({ boardName: 'large', minWordLength: 3, turnSeconds: 90, wordIndicators: false }, storage)
+    expect(loadOnlineOptions(storage)).toEqual({ boardName: 'large', minWordLength: 3, turnSeconds: 90, wordIndicators: false })
+    storage.setItem('glyphtender:online-options', JSON.stringify({ boardName: 'huge', minWordLength: 9, turnSeconds: 45, wordIndicators: 'yes' }))
     expect(loadOnlineOptions(storage)).toEqual(defaultOnlineOptions())
     storage.setItem('glyphtender:online-options', 'not json')
     expect(loadOnlineOptions(storage)).toEqual(defaultOnlineOptions())

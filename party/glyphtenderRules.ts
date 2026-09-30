@@ -10,7 +10,7 @@ import { checkAction, newGame } from '../src/engine/engine'
 import { shuffle } from '../src/engine/rng'
 import type { Action, WordList } from '../src/engine/types'
 import { emptyStats } from '../src/store/stats'
-import { mustBeListWithoutRepeats, mustBeObject, mustBeOneOf, mustBeWholeNumber, nullOr } from '../src/rooms/server/checks'
+import { mustBeListWithoutRepeats, mustBeObject, mustBeOneOf, mustBeTrueOrFalse, mustBeWholeNumber, nullOr } from '../src/rooms/server/checks'
 import type { GameRules } from '../src/rooms/server/gameRules'
 import type { OnlineAction, OnlineOptions, GameView } from './protocol'
 import { afterSeatChange, planNextTurn } from './turnClock'
@@ -65,6 +65,7 @@ export function makeRules({ words, randomSeed: seedMaker = randomSeed }: RulesSe
         boardName: mustBeOneOf(options.boardName ?? 'auto', ['auto', ...boardNames()], 'board'),
         minWordLength: mustBeWholeNumber(options.minWordLength ?? 2, 2, 3, 'minWordLength'),
         turnSeconds,
+        wordIndicators: mustBeTrueOrFalse(options.wordIndicators ?? true, 'wordIndicators'),
       }
     },
 

@@ -6,6 +6,7 @@
 //   held     — the piece you're holding: solid ring in the player's colour
 //   planned  — moved/targeted but not cast yet: pulsing halo at the hex edge (a targeted seed is also faded)
 //   done     — plain piece
+// WORDS (word indicators on): a white border behind the seeds — planned while aiming, then after they grow (WordBorders.tsx).
 // MOVES glide from hex to hex (useGlide.ts) — a planned move, Undo, and moves made anywhere else.
 // DANGER CUES (DangerCue.tsx): 1 move left = dashed thorny ring in the owner's colour · tangled = a vine wraps it
 // Colours: content/tuning/garden.json · timings: anim.json · margin: layout.json.
@@ -20,6 +21,8 @@ import { colourOf, glyphlingArt, seedArt } from './art'
 import { DangerCue } from './DangerCue'
 import { RevealMarks } from './RevealMarks'
 import { useGlide } from './useGlide'
+import { WordBorders } from './WordBorders'
+import { uniqueHexes } from '../store/wordMarks'
 import { usePreview } from './usePreview'
 import { HEX, useThrow } from './useThrow'
 import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
@@ -39,6 +42,7 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
   const flying = useGameStore((s) => s.flying)
   const landed = useGameStore((s) => s.landed)
   const revealAt = useGameStore((s) => s.revealAt)
+  const indicators = useGameStore((s) => s.options?.wordIndicators ?? true)
   const finishCast = useGameStore((s) => s.finishCast)
   const colours = useGardenTuning()
   const timing = useAnimTuning()
@@ -97,9 +101,9 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
   const highlight = flying ? null : highlightFor(game, move, selected)
   const lit = board.cells.filter((h) => highlight?.hexes.some((x) => hexKey(x) === hexKey(h)))
   const glow = highlight?.kind === 'cast' ? colours.castGlow : colours.moveGlow
-  const outlined = uniqueHexes(preview?.words.flatMap((w) => w.hexes) ?? [])
-  const grown = landed && game.lastTurn ? uniqueHexes(game.lastTurn.words.flatMap((w) => w.hexes)) : []
-  const grownColour = game.lastTurn ? colours[colourOf(game.lastTurn.seat)] : player
+  // Word indicators off: nothing shows which seeds make a word (players spot words themselves)
+  const outlined = indicators && !flying ? uniqueHexes(preview?.words.flatMap((w) => w.hexes) ?? []) : []
+  const grown = indicators && landed && game.lastTurn ? uniqueHexes(game.lastTurn.words.flatMap((w) => w.hexes)) : []
   const s = colours.pieceScale
   const at = (h: Hex) => hexToPixel(h, HEX)
 
@@ -123,6 +127,9 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
         return <polygon key={hexKey(h)} data-hex={hexKey(h)} points={hexCorners(x, y, HEX * 0.97)}
           fill={colours.hexFill} stroke={colours.hexLine} strokeWidth={colours.hexLineWidth} />
       })}
+
+      {/* Made words: a white border under the seeds (so it frames the letters instead of covering them) */}
+      <WordBorders planned={outlined} grown={grown} grownKey={landed?.count ?? 0} colours={colours} />
 
       {moved && (
         <image data-hex={hexKey(moved.hex)} href={glyphlingArt(moved.seat)} x={at(moved.hex).x - s} y={at(moved.hex).y - s}
@@ -155,17 +162,6 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
         </g>
       )}
 
-      {/* The words the planned cast would make — a thin outline in the player's colour */}
-      {!flying && outlined.map((h) => (
-        <polygon key={`word-${hexKey(h)}`} data-word-hex={hexKey(h)} points={hexCorners(at(h).x, at(h).y, HEX * 0.9)} fill="none"
-          stroke={player} strokeWidth={colours.wordOutlineWidth} strokeLinejoin="round" pointerEvents="none" />
-      ))}
-
-      {/* The words that just grew: glow, then fade (useThrow animates it) */}
-      <g data-grown opacity={0} pointerEvents="none" key={`grown-${landed?.count ?? 0}`}>
-        {grown.map((h) => <polygon key={hexKey(h)} points={hexCorners(at(h).x, at(h).y, HEX * 0.97)} fill={grownColour} />)}
-      </g>
-
       {game.glyphlings.map((g, i) => {
         const hex = spots[i].hex
         const { x, y } = at(hex)
@@ -195,10 +191,4 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
       )}
     </svg>
   )
-}
-
-/** The same hexes once each (a letter shared by two words is outlined once). */
-function uniqueHexes(list: Hex[]): Hex[] {
-  const seen = new Map(list.map((h) => [hexKey(h), h]))
-  return [...seen.values()]
 }

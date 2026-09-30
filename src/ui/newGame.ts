@@ -16,6 +16,8 @@ export interface NewGameChoices {
   twoLetterWords: boolean
   /** Pass-and-play: hide each player's seeds between turns. */
   hideSeeds: boolean
+  /** On = made words get a white border, Cast shows "+N" and the Magic pops. Off = players spot words themselves. */
+  wordIndicators: boolean
 }
 
 type Storage = Pick<globalThis.Storage, 'getItem' | 'setItem'>
@@ -26,9 +28,10 @@ const MAX_PLAYERS = 4
 /** Every board in content/data/boards.json, e.g. ["small", "large"] (the server's options check uses it too). */
 export { boardNames }
 
-/** First time: 2 players on their default board, 2-letter words as rules.json says, seeds hidden. */
-export const defaultChoices = (): NewGameChoices =>
-  ({ players: MIN_PLAYERS, boardName: defaultBoardFor(MIN_PLAYERS), twoLetterWords: rulesJson.minWordLength <= 2, hideSeeds: true })
+/** First time: 2 players on their default board, 2-letter words as rules.json says, seeds hidden, word indicators on. */
+export const defaultChoices = (): NewGameChoices => ({
+  players: MIN_PLAYERS, boardName: defaultBoardFor(MIN_PLAYERS), twoLetterWords: rulesJson.minWordLength <= 2, hideSeeds: true, wordIndicators: true,
+})
 
 /** A new player count also picks that count's default board (boards.json → defaultForPlayers). */
 export const withPlayers = (choices: NewGameChoices, players: number): NewGameChoices =>
@@ -55,6 +58,7 @@ export function loadChoices(storage: Storage | null = browserStorage()): NewGame
       players, boardName,
       twoLetterWords: typeof saved.twoLetterWords === 'boolean' ? saved.twoLetterWords : fallback.twoLetterWords,
       hideSeeds: typeof saved.hideSeeds === 'boolean' ? saved.hideSeeds : fallback.hideSeeds,
+      wordIndicators: typeof saved.wordIndicators === 'boolean' ? saved.wordIndicators : fallback.wordIndicators,
     }
   } catch {
     return fallback
@@ -80,7 +84,7 @@ export function startNewGame(choices: NewGameChoices) {
   closeAllScreens()
   useGameStore.getState().startGame({
     players: choices.players, boardName: choices.boardName, seed: randomSeed(),
-    minWordLength: choices.twoLetterWords ? 2 : 3, hideSeeds: choices.hideSeeds,
+    minWordLength: choices.twoLetterWords ? 2 : 3, hideSeeds: choices.hideSeeds, wordIndicators: choices.wordIndicators,
   })
 }
 
