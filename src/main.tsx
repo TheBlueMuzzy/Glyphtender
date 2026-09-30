@@ -3,6 +3,12 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { registerSW } from 'virtual:pwa-register'
+import { applyStyle, applyAccessibility, loadSettings } from './ui/kit'
+import style from '../content/ui/style.json'
+import settings from '../content/ui/settings.json'
+
+applyStyle(style) // content/ui/style.json → the UI kit's look (Cozy, night colours)
+applyAccessibility(loadSettings(settings)) // text size + reduce motion before any screen opens
 
 // Offline cache: when a new release is out it downloads in the background and the page swaps
 // to it straight away — returning players never see an old version (Roll Better B020).

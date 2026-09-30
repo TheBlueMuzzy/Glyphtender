@@ -20,11 +20,12 @@ Done when: the original's words.txt is in the game byte-for-byte and every scori
 - [ ] 🤖 8. Refresh: set aside any number, refill to 8, return set-aside seeds to the bag; bag empty → stop drawing — src/engine/turn.ts
 
 ## F03 🧱 UI kit (Cozy, night colours)
-- [ ] 🤖 9. Install the UI kit (Cozy), wire applyStyle + check:ui — src/ui/kit, content/ui/style.json, src/main.tsx
+- [x] 🤖 9. Install the UI kit (Cozy), wire applyStyle + check:ui — src/ui/kit, content/ui/style.json, src/main.tsx
 - [ ] 🤖 10. Night colours as Cozy tweaks (readable contrast), home page = kit MainMenu (Prototype, Settings) — content/ui/style.json, src/App.tsx
 - [ ] 🤖 11. Screenshots at 390×844, 844×390, 1440×900; nothing clipped
 - [ ] 🙋 12. Look at the Cozy night menus; tweak colours in Dev Kit → Color if wanted
 
 Ask Muzzy:
 Notes:
+- F03 task 9: kit 0.2.2 (framework db90181) installed with the Cozy preset; applyStyle + applyAccessibility wired in src/main.tsx; `npm run check:ui` passes. content/ui/settings.json = the kit's standard rows (accessibility tab kept).
 - Word Play (GMTK) feel reference being researched → .planning/research/wordplay.md

@@ -1,0 +1,11 @@
+/* THE KIT'S FONTS — self-hosted Google Fonts (SIL OFL 1.1, see content/credits.json), Latin letters only.
+   A browser only downloads a font when the page actually uses it, so a game pays only for its preset's fonts.
+   One file per font: variable fonts carry every weight in that one file. */
+@font-face { font-family: 'Nunito'; src: url('./nunito.woff2') format('woff2'); font-weight: 200 1000; font-display: swap; }
+@font-face { font-family: 'Fredoka'; src: url('./fredoka.woff2') format('woff2'); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: 'Lilita One'; src: url('./lilita-one.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Silkscreen'; src: url('./silkscreen.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+/* VT323 draws small for its size, so it's scaled up to sit level with the other body fonts */
+@font-face { font-family: 'VT323'; src: url('./vt323.woff2') format('woff2'); font-weight: 400; size-adjust: 125%; font-display: swap; }
+@font-face { font-family: 'Orbitron'; src: url('./orbitron.woff2') format('woff2'); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: 'Exo 2'; src: url('./exo-2.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }

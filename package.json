@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "check:devkit": "node src/devkit/check-devkit.mjs",
+    "check:ui": "node src/ui/kit/check-ui.mjs src/ui --css src",
     "e2e:sketch": "node e2e/sketch-shots.mjs"
   },
   "dependencies": {

@@ -1,11 +1,93 @@
 [
   {
-    "paths": ["public/art/runeblossoms/", "public/art/glyphlings/", "public/pwa-192x192.png", "public/pwa-512x512.png"],
+    "paths": [
+      "public/art/runeblossoms/",
+      "public/art/glyphlings/",
+      "public/pwa-192x192.png",
+      "public/pwa-512x512.png"
+    ],
     "source": "Glyphtender (Unity original) — Muzzy's own art, stand-in until redrawn",
     "author": "Muzzy (TheBlueMuzzy)",
     "licence": "own work",
     "light": "🟢",
     "url": "",
     "credit": ""
+  },
+  {
+    "paths": [
+      "src/ui/kit/fonts/nunito.woff2"
+    ],
+    "source": "Google Fonts (via Fontsource, self-hosted)",
+    "author": "Vernon Adams, Cyreal, Jacques Le Bailly",
+    "licence": "SIL OFL 1.1",
+    "light": "🟡",
+    "url": "https://fonts.google.com/specimen/Nunito",
+    "credit": "Nunito by Vernon Adams, Cyreal and Jacques Le Bailly, SIL Open Font License 1.1"
+  },
+  {
+    "paths": [
+      "src/ui/kit/fonts/fredoka.woff2"
+    ],
+    "source": "Google Fonts (via Fontsource, self-hosted)",
+    "author": "Milena Brandão, Hafontia",
+    "licence": "SIL OFL 1.1",
+    "light": "🟡",
+    "url": "https://fonts.google.com/specimen/Fredoka",
+    "credit": "Fredoka by Milena Brandão and Hafontia, SIL Open Font License 1.1"
+  },
+  {
+    "paths": [
+      "src/ui/kit/fonts/lilita-one.woff2"
+    ],
+    "source": "Google Fonts (via Fontsource, self-hosted)",
+    "author": "Juan Montoreano",
+    "licence": "SIL OFL 1.1",
+    "light": "🟡",
+    "url": "https://fonts.google.com/specimen/Lilita+One",
+    "credit": "Lilita One by Juan Montoreano, SIL Open Font License 1.1"
+  },
+  {
+    "paths": [
+      "src/ui/kit/fonts/silkscreen.woff2"
+    ],
+    "source": "Google Fonts (via Fontsource, self-hosted)",
+    "author": "Jason Kottke",
+    "licence": "SIL OFL 1.1",
+    "light": "🟡",
+    "url": "https://fonts.google.com/specimen/Silkscreen",
+    "credit": "Silkscreen by Jason Kottke, SIL Open Font License 1.1"
+  },
+  {
+    "paths": [
+      "src/ui/kit/fonts/vt323.woff2"
+    ],
+    "source": "Google Fonts (via Fontsource, self-hosted)",
+    "author": "Peter Hull",
+    "licence": "SIL OFL 1.1",
+    "light": "🟡",
+    "url": "https://fonts.google.com/specimen/VT323",
+    "credit": "VT323 by Peter Hull, SIL Open Font License 1.1"
+  },
+  {
+    "paths": [
+      "src/ui/kit/fonts/orbitron.woff2"
+    ],
+    "source": "Google Fonts (via Fontsource, self-hosted)",
+    "author": "Matt McInerney",
+    "licence": "SIL OFL 1.1",
+    "light": "🟡",
+    "url": "https://fonts.google.com/specimen/Orbitron",
+    "credit": "Orbitron by Matt McInerney, SIL Open Font License 1.1"
+  },
+  {
+    "paths": [
+      "src/ui/kit/fonts/exo-2.woff2"
+    ],
+    "source": "Google Fonts (via Fontsource, self-hosted)",
+    "author": "Natanael Gama",
+    "licence": "SIL OFL 1.1",
+    "light": "🟡",
+    "url": "https://fonts.google.com/specimen/Exo+2",
+    "credit": "Exo 2 by Natanael Gama, SIL Open Font License 1.1"
   }
 ]
