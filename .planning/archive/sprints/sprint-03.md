@@ -27,6 +27,7 @@ Check: `npm test`, build, check:ui, check:devkit, e2e green; screenshots look ri
 
 Ask Muzzy:
 Notes:
+- Closed 2026-09-30 (autonomous): F07 ✅; F08/F09/F10 🎛️ — built, 101 tests + e2e:game green at 3 sizes, independent review fixed 2 real bugs (95b34eb second finger, b82cb97 double results); minors → BUGS.md B002–B005. Claude's own look: board now sits right on the tray in portrait (bcf8153). They're ✅ when Muzzy plays them (task 12 → Sprint 04). v0.3 features needs changed to ~F09 (they only need the turn flow to work).
 - Tray seeds are real size (Muzzy 2026-09-30) — GDD §4 "Seed tray size".
 - Task 1: store = `src/store/gameStore.ts` (Zustand) + pure helpers `src/store/turnPlan.ts`. The store never changes the game except by sending an engine action (checkAction first). Tray order is the screen's own (a list of hand indexes per seat) — the rules don't care; after a turn/refresh survivors keep their place and new seeds go last. The draft and refresh don't wait for the word list; only Cast does.
 - Tuning: `layout.json` trayTileMax removed (tray = real size now), trayGap added; `garden.json` + purple/pink, wordOutlineWidth, grownGlowStrength; `anim.json` + pulseTime, wordGlowTime. The sketch's one use of trayTileMax became a plain 64 so it keeps its look.

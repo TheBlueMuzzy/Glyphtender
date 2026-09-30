@@ -1,5 +1,5 @@
 # Glyphtender — Roadmap
-Release target: alpha (pass-and-play + online) — musts 4/21 done
+Release target: alpha (pass-and-play + online) — musts 5/21 done
 IDs are names, not build order — follow `needs:`.
 
 ## v0.1 — Sketch  ✅ done 2026-09-30
@@ -15,42 +15,42 @@ flowchart LR
   F02[✅ F02 Skeleton] --> F01[✅ F01 Prototype]
 ```
 
-## v0.2 — Plant a garden  ← current  (→ alpha)
+## v0.2 — Plant a garden  🎛️ built 2026-09-30 — waiting on Muzzy's play (F08/F09/F10)
 Goal: two players on one device draft, move, cast, grow words and make Magic on either board.
 - 🎛️ F03 🧱 UI kit (Cozy, night colours) — must:alpha · needs: F02 · sprint 2
 - ✅ F04 🧱 Rules engine: boards, draft, move/cast legality, bag (120 + Qu), tangles, game end, tangle bonus — must:alpha · needs: F02 · sprint 2
 - ✅ F05 🧱 Official word list + word finder (union rule, Qu, min length) — must:alpha · needs: F02 · sprint 2
 - ✅ F06 🧱 Magic + draw / refresh — must:alpha · needs: F04, F05 · sprint 2
-- 🔨 F07 🧱 Board view + layout shell (tall → stacked, wide → side tray; fit / zoom) — must:alpha · needs: F01, ~F03, F04 · sprint 3
-- ⏳ F08 🎮 Seed tray (tap + drag, reorder, shuffle, refresh mode) — must:alpha · needs: F07 · sprint 3
+- ✅ F07 🧱 Board view + layout shell (tall → stacked, wide → side tray; fit / zoom) — must:alpha · needs: F01, ~F03, F04 · sprint 3
+- 🎛️ F08 🎮 Seed tray (tap + drag, reorder, shuffle, refresh mode) — must:alpha · needs: F07 · sprint 3
   why: seeds always in reach, refresh never a dead turn → avoids "homework" turns
-- ⏳ F09 🎮 Turn flow (legal highlights, move, cast, undo, "Cast · +N", words outlined, throw + sprout, piece-state look from F01) — must:alpha · needs: F01, F06, F07, F08 · sprint 3
+- 🎛️ F09 🎮 Turn flow (legal highlights, move, cast, undo, "Cast · +N", words outlined, throw + sprout, piece-state look from F01) — must:alpha · needs: F01, F06, F07, F08 · sprint 3
   why: every legal option lit + live Magic preview → players hunt for two-birds casts → Cozy cleverness
-- ⏳ F10 🎮 Snake draft — must:alpha · needs: F07, F04 · sprint 3
+- 🎛️ F10 🎮 Snake draft — must:alpha · needs: F07, F04 · sprint 3
   why: fair openings, no lockout → Fellowship
 ```mermaid
 flowchart LR
   F04[✅ F04 Engine] --> F06[✅ F06 Magic]
   F05[✅ F05 Word list] --> F06
-  F03[🎛️ F03 Kits] --> F07[🔨 F07 Board + layout]
+  F03[🎛️ F03 Kits] --> F07[✅ F07 Board + layout]
   F04 --> F07
   F01[✅ F01 Prototype] --> F07
-  F07 --> F08[⏳ F08 Seed tray]
-  F06 --> F09[⏳ F09 Turn flow]
+  F07 --> F08[🎛️ F08 Seed tray]
+  F06 --> F09[🎛️ F09 Turn flow]
   F07 --> F09
   F08 --> F09
   F01 --> F09
-  F07 --> F10[⏳ F10 Draft]
+  F07 --> F10[🎛️ F10 Draft]
   F04 --> F10
 ```
 
-## v0.3 — A full pass-and-play game  (→ alpha)
+## v0.3 — A full pass-and-play game  ← current  (→ alpha)
 Goal: 2–4 friends play a complete game on one phone, from the main menu to the Magic reveal, without seeing each other's seeds.
-- ⏳ F11 🧱 Seats + "pass to Blue" handoff screen — must:alpha · needs: F09
+- 🟢 F11 🧱 Seats + "pass to Blue" handoff screen — must:alpha · needs: ~F09
   why: seeds stay secret on one device → Fellowship without peeking; seats let online + AI plug in later
-- ⏳ F12 🎮 Tangle danger cues — must:alpha · needs: F09
+- 🟢 F12 🎮 Tangle danger cues — must:alpha · needs: ~F09
   why: shows risk instead of scores → Secret-Magic tension stays, board stays readable
-- ⏳ F13 🎮 Magic reveal + end table + play again — must:alpha · needs: F09
+- 🟢 F13 🎮 Magic reveal + end table + play again — must:alpha · needs: ~F09
   why: staged reveal (bonuses pop, totals count up lowest-first) → the gasp at the end → Secret-Magic tension
 - ⏳ F14 🎮 Menus: main, new game (players, board, 2-letter), settings, pause — must:alpha · needs: F03, F11
 - ⏳ F15 ✨ Grow + move animations (basic) — must:alpha · needs: ~F09
@@ -59,9 +59,9 @@ Goal: 2–4 friends play a complete game on one phone, from the main menu to the
 - 🟢 F17 🔧 Dev Kit Bug capture (framework-first) — must:alpha · needs: F03
 ```mermaid
 flowchart LR
-  F09[⏳ F09 Turn flow] --> F11[⏳ F11 Seats + handoff]
-  F09 --> F12[⏳ F12 Danger cues]
-  F09 --> F13[⏳ F13 Reveal]
+  F09[🎛️ F09 Turn flow] --> F11[🟢 F11 Seats + handoff]
+  F09 -.-> F12[🟢 F12 Danger cues]
+  F09 -.-> F13[🟢 F13 Reveal]
   F09 -.-> F15[⏳ F15 Animations]
   F11 --> F14[⏳ F14 Menus]
   F03[🎛️ F03 Kits] --> F14
@@ -81,12 +81,12 @@ Goal: 2–4 players on different devices join by room code and play a full game;
 ```mermaid
 flowchart LR
   F18[🟢 F18 Rooms module] --> F19[⏳ F19 Server]
-  F11[⏳ F11 Seats] --> F19
+  F11[🟢 F11 Seats] --> F19
   F19 --> F20[⏳ F20 Lobby]
   F14[⏳ F14 Menus] --> F20
   F20 --> F21[⏳ F21 Rejoin / idle]
   F20 --> F22[⏳ F22 Rematch]
-  F13[⏳ F13 Reveal] --> F22
+  F13[🟢 F13 Reveal] --> F22
 ```
 
 ## Later
