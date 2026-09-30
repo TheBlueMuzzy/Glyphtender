@@ -7,7 +7,7 @@ Done when: every rule in GDD §4 has a test; a random-player simulation finishes
 - [x] 🤖 1. Game state, seeded random, new game + snake draft (non-edge, not next to a glyphling) — src/engine/{types,rng,setup,draft}.ts
 - [x] 🤖 2. Turn: move legality, cast legality (over own pieces, not others'), move-only when no cast possible — src/engine/turn.ts
 - [x] 🤖 3. Tangles, game end at 2, tangle bonus (rivals only) — src/engine/tangle.ts
-- [ ] 🤖 4. Random-player simulation + invariants (seed conservation, turn order, termination) — src/engine/sim.ts, scripts/sim.mjs
+- [x] 🤖 4. Random-player simulation + invariants (seed conservation, turn order, termination) — src/engine/sim.ts, scripts/sim.mjs
 Check: `npm test`; `npm run sim` prints game lengths + how often the bag runs out.
 
 ## F05 🧱 Official word list + word finder
@@ -34,6 +34,7 @@ Notes:
 - F05: the word list has **63,657** words, not 63,656 — the file has 63,656 line breaks but no line break after the last word (ROMAN), so counting lines comes up one short. Zipf tiers match exactly (1000 / 6342 / 21805 / 43997). `.gitattributes` marks `public/words/*.csv` binary so git can never touch its bytes; a test checks its SHA-256.
 - Order change: task 4 (sim) needs draw + refresh (tasks 7–8) — without them hands run dry and glyphlings wander forever — so the sim is committed after task 8.
 - F06 refresh: when the bag is already empty, a no-Magic turn skips the refresh step (there's nothing to refill from; setting seeds aside would only shrink the hand). Set-aside seeds go back into the bag at seeded-random places *after* the refill, so you never draw them straight back. The tangle check runs after the refresh.
+- F04 sim: `npm run sim` (options `--games N --player random|greedy`) runs the TS engine through Vite's `runnerImport` — no new packages. Results in research/sims.md: every invariant held over 6,000 games; the bag ran out in ≤1.6% of games (only long 4p Large); self-tangle endings are ~75–95% with these blind players. vitest runs 300 random + 15 greedy games.
 - F03 task 9: kit 0.2.2 (framework db90181) installed with the Cozy preset; applyStyle + applyAccessibility wired in src/main.tsx; `npm run check:ui` passes. content/ui/settings.json = the kit's standard rows (accessibility tab kept).
 - F03 task 10: night palette = Cozy tweaks in content/ui/style.json (TDD D09). Home page = kit MainMenu (title, tagline, "Prototype: move → cast" → sketches/move-cast/, Settings) in src/ui/menus.tsx; words in content/text/en.json; Settings → About → Credits opens the kit Credits screen. Settings rows switched off (not real yet): language (English only), change name, analytics, and the example.com privacy/feedback links. body has class="kit-page"; index.css placeholder styles removed.
 - F03 task 11: `npm run e2e:menu <outDir> [url]` (e2e/menu-shots.mjs) shoots home, Settings, Settings → Accessibility at 390×844, 844×390, 1440×900 — all 9 pass: nothing past a screen edge, every button ≥ 44px, Esc closes Settings, the Prototype button reaches sketches/move-cast/, no console errors. check:ui, test, build, check:devkit all pass.

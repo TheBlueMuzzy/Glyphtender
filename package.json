@@ -12,7 +12,8 @@
     "check:devkit": "node src/devkit/check-devkit.mjs",
     "check:ui": "node src/ui/kit/check-ui.mjs src/ui --css src",
     "e2e:sketch": "node e2e/sketch-shots.mjs",
-    "e2e:menu": "node e2e/menu-shots.mjs"
+    "e2e:menu": "node e2e/menu-shots.mjs",
+    "sim": "node scripts/sim.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",
