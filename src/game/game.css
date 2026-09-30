@@ -26,6 +26,8 @@
 
   .game-bar { grid-area: bar; min-inline-size: 0; }
   .game-prompt { flex: 1 1 0; min-inline-size: 0; }
+  /* In the narrow side column the words get their own full-width line under the portrait and Menu button */
+  .game[data-layout="side"] .game-prompt { order: 1; flex-basis: 100%; }
 
   /* The board's box: the garden background and the board SVG on top of each other, filling it */
   .game-board { grid-area: board; display: grid; min-block-size: 0; min-inline-size: 0; }

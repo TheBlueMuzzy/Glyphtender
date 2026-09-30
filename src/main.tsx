@@ -20,6 +20,9 @@ if (import.meta.env.DEV || __DEVKIT_IN_RELEASE__) {
   import('./devkit/mount').then((m) => m.mountDevKit())
 }
 
+// Dev only: window.__glyphtender for the e2e check and the console (src/game/devHook.ts)
+if (import.meta.env.DEV) import('./game/devHook').then((m) => m.installDevHook())
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
