@@ -23,6 +23,7 @@ Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: waiting o
 **Don't re-break:** a score pop's LAST animation frame must be invisible (opacity 0) — the pops stay in the page until the next landing, held by fill (B007; e2e/leftover-pops.mjs) · before the move a tray seed can't be dragged at all, not even to reorder — it shakes (B008, Muzzy's call). · a targeted seed is never see-through — no opacity on it, only a plannedSeedLook filter (B010) · after Refresh N the handoff / next player waits until the tray's shrink → grow has played (B011).
 
 ## Log
+- 2026-09-30 — Alpha release prep: live online host set, returning-player update check, credits; all checks green. Delivering v0.1.0.
 - 2026-09-30 — Sprint 06 Feel pass (autonomous): Muzzy's 11 playtest notes built + 7 bugs fixed by e2e and review; 197 tests.
 - 2026-09-30 — Bug sweep (autonomous): word-list failure now shows Retry (and End turn no longer waits for words), draft ignores illegal taps quietly, right-click no longer taps, snapshots keep end-table stats. 168 tests, all e2e green.
 - 2026-09-30 — Sprint 05 done (autonomous): move glide, rooms framework module (harvested from Roll Better), online server with per-player views, online seats, lobby, e2e:online (0 leaks); security review fixed 5 issues; layout fix for the reveal.
