@@ -137,6 +137,13 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D45 · 2026-09-30 · The planned seed: keep the brightness gap, change the colour — "moonlit" (B010 reopened)
+  Proposed by: Muzzy ("maybe there's a better way than to just push the values towards white? do some research")
+  Research: research/ghost-pieces.md — a letter is read by its BRIGHTNESS gap to the tile; any even wash/fade shrinks it
+  (measured, scripts/planned-contrast.mjs: real 6.7 · misty 2.0 · greyed 2.9 · dimmed 2.4). Options: moonlit (gradient map,
+  9.1) / stencil (two flat colours, 12.0) / greyscale (6.3) / hatching / scanlines / darker tile / badge.
+  Chose: moonlit by default, stencil as runner-up, older looks kept — SVG feColorMatrix (brightness) → feComponentTransfer
+  table (shadow → light); alpha untouched, so still solid. Colour moves to the pulsing halo; colourless = "not planted yet"
 D44 · 2026-09-30 · A refresh plays out on the tray BEFORE play passes on (B011)
   Proposed by: Muzzy ("the tiles they selected shrink, and new ones scale into their place. THEN it goes to the next player")
   Chose: pass-and-play works the refresh out at once (checked), but the store holds the new game in `refreshFx` until the tray's
