@@ -15,8 +15,9 @@ import { useAnimTuning, useGardenTuning } from './useTuning'
 
 const w = text.game.handoff
 
-/** stacked: the tall layout — the box sits over the (hidden) tray at the bottom, so more of the garden shows. */
-export function Handoff({ stacked }: { stacked: boolean }) {
+/** stacked: the tall layout — the box sits over the (hidden) tray, so more of the garden shows. flipped: the tray is
+ *  on the other side (Settings → Tray position), so the box is too. */
+export function Handoff({ stacked, flipped }: { stacked: boolean; flipped: boolean }) {
   const handoff = useGameStore((s) => s.handoff)
   const showSeeds = useGameStore((s) => s.showSeeds)
   const timing = useAnimTuning()
@@ -50,8 +51,8 @@ export function Handoff({ stacked }: { stacked: boolean }) {
       <Button onClick={showSeeds}>{w.show}</Button>
     </Panel>
   )
-  // Tall screens: over the tray at the bottom. Wide: bottom right, over the tray column.
-  return stacked
-    ? <Screen dialog label={fill(w.title, { player })} bottom={box} />
-    : <Screen dialog label={fill(w.title, { player })} bottomRight={box} />
+  // Over the tray: tall screens at the bottom (flipped: the top); wide at the bottom right (flipped: bottom left)
+  const label = fill(w.title, { player })
+  if (stacked) return flipped ? <Screen dialog label={label} top={box} /> : <Screen dialog label={label} bottom={box} />
+  return flipped ? <Screen dialog label={label} bottomLeft={box} /> : <Screen dialog label={label} bottomRight={box} />
 }

@@ -26,6 +26,14 @@
     grid-template: "board bar" auto "board panel" minmax(0, 1fr) / minmax(0, 1fr) min-content;
   }
   .game[data-layout="side"] :is(.game-bar, .game-panel) { contain: inline-size; }
+  /* Settings → Tray position "Flipped": the tray (with its prompt and buttons) on the other side of the board —
+     above it when tall, on its left when wide (the column still takes the ruler's width) */
+  .game[data-layout="stacked"][data-flipped] {
+    grid-template: "bar" auto "panel" auto "board" minmax(0, 1fr) / minmax(0, 1fr);
+  }
+  .game[data-layout="side"][data-flipped] {
+    grid-template: "bar board" auto "panel board" minmax(0, 1fr) / min-content minmax(0, 1fr);
+  }
 
   .game-bar { grid-area: bar; min-inline-size: 0; }
   /* The prompt: its own full-width line just above the tray */

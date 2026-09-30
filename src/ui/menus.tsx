@@ -3,6 +3,7 @@
 import { Credits, HowToPlay, MainMenu, Pause, Settings, screens } from './kit'
 import { GameOverScreen } from '../game/GameOver'
 import { leaveToMenu, newGameFromEnd, openNewGame, playAgain } from './newGame'
+import { settingsChanged } from './gameSettings'
 import { LobbyScreen } from './online/LobbyScreen'
 import { OnlineStartScreen } from './online/OnlineStartScreen'
 import text from '../../content/text/en.json'
@@ -33,12 +34,13 @@ export function MainMenuScreen() {
 // PLAY ONLINE (src/ui/online/) — name + Create / Join, then the lobby while in a room.
 export { LobbyScreen, OnlineStartScreen }
 
-// SETTINGS — rows come from content/ui/settings.json ("on": false hides a row).
+// SETTINGS — rows come from content/ui/settings.json ("on": false hides a row). The game follows its own
+// rows at once (Gameplay → Tray position), even when Settings is opened from Pause mid-game.
 export function SettingsScreen() {
   const onAction = (id: string) => {
     if (id === 'credits') screens.push('credits')
   }
-  return <Settings schema={settings} info={{ version: `v${version.version}` }} onAction={onAction} />
+  return <Settings schema={settings} info={{ version: `v${version.version}` }} onAction={onAction} onChange={settingsChanged} />
 }
 
 // CREDITS — people from en.json, then every asset listed in content/credits.json.

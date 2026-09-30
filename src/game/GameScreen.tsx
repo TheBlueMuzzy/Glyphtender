@@ -1,12 +1,14 @@
 // THE GAME SCREEN — the layout shell: top bar (portrait + Menu), board, and the panel: prompt, seed tray, buttons.
 // Layout by the SHAPE of the free space, not the device (TDD D04): taller than layout.stackedAspect →
-// tray BELOW the board ("stacked"); otherwise tray BESIDE it ("side", taking sidePanelShare of the width).
+// tray BELOW the board ("stacked"); otherwise tray BESIDE it, on the right ("side", sidePanelShare of the width).
+// Settings → Gameplay → Tray position "Flipped" puts it on the other side: above the board / on its left.
 // The board always fits its box and hugs the tray's side of it, so board and tray sit close.
 // The tray is real size (trayLayout.ts); the buttons are about a board hex tall (finger-sized, ≥ 44 px).
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { toast } from '../ui/kit'
+import { useGameSettings } from '../ui/gameSettings'
 import { ActionBar } from './ActionBar'
 import { wordListUrl } from './art'
 import { Board } from './Board'
@@ -78,7 +80,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   // When the garden tangles, the Magic reveal takes the tray's place (Reveal.tsx) and then opens the end table
   const over = game.phase === 'over'
 
-  const flipped = false
+  const flipped = useGameSettings((s) => s.trayFlipped)
   const traySide = stacked ? (flipped ? 'top' : 'bottom') : flipped ? 'left' : 'right'
   // Buttons as tall as a board hex (its flat-to-flat height), never below the finger-size floor
   const buttonPx = Math.max(layout.trayTileMin, Math.round(hexPx * HEX_HEIGHT))
@@ -102,7 +104,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
         <image ref={dragImage} visibility="hidden" opacity={0.85} />
       </svg>
     </div>
-    <Handoff stacked={stacked} />
+    <Handoff stacked={stacked} flipped={flipped} />
     </>
   )
 }
