@@ -9,7 +9,7 @@
 - **Stack:** Vite + TypeScript + React, **2D SVG board (no Three.js)**, Zustand for screen state. Why: a flat hex board wants crisp, resizable, tappable shapes — SVG gives that for free, runs cool on phones, and every hex is a real element we can highlight and test.
 - **Where it runs online:** GitHub Pages (game) + PartyKit on Cloudflare (online rooms, from alpha's online milestone).
 - **Framework modules:** Game UI kit (Cozy, night colours) · Dev Kit · **rooms** (online; harvested from Roll Better during this game) · **ai** (beta; first AI module, built from the original's goal-selection model).
-- **Dev Kit tools used:** Console, Tuning, Color (built) — **recommended next:** **Snapshots** (save/restore any board position — the original's pain was edge cases, and a pure-state engine makes this nearly free) and **Bug capture** (last ~60 s of actions → /bug), both framework-first. Later: Multiplayer (online milestone), AI (beta).
+- **Dev Kit tools used:** Console, Tuning, Color, **Snapshots** + **Bug capture** (kit 0.3.0, framework-first — F16/F17): the game plugs in through `src/devkit-game/glyphtenderAdapter.ts` (state = engine GameState + tray order; events = a line per placement/turn/refresh/phase/tangle/note); snapshots live in `content/snapshots/`, captures in `.planning/bugs/`. Later: Multiplayer (online milestone), AI (beta).
 
 ## 2. How it fits together
 ```mermaid
@@ -105,6 +105,9 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D16 · 2026-09-30 · Dev Kit Snapshots + Bug capture see the game through one small adapter, registered in src/devkit-game/tabs.ts
+  Proposed by: Claude (autonomous)   Options: tools read the Zustand store directly / game registers an adapter (getState, setState, canRestore, onEvent) / register from main.tsx
+  Chose: adapter in the Dev Kit's own tabs file — the kit stays engine-agnostic (any game plugs in), the adapter only loads with the Dev Kit (gone at 1.0, main.tsx untouched), and it uses only the store's public getState/subscribe/loadState. A snapshot = GameState + tray order (the planned turn is dropped on restore); canRestore goes false for online seats
 D15 · 2026-09-30 · Game over = the kit's Results dialog, pushed on the screen stack after the last runeblossom grows
   Proposed by: Claude (autonomous)   Options: own end screen / kit GameOver / kit Results
   Chose: kit Results (dim) — ranks, ★ winners (ties share 1st), "N Magic", Menu + Play again; Esc closes it to look at the board, a Results button reopens it. The staged reveal (F13) replaces it later
