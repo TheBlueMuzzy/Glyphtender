@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { hexAt, position, wordsOf } from '../engine/testkit'
 import { hexKey } from '../engine/hex'
 import { legalDraftHexes } from '../engine/engine'
@@ -42,6 +42,15 @@ describe('game store — draft', () => {
     const before = store().game
     store().tapHex(hexAt('C1-1')) // an edge hex
     expect(store().game).toBe(before)
+  })
+
+  it('B003: a tap or drop on a non-glowing draft hex is simply ignored (no warning, no note)', () => {
+    store().startGame({ players: 2, seed: 7 })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    store().tapHex(hexAt('C1-1')) // an edge hex: never glows in the draft
+    expect(warn).not.toHaveBeenCalled()
+    expect(store().note).toBeNull()
+    warn.mockRestore()
   })
 })
 

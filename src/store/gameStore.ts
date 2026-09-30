@@ -7,7 +7,7 @@
 // server instead of the engine, and the server's view of the game comes back and replaces `game`.
 import { create } from 'zustand'
 import text from '../../content/text/en.json'
-import { applyAction, checkAction, newGame } from '../engine/engine'
+import { applyAction, checkAction, legalDraftHexes, newGame } from '../engine/engine'
 import { hexKey, sameHex, type Hex } from '../engine/hex'
 import { parseWordList } from '../engine/words'
 import type { Action, GameState, WordList } from '../engine/types'
@@ -249,6 +249,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
       const { game, move, cast, selected } = get()
       if (!game || !canPlay()) return
       if (game.phase === 'draft') {
+        if (!hexIn(legalDraftHexes(game), hex)) return // not a glowing hex: nothing happens
         if (get().online) return void sendOnline({ type: 'draft', hex })
         const next = send({ type: 'draft', hex })
         if (!next) return
