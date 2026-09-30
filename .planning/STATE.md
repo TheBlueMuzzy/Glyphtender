@@ -20,6 +20,7 @@ Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: waiting o
 **Sims:** `npm run sim` (research/sims.md): bag runs out in 0–1.6% of games; games 42–67 turns.
 **Online dev:** `npm run party:dev` (PartyKit on port 1997 — Roll Better uses 1999) + `npm run dev`; e2e: `e2e:game`, `e2e:pass`, `e2e:online` (each starts its own servers; run one at a time).
 **Run:** `npx vite --host --port 5180` (dev port 5180) · tests `npm test` · sketch check `npm run e2e:sketch` (needs the dev server).
+**Don't re-break:** a score pop's LAST animation frame must be invisible (opacity 0) — the pops stay in the page until the next landing, held by fill (B007; e2e/leftover-pops.mjs) · before the move a tray seed can't be dragged at all, not even to reorder — it shakes (B008, Muzzy's call).
 
 ## Log
 - 2026-09-30 — Sprint 06 Feel pass (autonomous): Muzzy's 11 playtest notes built + 7 bugs fixed by e2e and review; 197 tests.
