@@ -124,6 +124,14 @@ describe('game store — planning a turn (One Cast + undo)', () => {
     expect(lit()).toBeNull()
   })
 
+  it('an empty hand: no gold after the move (there is nothing to cast — End turn)', () => {
+    store().loadState(position({ glyphlings: { 0: 'C6-7', 1: 'C1-4', 2: 'C11-1', 3: 'C11-4' }, hands: [[], ['E']], bag: [] }))
+    store().tapGlyphling(0)
+    store().tapHex(hexAt('C6-6'))
+    expect(store().move).not.toBeNull()
+    expect(highlightFor(store().game!, store().move, store().selected)).toBeNull()
+  })
+
   it('dragging: only a legal hex under the piece is a "drop here" (teal for a move, gold for a cast); anything else, none', () => {
     yellowToPlay()
     const drop = (label: string) => { const s = store(); return dropKind({ ...s, game: s.game! }, hexAt(label)) }

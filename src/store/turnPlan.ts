@@ -49,7 +49,8 @@ export function highlightFor(game: GameState, move: PlannedMove | null, selected
   if (game.phase === 'draft') return { hexes: legalDraftHexes(game), kind: 'move' }
   if (game.phase !== 'play') return null
   if (selected?.kind === 'glyphling') return { hexes: legalMoves(game, selected.id), kind: 'move' }
-  return move ? { hexes: castOptions(game, move), kind: 'cast' } : null
+  const seedsLeft = game.hands[game.current].length > 0 // an empty hand has nothing to cast (End turn)
+  return move && seedsLeft ? { hexes: castOptions(game, move), kind: 'cast' } : null
 }
 
 /**
