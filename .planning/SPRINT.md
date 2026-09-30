@@ -27,6 +27,7 @@ Done when: the original's words.txt is in the game byte-for-byte and every scori
 
 Ask Muzzy:
 - **Word list quirk (not changed — the list is byte-for-byte):** line 63,650 reads `ZYGOTESAA,0.00` — ZYGOTES lost its score and line break and got glued to a stray `AA,0.00`. So ZYGOTES isn't playable and "ZYGOTESAA" is. The file also ends with 7 late additions (AIDS, AWOL, CHINA, FRENCH, JAPAN, MOROCCO, ROMAN). Fix in a deliberate word-list commit? (AA itself is fine — it's on line 1.)
+- GDD §4.6 says the list has 63,656 words; it's really 63,657 (see Notes). I fixed the TDD, left the GDD to you.
 Notes:
 - F04 engine: illegal actions THROW an Error with a plain reason; `checkAction(state, action, words)` returns the same reason (or null) without throwing, for the UI. The word list is passed into applyAction as a 3rd argument (it's too big to live in GameState). Rule numbers are copied from content/tuning/rules.json into `state.config.rules` at newGame, so a replay/online game uses the same numbers.
 - F04 engine: glyphling ids are seat × 2 + 0/1 (Yellow = 0,1 · Blue = 2,3 …). Hands are dealt 8 each in seat order from the front of the bag.
