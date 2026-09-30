@@ -6,6 +6,7 @@
 //   held     — the piece you're holding: solid ring in the player's colour
 //   planned  — moved/targeted but not cast yet: pulsing halo at the hex edge (a targeted seed is also faded)
 //   done     — plain piece
+// MOVES glide from hex to hex (useGlide.ts) — a planned move, Undo, and moves made anywhere else.
 // DANGER CUES (DangerCue.tsx): 1 move left = dashed thorny ring in the owner's colour · tangled = a vine wraps it
 // Colours: content/tuning/garden.json · timings: anim.json · margin: layout.json.
 import { useLayoutEffect, useMemo, useRef } from 'react'
@@ -18,6 +19,7 @@ import { revealSteps } from '../store/revealPlan'
 import { colourOf, glyphlingArt, seedArt } from './art'
 import { DangerCue } from './DangerCue'
 import { RevealMarks } from './RevealMarks'
+import { useGlide } from './useGlide'
 import { usePreview } from './usePreview'
 import { HEX, useThrow } from './useThrow'
 import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
@@ -74,6 +76,13 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
     [flying, move, cast],
   )
   useThrow({ svgRef, seedRef, flight, onLanded: finishCast, landed, timing, colours })
+
+  // Where each glyphling is drawn (a planned move shows it on its new hex); a change of spot glides there
+  const spots = useMemo(
+    () => game.glyphlings.map((g) => ({ id: g.id, hex: move?.glyphling === g.id ? move.to : g.hex })),
+    [game.glyphlings, move],
+  )
+  useGlide(svgRef, spots, timing)
 
   // Glyphlings with 0–1 moves left (everyone's — it's on the board for all to see, and never shows Magic)
   const inDanger = useMemo(() => dangers(game), [game])
@@ -157,14 +166,14 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
         {grown.map((h) => <polygon key={hexKey(h)} points={hexCorners(at(h).x, at(h).y, HEX * 0.97)} fill={grownColour} />)}
       </g>
 
-      {game.glyphlings.map((g) => {
-        const hex = move?.glyphling === g.id ? move.to : g.hex
+      {game.glyphlings.map((g, i) => {
+        const hex = spots[i].hex
         const { x, y } = at(hex)
         const held = selected?.kind === 'glyphling' && selected.id === g.id
         const planned = move?.glyphling === g.id
         const danger = held || planned ? undefined : inDanger.get(g.id) // held/planned rings win over the danger cue
         return (
-          <g key={g.id}>
+          <g key={g.id} data-glide={g.id}>
             <g data-hop={g.id} className="game-hop">
               <image data-glyph={g.id} data-hex={hexKey(hex)} href={glyphlingArt(g.seat)} x={x - s} y={y - s} width={2 * s} height={2 * s}
                 opacity={danger === 'tangled' ? colours.tangledDim : 1} />

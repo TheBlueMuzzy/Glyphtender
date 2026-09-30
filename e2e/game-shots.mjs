@@ -2,6 +2,7 @@
 // Play → Start (new-game screen) → snake draft (1 drag + 3 taps) → turns by tap (move, seed, cast, Cast · +N) and by drag, undo,
 // tray reorder + shuffle, a refresh → passing the device (Show my seeds) → fast-forward to the end with the dev hook →
 // Skip the Magic reveal → end table → Play again → Menu.
+// Checks the move glide (a planned move and Undo slide the glyphling; 4b = frozen halfway).
 // Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px, tray seeds real size, no console errors.
 // Starts its OWN dev server (default port 5188 — never Muzzy's 5180) and closes only that one at the end.
 //   npm run e2e:game [outDir] [port]
@@ -52,6 +53,7 @@ try {
     const tap = (loc) => (size.mobile ? loc.tap() : loc.click())
     const store = (fn) => page.evaluate(`(${fn})(window.__glyphtender.store.getState())`)
     const shot = async (name) => {
+      await glidesDone()
       await page.waitForTimeout(250)
       await page.screenshot({ path: `${OUT}/${size.name}-${name}.png` })
       const { out, hex, tile } = await page.evaluate(problems)
@@ -91,6 +93,20 @@ try {
       for (let i = 1; i <= 8; i++) await touch('touchMove', ax + 20 + ((bx - ax - 20) * i) / 8, ay + ((by - ay) * i) / 8)
       await page.screenshot({ path: `${OUT}/${size.name}-6-dragging.png` })
       await touch('touchEnd', bx, by)
+    }
+    // Moves glide (anim.json moveBase + movePerHex × hexes): is one running / wait until every glyphling has settled
+    const gliding = () => page.evaluate(() => [...document.querySelectorAll('[data-glide]')].some((g) => g.getAnimations().length > 0))
+    const glidesDone = () => page.waitForFunction(
+      () => [...document.querySelectorAll('[data-glide]')].every((g) => g.getAnimations().length === 0), null, { timeout: 3000 })
+    // Freeze the running glide halfway, take a picture, let it finish
+    const midGlideShot = async (name) => {
+      await page.evaluate(() => document.querySelectorAll('[data-glide]').forEach((g) => g.getAnimations().forEach((a) => {
+        a.pause()
+        a.currentTime = a.effect.getComputedTiming().duration / 2
+      })))
+      await page.screenshot({ path: `${OUT}/${size.name}-${name}.png` })
+      await page.evaluate(() => document.querySelectorAll('[data-glide]').forEach((g) => g.getAnimations().forEach((a) => a.play())))
+      await glidesDone()
     }
     const waitLanded = () => page.waitForFunction(() => !window.__glyphtender.store.getState().flying, null, { timeout: 5000 })
     const castButton = () => page.locator('.game-actions button').last()
@@ -138,6 +154,10 @@ try {
         await tap(glyph)
         if (turn === 1) await shot('4-move-options')
         await tap(option('move', Math.floor((await optionCount('move')) / 3)))
+        if (turn === 1) {
+          if (!(await gliding())) fail(`${size.name}: the planned move did not glide`)
+          else await midGlideShot('4b-gliding')
+        }
       }
       if (!(await store((s) => s.move !== null))) { fail(`${size.name} turn ${turn}: no move planned`); break }
       // Cast (a move-only turn if the hand is empty)
@@ -166,6 +186,8 @@ try {
           if (await store((s) => s.cast !== null)) fail(`${size.name}: Undo did not take the seed back`)
           await tap(page.locator('.game-actions button', { hasText: 'Undo' }))
           if (await store((s) => s.move !== null)) fail(`${size.name}: Undo did not take the move back`)
+          if (!(await gliding())) fail(`${size.name}: Undo did not glide the glyphling back`)
+          await glidesDone()
           turn-- // play this turn again
           continue
         }

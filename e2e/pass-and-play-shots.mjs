@@ -51,6 +51,9 @@ try {
     const store = (fn) => page.evaluate(`(${fn})(window.__glyphtender.store.getState())`)
     const check = (what, ok) => { if (!ok) fail(`${size.name}: ${what}`) }
     const shot = async (name, settle = 400) => {
+      // Moves glide (anim.json moveBase + movePerHex × hexes): picture the glyphlings once they have settled
+      await page.waitForFunction(
+        () => [...document.querySelectorAll('[data-glide]')].every((g) => g.getAnimations().length === 0), null, { timeout: 3000 })
       await page.waitForTimeout(settle)
       await page.screenshot({ path: `${OUT}/pass-${size.name}-${name}.png` })
       const out = await page.evaluate(problems)
