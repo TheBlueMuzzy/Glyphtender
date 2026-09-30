@@ -1,6 +1,12 @@
 # Glyphtender — Bugs
-Open: 2 (P0 0 · P1 0 · P2 0 · P3 2)
+Open: 4 (P0 0 · P1 2 · P2 0 · P3 2)
 ## Open
+### B007 · P1 · open · found 2026-09-30 in F09 (Sprint 06 score pops) · v0.0.0.2 · Muzzy's PC
+Some score-pop numbers stay on the board after the animation
+Steps: play several turns that make words (exact trigger unknown — screenshot didn't paste) · Expected: pops fly into the total over the caster, then everything fades · Actual: some numbers stick around on the board · How often: seen by Muzzy during play
+### B008 · P1 · open · found 2026-09-30 in F09 · v0.0.0.2 · Muzzy's PC
+Seeds can be dragged during "move a glyphling" — they should shake instead
+Steps: start your turn, before moving drag a seed from the tray · Expected: seeds are greyed out; touching/dragging one gives the "no" shake and nothing moves · Actual: the seed drags (the Sprint 06 fix c9cd4ef deliberately allowed tray reorder by drag before the move — Muzzy overrules: no dragging seeds before the move, reorder included)
 ### B001 · P3 · open · found 2026-09-30 in F05 · v0.0.0 · word list data
 ZYGOTES isn't a word; "ZYGOTESAA" is
 Steps: play ZYGOTES · Expected: scores · Actual: not in the list; the list has `ZYGOTESAA,0.00` instead.
