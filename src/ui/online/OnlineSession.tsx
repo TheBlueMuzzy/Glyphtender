@@ -29,9 +29,13 @@ export function OnlineSession() {
   useEffect(() => connectOnline(send), [send])
 
   // Every new view goes to the game store; a view of "no game" (the host went back to the lobby) ends the game
+  // and closes the end table (and anything else open), so the lobby shows
   useEffect(() => {
     if (room.view) receiveView(room.view)
-    else if (useGameStore.getState().online) useGameStore.getState().leaveGame()
+    else if (useGameStore.getState().online) {
+      useGameStore.getState().leaveGame()
+      closeAllScreens()
+    }
   }, [room.view])
 
   // In the room: the join screen closes (the lobby is underneath). A new game: the end table closes.
