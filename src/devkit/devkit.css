@@ -95,3 +95,11 @@
 .devkit-status { width: 100%; font-size: 12px; color: #9a9bab; }
 .devkit-status.is-error { color: #ff7b7b; }
 .devkit-status.is-ok { color: #7bd88f; }
+.devkit-not-plugged { margin: 0; padding: 12px 10px; color: #9a9bab; }
+.devkit-not-plugged code { color: #e8e8ee; }
+
+/* Phone: the panel is narrow — drop the title so all the tabs fit without scrolling sideways */
+@media (max-width: 520px) {
+  .devkit-title { display: none; }
+  .devkit-tab { padding: 4px 7px; }
+}

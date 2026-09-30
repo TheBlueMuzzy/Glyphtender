@@ -5,5 +5,10 @@
 //      with Save (saveContentFile) and Copy for Claude (copyText) from '../devkit/saveContent'
 //   2. list it below:  { id: 'table', label: 'Table', Panel: TableTab }
 import type { ComponentType } from 'react'
+import { registerDevKitGame } from '../devkit/devkitGame'
+import { glyphtenderAdapter } from './glyphtenderAdapter'
+
+// Plugs Glyphtender into the Dev Kit's Snapshots + Bug capture tabs (this file only loads with the Dev Kit)
+registerDevKitGame(glyphtenderAdapter)
 
 export const gameTabs: { id: string; label: string; Panel: ComponentType }[] = []

@@ -7,14 +7,19 @@
 //      the release check (src/devkit/check-devkit.mjs) uses that to test both ways.
 //   2. The Save endpoint, dev server only (never in a build):
 //        POST /__devkit/save   body: { "path": "content/ui/style.json", "data": { ... } }
-//      Safety: only .json files inside content/ — nothing else in the project can be written.
+//      Safety: only .json files inside content/ — nothing else in the project can be written — plus one
+//      exception: bug captures (the Bug capture tab) go in .planning/bugs/, where /bug keeps them.
+//      A missing folder is refused, except the two the Dev Kit's own tools fill (MADE_ON_FIRST_SAVE).
 //      Files are written pretty-printed (2 spaces) with a trailing newline, and a "_help" note already
 //      in the file is kept even if the tool didn't send it.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
 
 export const SAVE_URL = '/__devkit/save'
+
+/** Folders the Save endpoint makes if missing: Snapshots' files, and Bug capture's (where /bug looks). */
+export const MADE_ON_FIRST_SAVE = ['content/snapshots', '.planning/bugs']
 
 /** Is the Dev Kit in release builds? The DEVKIT_IN_RELEASE override, else content/devkit.json, else off. */
 export function devkitInReleaseBuilds(root: string, override = process.env.DEVKIT_IN_RELEASE): boolean {
@@ -34,6 +39,11 @@ export function isAllowedContentPath(path: unknown): path is string {
   if (path.includes('\\') || path.includes('\0')) return false
   const parts = path.split('/')
   return parts.every((part) => part !== '' && part !== '.' && part !== '..')
+}
+
+/** A bug capture's file: ".planning/bugs/capture-2026-09-30-23-15-07.json" yes; anything deeper or else, no. */
+export function isAllowedBugCapturePath(path: unknown): path is string {
+  return typeof path === 'string' && /^\.planning\/bugs\/[A-Za-z0-9_-]+\.json$/.test(path)
 }
 
 /** Keep the file's "_help" note (first, as it was) if the new data doesn't bring its own. */
@@ -103,13 +113,17 @@ export function devkit(): Plugin {
           try {
             // Join the raw bytes first, so a character split across two chunks (like "—") stays whole
             const { path, data } = JSON.parse(Buffer.concat(chunks).toString('utf8'))
-            if (!isAllowedContentPath(path)) return reply(400, { error: `Not allowed: only .json files inside content/ (got ${path})` })
+            const isCapture = isAllowedBugCapturePath(path)
+            if (!isAllowedContentPath(path) && !isCapture) return reply(400, { error: `Not allowed: only .json files inside content/, or bug captures in .planning/bugs/ (got ${path})` })
             if (typeof data !== 'object' || data === null || Array.isArray(data)) return reply(400, { error: 'data must be a JSON object' })
 
-            const contentDir = resolve(root, 'content')
+            const allowedDir = resolve(root, isCapture ? '.planning/bugs' : 'content')
             const file = resolve(root, path)
-            if (!file.startsWith(contentDir + sep)) return reply(400, { error: 'Not allowed: outside content/' })
-            if (!existsSync(dirname(file))) return reply(400, { error: `No such folder: ${dirname(path)}` })
+            if (!file.startsWith(allowedDir + sep)) return reply(400, { error: 'Not allowed: outside content/' })
+            if (!existsSync(dirname(file))) {
+              if (!MADE_ON_FIRST_SAVE.includes(dirname(path))) return reply(400, { error: `No such folder: ${dirname(path)}` })
+              mkdirSync(dirname(file), { recursive: true })
+            }
 
             const existing = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null
             justWrote.set(fileKey(file), Date.now())

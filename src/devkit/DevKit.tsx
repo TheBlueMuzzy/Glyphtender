@@ -9,8 +9,10 @@
 // The one rule (DEVKIT.md): tools edit content/ JSON files, never code.
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { gameTabs } from '../devkit-game/tabs'
+import { CaptureTab } from './capture/CaptureTab'
 import { ColorTab } from './color/ColorTab'
 import { CAN_SAVE } from './saveContent'
+import { SnapshotsTab } from './snapshots/SnapshotsTab'
 import { TuningTab } from './tuning/TuningTab'
 import { tuningFiles } from './tuning/tuningFiles'
 import './devkit.css'
@@ -25,6 +27,9 @@ const KIT_TABS: DevKitTab[] = [
   { id: 'color', label: 'Color', Panel: ColorTab },
   // Only when the game has content/tuning/*.json files
   ...(tuningFiles.length > 0 ? [{ id: 'tuning', label: 'Tuning', Panel: TuningTab }] : []),
+  // These two need the game's adapter (registerDevKitGame, devkitGame.ts); without it they say how to add it
+  { id: 'snapshots', label: 'Snapshots', Panel: SnapshotsTab },
+  { id: 'bugs', label: 'Bugs', Panel: CaptureTab },
 ]
 
 const CORNER_SIZE_PX = 64 // the invisible top-right square you triple-tap on a phone

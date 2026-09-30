@@ -1,0 +1,388 @@
+{
+  "_help": "A Dev Kit snapshot: press ` → Snapshots → Restore to jump here. Made by a greedy sim game (seed 3).",
+  "name": "One move from tangled",
+  "savedAt": "2026-09-30T06:23:00.046Z",
+  "game": "Glyphtender",
+  "version": "0.0.0.0",
+  "summary": "turn 36 · play · Yellow to move · glyphling 1 at C7-8 has one way out (C8-8)",
+  "state": {
+    "game": {
+      "config": {
+        "players": 2,
+        "boardName": "small",
+        "seed": 3,
+        "rules": {
+          "handSize": 8,
+          "minWordLength": 2,
+          "ownershipBonus": 1,
+          "tangleBonus": 3,
+          "tanglesToEnd": 2
+        }
+      },
+      "phase": "play",
+      "current": 0,
+      "draftOrder": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "draftIndex": 4,
+      "glyphlings": [
+        {
+          "id": 0,
+          "seat": 0,
+          "hex": {
+            "q": 10,
+            "r": -4
+          }
+        },
+        {
+          "id": 2,
+          "seat": 1,
+          "hex": {
+            "q": 8,
+            "r": -1
+          }
+        },
+        {
+          "id": 3,
+          "seat": 1,
+          "hex": {
+            "q": 6,
+            "r": -7
+          }
+        },
+        {
+          "id": 1,
+          "seat": 0,
+          "hex": {
+            "q": 6,
+            "r": -1
+          }
+        }
+      ],
+      "seeds": {
+        "2,-4": {
+          "letter": "M",
+          "seat": 0
+        },
+        "0,-1": {
+          "letter": "H",
+          "seat": 1
+        },
+        "7,-3": {
+          "letter": "Y",
+          "seat": 0
+        },
+        "1,-4": {
+          "letter": "E",
+          "seat": 1
+        },
+        "4,-4": {
+          "letter": "D",
+          "seat": 0
+        },
+        "0,1": {
+          "letter": "B",
+          "seat": 1
+        },
+        "3,-4": {
+          "letter": "E",
+          "seat": 0
+        },
+        "0,-2": {
+          "letter": "U",
+          "seat": 1
+        },
+        "1,-3": {
+          "letter": "T",
+          "seat": 0
+        },
+        "4,0": {
+          "letter": "U",
+          "seat": 1
+        },
+        "3,-5": {
+          "letter": "Y",
+          "seat": 0
+        },
+        "5,0": {
+          "letter": "H",
+          "seat": 1
+        },
+        "3,-3": {
+          "letter": "D",
+          "seat": 0
+        },
+        "5,-1": {
+          "letter": "S",
+          "seat": 1
+        },
+        "5,1": {
+          "letter": "E",
+          "seat": 0
+        },
+        "10,-7": {
+          "letter": "S",
+          "seat": 1
+        },
+        "3,-6": {
+          "letter": "E",
+          "seat": 0
+        },
+        "4,1": {
+          "letter": "A",
+          "seat": 1
+        },
+        "8,-4": {
+          "letter": "E",
+          "seat": 0
+        },
+        "6,0": {
+          "letter": "I",
+          "seat": 1
+        },
+        "6,-2": {
+          "letter": "D",
+          "seat": 0
+        },
+        "9,-5": {
+          "letter": "T",
+          "seat": 1
+        },
+        "7,-4": {
+          "letter": "O",
+          "seat": 0
+        },
+        "5,-2": {
+          "letter": "E",
+          "seat": 1
+        },
+        "8,-5": {
+          "letter": "H",
+          "seat": 0
+        },
+        "4,-3": {
+          "letter": "O",
+          "seat": 1
+        },
+        "7,-2": {
+          "letter": "A",
+          "seat": 0
+        },
+        "5,-3": {
+          "letter": "P",
+          "seat": 1
+        },
+        "8,-3": {
+          "letter": "Y",
+          "seat": 0
+        },
+        "9,-4": {
+          "letter": "N",
+          "seat": 1
+        },
+        "8,-2": {
+          "letter": "O",
+          "seat": 0
+        },
+        "3,-2": {
+          "letter": "D",
+          "seat": 1
+        },
+        "9,-3": {
+          "letter": "E",
+          "seat": 0
+        },
+        "6,-4": {
+          "letter": "L",
+          "seat": 1
+        },
+        "6,-3": {
+          "letter": "I",
+          "seat": 0
+        },
+        "6,1": {
+          "letter": "N",
+          "seat": 1
+        }
+      },
+      "hands": [
+        [
+          "E",
+          "C",
+          "W",
+          "K",
+          "H",
+          "U",
+          "T",
+          "T"
+        ],
+        [
+          "Qu",
+          "G",
+          "F",
+          "L",
+          "H",
+          "S",
+          "S",
+          "E"
+        ]
+      ],
+      "bag": [
+        "O",
+        "L",
+        "S",
+        "J",
+        "A",
+        "O",
+        "F",
+        "T",
+        "E",
+        "M",
+        "S",
+        "E",
+        "A",
+        "I",
+        "I",
+        "R",
+        "W",
+        "L",
+        "N",
+        "I",
+        "O",
+        "R",
+        "H",
+        "Z",
+        "A",
+        "A",
+        "M",
+        "E",
+        "N",
+        "O",
+        "C",
+        "N",
+        "R",
+        "G",
+        "T",
+        "X",
+        "T",
+        "T",
+        "U",
+        "I",
+        "A",
+        "T",
+        "P",
+        "I",
+        "N",
+        "V",
+        "F",
+        "N",
+        "O",
+        "E",
+        "S",
+        "R",
+        "I",
+        "O",
+        "B",
+        "E",
+        "L",
+        "E",
+        "E",
+        "W",
+        "K",
+        "R",
+        "C",
+        "A",
+        "T",
+        "I",
+        "A",
+        "R"
+      ],
+      "magic": [
+        107,
+        72
+      ],
+      "tangled": [],
+      "lastTurn": {
+        "seat": 1,
+        "glyphlingId": 2,
+        "from": {
+          "q": 9,
+          "r": -2
+        },
+        "to": {
+          "q": 8,
+          "r": -1
+        },
+        "letter": "N",
+        "target": {
+          "q": 6,
+          "r": 1
+        },
+        "words": [
+          {
+            "word": "IN",
+            "hexes": [
+              {
+                "q": 6,
+                "r": 0
+              },
+              {
+                "q": 6,
+                "r": 1
+              }
+            ],
+            "magic": 4
+          },
+          {
+            "word": "EN",
+            "hexes": [
+              {
+                "q": 5,
+                "r": 1
+              },
+              {
+                "q": 6,
+                "r": 1
+              }
+            ],
+            "magic": 3
+          }
+        ],
+        "magic": 7,
+        "drew": 1
+      },
+      "tangleMagic": [
+        0,
+        0
+      ],
+      "winners": [],
+      "turnCount": 36,
+      "rng": -1278823937
+    },
+    "trayOrder": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    ]
+  }
+}
