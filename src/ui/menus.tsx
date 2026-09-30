@@ -2,7 +2,7 @@
 // Words: content/text/en.json · settings rows: content/ui/settings.json · look: content/ui/style.json
 import { Credits, MainMenu, Pause, Settings, screens } from './kit'
 import { GameOverScreen } from '../game/GameOver'
-import { leaveToMenu, playAgain, startNewGame } from './newGame'
+import { leaveToMenu, openNewGame, playAgain } from './newGame'
 import text from '../../content/text/en.json'
 import settings from '../../content/ui/settings.json'
 import credits from '../../content/credits.json'
@@ -19,7 +19,7 @@ export function MainMenuScreen() {
       title={w.title}
       subtitle={w.subtitle}
       items={[
-        { label: w.play, onClick: startNewGame, primary: true },
+        { label: w.play, onClick: openNewGame, primary: true },
         { label: w.prototype, onClick: () => window.location.assign(prototypeUrl) },
         { label: w.settings, onClick: () => screens.push('settings') },
       ]}

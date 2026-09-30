@@ -111,11 +111,11 @@
       "small": "Small",
       "large": "Large"
     },
-    "boardDetail": "Small suits 2 players; Large suits 3–4",
+    "boardDetail": "Small for 2 · Large for 3–4",
     "twoLetterWords": "2-letter words",
-    "twoLetterDetail": "Off = words need 3 letters or more",
+    "twoLetterDetail": "Off: words need 3+ letters",
     "hideSeeds": "Hide seeds between turns",
-    "hideSeedsDetail": "Pass the device and tap to see your seeds",
+    "hideSeedsDetail": "Pass the device between turns",
     "start": "Start",
     "back": "Back"
   }
