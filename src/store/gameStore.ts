@@ -7,6 +7,9 @@
 // server instead of the engine, and the server's view of the game comes back and replaces `game`.
 import { create } from 'zustand'
 import text from '../../content/text/en.json'
+import animFile from '../../content/tuning/anim.json'
+import { liveTuning } from '../devkit/tuning/liveTuning'
+import { reduceMotion } from '../ui/kit/blocks/motion'
 import { applyAction, checkAction, legalDraftHexes, newGame } from '../engine/engine'
 import { hexKey, sameHex, type Hex } from '../engine/hex'
 import { parseWordList } from '../engine/words'
@@ -19,6 +22,7 @@ import { isLocalHuman, localSeats, needsHandoff, type Seat } from './seats'
 import { addTurn, emptyStats, type PlayerStats } from './stats'
 import { revealSteps } from './revealPlan'
 import { nopeFor, type NopeTarget, type Tap } from './nope'
+import { newSeedSlots, refillInPlace, refreshSlots, refreshTimes, type RefreshFx } from './refreshFx'
 
 /** Short messages for taps that can't do anything (their words live in content/text/en.json → game.notes). */
 export type Note = 'moveFirst' | 'notYours' | 'tangled' | 'wordsLoading' | 'wordsFailed' | 'problem'
@@ -51,6 +55,8 @@ export interface OnlineLink {
   post: (action: Action) => void
   /** A thrown seed landed (this device's own, or another player's being replayed). */
   landed: () => void
+  /** My refresh's seeds have shrunk away: show the views that waited for them. */
+  resume: () => void
 }
 
 export interface GameStore {
@@ -82,6 +88,8 @@ export interface GameStore {
   online: OnlineLink | null
   /** Online: this device's action went to the server; nothing can be touched until its view comes back. */
   waiting: boolean
+  /** A refresh playing out on the tray (refreshFx.ts) — nothing can be touched, and play passes on after it. */
+  refreshFx: RefreshFx | null
   /** The last piece that said "no" to a tap (it shakes); the count changes every time, so the same piece can shake again. */
   nope: (NopeTarget & { count: number }) | null
 
@@ -104,6 +112,8 @@ export interface GameStore {
   finishCast: () => void
   toggleSetAside: (index: number) => void
   refresh: (keepAll?: boolean) => void
+  /** Online: my refresh's view has come — the new seeds grow into these tray positions. */
+  refreshArrived: (newSlots: number[]) => void
   moveTraySeed: (from: number, to: number) => void
   shuffleTray: () => void
   /** Before a tap or drag does its thing: if the piece can't be touched it shakes "no" (nope.ts). True = refused. */
@@ -116,6 +126,7 @@ export interface GameStore {
 const noPlan = (): Pick<GameStore, 'move' | 'cast' | 'selected' | 'setAside' | 'note'> =>
   ({ move: null, cast: null, selected: null, setAside: [], note: null })
 const NO_WORDS: WordList = new Map() // the draft and refresh never read words
+const anim = liveTuning('anim', animFile) // the refresh's timings (read when a refresh starts)
 
 export const useGameStore = create<GameStore>()((set, get) => {
   // Sends an engine action; says "problem" instead of crashing if it was somehow illegal.
@@ -154,11 +165,29 @@ export const useGameStore = create<GameStore>()((set, get) => {
   }
 
   // May the screen touch the game right now? Not while a seed flies, not while the device is being
-  // passed on, not while waiting for the server, and only when the seat whose turn it is belongs to a
-  // human on this device.
+  // passed on, not while waiting for the server, not while a refresh plays out, and only when the seat
+  // whose turn it is belongs to a human on this device.
   const canPlay = () => {
-    const { game, flying, handoff, seats, waiting } = get()
-    return game !== null && !flying && !waiting && handoff === null && isLocalHuman(seats, game.current)
+    const { game, flying, handoff, seats, waiting, refreshFx } = get()
+    return game !== null && !flying && !waiting && handoff === null && refreshFx === null && isLocalHuman(seats, game.current)
+  }
+
+  // The refresh playing out (refreshFx.ts): one timer at a time; leaving or jumping the game stops it
+  let refreshTimer: ReturnType<typeof setTimeout> | null = null
+  const after = (ms: number, then: () => void) => {
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null
+      then()
+    }, ms)
+  }
+  const stopRefreshFx = () => {
+    if (refreshTimer) clearTimeout(refreshTimer)
+    refreshTimer = null
+  }
+  // Stage "in": the new seeds grow into their slots, then `done` (pass-and-play: play passes on)
+  const growIn = (fx: RefreshFx, done: () => void) => {
+    set({ refreshFx: { ...fx, stage: 'in' } })
+    after(refreshTimes(fx.newSlots?.length ?? 0, anim.current, false).growMs, done)
   }
 
   // Once play has passed on: must the device be handed over first? (from = null: always — after the draft)
@@ -183,6 +212,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
     revealAt: null,
     online: null,
     waiting: false,
+    refreshFx: null,
     nope: null,
 
     startGame: ({ players, seed, boardName, minWordLength, hideSeeds, wordIndicators }) => {
@@ -191,13 +221,17 @@ export const useGameStore = create<GameStore>()((set, get) => {
         players, boardName: game.config.boardName, minWordLength: game.config.rules.minWordLength, hideSeeds: hideSeeds ?? true,
         wordIndicators: wordIndicators ?? true,
       }
+      stopRefreshFx()
       set({
-        ...noPlan(), game, options, flying: false, landed: null, handoff: null, revealAt: null,
+        ...noPlan(), game, options, flying: false, landed: null, handoff: null, revealAt: null, refreshFx: null,
         seats: localSeats(players, text.game.players), stats: emptyStats(players),
         trayOrder: game.hands.map((h) => inHandOrder(h.length)),
       })
     },
-    leaveGame: () => set({ ...noPlan(), game: null, flying: false, landed: null, handoff: null, revealAt: null, online: null, waiting: false }),
+    leaveGame: () => {
+      stopRefreshFx()
+      set({ ...noPlan(), game: null, flying: false, landed: null, handoff: null, revealAt: null, online: null, waiting: false, refreshFx: null })
+    },
     showSeeds: () => set({ handoff: null }),
     setRevealAt: (step) => set({ revealAt: step }),
     skipReveal: () => {
@@ -327,18 +361,38 @@ export const useGameStore = create<GameStore>()((set, get) => {
       set({ setAside: setAside.includes(index) ? setAside.filter((i) => i !== index) : [...setAside, index] })
     },
     // Refresh N (or Keep all = set nothing aside): refill to a full hand; set-aside seeds go back in the bag.
-    // The player who just played does this BEFORE the device is passed on.
+    // The player who just played does this BEFORE the device is passed on. It plays out on the tray first
+    // (B011, refreshFx.ts): the set-aside seeds shrink away, the new ones grow into their slots, THEN play passes on.
     refresh: (keepAll = false) => {
-      const { game, setAside, trayOrder } = get()
+      const { game, setAside, trayOrder, online } = get()
       if (!game || !canPlay() || game.phase !== 'refresh') return
       const chosen = keepAll ? [] : [...setAside].sort((a, b) => a - b)
-      if (get().online) return void sendOnline({ type: 'refresh', setAside: chosen })
+      const seat = game.current
+      const slots = refreshSlots(trayOrder[seat] ?? [], chosen)
+      const { shrinkMs } = refreshTimes(slots.length, anim.current, reduceMotion())
+      if (online) {
+        // The action leaves at once (the trip to the server hides inside the shrink); its view waits for the shrink
+        if (!sendOnline({ type: 'refresh', setAside: chosen }) || shrinkMs === 0) return
+        set({ refreshFx: { seat, slots, stage: 'out' } })
+        return after(shrinkMs, () => {
+          if (get().refreshFx?.stage !== 'out') return // the server refused it, or the connection dropped (onlinePlay.ts)
+          set({ refreshFx: { seat, slots, stage: 'gone' } })
+          get().online?.resume()
+        })
+      }
       const next = send({ type: 'refresh', setAside: chosen })
       if (!next) return
-      const seat = game.current
       const order = [...trayOrder]
-      order[seat] = reconcileOrder(order[seat] ?? [], chosen, next.hands[seat].length)
-      set({ ...noPlan(), game: next, trayOrder: order, handoff: handoffTo(seat, next, false) })
+      order[seat] = refillInPlace(order[seat] ?? [], chosen, next.hands[seat].length)
+      const passOn = () => set({ ...noPlan(), game: next, trayOrder: order, handoff: handoffTo(seat, next, false), refreshFx: null })
+      if (shrinkMs === 0) return passOn()
+      set({ refreshFx: { seat, slots, stage: 'out' }, selected: null })
+      const newSlots = newSeedSlots(order[seat], (trayOrder[seat]?.length ?? 0) - chosen.length)
+      after(shrinkMs, () => growIn({ seat, slots, newSlots, stage: 'in', hand: next.hands[seat], order: order[seat] }, passOn))
+    },
+    refreshArrived: (newSlots) => {
+      const fx = get().refreshFx
+      if (fx) growIn({ seat: fx.seat, slots: fx.slots, newSlots, stage: 'in' }, () => set({ refreshFx: null }))
     },
 
     moveTraySeed: (from, to) => {
@@ -362,11 +416,14 @@ export const useGameStore = create<GameStore>()((set, get) => {
       return target !== null
     },
 
-    loadState: (game, stats) => set({
-      ...noPlan(), game, flying: false, handoff: null, revealAt: null,
-      seats: get().seats.length === game.config.players ? get().seats : localSeats(game.config.players, text.game.players),
-      stats: stats ?? (get().stats.length === game.config.players ? get().stats : emptyStats(game.config.players)),
-      trayOrder: game.hands.map((h) => inHandOrder(h.length)),
-    }),
+    loadState: (game, stats) => {
+      stopRefreshFx()
+      set({
+        ...noPlan(), game, flying: false, handoff: null, revealAt: null, refreshFx: null,
+        seats: get().seats.length === game.config.players ? get().seats : localSeats(game.config.players, text.game.players),
+        stats: stats ?? (get().stats.length === game.config.players ? get().stats : emptyStats(game.config.players)),
+        trayOrder: game.hands.map((h) => inHandOrder(h.length)),
+      })
+    },
   }
 })

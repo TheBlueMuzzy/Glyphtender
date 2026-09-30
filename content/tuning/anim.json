@@ -27,7 +27,11 @@
     "scoreTotalHold": "Score pops: how long the turn's total (\"+6\") stays over the glyphling that cast, in seconds. With reduce motion only this total shows.",
     "scoreTotalFade": "Score pops: how long the total takes to fade away, in seconds.",
     "turnPulseTime": "Whose turn: how long one slow pulse of the current player's glyphlings takes, in seconds (they pulse until one is moved). How much they swell: feel.json → turnPulse.",
-    "noShakeTime": "\"No\" shake: how long the quick sideways shake takes when you tap something you can't move, in seconds. How far it moves: feel.json → noShake."
+    "noShakeTime": "\"No\" shake: how long the quick sideways shake takes when you tap something you can't move, in seconds. How far it moves: feel.json → noShake.",
+    "refreshShrinkTime": "Refresh: how long each set-aside seed takes to shrink away, in seconds.",
+    "refreshGrowTime": "Refresh: how long each new seed takes to grow into its slot (swelling a little past full size, then settling), in seconds. How much it swells: feel.json → refreshGrow.",
+    "refreshStagger": "Refresh: seconds between one slot starting and the next (they go one after another, left to right).",
+    "refreshPause": "Refresh: the pause between the last seed shrinking away and the new ones growing in, in seconds. Play passes to the next player only after they've grown."
   },
   "_ranges": {
     "flightBase": [
@@ -169,6 +173,26 @@
       0.1,
       1,
       0.05
+    ],
+    "refreshShrinkTime": [
+      0.05,
+      1,
+      0.05
+    ],
+    "refreshGrowTime": [
+      0.05,
+      1,
+      0.05
+    ],
+    "refreshStagger": [
+      0,
+      0.3,
+      0.01
+    ],
+    "refreshPause": [
+      0,
+      0.6,
+      0.05
     ]
   },
   "flightBase": 0.3,
@@ -198,5 +222,9 @@
   "scoreTotalHold": 1,
   "scoreTotalFade": 0.4,
   "turnPulseTime": 1.6,
-  "noShakeTime": 0.35
+  "noShakeTime": 0.35,
+  "refreshShrinkTime": 0.25,
+  "refreshGrowTime": 0.35,
+  "refreshStagger": 0.07,
+  "refreshPause": 0.1
 }

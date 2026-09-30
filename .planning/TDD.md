@@ -137,6 +137,16 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D44 · 2026-09-30 · A refresh plays out on the tray BEFORE play passes on (B011)
+  Proposed by: Muzzy ("the tiles they selected shrink, and new ones scale into their place. THEN it goes to the next player")
+  Chose: pass-and-play works the refresh out at once (checked), but the store holds the new game in `refreshFx` until the tray's
+  shrink → grow has played (store timers from anim.json, so it never depends on the tray being on screen; locked like a throw).
+  Online: the action leaves at once, its view waits for the shrink (like a flying seed), then the new seeds grow in. New seeds take
+  the set-aside places (refillInPlace). Keep all / reduce motion → instant. store/refreshFx.ts + SeedTray.tsx (Web Animations)
+D43 · 2026-09-30 · The planned seed: a solid look, not opacity (B010)
+  Proposed by: Muzzy ("a ghost… while also keeping it not see-through")   Options: dimmed (faded over a hex-coloured patch) /
+  greyed (desaturate + darken) / misty (pale wash)   Chose: misty by default, all three kept behind garden.json plannedSeedLook —
+  each an SVG filter clipped to the art's own shape, so nothing on the board shows through (PlannedSeedLook.tsx)
 D42 · 2026-09-30 · End table: New game only (+ Menu); Play again removed
   Proposed by: Muzzy ("just New game — fewer, clearer options")   Chose: offline New game → the new-game screen (last choices remembered);
   online → the host's New game takes everyone to the lobby (rooms backToLobby, which also closes the end table on every screen);

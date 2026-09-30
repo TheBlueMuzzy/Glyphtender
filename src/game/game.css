@@ -52,6 +52,7 @@
   .game-panel { grid-area: panel; display: flex; flex-direction: column; align-items: center; gap: var(--gap-s); min-block-size: 0; }
   .game[data-layout="side"] .game-panel { justify-content: center; }
   .game-tray { display: block; flex: none; overflow: visible; }
+  .game-refresh-slot { transform-box: fill-box; transform-origin: center; } /* a refreshed seed shrinks/grows in its slot */
   .game-column-ruler { grid-area: panel; align-self: start; display: block; pointer-events: none; }
   .game-reveal { inline-size: 100%; } /* the players' Magic chips, in the tray's place at the end */
 

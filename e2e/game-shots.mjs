@@ -15,6 +15,7 @@ import { createServer } from 'vite'
 import { chromium } from 'playwright-core'
 import layout from '../content/tuning/layout.json' with { type: 'json' }
 import garden from '../content/tuning/garden.json' with { type: 'json' }
+import anim from '../content/tuning/anim.json' with { type: 'json' }
 import { leftoverPops } from './leftover-pops.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
@@ -223,6 +224,46 @@ try {
       await tune(garden)
       console.log(`ok   ${size.name} B010 planned seed looks · solid (filter, no opacity) · shots b010-*`)
     }
+    // B011: Refresh 2 (tray places 0 and 2 set aside) plays out on the tray — they shrink away, the new seeds grow into
+    // their places — and only THEN does play pass on (the handoff). Slowed right down (sent as the Dev Kit would) so
+    // each stage can be caught and pictured; the file's own timings come back at the end.
+    const refreshPlaysOut = async () => {
+      const tuneAnim = (data) => page.evaluate((data) => window.dispatchEvent(new CustomEvent('devkit:tuning', { detail: { file: 'anim', data } })), data)
+      await tuneAnim({ ...anim, refreshShrinkTime: 1.2, refreshGrowTime: 1.2, refreshStagger: 0.2, refreshPause: 0.3 })
+      const moment = () => page.evaluate(() => {
+        const s = window.__glyphtender.store.getState()
+        return {
+          fx: s.refreshFx, phase: s.game.phase, current: s.game.current, handoff: s.handoff !== null,
+          showSeeds: [...document.querySelectorAll('button')].some((b) => b.textContent.includes('Show my seeds')),
+          animated: [...document.querySelectorAll('[data-refresh-slot]')].filter((g) => g.getAnimations().length > 0).map((g) => Number(g.dataset.refreshSlot)),
+        }
+      })
+      const seat = await store((s) => s.game.current)
+      await tap(page.getByRole('button', { name: 'Refresh 2' }))
+      const out = await moment()
+      if (out.fx?.stage !== 'out' || out.fx.slots.join() !== '0,2') fail(`${size.name}: B011: Refresh 2 did not start shrinking tray places 0 and 2 (${JSON.stringify(out.fx)})`)
+      if (out.animated.join() !== '0,2') fail(`${size.name}: B011: shrinking animations on tray places [${out.animated}], expected [0,2]`)
+      await tap(page.locator('[data-tray-pos="1"]')) // locked while it plays: this sets nothing aside
+      if ((await store((s) => s.setAside.length)) !== 2) fail(`${size.name}: B011: a tray tap got through during the refresh`)
+      await page.waitForTimeout(700)
+      await page.screenshot({ path: `${OUT}/${size.name}-10b-refresh-shrinking.png` })
+      await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx?.stage === 'in', null, { timeout: 5000 })
+      const grow = await moment()
+      if (grow.animated.join() !== grow.fx.newSlots.join() || !grow.fx.newSlots.includes(0) || !grow.fx.newSlots.includes(2)) {
+        fail(`${size.name}: B011: growing animations on tray places [${grow.animated}], new seeds in [${grow.fx.newSlots}]`)
+      }
+      await page.waitForTimeout(600)
+      await page.screenshot({ path: `${OUT}/${size.name}-10c-refresh-growing.png` })
+      const mid = await moment()
+      for (const m of [out, grow, mid]) {
+        if (m.fx && (m.handoff || m.showSeeds || m.phase !== 'refresh' || m.current !== seat)) fail(`${size.name}: B011: play passed on before the refresh finished playing out`)
+      }
+      await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx === null, null, { timeout: 5000 })
+      const after = await moment()
+      if (after.phase === 'refresh' || after.current === seat) fail(`${size.name}: B011: play didn't pass on after the refresh`)
+      await tuneAnim(anim)
+      console.log(`ok   ${size.name} B011 refresh: shrink [${out.animated}] → grow [${grow.animated}] → then ${after.handoff ? 'the handoff' : 'the next player'}`)
+    }
     // While dragging over a legal hex: its "drop here" mark shows on that hex
     const checkDropTarget = async () => {
       const lit = await page.evaluate(() => document.querySelector('[data-drop-target][visibility="visible"]')?.getAttribute('data-drop-hex') ?? null)
@@ -386,7 +427,9 @@ try {
         await tap(page.locator('[data-tray-pos="0"]'))
         await tap(page.locator('[data-tray-pos="2"]'))
         if (!refreshed) await shot('10-refresh')
-        await tap(page.getByRole('button', { name: 'Refresh 2' }))
+        if (!refreshed) await refreshPlaysOut()
+        else await tap(page.getByRole('button', { name: 'Refresh 2' }))
+        await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx === null, null, { timeout: 8000 })
         if (!(await store((s) => s.game.phase !== 'refresh'))) fail(`${size.name}: refresh did not happen`)
         refreshed = true
       }

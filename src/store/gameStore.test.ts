@@ -213,7 +213,10 @@ describe('game store — Cast', () => {
     store().tapSeed(3)
     store().tapSeed(1) // tap again: keep it after all
     expect(store().setAside).toEqual([3])
+    vi.useFakeTimers()
     store().refresh()
+    vi.runAllTimers() // the refresh plays out on the tray first (B011 — refreshFx.test.ts)
+    vi.useRealTimers()
     expect(store().game?.phase).toBe('play')
     expect(store().game?.hands[0]).toHaveLength(8)
     expect(store().trayOrder[0]).toHaveLength(8)

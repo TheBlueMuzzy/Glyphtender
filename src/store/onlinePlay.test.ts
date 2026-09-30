@@ -223,6 +223,38 @@ describe('online store — turns', () => {
     expect(sent.at(-1)).toEqual({ kind: 'sync' })
   })
 
+  it('B011: my refresh plays out on my tray — shrink (its view waits), then the new seeds grow in', () => {
+    finishDraft()
+    // play until it's my refresh (a turn of mine that made no Magic)
+    for (let i = 0; i < 400 && !(store().game!.current === 0 && store().game!.phase === 'refresh'); i++) {
+      const game = store().game!
+      if (store().flying) store().finishCast()
+      else if (game.phase === 'refresh' && game.current === 1) bluePlays(i + 1)
+      else if (game.current === 0 && !store().waiting) yellowPlansAndCasts(i + 1)
+      else if (game.current === 1 && !store().move) bluePlays(i + 1)
+      deliver()
+      vi.advanceTimersByTime(1000)
+    }
+    expect(store().game!.phase).toBe('refresh')
+    const orderBefore = [...store().trayOrder[0]]
+    store().tapSeed(orderBefore[1]) // the seed in tray place 1
+    store().refresh()
+    expect(store().refreshFx).toMatchObject({ seat: 0, slots: [1], stage: 'out' })
+    expect(sent.at(-1)).toMatchObject({ kind: 'play', action: { type: 'refresh' } }) // it left at once
+    deliver() // the view is here already…
+    expect(store().game!.phase).toBe('refresh') // …but waits for the shrink
+    vi.advanceTimersByTime(animJson.refreshShrinkTime * 1000 + animJson.refreshPause * 1000)
+    const fx = store().refreshFx!
+    expect(fx.stage).toBe('in')
+    expect(fx.newSlots).toContain(1) // the new seed grows into the set-aside place
+    expect(store().game!.current).toBe(1)
+    vi.advanceTimersByTime(2000)
+    expect(store().refreshFx).toBeNull()
+    // kept seeds stayed where they were
+    const kept = orderBefore.filter((_, pos) => pos !== 1).length
+    expect(store().trayOrder[0].filter((i) => i < kept)).toHaveLength(kept)
+  })
+
   it('a whole game to the end: the reveal gets the full truth and the end table', () => {
     finishDraft()
     for (let i = 0; i < 3000 && store().game!.phase !== 'over'; i++) {

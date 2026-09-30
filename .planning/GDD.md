@@ -56,6 +56,7 @@
   - **"No" shake:** tapping anything you can't move gives a quick shake.
   - Before the move, seeds can't be dragged at all (not even to reorder) — they shake (Muzzy, B008)
   - **Planned seed, not see-through:** "you shouldn't be able to see through the ghosted image of a placed seed… maybe there's another treatment… to make it a ghost while also keeping it not see-through" → a solid misty wash over the targeted seed (garden.json plannedSeedLook: misty · greyed · dimmed) (B010)
+  - **Refresh shows itself:** "the tiles they selected shrink, and new ones scale into their place. THEN it goes to the next player" — Keep all just goes on; online only you see it, on your own tray (B011)
   - **Layout:** buttons finger-sized like a glyphling (also on PC); the seed tray about half as far from the board; a setting flips board ↔ tray; the prompt sits just above the tray in larger letters (not in the top bar).
   - **End screen:** just "New game" (no "Play again" — fewer, clearer options).
 - **Piece states — one look for every piece** (glyphlings, seeds, tray): **options** = glowing hexes with a dot (teal move · gold cast) · **held** = solid ring in the player's colour · **planned** = pulsing halo at the hex edge in the player's colour (a targeted seed also gets a solid misty look — never see-through, B010) · **done** = plain.

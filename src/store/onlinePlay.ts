@@ -6,6 +6,8 @@
 //     glyphling glides from → to, the throw starts after glideSeconds, lands — then the new view is applied
 //     and the runeblossom sprouts. Views that arrive meanwhile wait in the inbox and play in order.
 //   · Anything else (draft placements, refreshes, a rejoin after a gap) is simply applied.
+//   · MY refresh plays out on my own tray (B011, refreshFx.ts): the set-aside seeds shrink while the action
+//     travels; its view waits for the shrink, then the new seeds grow in. Nobody else sees my seeds.
 import animJson from '../../content/tuning/anim.json'
 import type { GameView, OnlineAction } from '../../party/protocol'
 import { hexKey, sameHex } from '../engine/hex'
@@ -16,6 +18,7 @@ import { useGameStore, type OnlineLink } from './gameStore'
 import type { Seat } from './seats'
 import { emptyStats } from './stats'
 import { inHandOrder, reconcileOrder } from './turnPlan'
+import { newSeedSlots, refillInPlace } from './refreshFx'
 
 /** How long to wait for my own action's view before asking again (design §6 timers table; counted from Cast). */
 export const WAIT_FOR_VIEW_MS = 3000
@@ -48,7 +51,7 @@ export function receiveView(view: GameView) {
 export function actionRefused() {
   if (!store().online) return
   sent = null
-  set({ move: null, cast: null, selected: null, setAside: [], flying: false, waiting: false, note: 'problem' })
+  set({ move: null, cast: null, selected: null, setAside: [], flying: false, waiting: false, refreshFx: null, note: 'problem' })
   toServer({ kind: 'sync' })
 }
 
@@ -65,10 +68,10 @@ export function stopOnline() {
 function startFrom(view: GameView) {
   stopOnline()
   const game = view.game
-  const online: OnlineLink = { mySeat: view.mySeat, gameId: view.gameId, version: view.version, post, landed }
+  const online: OnlineLink = { mySeat: view.mySeat, gameId: view.gameId, version: view.version, post, landed, resume: showNext }
   const seats: Seat[] = view.names.map((name, seat) => ({ kind: seat === view.mySeat ? 'local' : 'online', name, colour: SEAT_COLOURS[seat] }))
   set({
-    game, online, seats, waiting: false, flying: false, handoff: null, revealAt: null, landed: null,
+    game, online, seats, waiting: false, flying: false, handoff: null, revealAt: null, landed: null, refreshFx: null,
     move: null, cast: null, selected: null, setAside: [], note: null,
     options: {
       players: game.config.players, boardName: game.config.boardName, minWordLength: game.config.rules.minWordLength, hideSeeds: false,
@@ -79,11 +82,11 @@ function startFrom(view: GameView) {
   })
 }
 
-/** Shows the waiting views in order, one at a time (a flying seed or a replay holds the queue). */
+/** Shows the waiting views in order, one at a time (a flying seed, a replay or my refresh's shrink holds the queue). */
 function showNext() {
   while (inbox.length > 0) {
-    const { flying, online, game } = store()
-    if (flying || replaying || !online || !game) return
+    const { flying, online, game, refreshFx } = store()
+    if (flying || replaying || refreshFx?.stage === 'out' || !online || !game) return
     const view = inbox.shift()!
     if (view.version <= online.version) {
       // The server answered a sync (or a rejoin) with the game as it was: it never got my action
@@ -110,9 +113,11 @@ function apply(view: GameView) {
   const { game: old, online, trayOrder, landed } = store()
   if (!online || !old) return
   const mine = view.by === online.mySeat
+  const myRefresh = mine && sent?.type === 'refresh' ? sent.setAside : null
   const order = view.game.hands.map((hand, seat) => {
     if (seat !== online.mySeat) return inHandOrder(hand.length)
-    const removed = !mine || !sent ? [] : sent.type === 'turn' ? (sent.seed === null ? [] : [sent.seed]) : sent.type === 'refresh' ? sent.setAside : []
+    if (myRefresh) return refillInPlace(trayOrder[seat] ?? [], myRefresh, hand.length) // new seeds take the set-aside places
+    const removed = !mine || sent?.type !== 'turn' || sent.seed === null ? [] : [sent.seed]
     return reconcileOrder(trayOrder[seat] ?? [], removed, hand.length)
   })
   const turn = view.game.lastTurn
@@ -127,6 +132,8 @@ function apply(view: GameView) {
     move: null, cast: null, selected: null, setAside: [], note: null,
     stats: view.results?.stats ?? store().stats,
   })
+  // the new seeds grow into the emptied places (hand indexes from the kept count on are the new ones)
+  if (myRefresh) store().refreshArrived(newSeedSlots(order[online.mySeat], (trayOrder[online.mySeat]?.length ?? 0) - myRefresh.length))
 }
 
 const isNewTurn = (before: TurnSummary | null, turn: TurnSummary) =>
@@ -165,7 +172,7 @@ function post(action: Action) {
 function actionLost() {
   sent = null
   clearTimers()
-  set({ move: null, cast: null, selected: null, setAside: [], flying: false, waiting: false, note: 'problem' })
+  set({ move: null, cast: null, selected: null, setAside: [], flying: false, waiting: false, refreshFx: null, note: 'problem' })
 }
 
 /** A seed landed (Board → finishCast → here): finish a replay, or show my own action's view once it's here. */

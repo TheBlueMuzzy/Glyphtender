@@ -1,7 +1,7 @@
 {
   "_help": {
-    "tiers": "How big each kind of juice is. grow = how far a piece swells past full size (0.3 = 30%); shake = how far a \"no\" shake moves sideways, as a share of the piece's width. Reduce motion (Settings) turns the pulse and the shake off, and shows only the score total.",
-    "events": "Which tier each moment uses: small, medium or big. turnPulse = your glyphlings breathing at the start of your turn · noShake = tapping something you can't move · seedPop = each seed's \"+1\" · totalPop = the turn's total over the glyphling."
+    "tiers": "How big each kind of juice is. grow = how far a piece swells past full size (0.3 = 30%); shake = how far a \"no\" shake moves sideways, as a share of the piece's width. Reduce motion (Settings) turns the pulse, the shake and the refresh animation off, and shows only the score total.",
+    "events": "Which tier each moment uses: small, medium or big. turnPulse = your glyphlings breathing at the start of your turn · noShake = tapping something you can't move · seedPop = each seed's \"+1\" · totalPop = the turn's total over the glyphling · refreshGrow = a new seed growing into the tray after a Refresh."
   },
   "_ranges": {
     "tiers.small.grow": [
@@ -53,6 +53,7 @@
     "turnPulse": "small",
     "noShake": "small",
     "seedPop": "medium",
-    "totalPop": "big"
+    "totalPop": "big",
+    "refreshGrow": "small"
   }
 }

@@ -10,8 +10,9 @@
 // Every WebSocket frame each browser RECEIVES is recorded: the run FAILS if one ever
 // holds another player's seeds, the bag, the rng, the seed or any Magic before the game is over.
 // Also checks every screenshot (nothing past a screen edge, buttons ≥ 44 px) and a clean console.
-// Starts its OWN `partykit dev` (port 1997, partykit.json) and Vite (default 5311) and stops only those.
-//   npm run e2e:online [outDir] [vitePort]
+// Starts its OWN `partykit dev` (default port 1995 — never 1997, where `npm run party:dev` runs) and Vite
+// (default 5311) and stops only those. The page finds that server through VITE_PARTY_PORT (ui/online/session.ts).
+//   npm run e2e:online [outDir] [vitePort] [partyPort]
 import { spawn, execSync } from 'node:child_process'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { createServer as netServer } from 'node:net'
@@ -21,7 +22,7 @@ import { leftoverPops } from './leftover-pops.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
 const VITE_PORT = Number(process.argv[3] ?? 5311)
-const PARTY_PORT = JSON.parse(readFileSync('partykit.json', 'utf8')).port
+const PARTY_PORT = Number(process.argv[4] ?? 1995)
 const BOT_AFTER_MS = JSON.parse(readFileSync('content/rooms.json', 'utf8')).botTakesOverAfterMs
 mkdirSync(OUT, { recursive: true })
 
@@ -34,8 +35,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const portFree = (port) => new Promise((ok) => {
   const probe = netServer().once('error', () => ok(false)).once('listening', () => probe.close(() => ok(true))).listen(port, '0.0.0.0')
 })
-if (!(await portFree(PARTY_PORT))) throw new Error(`Port ${PARTY_PORT} is busy (is npm run party:dev running?) — stop it first`)
-const party = spawn('npx partykit dev', { shell: true, cwd: process.cwd() })
+if (!(await portFree(PARTY_PORT))) throw new Error(`Port ${PARTY_PORT} is busy — pass another: npm run e2e:online e2e-shots 5311 <port>`)
+const party = spawn(`npx partykit dev --port ${PARTY_PORT}`, { shell: true, cwd: process.cwd() })
 let partyLog = ''
 party.stdout.on('data', (d) => { partyLog += d })
 party.stderr.on('data', (d) => { partyLog += d })
@@ -44,6 +45,7 @@ const stopParty = () => {
 }
 for (let t = 0; t < 120 && !/Ready on/.test(partyLog); t++) await wait(500)
 if (!/Ready on/.test(partyLog)) { stopParty(); throw new Error(`partykit dev didn't start:\n${partyLog}`) }
+process.env.VITE_PARTY_PORT = String(PARTY_PORT) // the page talks to OUR server
 const vite = await createServer({ server: { port: VITE_PORT, strictPort: true, host: '127.0.0.1' }, logLevel: 'warn' })
 await vite.listen()
 const browser = await chromium.launch()
@@ -115,7 +117,8 @@ const bo = player('Bo', await browser.newContext({ viewport: { width: 1440, heig
 const myTurn = (p) => p.page && !p.page.isClosed() && p.store((s) => !!s.game && !!s.online && s.game.phase !== 'over'
   && s.game.current === s.online.mySeat && !s.waiting && !s.flying && s.wordsStatus === 'ready')
 
-// One turn through the screen: a draft placement, Keep all on a refresh, or move + cast (Magic if it can) + Cast
+// One turn through the screen: a draft placement, Keep all on a refresh (Refresh 1 the first time), or move + cast (Magic if it can) + Cast
+let refreshSeen = false
 async function playTurn(p) {
   const { page } = p
   const option = (kind) => page.locator(`[data-option="${kind}"] circle`)
@@ -123,6 +126,18 @@ async function playTurn(p) {
   if (phase === 'draft') {
     const count = await option('move').count()
     await p.tap(option('move').nth(Math.floor(count * (0.25 + Math.random() * 0.5))))
+  } else if (phase === 'refresh' && !refreshSeen) {
+    // B011, once: Refresh 1 plays out on MY tray (shrink, then the server's new seed grows in), then play passes on
+    refreshSeen = true
+    await p.tap(page.locator('[data-tray-pos="1"]'))
+    await p.tap(page.getByRole('button', { name: 'Refresh 1' }))
+    const fx = await p.store((s) => s.refreshFx)
+    check(`${p.name}: B011 my refresh shrinks tray place 1 (${JSON.stringify(fx)})`, fx?.stage === 'out' && fx.slots.join() === '1')
+    await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx?.stage === 'in', null, { timeout: 5000 })
+      .catch(() => fail(`${p.name}: B011 the new seeds never grew in`))
+    await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx === null, null, { timeout: 5000 })
+    check(`${p.name}: B011 play passed on after my refresh`, await p.store((s) => s.game.phase !== 'refresh'))
+    console.log(`ok   ${p.name} B011 refresh played out on my tray`)
   } else if (phase === 'refresh') {
     await p.tap(page.getByRole('button', { name: 'Keep all' }))
   } else {

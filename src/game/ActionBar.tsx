@@ -24,10 +24,11 @@ export function ActionBar({ onNewGame, size }: { onNewGame: () => void; size: nu
   const notNow = s.waiting || (s.online !== null && s.online.mySeat !== game.current)
 
   if (game.phase === 'refresh') {
+    const refreshing = notNow || s.refreshFx !== null // (the refresh playing out on the tray)
     return (
       <Row gap="s" justify="center" className="game-actions">
-        <Button size={size} variant="secondary" disabled={notNow} onClick={() => s.refresh(true)}>{w.keepAll}</Button>
-        <Button size={size} disabled={notNow || s.setAside.length === 0} onClick={() => s.refresh()}>{fill(w.refresh, { n: s.setAside.length })}</Button>
+        <Button size={size} variant="secondary" disabled={refreshing} onClick={() => s.refresh(true)}>{w.keepAll}</Button>
+        <Button size={size} disabled={refreshing || s.setAside.length === 0} onClick={() => s.refresh()}>{fill(w.refresh, { n: s.setAside.length })}</Button>
       </Row>
     )
   }
@@ -47,7 +48,8 @@ export function ActionBar({ onNewGame, size }: { onNewGame: () => void; size: nu
 
   // (online, another player's replayed plan is on the board — it's not mine to preview)
   const moveOnly = !notNow && !s.cast && mayMoveOnly(game, s.move)
-  const busy = s.flying || s.handoff !== null || notNow // a seed in the air, the device being passed on, or not my turn online
+  // a seed in the air, the device being passed on, my refresh's new seeds still growing (online), or not my turn online
+  const busy = s.flying || s.handoff !== null || s.refreshFx !== null || notNow
   // The word list couldn't be loaded: a cast can't be scored, so the main button fetches it again
   if (!moveOnly && s.wordsStatus === 'failed') {
     return (
