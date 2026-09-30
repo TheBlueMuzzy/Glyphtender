@@ -1,8 +1,8 @@
 ## ▶ RESUME HERE
-Sprint 01 done — skeleton + F01 prototype approved (One Cast + undo, throw story, one halo style). v0.1 Sketch ✅. Next: `/sprint` → Sprint 02 from v0.2 "Plant a garden": ready now F03 UI kit, F04 rules engine, F05 word list (+ F18 rooms module).
+AUTONOMOUS (Muzzy asleep, 2026-09-30): Sprint 02 — The garden's rules work (F04 engine, F05 word list, F06 Magic, F03 UI kit). Status board = SPRINT.md ticks.
 
 ## Where we are
-Stage: develop · Milestone: v0.2 Plant a garden · Sprint: — · Doing: — · Branch: dev/alpha · Version: 0.0.0 · Live: none yet
+Stage: develop · Milestone: v0.2 Plant a garden · Sprint: 02 · Doing: F04 + F03 · Branch: dev/alpha · Version: 0.0.0 · Live: none yet
 
 ## Key facts
 **Remake.** Web remake of the Unity game. The original is read-only reference at `../glyphtender-original` (GitHub `TheBlueMuzzy/glyphtender-original`, renamed from `Glyphtender` 2026-09-30). Never copy it wholesale — pull ideas/assets across deliberately. Digest: `.planning/research/original-digest.md`.

@@ -17,10 +17,10 @@ flowchart LR
 
 ## v0.2 — Plant a garden  ← current  (→ alpha)
 Goal: two players on one device draft, move, cast, grow words and make Magic on either board.
-- 🟢 F03 🧱 UI kit (Cozy, night colours) — must:alpha · needs: F02
-- 🟢 F04 🧱 Rules engine: boards, draft, move/cast legality, bag (120 + Qu), tangles, game end, tangle bonus — must:alpha · needs: F02
-- 🟢 F05 🧱 Official word list + word finder (union rule, Qu, min length) — must:alpha · needs: F02
-- ⏳ F06 🧱 Magic + draw / refresh — must:alpha · needs: F04, F05
+- 🔨 F03 🧱 UI kit (Cozy, night colours) — must:alpha · needs: F02 · sprint 2
+- 🔨 F04 🧱 Rules engine: boards, draft, move/cast legality, bag (120 + Qu), tangles, game end, tangle bonus — must:alpha · needs: F02 · sprint 2
+- 🔨 F05 🧱 Official word list + word finder (union rule, Qu, min length) — must:alpha · needs: F02 · sprint 2
+- ⏳ F06 🧱 Magic + draw / refresh — must:alpha · needs: F04, F05 · sprint 2
 - ⏳ F07 🧱 Board view + layout shell (tall → stacked, wide → side tray; fit / zoom) — must:alpha · needs: F01, F03, F04
 - ⏳ F08 🎮 Seed tray (tap + drag, reorder, shuffle, refresh mode) — must:alpha · needs: F07
   why: seeds always in reach, refresh never a dead turn → avoids "homework" turns
@@ -30,9 +30,9 @@ Goal: two players on one device draft, move, cast, grow words and make Magic on 
   why: fair openings, no lockout → Fellowship
 ```mermaid
 flowchart LR
-  F04[🟢 F04 Engine] --> F06[⏳ F06 Magic]
-  F05[🟢 F05 Word list] --> F06
-  F03[🟢 F03 Kits] --> F07[⏳ F07 Board + layout]
+  F04[🔨 F04 Engine] --> F06[⏳ F06 Magic]
+  F05[🔨 F05 Word list] --> F06
+  F03[🔨 F03 Kits] --> F07[⏳ F07 Board + layout]
   F04 --> F07
   F01[✅ F01 Prototype] --> F07
   F07 --> F08[⏳ F08 Seed tray]
@@ -64,9 +64,9 @@ flowchart LR
   F09 --> F13[⏳ F13 Reveal]
   F09 -.-> F15[⏳ F15 Animations]
   F11 --> F14[⏳ F14 Menus]
-  F03[🟢 F03 Kits] --> F14
+  F03[🔨 F03 Kits] --> F14
   F03 --> F16[⏳ F16 Snapshots]
-  F04[🟢 F04 Engine] --> F16
+  F04[🔨 F04 Engine] --> F16
   F03 --> F17[⏳ F17 Bug capture]
 ```
 
