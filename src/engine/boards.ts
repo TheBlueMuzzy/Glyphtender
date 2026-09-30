@@ -35,3 +35,7 @@ export function defaultRules(): RuleNumbers {
     tanglesToEnd: rulesJson.tanglesToEnd,
   }
 }
+
+/** Every board in content/data/boards.json (its entries that have columns), e.g. ["small", "large"]. */
+export const boardNames = (): string[] =>
+  Object.entries(boardsJson).filter(([, entry]) => Array.isArray((entry as { columns?: unknown }).columns)).map(([name]) => name)

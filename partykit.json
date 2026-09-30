@@ -1,0 +1,7 @@
+{
+  "name": "glyphtender",
+  "main": "party/server.ts",
+  "compatibilityDate": "2024-12-01",
+  "port": 1997,
+  "build": { "command": "node scripts/server-words.mjs" }
+}

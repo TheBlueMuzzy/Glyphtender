@@ -1,9 +1,8 @@
 // Starting and leaving a game from the menus. The new-game screen (NewGameScreen.tsx) picks the table
 // options; the last choices are remembered on this device (localStorage — never required: if the browser
 // won't store them, the defaults are used). Play again reuses the options the game started with.
-import boardsJson from '../../content/data/boards.json'
 import rulesJson from '../../content/tuning/rules.json'
-import { defaultBoardFor } from '../engine/boards'
+import { boardNames, defaultBoardFor } from '../engine/boards'
 import { useGameStore } from '../store/gameStore'
 import { screens } from './kit'
 
@@ -23,9 +22,8 @@ const SAVE_KEY = 'glyphtender:new-game'
 const MIN_PLAYERS = 2
 const MAX_PLAYERS = 4
 
-/** Every board in content/data/boards.json (its entries that have columns), e.g. ["small", "large"]. */
-export const boardNames = (): string[] =>
-  Object.entries(boardsJson).filter(([, entry]) => Array.isArray((entry as { columns?: unknown }).columns)).map(([name]) => name)
+/** Every board in content/data/boards.json, e.g. ["small", "large"] (the server's options check uses it too). */
+export { boardNames }
 
 /** First time: 2 players on their default board, 2-letter words as rules.json says, seeds hidden. */
 export const defaultChoices = (): NewGameChoices =>

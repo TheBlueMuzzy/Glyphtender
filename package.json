@@ -15,9 +15,13 @@
     "e2e:menu": "node e2e/menu-shots.mjs",
     "e2e:game": "node e2e/game-shots.mjs",
     "e2e:pass": "node e2e/pass-and-play-shots.mjs",
-    "sim": "node scripts/sim.mjs"
+    "sim": "node scripts/sim.mjs",
+    "party:dev": "partykit dev",
+    "party:deploy": "partykit deploy",
+    "e2e:online": "node e2e/online-shots.mjs"
   },
   "dependencies": {
+    "partysocket": "^1.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "zustand": "^5.0.15"
@@ -32,6 +36,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^16.5.0",
+    "partykit": "^0.0.115",
     "playwright-core": "^1.63.0",
     "sharp": "^0.35.5",
     "typescript": "~5.9.3",
