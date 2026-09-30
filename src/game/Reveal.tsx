@@ -16,7 +16,8 @@ import { useAnimTuning, useGardenTuning } from './useTuning'
 
 const w = text.game.reveal
 
-export function RevealPanel() {
+/** compact: the narrow side column (a phone on its side) — one-line chips, no tangle line, so everything fits. */
+export function RevealPanel({ compact }: { compact: boolean }) {
   const game = useGameStore((s) => s.game)!
   const revealAt = useGameStore((s) => s.revealAt)
   const setRevealAt = useGameStore((s) => s.setRevealAt)
@@ -55,8 +56,9 @@ export function RevealPanel() {
         const shown = view.counted.includes(seat)
         const winner = view.announced && game.winners.includes(seat)
         return (
-          <PlayerChip key={seat} size="s" name={playerName(seat)} avatar={glyphlingArt(seat)} color={colours[colourOf(seat)]}
-            score={shown ? magic : undefined} scoreIcon="✦" detail={shown ? fill(w.tangleDetail, { n: game.tangleMagic[seat] }) : w.secret}
+          <PlayerChip key={seat} size={compact ? 'xs' : 's'} name={playerName(seat)} avatar={glyphlingArt(seat)} color={colours[colourOf(seat)]}
+            score={shown ? magic : undefined} scoreIcon="✦"
+            detail={!shown ? w.secret : compact ? undefined : fill(w.tangleDetail, { n: game.tangleMagic[seat] })}
             badge={winner ? w.winnerBadge : undefined} active={counting === seat || winner} words={{ score: w.magic }} />
         )
       })}

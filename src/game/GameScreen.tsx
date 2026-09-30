@@ -68,7 +68,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
         <Board onHexSize={onHexSize} sitOnTray={stacked} />
       </div>
       <section className="game-panel" aria-label="Seeds and actions">
-        {over ? <RevealPanel /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : room} />}
+        {over ? <RevealPanel compact={!stacked} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : room} />}
         <ActionBar onPlayAgain={onPlayAgain} />
       </section>
       <svg ref={dragLayer} className="game-drag-layer" aria-hidden="true">
