@@ -26,9 +26,13 @@ Done when: the original's words.txt is in the game byte-for-byte and every scori
 - [ ] 🙋 12. Look at the Cozy night menus; tweak colours in Dev Kit → Color if wanted
 
 Ask Muzzy:
+- B001: fix the glued `ZYGOTESAA` line in the word list (split back into ZYGOTES)? And keep the 7 late additions (AIDS, AWOL, CHINA, FRENCH, JAPAN, MOROCCO, ROMAN)?
+- Refresh when the bag is nearly empty: set-aside seeds go back only *after* refilling (rule 7), so a hand can end up under 8. Keep as written, or return them first so the hand always refills? (Sims: the bag almost never runs out — 0–1.6% of games.)
 - **Word list quirk (not changed — the list is byte-for-byte):** line 63,650 reads `ZYGOTESAA,0.00` — ZYGOTES lost its score and line break and got glued to a stray `AA,0.00`. So ZYGOTES isn't playable and "ZYGOTESAA" is. The file also ends with 7 late additions (AIDS, AWOL, CHINA, FRENCH, JAPAN, MOROCCO, ROMAN). Fix in a deliberate word-list commit? (AA itself is fine — it's on line 1.)
 - GDD §4.6 says the list has 63,656 words; it's really 63,657 (see Notes). I fixed the TDD, left the GDD to you.
 Notes:
+- Closed 2026-09-30 (autonomous): F04/F05/F06 ✅ on evidence — 84 tests, build + lint clean, 6,000 simulated games with every invariant holding, and an independent correctness review (1 real bug: stuck turn when tanglesToEnd ≥ 3 → fixed 3a1bbe2 with a test). Muzzy can reopen. F03 = 🎛️ until Muzzy looks at the night menus (task 12 moves to Sprint 03).
+- F07 now needs ~F03 (the kit only has to work — colours can still change).
 - F04 engine: illegal actions THROW an Error with a plain reason; `checkAction(state, action)` returns the same reason (or null) without throwing, for the UI. The word list is passed into applyAction as a 3rd argument (it's too big to live in GameState). Rule numbers are copied from content/tuning/rules.json into `state.config.rules` at newGame, so a replay/online game uses the same numbers.
 - F04 engine: glyphling ids are seat × 2 + 0/1 (Yellow = 0,1 · Blue = 2,3 …). Hands are dealt 8 each in seat order from the front of the bag.
 - F04 surprise: "can move but can't cast" only ever means "no seeds in hand" — after any move, the hexes the glyphling just crossed (at least the one it left) are always open to cast into. Tested.

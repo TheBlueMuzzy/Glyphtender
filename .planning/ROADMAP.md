@@ -1,5 +1,5 @@
 # Glyphtender — Roadmap
-Release target: alpha (pass-and-play + online) — musts 1/21 done
+Release target: alpha (pass-and-play + online) — musts 4/21 done
 IDs are names, not build order — follow `needs:`.
 
 ## v0.1 — Sketch  ✅ done 2026-09-30
@@ -17,11 +17,11 @@ flowchart LR
 
 ## v0.2 — Plant a garden  ← current  (→ alpha)
 Goal: two players on one device draft, move, cast, grow words and make Magic on either board.
-- 🔨 F03 🧱 UI kit (Cozy, night colours) — must:alpha · needs: F02 · sprint 2
-- 🔨 F04 🧱 Rules engine: boards, draft, move/cast legality, bag (120 + Qu), tangles, game end, tangle bonus — must:alpha · needs: F02 · sprint 2
-- 🔨 F05 🧱 Official word list + word finder (union rule, Qu, min length) — must:alpha · needs: F02 · sprint 2
-- ⏳ F06 🧱 Magic + draw / refresh — must:alpha · needs: F04, F05 · sprint 2
-- ⏳ F07 🧱 Board view + layout shell (tall → stacked, wide → side tray; fit / zoom) — must:alpha · needs: F01, F03, F04
+- 🎛️ F03 🧱 UI kit (Cozy, night colours) — must:alpha · needs: F02 · sprint 2
+- ✅ F04 🧱 Rules engine: boards, draft, move/cast legality, bag (120 + Qu), tangles, game end, tangle bonus — must:alpha · needs: F02 · sprint 2
+- ✅ F05 🧱 Official word list + word finder (union rule, Qu, min length) — must:alpha · needs: F02 · sprint 2
+- ✅ F06 🧱 Magic + draw / refresh — must:alpha · needs: F04, F05 · sprint 2
+- 🟢 F07 🧱 Board view + layout shell (tall → stacked, wide → side tray; fit / zoom) — must:alpha · needs: F01, ~F03, F04
 - ⏳ F08 🎮 Seed tray (tap + drag, reorder, shuffle, refresh mode) — must:alpha · needs: F07
   why: seeds always in reach, refresh never a dead turn → avoids "homework" turns
 - ⏳ F09 🎮 Turn flow (legal highlights, move, cast, undo, "Cast · +N", words outlined, throw + sprout, piece-state look from F01) — must:alpha · needs: F01, F06, F07, F08
@@ -30,9 +30,9 @@ Goal: two players on one device draft, move, cast, grow words and make Magic on 
   why: fair openings, no lockout → Fellowship
 ```mermaid
 flowchart LR
-  F04[🔨 F04 Engine] --> F06[⏳ F06 Magic]
-  F05[🔨 F05 Word list] --> F06
-  F03[🔨 F03 Kits] --> F07[⏳ F07 Board + layout]
+  F04[✅ F04 Engine] --> F06[✅ F06 Magic]
+  F05[✅ F05 Word list] --> F06
+  F03[🎛️ F03 Kits] --> F07[🟢 F07 Board + layout]
   F04 --> F07
   F01[✅ F01 Prototype] --> F07
   F07 --> F08[⏳ F08 Seed tray]
@@ -55,8 +55,8 @@ Goal: 2–4 friends play a complete game on one phone, from the main menu to the
 - ⏳ F14 🎮 Menus: main, new game (players, board, 2-letter), settings, pause — must:alpha · needs: F03, F11
 - ⏳ F15 ✨ Grow + move animations (basic) — must:alpha · needs: ~F09
   why: a pause to see what grew → *A cozy garden*, everyone follows the move
-- ⏳ F16 🔧 Dev Kit Snapshots — save/restore any board position (framework-first) — must:alpha · needs: F03, F04
-- ⏳ F17 🔧 Dev Kit Bug capture (framework-first) — must:alpha · needs: F03
+- 🟢 F16 🔧 Dev Kit Snapshots — save/restore any board position (framework-first) — must:alpha · needs: F03, F04
+- 🟢 F17 🔧 Dev Kit Bug capture (framework-first) — must:alpha · needs: F03
 ```mermaid
 flowchart LR
   F09[⏳ F09 Turn flow] --> F11[⏳ F11 Seats + handoff]
@@ -64,10 +64,10 @@ flowchart LR
   F09 --> F13[⏳ F13 Reveal]
   F09 -.-> F15[⏳ F15 Animations]
   F11 --> F14[⏳ F14 Menus]
-  F03[🔨 F03 Kits] --> F14
-  F03 --> F16[⏳ F16 Snapshots]
-  F04[🔨 F04 Engine] --> F16
-  F03 --> F17[⏳ F17 Bug capture]
+  F03[🎛️ F03 Kits] --> F14
+  F03 --> F16[🟢 F16 Snapshots]
+  F04[✅ F04 Engine] --> F16
+  F03 --> F17[🟢 F17 Bug capture]
 ```
 
 ## v0.4 — Play online  (→ alpha release)
