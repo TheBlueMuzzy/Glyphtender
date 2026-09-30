@@ -9,7 +9,7 @@ Overnight (autonomous, 2026-09-30): Sprints 02–05 done — **alpha is feature-
 6. BMUZ stress test: 43 findings in ~/.claude/config/bmuz/reviews/2026-09-30-glyphtender-remake/FINDINGS.md.
 
 ## Where we are
-Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: bug sweep (B002, B003, B005, B006) · Branch: dev/alpha · Version: 0.0.0 · Live: none yet
+Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: waiting on Muzzy (play + decisions, then /deliver alpha) · Branch: dev/alpha · Version: 0.0.0.1 · Live: none yet
 
 ## Key facts
 **Remake.** Web remake of the Unity game. The original is read-only reference at `../glyphtender-original` (GitHub `TheBlueMuzzy/glyphtender-original`, renamed from `Glyphtender` 2026-09-30). Never copy it wholesale — pull ideas/assets across deliberately. Digest: `.planning/research/original-digest.md`.
@@ -22,6 +22,7 @@ Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: bug sweep
 **Run:** `npx vite --host --port 5180` (dev port 5180) · tests `npm test` · sketch check `npm run e2e:sketch` (needs the dev server).
 
 ## Log
+- 2026-09-30 — Bug sweep (autonomous): word-list failure now shows Retry (and End turn no longer waits for words), draft ignores illegal taps quietly, right-click no longer taps, snapshots keep end-table stats. 168 tests, all e2e green.
 - 2026-09-30 — Sprint 05 done (autonomous): move glide, rooms framework module (harvested from Roll Better), online server with per-player views, online seats, lobby, e2e:online (0 leaks); security review fixed 5 issues; layout fix for the reveal.
 - 2026-09-30 — Sprint 04 done (autonomous): seats + handoff, new game screen, pause/rules, danger cues, staged Magic reveal, end table; Dev Kit 0.3.0 Snapshots + Bug capture (framework branch). Review fixed 2 bugs.
 - 2026-09-30 — Sprint 03 done (autonomous): playable 2-player game — board, real-size tray, draft, turn flow + throw, basic results; review fixed 2 bugs.

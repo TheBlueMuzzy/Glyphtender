@@ -1,8 +1,12 @@
 {
   "name": "Glyphtender",
   "version": "0.0.0",
-  "build": 0,
+  "build": 1,
   "history": [
-    { "version": "0.0.0", "date": "2026-09-30", "summary": "Project created — web remake of the Unity game (now glyphtender-original)" }
+    {
+      "version": "0.0.0",
+      "date": "2026-09-30",
+      "summary": "Project created — web remake of the Unity game (now glyphtender-original)"
+    }
   ]
 }
