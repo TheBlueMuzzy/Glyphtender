@@ -62,7 +62,7 @@
 
 ## 5. Systems
 - **Seats** — every player seat is *local*, *online* or *AI*; all submit the same actions to the same rules engine. Pass-and-play = several local seats + handoff screen (hand hidden, board visible).
-- **Online (alpha)** — Roll Better's PartyKit rooms: room code, 2–4 players, rejoin, host leaves, AFK. Server runs the same rules engine, so it validates every move (the original never did).
+- **Online (alpha)** — Roll Better's PartyKit rooms: room code, 2–4 players, rejoin, host leaves, AFK. Server runs the same rules engine, so it validates every move (the original never did). Design: [design/online.md](design/online.md).
 - **AI (beta)** — the goal-selection personality model from the original's `festive-booth` branch (7 goals, 7 personalities, fuzzy Magic perception, difficulty) → built as the **first framework AI module**, game-specific goal scorers stay in the game. Add Amazons-style "reachable moves" evaluation for garden pockets. Detail: `research/original-digest.md §2`; `design/ai.md` in beta.
 - **Stats (1.0)** — per-game table at the end (alpha), lifetime stats + Wordsmith/Tanglesmith radar later.
 
