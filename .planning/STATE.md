@@ -1,9 +1,8 @@
 ## ▶ RESUME HERE
-Discovery done — original digested, 7 references broken down, 4 directions on the table (`research/discovery.md`). Next: `/define` — pick a direction, answer GDD §9, lock scope, write the TDD and feature map.
-Muzzy: skim `research/discovery.md` (1 page) and pick a direction A–D, or say "your call".
+Roadmap ready — GDD complete, TDD written, 22 features mapped (v0.1 Sketch → v0.4 Online = alpha). Ready to start: F02 skeleton (→ then F01 prototype), F18 rooms module. Next: `/sprint` → Sprint 01 = F02 + F01.
 
 ## Where we are
-Stage: discover · Milestone: — · Sprint: — · Branch: main · Version: 0.0.0 · Live: none yet
+Stage: develop · Milestone: v0.1 Sketch · Sprint: — · Branch: main · Version: 0.0.0 · Live: none yet
 
 ## Key facts
 **Remake.** Web remake of the Unity game. The original is read-only reference at `../glyphtender-original` (GitHub `TheBlueMuzzy/glyphtender-original`, renamed from `Glyphtender` 2026-09-30). Never copy it wholesale — pull ideas/assets across deliberately. Digest: `.planning/research/original-digest.md`.
@@ -13,4 +12,5 @@ Stage: discover · Milestone: — · Sprint: — · Branch: main · Version: 0.0
 **Default branch:** main.
 
 ## Log
+- 2026-09-30 — /define done: theme (Grand Glyphtender, Magic), cozy not hunting, alpha = pass-and-play + online, beta = AI. Official word list traced + kept. TDD + roadmap.
 - 2026-09-30 — Project created (remake). Old repo/folder renamed to glyphtender-original. /discover done: digest, references, directions.

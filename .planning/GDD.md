@@ -1,6 +1,6 @@
 # Glyphtender — Game Design Document (GDD)
 > What the game is, how it plays, how it should feel. Aim for ~150 lines — detail lives in `design/` docs linked from here.
-> Current phase: Design   ·   Engineering plan: TDD.md (not yet)   ·   Milestones, ideas, known issues: ROADMAP.md (not yet)
+> Current phase: Complete   ·   Engineering plan: TDD.md   ·   Milestones, ideas, known issues: ROADMAP.md
 > **Remake** of the Unity game (`../glyphtender-original`). The original: `research/original-digest.md`. References + directions: `research/discovery.md`. Direction: **B — board-first modern** (same rules; flow and layout rebuilt to current board-game-app practice).
 
 ## 1. Pitch
