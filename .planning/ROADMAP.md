@@ -21,18 +21,18 @@ Goal: two players on one device draft, move, cast, grow words and make Magic on 
 - ✅ F04 🧱 Rules engine: boards, draft, move/cast legality, bag (120 + Qu), tangles, game end, tangle bonus — must:alpha · needs: F02 · sprint 2
 - ✅ F05 🧱 Official word list + word finder (union rule, Qu, min length) — must:alpha · needs: F02 · sprint 2
 - ✅ F06 🧱 Magic + draw / refresh — must:alpha · needs: F04, F05 · sprint 2
-- 🟢 F07 🧱 Board view + layout shell (tall → stacked, wide → side tray; fit / zoom) — must:alpha · needs: F01, ~F03, F04
-- ⏳ F08 🎮 Seed tray (tap + drag, reorder, shuffle, refresh mode) — must:alpha · needs: F07
+- 🔨 F07 🧱 Board view + layout shell (tall → stacked, wide → side tray; fit / zoom) — must:alpha · needs: F01, ~F03, F04 · sprint 3
+- ⏳ F08 🎮 Seed tray (tap + drag, reorder, shuffle, refresh mode) — must:alpha · needs: F07 · sprint 3
   why: seeds always in reach, refresh never a dead turn → avoids "homework" turns
-- ⏳ F09 🎮 Turn flow (legal highlights, move, cast, undo, "Cast · +N", words outlined, throw + sprout, piece-state look from F01) — must:alpha · needs: F01, F06, F07, F08
+- ⏳ F09 🎮 Turn flow (legal highlights, move, cast, undo, "Cast · +N", words outlined, throw + sprout, piece-state look from F01) — must:alpha · needs: F01, F06, F07, F08 · sprint 3
   why: every legal option lit + live Magic preview → players hunt for two-birds casts → Cozy cleverness
-- ⏳ F10 🎮 Snake draft — must:alpha · needs: F07, F04
+- ⏳ F10 🎮 Snake draft — must:alpha · needs: F07, F04 · sprint 3
   why: fair openings, no lockout → Fellowship
 ```mermaid
 flowchart LR
   F04[✅ F04 Engine] --> F06[✅ F06 Magic]
   F05[✅ F05 Word list] --> F06
-  F03[🎛️ F03 Kits] --> F07[🟢 F07 Board + layout]
+  F03[🎛️ F03 Kits] --> F07[🔨 F07 Board + layout]
   F04 --> F07
   F01[✅ F01 Prototype] --> F07
   F07 --> F08[⏳ F08 Seed tray]
