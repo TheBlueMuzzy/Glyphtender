@@ -42,6 +42,8 @@ flowchart LR
 ## 2b. Game-specific systems
 **Coordinates** — engine uses **axial hex coordinates** (q, r) — the standard (Red Blob Games) — so leylines are simple steps. Boards are defined in `content/data/boards.json` as column heights (`[4,7,8,9,10,9,10,9,8,7,4]`) like Muzzy's paper notation, converted at load. Designer notation `C4-3` shown in Dev Kit / bug reports.
 **Words** — per leyline, collect the run of letters through the new seed; check every sub-run of ≥ min length containing the new seed; keep valid words; drop any word covered by the union of the other kept words on that line (GARDENING/DEN, SEAL+LEAP/ALE). Tested against every example in the digest.
+**Piece states + the throw** (from the F01 prototype) — every piece shows one of: options (glow + dot) · held (solid ring, player colour) · planned (pulsing halo at the hex edge, player colour; targeted seed faded) · done. The halo sits *outside* the art's own coloured frame. Cast plays: glyphling hop → seed flies a bezier arc (time = `flightBase` + `flightPerHex` × distance) → runeblossom sprouts with overshoot; the game state commits on landing; input is locked in flight. Frames mutate SVG attributes directly (no React state per frame). Numbers: `content/tuning/anim.json`, colours: `garden.json`.
+**Tray** — one row of 8 when 8 fit at ≥ `trayTileMin` (44 px), else 2 rows of 4 (portrait phones have spare height). Measured hex widths: phone portrait 36–42 px, landscape 38–41 px, desktop 89–97 px.
 **Dictionary — the official Glyphtender word list** is the original's `words.txt`, **copied byte-for-byte** (blob `3280512a`, identical on the original's main and festive-booth): 63,656 words, 2–15 letters, each with a **Zipf score** (how common it is: THE 7.73 … rare words 0). How it was made: Muzzy chose TWL in the Python prototype (2025-12-14) → 63,612-word list (2025-12-17) → cleaned: abbreviations out, scoring fixes (12-21) → +218 missing words incl. 2-letter words (12-22) → roman numerals out + Zipf column added for AI difficulty (12-23). **Never edit it by hand in code** — it lives in `public/words/words.csv`; changes are deliberate, logged commits. The game uses the words; the **AI uses the Zipf scores** (difficulty + personality vocabulary). Loaded once, async, into a `Map<word, zipf>`; ~250 KB gzipped.
 **Multiplayer** (alpha, online milestone) — server-authoritative, same engine. Messages (first draft): `join`, `seat`, `start` → server; `action` (draft / move+cast / refresh) → server validates via engine → `view` to each player; `rejoin`, `leave`, `rematch`. Identity/rejoin/host rules copied from Roll Better (persistentId owns the seat; leave via `useRoom.leave()`). Detail: `design/online.md` when we get there.
 **Timers**
@@ -60,7 +62,8 @@ flowchart LR
 | `content/data/bag.json` | seed counts per letter (incl. `Qu`) | Obsidian / Dev Kit → Tuning |
 | `content/tuning/rules.json` | hand size 8, min word 2, tangle bonus 3, tangles to end 2, ownership bonus 1 | Dev Kit → Tuning |
 | `content/tuning/layout.json` | stacked/side threshold, tray tile size, hex min size, gaps | Dev Kit → Tuning |
-| `content/tuning/anim.json` | grow, move, reveal timings | Dev Kit → Tuning |
+| `content/tuning/anim.json` | throw (flight, arc, hop), sprout, later reveal timings | Dev Kit → Tuning |
+| `content/tuning/garden.json` | night garden colours, player colours, glow, halo, faded-seed strength | Dev Kit → Tuning |
 | `content/ui/style.json` | Cozy preset + night colour tweaks | Dev Kit → Color |
 | `content/text/en.json` | every player-facing word ("tangled", "Magic", prompts) | Obsidian |
 | `content/credits.json` | fonts, word list | organize-assets |
@@ -100,6 +103,9 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D08 · 2026-09-30 · One Cast per turn with free undo; the throw animation plays only after Cast
+  Proposed by: Claude (research) → decided by Muzzy after the F01 prototype   Options: one Cast / confirm each step
+  Chose: one Cast — "it's better for sure"; Muzzy added the throw story and one halo style for planned pieces
 D07 · 2026-09-30 · Tool versions match Roll Better (Vite 7, TypeScript 5.9, React 19, vitest 4)
   Proposed by: Claude   Options: newest (framework dev env: Vite 8 / TS 7) / Roll Better's
   Chose: Roll Better's — the UI kit + Dev Kit are proven on them; upgrade together later
@@ -132,8 +138,7 @@ D01 · 2026-09-30 · One pure rules engine shared by client, server, AI and test
 | Runeblossom + glyphling art | stand-in art | Muzzy's own | ✅ |
 
 ## 10. Risks & open questions
-- **Board readability on phones** (117 hexes, landscape height ~360 px) → F01 prototype measures it at 3 sizes.
-- **Commit style** (undo until Cast) → F01 prototype; Muzzy decides.
+- ~~Board readability on phones~~ — F01: 36–42 px hexes on phones. ~~Commit style~~ — F01: One Cast (D08).
 - **Word rule edge cases** (union rule) → table-driven tests from every example Muzzy gave.
 - **AI speed in a browser** (beta) → Web Worker + timing test.
 - **Online secrecy** — per-player views are new vs Roll Better (which showed everything) → design it in `design/online.md` before building.

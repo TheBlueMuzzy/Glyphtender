@@ -16,11 +16,12 @@ Done when: Muzzy has played it on his phone both ways up and on desktop, and dec
 - [x] 🤖 7. Shape-based layout: tall → tray below, wide → tray beside — sketches/move-cast/
 - [x] 🤖 8. Move (tap/drag glyphling → legal hexes glow) → cast (tap/drag seed → legal hexes glow) → Undo / tap-again → Cast commits, go again with any piece — sketches/move-cast/
 - [x] 🤖 9. Screenshots at 390×844, 844×390, 1440×900 on both boards; measure hex size in px
-- [ ] 🙋 10. Play it on phone (portrait + landscape) and desktop; decide: one Cast + undo, or confirm each step
-- [ ] 🤖 11. Learnings → GDD §3/§4 + TDD; F01 ✅
+- [x] 🙋 10. Play it on phone (portrait + landscape) and desktop; decide: one Cast + undo, or confirm each step
+- [x] 🤖 11. Learnings → GDD §3/§4 + TDD; F01 ✅
 Check: screenshots look right to Claude first; then Muzzy's feel call.
 
 Ask Muzzy: —
+Feel check (F01 why): Muzzy 2026-09-30 — "this looks great. well done… this proves the flow well." → Try freely, commit once ✅
 Notes:
 - Dev Kit moved from F03 into F02 so the sketch's hex size / colours are tweakable live (F03 = UI kit only).
 - D07: tool versions match Roll Better (Vite 7, TS 5.9, React 19, vitest 4) — the kits are proven there.

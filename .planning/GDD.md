@@ -24,7 +24,7 @@
 - **The best speller doesn't always win** — where you plant matters as much as what you spell. *Settles:* no multiplier squares or letter values (word = letters + ownership); tangle bonuses stay big; AI personalities that don't spell well can still win.
 - **A cozy garden** — nobody is attacked: seeds grow, and glyphlings get *tangled* in the growing garden. *Settles:* wording ("tangled", never "trapped/killed"), soft animations, gentle AI banter (beta) — even the Bully is mischievous, not mean.
 - **Always readable** — whose turn, what's legal, what just grew, at a glance, on a phone either way up. *Settles:* the board gets the space and always fits; every legal option is highlighted.
-- **Try freely, commit once** — experiment on the board without penalty until you cast. *Settles:* one commit per turn with undo — **pending Muzzy's prototype (F01)**.
+- **Try freely, commit once** — experiment on the board without penalty until you cast. *Settles:* one commit per turn with undo — **confirmed by the F01 prototype** (Muzzy, 2026-09-30: "it's better for sure").
 - **Every seat is swappable** — local player, online player or AI; the rules don't care. *Settles:* pass-and-play is built on seats, so online and AI plug in without touching the rules.
 
 ## 4. How it plays
@@ -41,7 +41,12 @@
   9. **Tangled** — a glyphling with no legal move. Checked fresh after every turn, so a glyphling hemmed in by another glyphling is freed if that one moves away (as the original). When a turn ends with **2 or more glyphlings tangled**, the game ends.
   10. **Tangle bonus** — for each tangled glyphling, every *other* player gains **+3 Magic per seed or glyphling of theirs next to it**. Self-tangling next to your own seeds gives your rivals nothing.
   11. **Magic is secret** until the end. Most Magic wins; ties share the win.
-- **Controls:** tap-tap *and* drag, always both (phone and mouse). Tap a glyphling → its moves light up → tap one. Tap or drag a seed → legal hexes light up with their Magic preview → tap one. Undo / tap-again to take back (per F01). **Cast · +N** commits. Pinch/scroll zoom is optional; a Fit button snaps back.
+- **Controls** (proven in the F01 prototype): tap-tap *and* drag, always both (phone and mouse).
+  1. Tap/drag a glyphling → hexes it can reach glow teal → tap/drop one: it moves, leaving a faded ghost where it started (tap the ghost to send it back).
+  2. Tap/drag a seed → hexes it can reach glow gold → tap/drop one: the seed sits there **faded** — targeted, not planted (tap it to take it back). **Undo** takes back the last step.
+  3. **Cast** commits the turn — only then does the story play: the glyphling hops and **throws** the seed, it **arcs** to the target, lands, and the runeblossom **grows** out of the ground. Nothing can be touched while a seed is in the air.
+  - Pinch/scroll zoom is optional; a Fit button snaps back.
+- **Piece states — one look for every piece** (glyphlings, seeds, tray): **options** = glowing hexes with a dot (teal move · gold cast) · **held** = solid ring in the player's colour · **planned** = pulsing halo at the hex edge in the player's colour (a targeted seed is also faded) · **done** = plain.
 - **Mechanics:**
 | Mechanic | What players end up doing → Target |
 |---|---|
@@ -89,17 +94,16 @@ Releases: **alpha → beta → 1.0** (no "prototype" release — prototypes are 
 
 **Should** — board themes · colour preference · random starting player · hint ("show me a move") · topiary-grow cast effect (may move up)
 **Could** — async play (several games at once) · spectators · leaderboards/accounts · 3D figurine glyphlings
-**Won't** — 2v2 teams (cut in the original as "less fun") · multiplier squares / letter values (breaks *best speller doesn't always win*) · tilted 3D camera (breaks *Always readable*) · per-step confirm (unless F01 says otherwise)
+**Won't** — 2v2 teams (cut in the original as "less fun") · multiplier squares / letter values (breaks *best speller doesn't always win*) · tilted 3D camera (breaks *Always readable*) · per-step confirm (F01 prototype: One Cast felt better)
 
 ## 8. Product
 - **Release path:** web (GitHub Pages) first; stores later if it earns it.   **Business:** none yet.
 - **Success looks like:** friends ask to play again; Muzzy prefers it to the Unity version; a 4-player game on one phone never needs a zoom.
 
 ## 9. Open questions
-- ❓ **Commit style** — one Cast + undo vs per-step confirm → **F01 prototype** (move → cast → undo, no scoring).
 - ❓ **Board size per player count** — sims in beta; alpha ships Small + Large.
 - ❓ **Bag run-out** — can 120 run out on Large with 4 players? Sim. If it does: stop drawing.
 - ❓ **Starting player** — Yellow always, or random?
 - ❓ **AI vocabulary tiers** — code thresholds (Zipf 3/2/0) give ~22k/~44k/63k words; the design said ~5k/~20k/all (would be 4/3/0). (beta)
 - ❓ **Strategist personality** — multi-word specialist or DENY-first tactician? (beta)
-- **Risks:** (1) board unreadable on phones → F01 renders both boards at 390×844, 844×390, 1440×900 · (2) the undo flow feels wrong → F01 · (3) AI too slow in a browser → Web Worker, timed in beta.
+- **Risks:** ~~board unreadable on phones~~ (F01: hexes 36–42 px on phones, both boards) · ~~undo flow feels wrong~~ (F01: approved) · AI too slow in a browser → Web Worker, timed in beta.
