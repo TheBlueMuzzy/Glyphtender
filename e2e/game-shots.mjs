@@ -151,6 +151,13 @@ try {
         if (size.mobile) await touchDragVia(glyph, () => option('move', 0))
         else await dragVia(glyph, () => option('move', 0), true)
       } else {
+        if (turn === 1 && !size.mobile) {
+          // B005: only the main mouse button plays — a right- or middle-click picks nothing up
+          for (const button of ['right', 'middle']) {
+            await glyph.click({ button })
+            if (await store((s) => s.selected !== null)) fail(`${size.name}: a ${button}-click picked up a glyphling`)
+          }
+        }
         await tap(glyph)
         if (turn === 1) await shot('4-move-options')
         await tap(option('move', Math.floor((await optionCount('move')) / 3)))
@@ -238,6 +245,15 @@ try {
     await shot('11-game-over')
     const stars = await page.getByRole('img', { name: 'Winner' }).count()
     if (stars < 1) fail(`${size.name}: no winner marked`)
+    // B005: closed results stay closed (nothing reopens them by itself); the Results button brings them back
+    await page.keyboard.press('Escape')
+    await tap(page.getByRole('button', { name: 'Results' }))
+    await table.waitFor({ timeout: 3000 })
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(2000)
+    if (await table.isVisible()) fail(`${size.name}: the end table reopened by itself after it was closed`)
+    await tap(page.getByRole('button', { name: 'Results' }))
+    await table.waitFor({ timeout: 3000 })
     await table.getByRole('button', { name: 'Play again' }).click()
     if (!(await store((s) => s.game?.phase === 'draft'))) fail(`${size.name}: Play again did not start a new draft`)
     // Menu → Leave game → confirm → main menu

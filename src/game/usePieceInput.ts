@@ -16,7 +16,7 @@ interface Press {
   trayPos?: number
   draft?: boolean
   hex?: Hex
-  /** Which finger (or mouse) is pressing — a second finger is ignored until this one lifts. */
+  /** Which finger (or mouse) is pressing ï¿½ a second finger is ignored until this one lifts. */
   pointerId: number
   x: number
   y: number
@@ -82,6 +82,7 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
   const onPointerDown = (e: PointerEvent) => {
     if (store().flying) return // nothing to touch while a seed is in the air
     if (!e.isPrimary) return // only the first finger plays; a second finger (or a palm) is ignored
+    if (e.button !== 0) return // only the main mouse button (a finger or pen tip is 0 too); right/middle clicks do nothing
     const t = e.target as Element
     press.current = {
       glyph: numberAttr(t, 'data-glyph'),
