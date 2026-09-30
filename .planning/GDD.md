@@ -61,7 +61,12 @@
 - **Stats (1.0)** — per-game table at the end (alpha), lifetime stats + Wordsmith/Tanglesmith radar later.
 
 ## 6. Look & sound
-UI: Game UI kit, **Cozy** style. Garden art direction: *to capture with Muzzy* (current art: glowing vine-wrapped letters in rounded hexes on a dark starry background; fuzzy leaf-sprout glyphlings). Signature moment: seed arcs to the hex → buried → glyphling splashes magic water → letter topiary grows.
+- **Function first; look is secondary for now.** Muzzy (2026-09-30).
+- **Night-time garden** — dark, so Magic sparkles *pop* when they come (sparkles: later).
+- **UI:** Game UI kit, **Cozy** style, tuned to night colours in `content/ui/style.json` (Cozy's preset is light paper).
+- **Art:** the original's runeblossom letters (A–Z × 4 colours) and glyphling portraits, used as-is as stand-ins. **Muzzy will redraw them** (he also has board art for later).
+- **Signature moment (later):** seed arcs to the hex → buried → glyphling splashes magic water → letter topiary grows.
+- **Sound:** none in alpha; basic audio in beta.
 
 ## 7. Scope
 Releases: **alpha → beta → 1.0** (no "prototype" release — prototypes are code sketches, like F01). **Done** = all its musts done.
@@ -96,5 +101,4 @@ Releases: **alpha → beta → 1.0** (no "prototype" release — prototypes are 
 - ❓ **Bag run-out** — can 120 run out on Large with 4 players? Sim. If it does: stop drawing.
 - ❓ **Starting player** — Yellow always, or random?
 - ❓ **Strategist personality** — multi-word specialist or DENY-first tactician? (beta)
-- ❓ **Look** — garden art direction (see §6).
 - **Risks:** (1) board unreadable on phones → F01 renders both boards at 390×844, 844×390, 1440×900 · (2) the undo flow feels wrong → F01 · (3) AI too slow in a browser → Web Worker, timed in beta.
