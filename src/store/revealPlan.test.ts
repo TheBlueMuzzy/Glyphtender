@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { getBoard } from '../engine/boards'
+import { hexKey, neighbours } from '../engine/hex'
 import { tangleBonus, tangledIds } from '../engine/tangle'
-import { position } from '../engine/testkit'
+import { hexAt, position } from '../engine/testkit'
 import type { GameState } from '../engine/types'
-import { revealSeconds, revealSteps, revealView } from './revealPlan'
+import { popsByHex, revealSeconds, revealSteps, revealView } from './revealPlan'
 import animJson from '../../content/tuning/anim.json'
 
 // Yellow's glyphling 0 is tangled in the corner: next to its own seed (no bonus) and two of Blue's (+3 each)
@@ -48,5 +50,24 @@ describe('the Magic reveal plan', () => {
     const seconds = revealSeconds(revealSteps(finished([20, 12])), animJson)
     expect(seconds).toBeGreaterThanOrEqual(6)
     expect(seconds).toBeLessThanOrEqual(10)
+  })
+
+  it('a rival seed next to TWO tangled glyphlings shows one "+6" on the board, not two "+3"s on top of each other', () => {
+    // Yellow's two glyphlings side by side in the corner, boxed in by Blue's seeds
+    const board = getBoard('small')
+    const corner = [hexAt('C1-1'), hexAt('C1-2')]
+    const blue: Record<string, string> = {}
+    for (const hex of corner.flatMap((h) => neighbours(board, h))) {
+      if (!corner.some((c) => hexKey(c) === hexKey(hex))) blue[board.label(hex)] = 'A'
+    }
+    const game = position({ glyphlings: { 0: 'C1-1', 1: 'C1-2', 2: 'C8-6', 3: 'C11-2' }, seeds: [{}, blue] })
+    const tangled = tangledIds(game)
+    const over: GameState = { ...game, phase: 'over', tangled, tangleMagic: tangleBonus(game, tangled), magic: [0, 0] }
+    const steps = revealSteps(over)
+    const marks = popsByHex(revealView(steps, steps.length).pops)
+    // one mark per hex, and together they add up to Blue's tangle Magic
+    expect(new Set(marks.map((m) => hexKey(m.hex))).size).toBe(marks.length)
+    expect(marks.reduce((sum, m) => sum + m.total, 0)).toBe(over.tangleMagic[1])
+    expect(marks.some((m) => m.total === 6)).toBe(true)
   })
 })

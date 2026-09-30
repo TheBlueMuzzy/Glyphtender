@@ -56,6 +56,21 @@ export function stepSeconds(step: RevealStep, timing: RevealTiming): number {
 export const revealSeconds = (steps: RevealStep[], timing: RevealTiming) =>
   steps.reduce((sum, step) => sum + stepSeconds(step, timing), 0)
 
+/**
+ * The "+N" marks on the board: one per hex, adding up every bonus popped there so far.
+ * (A rival seed next to two tangled glyphlings earns the bonus twice — it shows "+6", not two "+3"s
+ * drawn on top of each other.) `count` = how many bonuses that hex has had, so the mark pops again for each.
+ */
+export function popsByHex(pops: RevealStep[]): { hex: Hex; total: number; count: number }[] {
+  const marks = new Map<string, { hex: Hex; total: number; count: number }>()
+  for (const pop of pops) {
+    if (pop.kind !== 'bonus') continue
+    const mark = marks.get(hexKey(pop.hex)) ?? { hex: pop.hex, total: 0, count: 0 }
+    marks.set(hexKey(pop.hex), { hex: pop.hex, total: mark.total + pop.amount, count: mark.count + 1 })
+  }
+  return [...marks.values()]
+}
+
 /** What the screen shows at step `at` (null = not started; steps.length = finished, everything shown). */
 export function revealView(steps: RevealStep[], at: number | null) {
   const reached = at === null ? [] : steps.slice(0, at + 1)

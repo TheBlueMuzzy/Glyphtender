@@ -7,7 +7,7 @@ import text from '../../content/text/en.json'
 import { hexCorners, hexKey, hexToPixel } from '../engine/hex'
 import type { GameState } from '../engine/types'
 import type { RevealStep } from '../store/revealPlan'
-import { revealView } from '../store/revealPlan'
+import { popsByHex, revealView } from '../store/revealPlan'
 import { fill, reduceMotion } from '../ui/kit'
 import { HEX } from './useThrow'
 import type { AnimTuning, GardenTuning } from './useTuning'
@@ -33,9 +33,10 @@ export function RevealMarks({ game, steps, at, colours, timing }: Props) {
           </polygon>
         )
       })}
-      {view.pops.map((pop) => pop.kind === 'bonus' && (
-        <Pop key={`${pop.glyphling}-${hexKey(pop.hex)}`} x={hexToPixel(pop.hex, HEX).x} y={hexToPixel(pop.hex, HEX).y}
-          label={fill(text.game.reveal.pop, { n: pop.amount })} colours={colours} seconds={timing.revealPopTime} />
+      {/* One mark per hex (a piece next to two tangled glyphlings shows "+6"); it pops again each time it grows */}
+      {popsByHex(view.pops).map((mark) => (
+        <Pop key={`${hexKey(mark.hex)}-${mark.count}`} x={hexToPixel(mark.hex, HEX).x} y={hexToPixel(mark.hex, HEX).y}
+          label={fill(text.game.reveal.pop, { n: mark.total })} colours={colours} seconds={timing.revealPopTime} />
       ))}
     </g>
   )
