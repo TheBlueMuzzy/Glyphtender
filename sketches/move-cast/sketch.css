@@ -1,0 +1,54 @@
+/* SKETCH styles — plain CSS on purpose (the real game uses the UI kit). */
+html, body, #root { height: 100%; margin: 0; overscroll-behavior: none; }
+body { background: #10162a; }
+
+.sketch {
+  position: fixed; inset: 0; box-sizing: border-box;
+  display: grid; gap: 6px;
+  padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  background: var(--bg); color: #f3e9d7;
+  font-family: ui-rounded, 'Nunito', system-ui, sans-serif;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.sketch.stacked { grid-template: "bar" auto "board" 1fr "panel" auto / 1fr; }
+.sketch.side { grid-template: "board bar" auto "board panel" 1fr / 1fr var(--panel); }
+
+.bar { grid-area: bar; display: flex; flex-direction: column; gap: 4px; }
+.toggles { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.sep { width: 6px; }
+.readout { font-size: 12px; opacity: 0.6; }
+
+.board-area { grid-area: board; min-height: 0; min-width: 0; display: flex; }
+.garden { width: 100%; height: 100%; display: block; }
+.garden .pending-ring { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+.panel { grid-area: panel; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.side .panel { justify-content: center; }
+.prompt { margin: 0; font-size: 18px; font-weight: 700; min-height: 1.4em; text-align: center; }
+
+.tray { display: grid; gap: 6px; justify-content: center; grid-template-columns: repeat(var(--tray-columns), var(--tile)); }
+.seed {
+  width: var(--tile); height: var(--tile); border-radius: 12px; display: grid; place-items: center;
+  background: #1c2742; box-shadow: inset 0 0 0 2px #33456f; transition: transform 120ms, box-shadow 120ms, opacity 120ms;
+}
+.seed img { width: 100%; height: 100%; pointer-events: none; }
+.seed.selected { transform: translateY(-6px); box-shadow: inset 0 0 0 3px #f2c14e, 0 6px 14px rgb(0 0 0 / 0.5); }
+.seed.used { box-shadow: inset 0 0 0 2px #f2c14e; background: transparent; }
+.seed.waiting { opacity: 0.55; }
+
+.actions { display: flex; gap: 8px; justify-content: center; }
+.actions button { min-width: 120px; min-height: 48px; font-size: 18px; }
+
+button {
+  font: inherit; font-weight: 700; color: #f3e9d7; background: #22304f; border: 2px solid #33456f;
+  border-radius: 999px; padding: 6px 14px; min-height: 36px; cursor: pointer;
+}
+button.on { background: #4f7c5a; border-color: #6fa07a; }
+button.primary { background: #e8a33d; border-color: #f2c14e; color: #2a1d08; }
+button:disabled { opacity: 0.35; cursor: default; }
+
+.drag-ghost {
+  position: fixed; display: none; pointer-events: none; transform: translate(-50%, -50%);
+  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 0.6)); z-index: 10;
+}

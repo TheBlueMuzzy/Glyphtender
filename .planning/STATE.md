@@ -9,7 +9,8 @@ Stage: develop · Milestone: v0.1 Sketch · Sprint: 01 · Doing: F02 · Branch: 
 **AI source of truth** is the original's branch `festive-booth` (goal-selection model), not its `main`.
 **Muzzy's direction (2026-09-30):** phone (portrait AND landscape) + desktop — do responsive properly · first release = strong pass-and-play (AI replaces a seat next; online = "P0.5", reuse Roll Better's rooms if cheap) · tutorial not yet · UI kit **Cozy** style · think critically vs industry standards, don't just port.
 **BMUZ stress test:** log BMUZ gaps in `~/.claude/config/bmuz/reviews/2026-09-30-glyphtender-remake/FINDINGS.md` as we go.
-**Default branch:** main.
+**Default branch:** main. Work branch: `dev/alpha`.
+**Run:** `npx vite --host --port 5180` (dev port 5180) · tests `npm test` · sketch check `npm run e2e:sketch` (needs the dev server).
 
 ## Log
 - 2026-09-30 — /define done: theme (Grand Glyphtender, Magic), cozy not hunting, alpha = pass-and-play + online, beta = AI. Official word list traced + kept. TDD + roadmap.

@@ -1,0 +1,28 @@
+{
+  "_help": {
+    "background": "Night sky behind everything.",
+    "hexFill": "Colour of an empty garden hex.",
+    "hexLine": "Outline colour of each hex.",
+    "hexLineWidth": "Outline thickness, in hex sizes.",
+    "moveGlow": "Highlight on hexes a glyphling can move to.",
+    "castGlow": "Highlight on hexes a seed can be cast to.",
+    "glowStrength": "How strong the highlights are. 0 = invisible, 1 = solid.",
+    "pieceScale": "Size of seeds and glyphlings inside their hex. 1 = fills the hex.",
+    "ghostOpacity": "How visible the faded glyphling left where it started (tap it to send the glyphling back)."
+  },
+  "_ranges": {
+    "hexLineWidth": [0, 0.2, 0.01],
+    "glowStrength": [0, 1, 0.05],
+    "pieceScale": [0.6, 1.1, 0.01],
+    "ghostOpacity": [0, 0.8, 0.05]
+  },
+  "background": "#10162a",
+  "hexFill": "#1c2742",
+  "hexLine": "#33456f",
+  "hexLineWidth": 0.06,
+  "moveGlow": "#5fd4c4",
+  "castGlow": "#f2c14e",
+  "glowStrength": 0.45,
+  "pieceScale": 0.96,
+  "ghostOpacity": 0.3
+}
