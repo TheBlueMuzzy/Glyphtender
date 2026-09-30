@@ -11,7 +11,7 @@
 // MOVES glide from hex to hex (useGlide.ts) — a planned move, Undo, and moves made anywhere else.
 // DANGER CUES (DangerCue.tsx): 1 move left = dashed thorny ring in the owner's colour · tangled = a vine wraps it
 // Colours: content/tuning/garden.json · timings: anim.json · margin: layout.json.
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { getBoard } from '../engine/boards'
 import { hexCorners, hexKey, hexToPixel, type Hex } from '../engine/hex'
@@ -20,6 +20,7 @@ import { highlightFor } from '../store/turnPlan'
 import { dangers } from '../store/danger'
 import { revealSteps } from '../store/revealPlan'
 import { colourOf, glyphlingArt, seedArt } from './art'
+import { boardShift, type TraySide } from './boardPlace'
 import { DangerCue } from './DangerCue'
 import { RevealMarks } from './RevealMarks'
 import { useGlide } from './useGlide'
@@ -35,11 +36,11 @@ import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
 type Props = {
   /** Reports how wide one hex is on screen (pixels), so the tray can match it. */
   onHexSize: (px: number) => void
-  /** Tall screens: sit the board at the bottom of its box, right above the tray (thumb reach, no gap). */
-  sitOnTray?: boolean
+  /** Which side of the board's box the tray is on — the board sits close to it (boardPlace.ts). */
+  traySide?: TraySide
 }
 
-export function Board({ onHexSize, sitOnTray = false }: Props) {
+export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   const game = useGameStore((s) => s.game)!
   const move = useGameStore((s) => s.move)
   const cast = useGameStore((s) => s.cast)
@@ -66,19 +67,24 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
     return { minX, minY, w: Math.max(...xs) + pad - minX, h: Math.max(...ys) + pad - minY }
   }, [board, boardMargin])
 
-  // Measure the on-screen hex width whenever the board's box changes size
+  // Measure the on-screen hex width whenever the board's box changes size, and move the board toward the tray
+  // (the viewBox slides the other way; the box's spare room shows the board there)
+  const [shift, setShift] = useState({ x: 0, y: 0 })
   useLayoutEffect(() => {
     const svg = svgRef.current
     if (!svg) return
     const measure = () => {
       const r = svg.getBoundingClientRect()
-      onHexSize(2 * HEX * Math.min(r.width / view.w, r.height / view.h))
+      const scale = Math.min(r.width / view.w, r.height / view.h)
+      if (!(scale > 0)) return
+      onHexSize(2 * HEX * scale)
+      setShift(boardShift(traySide, r.width / scale - view.w, r.height / scale - view.h))
     }
     measure()
     const watcher = new ResizeObserver(measure)
     watcher.observe(svg)
     return () => watcher.disconnect()
-  }, [view, onHexSize])
+  }, [view, onHexSize, traySide])
 
   const flight = useMemo(
     () => (flying && move && cast ? { glyphling: move.glyphling, from: move.to, to: cast.target } : null),
@@ -132,8 +138,8 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
   }
 
   return (
-    <svg ref={svgRef} className="game-garden" viewBox={`${view.minX} ${view.minY} ${view.w} ${view.h}`}
-      preserveAspectRatio={sitOnTray ? 'xMidYMax meet' : 'xMidYMid meet'} role="img" aria-label="Garden">
+    <svg ref={svgRef} className="game-garden" viewBox={`${view.minX - shift.x} ${view.minY - shift.y} ${view.w} ${view.h}`}
+      preserveAspectRatio="xMidYMid meet" role="img" aria-label="Garden">
       {board.cells.map((h) => {
         const { x, y } = at(h)
         return <polygon key={hexKey(h)} data-hex={hexKey(h)} points={hexCorners(x, y, HEX * 0.97)}

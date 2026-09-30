@@ -1,7 +1,8 @@
-// THE GAME SCREEN — the layout shell: turn bar, board, seed tray and buttons.
+// THE GAME SCREEN — the layout shell: top bar (portrait + Menu), board, and the panel: prompt, seed tray, buttons.
 // Layout by the SHAPE of the free space, not the device (TDD D04): taller than layout.stackedAspect →
 // tray BELOW the board ("stacked"); otherwise tray BESIDE it ("side", taking sidePanelShare of the width).
-// The board always fits its box; the tray is real size (trayLayout.ts).
+// The board always fits its box and hugs the tray's side of it, so board and tray sit close.
+// The tray is real size (trayLayout.ts); the buttons are about a board hex tall (finger-sized, ≥ 44 px).
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
@@ -11,6 +12,7 @@ import { wordListUrl } from './art'
 import { Board } from './Board'
 import { Handoff } from './Handoff'
 import { RevealPanel } from './Reveal'
+import { PromptLine } from './PromptLine'
 import { SeedTray } from './SeedTray'
 import { TurnBar } from './TurnBar'
 import { trayLayout } from './trayLayout'
@@ -18,6 +20,9 @@ import { useNopeShake } from './useNopeShake'
 import { usePieceInput } from './usePieceInput'
 import { useGardenTuning, useLayoutTuning } from './useTuning'
 import './game.css'
+
+const HEX_HEIGHT = Math.sqrt(3) / 2 // a flat-top hex is this much as tall as it is wide
+const BIG_HEX = 64 // board hexes this wide (px) or more = a roomy screen: the prompt's words go up a size
 
 export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   const game = useGameStore((s) => s.game)!
@@ -73,17 +78,23 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   // When the garden tangles, the Magic reveal takes the tray's place (Reveal.tsx) and then opens the end table
   const over = game.phase === 'over'
 
+  const flipped = false
+  const traySide = stacked ? (flipped ? 'top' : 'bottom') : flipped ? 'left' : 'right'
+  // Buttons as tall as a board hex (its flat-to-flat height), never below the finger-size floor
+  const buttonPx = Math.max(layout.trayTileMin, Math.round(hexPx * HEX_HEIGHT))
+
   return (
     <>
-    <div ref={rootRef} className="game" data-layout={stacked ? 'stacked' : 'side'} data-phase={game.phase} {...input}>
+    <div ref={rootRef} className="game" data-layout={stacked ? 'stacked' : 'side'} data-flipped={flipped || undefined} data-phase={game.phase} {...input}>
       <header className="game-bar"><TurnBar /></header>
       <div className="game-board">
         <svg className="game-garden-back" aria-hidden="true"><rect width="100%" height="100%" fill={colours.background} /></svg>
-        <Board onHexSize={onHexSize} sitOnTray={stacked} />
+        <Board onHexSize={onHexSize} traySide={traySide} />
       </div>
       <section className="game-panel" aria-label="Seeds and actions">
+        <PromptLine big={hexPx >= BIG_HEX} />
         {over ? <RevealPanel compact={!stacked} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : column} />}
-        <ActionBar onPlayAgain={onPlayAgain} />
+        <ActionBar onPlayAgain={onPlayAgain} size={buttonPx} />
       </section>
       {/* an empty SVG as wide as the side column (sizes are SVG attributes — TDD D13) */}
       {!stacked && <svg className="game-column-ruler" width={column} height={0} aria-hidden="true" />}

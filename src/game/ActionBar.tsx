@@ -14,7 +14,8 @@ import { usePreview } from './usePreview'
 
 const w = text.game.buttons
 
-export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
+/** size: how tall the buttons are, in px — about a board hex (finger-sized, like a glyphling), never below 44. */
+export function ActionBar({ onPlayAgain, size }: { onPlayAgain: () => void; size: number }) {
   const s = useGameStore()
   const preview = usePreview()
   const game = s.game!
@@ -25,8 +26,8 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
   if (game.phase === 'refresh') {
     return (
       <Row gap="s" justify="center" className="game-actions">
-        <Button variant="secondary" disabled={notNow} onClick={() => s.refresh(true)}>{w.keepAll}</Button>
-        <Button disabled={notNow || s.setAside.length === 0} onClick={() => s.refresh()}>{fill(w.refresh, { n: s.setAside.length })}</Button>
+        <Button size={size} variant="secondary" disabled={notNow} onClick={() => s.refresh(true)}>{w.keepAll}</Button>
+        <Button size={size} disabled={notNow || s.setAside.length === 0} onClick={() => s.refresh()}>{fill(w.refresh, { n: s.setAside.length })}</Button>
       </Row>
     )
   }
@@ -34,12 +35,12 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
   if (game.phase === 'over') {
     // While the Magic reveal plays: only Skip. After it: Results (the end table) + Play again.
     if (s.revealAt === null || s.revealAt < revealSteps(game).length) {
-      return <Row gap="s" justify="center" className="game-actions"><Button variant="secondary" onClick={s.skipReveal}>{w.skip}</Button></Row>
+      return <Row gap="s" justify="center" className="game-actions"><Button size={size} variant="secondary" onClick={s.skipReveal}>{w.skip}</Button></Row>
     }
     return (
       <Row gap="s" justify="center" className="game-actions">
-        <Button variant="secondary" onClick={() => screens.push('gameOver')}>{w.results}</Button>
-        <Button onClick={onPlayAgain}>{w.playAgain}</Button>
+        <Button size={size} variant="secondary" onClick={() => screens.push('gameOver')}>{w.results}</Button>
+        <Button size={size} onClick={onPlayAgain}>{w.playAgain}</Button>
       </Row>
     )
   }
@@ -51,9 +52,9 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
   if (!moveOnly && s.wordsStatus === 'failed') {
     return (
       <Row gap="s" justify="center" className="game-actions">
-        <Button variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
-        <Button variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
-        <Button onClick={() => s.loadWords(wordListUrl())}>{w.retryWords}</Button>
+        <Button size={size} variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
+        <Button size={size} variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
+        <Button size={size} onClick={() => s.loadWords(wordListUrl())}>{w.retryWords}</Button>
       </Row>
     )
   }
@@ -61,9 +62,9 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
   const castLabel = moveOnly ? w.endTurn : showMagic ? fill(w.castMagic, { n: preview.magic }) : w.cast
   return (
     <Row gap="s" justify="center" className="game-actions">
-      <Button variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
-      <Button variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
-      <Button disabled={busy || !(s.cast || moveOnly) || (s.cast !== null && !preview)} onClick={s.startCast}>{castLabel}</Button>
+      <Button size={size} variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
+      <Button size={size} variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
+      <Button size={size} disabled={busy || !(s.cast || moveOnly) || (s.cast !== null && !preview)} onClick={s.startCast}>{castLabel}</Button>
     </Row>
   )
 }
