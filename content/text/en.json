@@ -47,7 +47,8 @@
       "keepAll": "Keep all",
       "menu": "Menu",
       "results": "Results",
-      "playAgain": "Play again"
+      "playAgain": "Play again",
+      "skip": "Skip"
     },
     "pause": {
       "title": "Paused",
@@ -91,6 +92,20 @@
           "body": "A glyphling with nowhere to move is tangled. When two are tangled the game ends: each rival piece next to a tangled glyphling earns its owner +3. Magic stays secret until the end — most Magic becomes Grand Glyphtender!"
         }
       ]
+    },
+    "reveal": {
+      "tangles": "The garden is tangled",
+      "bonus": "Tangle bonus: +{n} for {player}",
+      "counting": "Counting {player}'s Magic…",
+      "winner": "Grand Glyphtender: {names}!",
+      "winners": "Grand Glyphtenders: {names}!",
+      "and": " & ",
+      "secret": "Magic ?",
+      "magic": "{n} Magic",
+      "winnerBadge": "★",
+      "label": "The Magic reveal",
+      "skip": "Skip",
+      "pop": "+{n}"
     }
   },
   "credits": {

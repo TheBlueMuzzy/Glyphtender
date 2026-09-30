@@ -34,10 +34,13 @@
   .game-board > svg { grid-area: 1 / 1; inline-size: 100%; block-size: 100%; display: block; contain: size; } /* contain: never pushes the layout */
   /* a new runeblossom grows up out of the ground (useThrow animates the scale) */
   .game-seed { transform-box: fill-box; transform-origin: 50% 80%; }
+  /* a "+3" tangle bonus pops from its own middle (RevealMarks animates the scale) */
+  .game-pop { transform-box: fill-box; transform-origin: center; }
 
   .game-panel { grid-area: panel; display: flex; flex-direction: column; align-items: center; gap: var(--gap-s); min-block-size: 0; }
   .game[data-layout="side"] .game-panel { justify-content: center; }
   .game-tray { display: block; flex: none; overflow: visible; }
+  .game-reveal { inline-size: 100%; } /* the players' Magic chips, in the tray's place at the end */
 
   /* The dragged piece floats in this layer, over everything, never catching taps itself */
   .game-drag-layer { grid-area: 1 / 1 / -1 / -1; inline-size: 100%; block-size: 100%; pointer-events: none; overflow: visible; z-index: 1; contain: size; }

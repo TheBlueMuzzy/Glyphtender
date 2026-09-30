@@ -14,8 +14,10 @@ import { hexCorners, hexKey, hexToPixel, type Hex } from '../engine/hex'
 import { useGameStore } from '../store/gameStore'
 import { highlightFor } from '../store/turnPlan'
 import { dangers } from '../store/danger'
+import { revealSteps } from '../store/revealPlan'
 import { colourOf, glyphlingArt, seedArt } from './art'
 import { DangerCue } from './DangerCue'
+import { RevealMarks } from './RevealMarks'
 import { usePreview } from './usePreview'
 import { HEX, useThrow } from './useThrow'
 import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
@@ -34,6 +36,7 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
   const selected = useGameStore((s) => s.selected)
   const flying = useGameStore((s) => s.flying)
   const landed = useGameStore((s) => s.landed)
+  const revealAt = useGameStore((s) => s.revealAt)
   const finishCast = useGameStore((s) => s.finishCast)
   const colours = useGardenTuning()
   const timing = useAnimTuning()
@@ -74,6 +77,8 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
 
   // Glyphlings with 0–1 moves left (everyone's — it's on the board for all to see, and never shows Magic)
   const inDanger = useMemo(() => dangers(game), [game])
+  // At the end: the Magic reveal's steps (the tangled glow and the +3s are drawn on top of everything)
+  const reveal = useMemo(() => (game.phase === 'over' ? revealSteps(game) : []), [game])
 
   // ---- what's where, with the planned move and cast shown ----
   const seat = game.current
@@ -169,6 +174,8 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
           </g>
         )
       })}
+
+      {game.phase === 'over' && <RevealMarks game={game} steps={reveal} at={revealAt} colours={colours} timing={timing} />}
 
       {flight && (
         <g ref={seedRef} transform={`translate(${at(flight.from).x} ${at(flight.from).y})`} pointerEvents="none">

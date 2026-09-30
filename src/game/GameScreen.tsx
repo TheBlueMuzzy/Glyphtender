@@ -8,19 +8,18 @@ import { ActionBar } from './ActionBar'
 import { wordListUrl } from './art'
 import { Board } from './Board'
 import { Handoff } from './Handoff'
+import { RevealPanel } from './Reveal'
 import { SeedTray } from './SeedTray'
 import { TurnBar } from './TurnBar'
 import { trayLayout } from './trayLayout'
 import { usePieceInput } from './usePieceInput'
-import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
-import { screens } from '../ui/kit'
+import { useGardenTuning, useLayoutTuning } from './useTuning'
 import './game.css'
 
 export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   const game = useGameStore((s) => s.game)!
   const loadWords = useGameStore((s) => s.loadWords)
   const layout = useLayoutTuning()
-  const timing = useAnimTuning()
   const colours = useGardenTuning()
 
   useEffect(() => { loadWords(wordListUrl()) }, [loadWords])
@@ -57,16 +56,8 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   const dragImage = useRef<SVGImageElement>(null)
   const input = usePieceInput({ layer: dragLayer, image: dragImage }, layout, Math.max(tray.tile, hexPx) * 1.2)
 
-  // When the garden tangles: let the last runeblossom grow, then show the results
+  // When the garden tangles, the Magic reveal takes the tray's place (Reveal.tsx) and then opens the end table
   const over = game.phase === 'over'
-  useEffect(() => {
-    if (!over) return
-    const wait = setTimeout(() => {
-      if (!screens.current.includes('gameOver')) screens.push('gameOver') // unless the Results button already opened them
-    }, (timing.growTime + timing.wordGlowTime) * 1000)
-    return () => clearTimeout(wait)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [over])
 
   return (
     <>
@@ -77,7 +68,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
         <Board onHexSize={onHexSize} sitOnTray={stacked} />
       </div>
       <section className="game-panel" aria-label="Seeds and actions">
-        <SeedTray layout={tray} boxWidth={stacked ? tray.width : room} />
+        {over ? <RevealPanel /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : room} />}
         <ActionBar onPlayAgain={onPlayAgain} />
       </section>
       <svg ref={dragLayer} className="game-drag-layer" aria-hidden="true">

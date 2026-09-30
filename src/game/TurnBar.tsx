@@ -4,18 +4,18 @@ import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { Avatar, Button, HudText, Row, screens } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
-import { playerName, promptFor } from './prompt'
+import { playerName, promptFor, promptSeat } from './prompt'
 import { useGardenTuning } from './useTuning'
 
 export function TurnBar() {
   const state = useGameStore()
   const colours = useGardenTuning()
-  const game = state.game!
   const { text: prompt, detail } = promptFor(state)
+  const seat = promptSeat(state)
   return (
     <Row gap="s" justify="between" className="game-turn-bar">
-      <Avatar name={playerName(game.current)} src={glyphlingArt(game.current)} color={colours[colourOf(game.current)]} active />
-      <div className="game-prompt"><HudText size="s" detail={detail || undefined}>{prompt}</HudText></div>
+      <Avatar name={playerName(seat)} src={glyphlingArt(seat)} color={colours[colourOf(seat)]} active />
+      <div className="game-prompt"><HudText size="s" detail={detail || undefined} pop={state.game?.phase === 'over'}>{prompt}</HudText></div>
       <Button variant="secondary" icon aria-label={text.game.buttons.menu} onClick={() => screens.push('pause')}>☰</Button>
     </Row>
   )

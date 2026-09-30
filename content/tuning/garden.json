@@ -21,7 +21,9 @@
     "warningDash": "Length of each dash in that ring, in hex sizes (the gaps are a little shorter).",
     "vine": "Colour of the vine that wraps a TANGLED glyphling (no moves left).",
     "vineWidth": "Thickness of that vine, in hex sizes.",
-    "tangledDim": "How faded a tangled glyphling looks under its vine. 1 = not faded."
+    "tangledDim": "How faded a tangled glyphling looks under its vine. 1 = not faded.",
+    "revealPop": "Colour of the \"+3\" tangle bonuses that pop up at the end.",
+    "revealPopSize": "Size of the \"+3\" text, in hex sizes."
   },
   "_ranges": {
     "hexLineWidth": [
@@ -78,6 +80,11 @@
       0.2,
       1,
       0.05
+    ],
+    "revealPopSize": [
+      0.3,
+      1,
+      0.05
     ]
   },
   "background": "#10162a",
@@ -101,5 +108,7 @@
   "warningDash": 0.16,
   "vine": "#8cc47e",
   "vineWidth": 0.08,
-  "tangledDim": 0.6
+  "tangledDim": 0.6,
+  "revealPop": "#fff3c4",
+  "revealPopSize": 0.8
 }

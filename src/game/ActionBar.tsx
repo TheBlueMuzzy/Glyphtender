@@ -1,10 +1,11 @@
 // THE BUTTONS under the tray — change with the moment:
 //   play:    Shuffle · Undo · "Cast · +N" (N = Magic from THIS cast only; totals stay secret) or End turn
 //   refresh: Keep all · Refresh N
-//   over:    Results · Play again
+//   over:    Skip (while the Magic reveal plays) → then Results · Play again
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { mayMoveOnly } from '../store/turnPlan'
+import { revealSteps } from '../store/revealPlan'
 import { Button, Row, fill, screens } from '../ui/kit'
 import { usePreview } from './usePreview'
 
@@ -26,6 +27,10 @@ export function ActionBar({ onPlayAgain }: { onPlayAgain: () => void }) {
   }
 
   if (game.phase === 'over') {
+    // While the Magic reveal plays: only Skip. After it: Results (the end table) + Play again.
+    if (s.revealAt === null || s.revealAt < revealSteps(game).length) {
+      return <Row gap="s" justify="center" className="game-actions"><Button variant="secondary" onClick={s.skipReveal}>{w.skip}</Button></Row>
+    }
     return (
       <Row gap="s" justify="center" className="game-actions">
         <Button variant="secondary" onClick={() => screens.push('gameOver')}>{w.results}</Button>

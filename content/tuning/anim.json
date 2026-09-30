@@ -9,7 +9,12 @@
     "growTime": "How long the runeblossom takes to grow out of the ground, in seconds.",
     "growFrom": "How small the runeblossom starts when it sprouts (0.1 = a tiny sprout, 1 = full size).",
     "pulseTime": "How long one pulse of a planned piece's halo takes, in seconds.",
-    "wordGlowTime": "How long the words that just grew keep glowing after the seed lands, in seconds."
+    "wordGlowTime": "How long the words that just grew keep glowing after the seed lands, in seconds.",
+    "revealTangles": "End of game: how long the tangled glyphlings pulse before the bonuses are shown, in seconds.",
+    "revealBonus": "End of game: time for each \"+3\" tangle bonus to pop on a rival piece, in seconds (they pop one hex at a time).",
+    "revealCount": "End of game: time for each player's Magic to count up (lowest first), including a short pause after, in seconds.",
+    "revealWinner": "End of game: how long \"Grand Glyphtender!\" shows before the end table opens, in seconds.",
+    "revealPopTime": "How long one \"+3\" takes to pop in (grow past full size and settle), in seconds."
   },
   "_ranges": {
     "flightBase": [
@@ -61,6 +66,31 @@
       0,
       3,
       0.1
+    ],
+    "revealTangles": [
+      0,
+      3,
+      0.1
+    ],
+    "revealBonus": [
+      0.1,
+      1.5,
+      0.05
+    ],
+    "revealCount": [
+      0.5,
+      3,
+      0.1
+    ],
+    "revealWinner": [
+      0.5,
+      5,
+      0.1
+    ],
+    "revealPopTime": [
+      0.1,
+      1,
+      0.05
     ]
   },
   "flightBase": 0.3,
@@ -72,5 +102,10 @@
   "growTime": 0.5,
   "growFrom": 0.1,
   "pulseTime": 1.2,
-  "wordGlowTime": 1
+  "wordGlowTime": 1,
+  "revealTangles": 1.4,
+  "revealBonus": 0.55,
+  "revealCount": 1.5,
+  "revealWinner": 2.5,
+  "revealPopTime": 0.4
 }

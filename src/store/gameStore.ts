@@ -15,6 +15,7 @@ import {
 } from './turnPlan'
 import { isLocalHuman, localSeats, needsHandoff, type Seat } from './seats'
 import { addTurn, emptyStats, type PlayerStats } from './stats'
+import { revealSteps } from './revealPlan'
 
 /** Short messages for taps that can't do anything (their words live in content/text/en.json → game.notes). */
 export type Note = 'moveFirst' | 'notYours' | 'tangled' | 'wordsLoading' | 'problem'
@@ -67,6 +68,8 @@ export interface GameStore {
   /** The next player has the device: show their seeds. */
   showSeeds: () => void
   setRevealAt: (step: number | null) => void
+  /** Skip: jump to the end of the reveal (everything shown). */
+  skipReveal: () => void
   loadWords: (url: string) => Promise<void>
   setWords: (words: WordList) => void
   tapGlyphling: (id: number) => void
@@ -150,6 +153,10 @@ export const useGameStore = create<GameStore>()((set, get) => {
     leaveGame: () => set({ ...noPlan(), game: null, flying: false, landed: null, handoff: null, revealAt: null }),
     showSeeds: () => set({ handoff: null }),
     setRevealAt: (step) => set({ revealAt: step }),
+    skipReveal: () => {
+      const { game } = get()
+      if (game?.phase === 'over') set({ revealAt: revealSteps(game).length })
+    },
 
     // The official word list, fetched once (about 250 KB gzipped)
     loadWords: async (url) => {
