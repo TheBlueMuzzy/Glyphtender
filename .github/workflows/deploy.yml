@@ -43,6 +43,8 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+          # The live online server (party/, deployed with `npx partykit deploy`) — public, not a secret
+          VITE_PARTY_HOST: glyphtender.thebluemuzzy.partykit.dev
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

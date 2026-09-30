@@ -130,9 +130,9 @@ flowchart LR
 - [ ] Privacy policy page (`public/privacy.html`, as Roll Better)
 - [ ] App store age rating questionnaire (if stores ever)
 - [ ] Data safety / privacy labels (if stores ever)
-- [ ] Analytics/ads/accounts → consent (none planned)
+- [x] Analytics/ads/accounts → consent (none planned) — alpha has none: nothing to consent to (checked 2026-09-30)
 - [ ] **Word list licence settled** (see §9 — keep the Zipf pipeline either way) — before 1.0
-- [ ] Every font, sound, image licensed (UI kit fonts carry their own credits)
+- [x] Every font, sound, image licensed (UI kit fonts carry their own credits) — 7 kit fonts SIL OFL + Muzzy's own art, all in content/credits.json; no sounds yet (checked 2026-09-30). Word list tracked there as 🟡 until its licence is settled (line above)
 - [ ] Accessibility basics: 18 px text floor, 44 px targets, glyphling colour never the only signal (shape marks in 1.0), reduced motion
 
 ## 8. Decisions log

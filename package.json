@@ -18,7 +18,8 @@
     "sim": "node scripts/sim.mjs",
     "party:dev": "partykit dev",
     "party:deploy": "partykit deploy",
-    "e2e:online": "node e2e/online-shots.mjs"
+    "e2e:online": "node e2e/online-shots.mjs",
+    "e2e:update": "node e2e/sw-update.mjs"
   },
   "dependencies": {
     "partysocket": "^1.3.0",

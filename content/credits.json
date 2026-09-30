@@ -89,5 +89,16 @@
     "light": "🟡",
     "url": "https://fonts.google.com/specimen/Exo+2",
     "credit": "Exo 2 by Natanael Gama, SIL Open Font License 1.1"
+  },
+  {
+    "paths": [
+      "public/words/words.csv"
+    ],
+    "source": "Glyphtender official word list — TWL-derived (Muzzy's cleaned list + Zipf scores, see TDD §9)",
+    "author": "TWL: NASPA / Hasbro; Zipf scores likely from the wordfreq library",
+    "licence": "not settled — TWL-derived word list, licence to settle before 1.0",
+    "light": "🟡",
+    "url": "",
+    "credit": "Word list derived from the Tournament Word List (TWL, NASPA)"
   }
 ]
