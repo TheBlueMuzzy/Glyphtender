@@ -12,7 +12,7 @@ Check: `npm test`; `npm run sim` prints game lengths + how often the bag runs ou
 
 ## F05 🧱 Official word list + word finder
 Done when: the original's words.txt is in the game byte-for-byte and every scoring example from the digest passes.
-- [ ] 🤖 5. Copy words.txt unchanged → public/words/words.csv; loader → Map<word, zipf>; test the Zipf tier counts — src/engine/words.ts
+- [x] 🤖 5. Copy words.txt unchanged → public/words/words.csv; loader → Map<word, zipf>; test the Zipf tier counts — src/engine/words.ts
 - [ ] 🤖 6. Word finder on the 3 leylines: reading direction, min length, Qu, union rule (GARDENING/DEN, SEAL+LEAP/ALE, HELP+PEA) — src/engine/words.ts
 
 ## F06 🧱 Magic + draw / refresh
@@ -26,10 +26,13 @@ Done when: the original's words.txt is in the game byte-for-byte and every scori
 - [ ] 🙋 12. Look at the Cozy night menus; tweak colours in Dev Kit → Color if wanted
 
 Ask Muzzy:
+- **Word list quirk (not changed — the list is byte-for-byte):** line 63,650 reads `ZYGOTESAA,0.00` — ZYGOTES lost its score and line break and got glued to a stray `AA,0.00`. So ZYGOTES isn't playable and "ZYGOTESAA" is. The file also ends with 7 late additions (AIDS, AWOL, CHINA, FRENCH, JAPAN, MOROCCO, ROMAN). Fix in a deliberate word-list commit? (AA itself is fine — it's on line 1.)
 Notes:
 - F04 engine: illegal actions THROW an Error with a plain reason; `checkAction(state, action, words)` returns the same reason (or null) without throwing, for the UI. The word list is passed into applyAction as a 3rd argument (it's too big to live in GameState). Rule numbers are copied from content/tuning/rules.json into `state.config.rules` at newGame, so a replay/online game uses the same numbers.
 - F04 engine: glyphling ids are seat × 2 + 0/1 (Yellow = 0,1 · Blue = 2,3 …). Hands are dealt 8 each in seat order from the front of the bag.
 - F04 surprise: "can move but can't cast" only ever means "no seeds in hand" — after any move, the hexes the glyphling just crossed (at least the one it left) are always open to cast into. Tested.
+- F05: the word list has **63,657** words, not 63,656 — the file has 63,656 line breaks but no line break after the last word (ROMAN), so counting lines comes up one short. Zipf tiers match exactly (1000 / 6342 / 21805 / 43997). `.gitattributes` marks `public/words/*.csv` binary so git can never touch its bytes; a test checks its SHA-256.
+- Order change: task 4 (sim) needs draw + refresh (tasks 7–8) — without them hands run dry and glyphlings wander forever — so the sim is committed after task 8.
 - F03 task 9: kit 0.2.2 (framework db90181) installed with the Cozy preset; applyStyle + applyAccessibility wired in src/main.tsx; `npm run check:ui` passes. content/ui/settings.json = the kit's standard rows (accessibility tab kept).
 - F03 task 10: night palette = Cozy tweaks in content/ui/style.json (TDD D09). Home page = kit MainMenu (title, tagline, "Prototype: move → cast" → sketches/move-cast/, Settings) in src/ui/menus.tsx; words in content/text/en.json; Settings → About → Credits opens the kit Credits screen. Settings rows switched off (not real yet): language (English only), change name, analytics, and the example.com privacy/feedback links. body has class="kit-page"; index.css placeholder styles removed.
 - F03 task 11: `npm run e2e:menu <outDir> [url]` (e2e/menu-shots.mjs) shoots home, Settings, Settings → Accessibility at 390×844, 844×390, 1440×900 — all 9 pass: nothing past a screen edge, every button ≥ 44px, Esc closes Settings, the Prototype button reaches sketches/move-cast/, no console errors. check:ui, test, build, check:devkit all pass.

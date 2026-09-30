@@ -1,3 +1,6 @@
 * text=auto eol=lf
 *.png binary
 *.webp binary
+
+# The official word list is kept byte-for-byte as the original (never let git change its line endings)
+public/words/*.csv binary
