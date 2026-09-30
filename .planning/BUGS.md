@@ -1,5 +1,5 @@
 # Glyphtender — Bugs
-Open: 5 (P0 0 · P1 0 · P2 1 · P3 4)
+Open: 6 (P0 0 · P1 0 · P2 1 · P3 5)
 ## Open
 ### B001 · P3 · open · found 2026-09-30 in F05 · v0.0.0 · word list data
 ZYGOTES isn't a word; "ZYGOTESAA" is
@@ -15,7 +15,11 @@ Tapping a non-glowing hex in the draft logs a console warning ("Illegal action f
 Dragging a seed only to reorder the tray (mid-turn, after a move) leaves it picked up with gold hexes lit, and cancels an existing aim. Design question: should a reorder drag drop the selection?
 ### B005 · P3 · open · found 2026-09-30 in F09
 A right-click counts as a tap. / Tapping Results early then closing it within 1.5 s lets the timer reopen it (rare).
+### B006 · P3 · open · found 2026-09-30 in F16
+Dev Kit snapshots don't carry the end-table stats or table options — a restored game's end table only counts turns played after the restore.
 ## Fixed (newest first)
+### (F13) · verified 2026-09-30 · fixed in dbbe5bc · Guarded by: src/store/revealPlan.test.ts — two +3s drawn on one hex (read as +3, was +6)
+### (F16) · verified 2026-09-30 · fixed in 430f07c · Guarded by: src/devkit-game/glyphtenderAdapter.test.ts — restore left menus stuck on top
 ### (F09) · verified 2026-09-30 · fixed in 95b34eb · Guarded by: e2e + finger-id tracking — a second finger hijacked a drag (floating piece stuck)
 ### (F09) · verified 2026-09-30 · fixed in b82cb97 — results dialog opened twice
 ### (F04) · verified 2026-09-30 · fixed in 3a1bbe2 · Guarded by: src/engine/tangle.test.ts — stuck turn when tanglesToEnd ≥ 3
