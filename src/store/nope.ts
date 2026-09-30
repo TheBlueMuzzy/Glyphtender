@@ -1,8 +1,8 @@
 // THE "NO" SHAKE — tapping (or trying to drag) something you can't move gives it a quick sideways shake
 // (GDD §4 feel notes). This decides WHICH taps are refused; the screen shakes the piece (useNopeShake.ts).
 // Refused: another player's glyphling · a tangled one (no moves) · any glyphling outside your move step (the
-// draft, a refresh) · a seed already planted on the board · a tray seed TAPPED before you've moved (dragging it is
-// fine: that reorders the tray) · anything of yours
+// draft, a refresh) · a seed already planted on the board · a tray seed before you've moved (tapped OR dragged —
+// before the move seeds can't be dragged at all, not even to reorder the tray: Muzzy, B008) · anything of yours
 // while it isn't your turn (online). Quiet moments shake nothing: a seed in the air, the device being passed on,
 // my move on its way to the server, and the finished game (you're just looking).
 import { legalMoves } from '../engine/engine'
@@ -10,8 +10,8 @@ import { hexKey, type Hex } from '../engine/hex'
 import type { GameStore } from './gameStore'
 import { isLocalHuman } from './seats'
 
-/** What was tapped: a board glyphling (id), a tray seed (hand index; drag = picked up to drag) or a board hex. */
-export type Tap = { glyph: number } | { hand: number; drag?: boolean } | { hex: Hex }
+/** What was tapped (or picked up to drag): a board glyphling (id), a tray seed (hand index) or a board hex. */
+export type Tap = { glyph: number } | { hand: number } | { hex: Hex }
 
 /** The piece to shake: a glyphling (id), a planted seed (hexKey) or a tray seed (hand index). */
 export type NopeTarget = { kind: 'glyph' | 'seed' | 'hand'; key: string }
@@ -30,7 +30,7 @@ export function nopeFor(s: NopeState, tap: Tap): NopeTarget | null {
   }
   if ('hand' in tap) {
     if (game.phase === 'draft') return null // the draft tray holds glyphlings to place, not seeds
-    const waitingForMove = game.phase === 'play' && !s.move && !tap.drag // a drag may just reorder the tray
+    const waitingForMove = game.phase === 'play' && !s.move
     return !myTurn || waitingForMove ? { kind: 'hand', key: String(tap.hand) } : null
   }
   const key = hexKey(tap.hex)

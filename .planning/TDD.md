@@ -50,7 +50,7 @@ flowchart LR
 - **Cast range** shows as soon as the move is planned (gold, before a seed is picked); an aimed seed re-aims by tapping another gold hex.
 - **Drop target**: while dragging, the legal hex under the floating piece fills bright + a glow ring spills past it (the piece covers the hex); an illegal hex shows nothing (`turnPlan.dropKind`).
 - **Turn pulse** (`turnPulse.pulsingGlyphlings`): the current local human's glyphlings that can move breathe (feel.json small tier, `turnPulseTime`) until a move is planned; never in the draft or a refresh, never the held or a tangled one; online only on your turn.
-- **"No" shake** (`nope.nopeFor`): another player's glyphling, a tangled one, any glyphling outside your move step, a planted seed, a tray seed TAPPED before moving (a drag reorders), anything of yours when it isn't your turn online → a quick sideways shake of that piece (feel.json small tier × its width, `noShakeTime`). Quiet: seed in the air, handoff, waiting for the server, game over, empty hexes.
+- **"No" shake** (`nope.nopeFor`): another player's glyphling, a tangled one, any glyphling outside your move step, a planted seed, a tray seed tapped or dragged before moving (no reorder before the move — Muzzy, B008), anything of yours when it isn't your turn online → a quick sideways shake of that piece (feel.json small tier × its width, `noShakeTime`). Quiet: seed in the air, handoff, waiting for the server, game over, empty hexes.
 - **Layout**: action buttons are a board hex tall (hex width × √3/2, ≥ 44; kit Button `size`); the prompt sits just above the tray (heading size; title size when hexes ≥ 64 px); the board sits close to the tray (`boardPlace.boardShift`: tall = right on it; wide = 1/8 of the spare room on the tray's side). Settings → Gameplay → **Tray position** Standard / Flipped (tall: tray above; wide: tray left), followed live; the side column keeps the ruler's width either way.
 - Every one of these animates with Web Animations on SVG elements (no React state per frame) and reads timings/sizes from content/.
 
@@ -151,7 +151,8 @@ D40 · 2026-09-30 · The board sits close to the tray, by sliding its viewBox
   half the old gap (desktop 105 → ~55 px) once margins count; a full hug left phones on their side lopsided
 D39 · 2026-09-30 · "No" shake: which taps are refused
   Proposed by: Claude (autonomous; Muzzy listed the main cases)   Chose: nope.ts — others' / tangled glyphlings, glyphlings outside
-  your move step, planted seeds, a tray seed TAPPED before moving (a drag must still reorder the tray — found by e2e), anything of yours
+  your move step, planted seeds, a tray seed before moving (tapped OR dragged: Muzzy's B008 call overrules c9cd4ef, which let a drag
+  reorder the tray before the move — reorder is fine once the move is planned and in the refresh step), anything of yours
   off-turn online. Empty hexes (incl. non-glowing draft hexes) don't shake — shaking the ground felt harsh, not cozy
 D38 · 2026-09-30 · Turn pulse: the local player's movable glyphlings, play phase only
   Proposed by: Muzzy ("pulse until one is moved")   Chose: not in the draft (the pieces aren't placed yet) or a refresh; the held one

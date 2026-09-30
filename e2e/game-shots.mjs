@@ -1,6 +1,7 @@
 // THE GAME, PLAYED THROUGH THE REAL SCREEN — at phone-tall 390×844, phone-wide 844×390 and desktop 1440×900:
 // Play → Start (new-game screen) → snake draft (1 drag + 3 taps) → turns by tap (move, seed, cast, Cast · +N) and by drag, undo,
-// tray reorder + shuffle, a refresh → passing the device (Show my seeds) → fast-forward to the end with the dev hook →
+// no tray drag before the move (B008: it shakes), tray reorder after the move, shuffle, a refresh → passing the device
+// (Show my seeds) → fast-forward to the end with the dev hook →
 // Skip the Magic reveal → end table → New game → a game with word indicators OFF → Settings → Tray position Flipped → Menu.
 // Checks the move glide (a planned move and Undo slide the glyphling; 4b = frozen halfway), the turn pulse (3b), the "no"
 // shake (3c, frozen mid-shake), the drop target while dragging (6), gold cast hexes right after the move (5a), the white
@@ -268,6 +269,16 @@ try {
       if (turn > 30) { fail(`${size.name}: in 30 turns: words grown ${grewWords}, refreshed ${refreshed}`); break }
       const mine = await store((s) => s.game.glyphlings.filter((g) => g.seat === s.game.current && !s.game.tangled.includes(g.id)).map((g) => g.id))
       const glyph = page.locator(`[data-glyph="${mine[0]}"]`)
+      // Before the move a tray seed can't be dragged at all — not even to reorder the tray — it shakes "no" (B008)
+      if (turn === 1) {
+        const before = await store((s) => ({ order: s.trayOrder[s.game.current].join(), nopes: s.nope?.count ?? 0 }))
+        await drag(page.locator('[data-tray-pos="0"]'), page.locator('[data-tray-pos="3"]'))
+        const after = await store((s) => ({ order: s.trayOrder[s.game.current].join(), nope: s.nope, selected: s.selected }))
+        if (before.order !== after.order) fail(`${size.name}: B008: a tray seed was dragged (reordered) before the move`)
+        if (after.selected) fail(`${size.name}: B008: dragging a tray seed before the move picked it up`)
+        if (after.nope?.kind !== 'hand' || after.nope.count <= before.nopes) fail(`${size.name}: B008: dragging a tray seed before the move did not shake "no"`)
+        else console.log(`ok   ${size.name} B008 no tray drag before the move (it shakes)`)
+      }
       // Move
       if (turn === 2) {
         if (size.mobile) await touchDragVia(glyph, () => option('move', 0))
@@ -294,6 +305,16 @@ try {
         }
       }
       if (!(await store((s) => s.move !== null))) { fail(`${size.name} turn ${turn}: no move planned`); break }
+      // Once the move is planned, dragging in the tray reorders it (turn 4: after B008's "no" before the move)
+      if (turn === 4 && (await store((s) => s.game.hands[s.game.current].length >= 4))) {
+        const before = await store((s) => s.trayOrder[s.game.current].join())
+        await drag(page.locator('[data-tray-pos="0"]'), page.locator('[data-tray-pos="3"]'))
+        const after = await store((s) => s.trayOrder[s.game.current].join())
+        if (before === after) fail(`${size.name}: dragging in the tray after the move did not reorder it`)
+        // (the reorder drag leaves that seed picked up — B004 — tap it again to put it down)
+        const held = await store((s) => (s.selected?.kind === 'seed' ? s.trayOrder[s.game.current].indexOf(s.selected.index) : -1))
+        if (held >= 0) await tap(page.locator(`[data-tray-pos="${held}"]`))
+      }
       // Cast (a move-only turn if the hand is empty)
       const hasSeeds = await store((s) => s.game.hands[s.game.current].length > 0)
       if (hasSeeds) {
@@ -354,12 +375,8 @@ try {
       await passIfAsked()
       await noPopsLeft(`after turn ${turn}`)
       if (await store((s) => s.game.phase === 'over')) break
-      // Between turns: reorder the tray by dragging, and shuffle it
+      // Between turns: shuffle the tray
       if (turn === 2) {
-        const before = await store((s) => s.trayOrder[s.game.current].join())
-        await drag(page.locator('[data-tray-pos="0"]'), page.locator('[data-tray-pos="3"]'))
-        const after = await store((s) => s.trayOrder[s.game.current].join())
-        if (before === after) fail(`${size.name}: dragging in the tray did not reorder it`)
         await tap(page.getByRole('button', { name: 'Shuffle' }))
         const shuffledOk = await store((s) => [...s.trayOrder[s.game.current]].sort().join() === [...s.game.hands[s.game.current].keys()].join())
         if (!shuffledOk) fail(`${size.name}: shuffle lost a seed`)

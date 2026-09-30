@@ -54,6 +54,7 @@
   - **Drop target:** while dragging, the hex it would land on lights up (the zone reacts, not the piece).
   - **Whose turn:** the current player's glyphlings pulse gently (small) until one is moved.
   - **"No" shake:** tapping anything you can't move gives a quick shake.
+  - Before the move, seeds can't be dragged at all (not even to reorder) — they shake (Muzzy, B008)
   - **Layout:** buttons finger-sized like a glyphling (also on PC); the seed tray about half as far from the board; a setting flips board ↔ tray; the prompt sits just above the tray in larger letters (not in the top bar).
   - **End screen:** just "New game" (no "Play again" — fewer, clearer options).
 - **Piece states — one look for every piece** (glyphlings, seeds, tray): **options** = glowing hexes with a dot (teal move · gold cast) · **held** = solid ring in the player's colour · **planned** = pulsing halo at the hex edge in the player's colour (a targeted seed is also faded) · **done** = plain.
