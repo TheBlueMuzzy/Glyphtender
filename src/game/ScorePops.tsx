@@ -15,13 +15,14 @@ import { juiceFor } from './feel'
 import { HEX } from './useThrow'
 import type { AnimTuning, GardenTuning } from './useTuning'
 
-type Props = { game: GameState; turn: TurnSummary; colours: GardenTuning; timing: AnimTuning }
+/** pxPerHex: how many screen pixels one hex size is — so the pops never get smaller than scorePopMinPx. */
+type Props = { game: GameState; turn: TurnSummary; colours: GardenTuning; timing: AnimTuning; pxPerHex: number }
 
 const POP_ABOVE = HEX * 0.75 // a seed's pop sits this far above its hex centre (over the top of its letter)
 const STACK_STEP = HEX * 0.5 // a second pop on the same hex (a seed in two words) sits this much higher
 const TOTAL_ABOVE = HEX * 1.0 // the total sits over the glyphling's head
 
-export function ScorePops({ game, turn, colours, timing }: Props) {
+export function ScorePops({ game, turn, colours, timing, pxPerHex }: Props) {
   const groupRef = useRef<SVGGElement>(null)
   const pops = useMemo(() => scorePops(game, turn), [game, turn])
   const caster = hexToPixel(turn.to, HEX)
@@ -76,10 +77,12 @@ export function ScorePops({ game, turn, colours, timing }: Props) {
       {words}
     </text>
   )
+  // Readable on any board: small boards on phones scale the words up to at least scorePopMinPx on screen
+  const grow = Math.max(1, colours.scorePopMinPx / (colours.scorePopSize * pxPerHex))
   return (
     <g ref={groupRef} data-score-pops pointerEvents="none">
-      {pops.map((p, i) => label(`pop-${i}`, spots[i].x, spots[i].y, fill(text.game.scorePop, { n: p.amount }), colours.scorePopSize, { 'data-score-pop': i }))}
-      {label('total', caster.x, caster.y - TOTAL_ABOVE, fill(text.game.scorePop, { n: popsTotal(pops) }), colours.scoreTotalSize, { 'data-score-total': true })}
+      {pops.map((p, i) => label(`pop-${i}`, spots[i].x, spots[i].y, fill(text.game.scorePop, { n: p.amount }), colours.scorePopSize * grow, { 'data-score-pop': i }))}
+      {label('total', caster.x, caster.y - TOTAL_ABOVE, fill(text.game.scorePop, { n: popsTotal(pops) }), colours.scoreTotalSize * grow, { 'data-score-total': true })}
     </g>
   )
 }

@@ -70,6 +70,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   // Measure the on-screen hex width whenever the board's box changes size, and move the board toward the tray
   // (the viewBox slides the other way; the box's spare room shows the board there)
   const [shift, setShift] = useState({ x: 0, y: 0 })
+  const [pxPerHex, setPxPerHex] = useState(40) // screen pixels per board unit (hex size), for text that must stay readable
   useLayoutEffect(() => {
     const svg = svgRef.current
     if (!svg) return
@@ -78,6 +79,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
       const scale = Math.min(r.width / view.w, r.height / view.h)
       if (!(scale > 0)) return
       onHexSize(2 * HEX * scale)
+      setPxPerHex(scale)
       setShift(boardShift(traySide, r.width / scale - view.w, r.height / scale - view.h))
     }
     measure()
@@ -214,7 +216,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
         )
       })}
 
-      {pops && <ScorePops key={`pops-${landed?.count}`} game={game} turn={pops} colours={colours} timing={timing} />}
+      {pops && <ScorePops key={`pops-${landed?.count}`} game={game} turn={pops} colours={colours} timing={timing} pxPerHex={pxPerHex} />}
 
       {game.phase === 'over' && <RevealMarks game={game} steps={reveal} at={revealAt} colours={colours} timing={timing} />}
 
