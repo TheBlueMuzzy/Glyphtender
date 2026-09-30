@@ -60,7 +60,9 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   const over = game.phase === 'over'
   useEffect(() => {
     if (!over) return
-    const wait = setTimeout(() => screens.push('gameOver'), (timing.growTime + timing.wordGlowTime) * 1000)
+    const wait = setTimeout(() => {
+      if (!screens.current.includes('gameOver')) screens.push('gameOver') // unless the Results button already opened them
+    }, (timing.growTime + timing.wordGlowTime) * 1000)
     return () => clearTimeout(wait)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [over])
