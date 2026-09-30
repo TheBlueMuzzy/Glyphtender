@@ -32,7 +32,9 @@ Muzzy's intended (transcript 2025-12-15-03-16): A9 B2 C3 D4 E16 F3 G2 H6 I9 J1 K
 
 **Tangle + end** (`Core/TangleChecker.cs`) — a glyphling with no legal move is **tangled**. **Game ends when 2 glyphlings are tangled** (HANDOFF's "one" is wrong). Then for each tangled glyphling, each *opponent* scores **+3 per adjacent tile or glyphling they own**. Highest wins; ties allowed. Self-tangling against own tiles / the edge is a real strategy.
 
-**Dictionary** — `Assets/Resources/words.txt`, 63,656 lines, 907 KB, CSV `WORD,ZIPF` (TWL, abbreviations stripped). Min length 2 (toggle "2-Letter off" → 3). Zipf decides AI vocabulary.
+**Dictionary — the official word list** — `Assets/Resources/words.txt`, 63,656 words (2–15 letters), 907 KB, CSV `WORD,ZIPF`. Same file on main and festive-booth (blob `3280512a`). Min length 2 (toggle "2-Letter off" → 3).
+History (a lot of Muzzy's work): TWL chosen by Muzzy in the Python prototype (2025-12-14, transcript) → 63,612-word list (12-17, `5353eaca`) → abbreviations out + subword scoring fixes (12-21, `e36d6126`) → +218 missing words incl. 2-letter words (12-22, `8522a373`) → roman numerals out (12-23, `89d5ad67`) → Zipf column added, AI difficulty tied to it (12-23, `9ffbed6b`). Zipf values match the `wordfreq` library (THE 7.73).
+**Real counts vs the code comments:** Zipf ≥5: 1,000 · ≥4: 6,342 · ≥3: 21,805 · ≥2: 43,997 · ≥0: 63,656 (6,091 words at 0 = unknown to the frequency data). Comments say "≥3 ≈ 5k, ≥2 ≈ 20k" — actually ≥4 ≈ 6k and ≥3 ≈ 22k. So Apprentice (≥3) really knows ~22k words, FirstClass (≥2) ~44k. ❓ for beta: keep the thresholds, or shift to 4/3/0 to match the intended ~5k/~20k/all.
 
 **Modes** — Local 2P / vs AI / AI vs AI / Online / Local 3P / Local 4P. 4P free-for-all (teams cut: "less fun"). AI supports only Yellow/Blue (hard-coded opponent) → vs-AI is 2-player only.
 
@@ -69,7 +71,7 @@ Files: `AIGoal.cs` (enums, GoalSelector, TraitRange 0–100), `AIPersonality.cs`
 6. Choose: keep moves within 80% of best (max 8), weighted random.
 - Cycle: threshold = `5 − Pragmatism centre/25`; discard up to 4 with junk ≥3.
 - Draft: centre + mobility, pull toward opponents by Aggression / away by Caution, spread if low Aggression, random of top 3.
-- **Vocabulary**: Zipf ≥3.0 Apprentice (~5k words) / ≥2.0 FirstClass (~20k) / ≥0 Archmage (all) + personality modifier.
+- **Vocabulary**: Zipf ≥3.0 Apprentice / ≥2.0 FirstClass / ≥0 Archmage + personality modifier (`AIPersonality.GetZipfThreshold`; negative modifier = knows more). Comments claim ~5k/~20k/all; real counts ~22k/~44k/63k — see §1 Dictionary.
 - **Fuzzy score perception** (`AIPerception.ScorePerception`, `AIConstants.cs`): confidence 0.1–1, decays 0.05/turn, +0.1 own score, +0.08 seeing opp score; estimate drifts ±3×(1−conf)/turn; perceived lead noise ±20×(1−conf). The AI can be wrong about who's winning — on purpose.
 
 **The 7 presets** (ranges 0–100 · priority · flavour line from code comments)

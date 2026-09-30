@@ -42,7 +42,7 @@ flowchart LR
 ## 2b. Game-specific systems
 **Coordinates** — engine uses **axial hex coordinates** (q, r) — the standard (Red Blob Games) — so leylines are simple steps. Boards are defined in `content/data/boards.json` as column heights (`[4,7,8,9,10,9,10,9,8,7,4]`) like Muzzy's paper notation, converted at load. Designer notation `C4-3` shown in Dev Kit / bug reports.
 **Words** — per leyline, collect the run of letters through the new seed; check every sub-run of ≥ min length containing the new seed; keep valid words; drop any word covered by the union of the other kept words on that line (GARDENING/DEN, SEAL+LEAP/ALE). Tested against every example in the digest.
-**Dictionary** — original list (63,656 words + Zipf) converted to a compact file; loaded once, async, into a `Set` (plus Zipf buckets for AI vocab). ~250 KB gzipped. See §9 licence note.
+**Dictionary — the official Glyphtender word list** is the original's `words.txt`, **copied byte-for-byte** (blob `3280512a`, identical on the original's main and festive-booth): 63,656 words, 2–15 letters, each with a **Zipf score** (how common it is: THE 7.73 … rare words 0). How it was made: Muzzy chose TWL in the Python prototype (2025-12-14) → 63,612-word list (2025-12-17) → cleaned: abbreviations out, scoring fixes (12-21) → +218 missing words incl. 2-letter words (12-22) → roman numerals out + Zipf column added for AI difficulty (12-23). **Never edit it by hand in code** — it lives in `public/words/words.csv`; changes are deliberate, logged commits. The game uses the words; the **AI uses the Zipf scores** (difficulty + personality vocabulary). Loaded once, async, into a `Map<word, zipf>`; ~250 KB gzipped.
 **Multiplayer** (alpha, online milestone) — server-authoritative, same engine. Messages (first draft): `join`, `seat`, `start` → server; `action` (draft / move+cast / refresh) → server validates via engine → `view` to each player; `rejoin`, `leave`, `rematch`. Identity/rejoin/host rules copied from Roll Better (persistentId owns the seat; leave via `useRoom.leave()`). Detail: `design/online.md` when we get there.
 **Timers**
 | Timer | Length | Owned by | Starts when | On expiry |
@@ -94,7 +94,7 @@ flowchart LR
 - [ ] App store age rating questionnaire (if stores ever)
 - [ ] Data safety / privacy labels (if stores ever)
 - [ ] Analytics/ads/accounts → consent (none planned)
-- [ ] **Word list licensed for our use** (see §9) — before 1.0
+- [ ] **Word list licence settled** (see §9 — keep the Zipf pipeline either way) — before 1.0
 - [ ] Every font, sound, image licensed (UI kit fonts carry their own credits)
 - [ ] Accessibility basics: 18 px text floor, 44 px targets, glyphling colour never the only signal (shape marks in 1.0), reduced motion
 
@@ -123,7 +123,7 @@ D01 · 2026-09-30 · One pure rules engine shared by client, server, AI and test
 ## 9. Third-party stuff
 | What | Used for | License | OK for commercial? |
 |---|---|---|---|
-| Word list (original's `words.txt`, from TWL) | dictionary | TWL is owned by NASPA / Hasbro | ⚠️ **No** — fine for a free test build; swap to a public-domain list (e.g. ENABLE) + permissive frequency data before 1.0 or any money (❓ in ROADMAP) |
+| Official word list (`words.txt`, built from TWL + Zipf scores) | dictionary + AI vocabulary | TWL is owned by NASPA / Hasbro; Zipf values look like the `wordfreq` library's (its data has its own licence — to check) | ⚠️ fine for a free build. Before 1.0 or any money: ❓ keep and seek permission, or **re-run Muzzy's pipeline on a public-domain base (e.g. ENABLE, very close to TWL)** keeping the Zipf column — the AI tiers depend on Zipf, not on the source list, so that work carries over |
 | UI kit fonts (Nunito) | UI | SIL OFL | ✅ |
 | React, Vite, Zustand, PartyKit | code | MIT | ✅ |
 | Runeblossom + glyphling art | stand-in art | Muzzy's own | ✅ |

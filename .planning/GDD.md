@@ -35,7 +35,7 @@
   3. **Bag** — 120 seeds: A9 B2 C3 D4 E16 F3 G2 H6 I9 J1 K2 L5 M3 N7 O9 P2 **Qu1** R6 S7 T10 U4 V1 W3 X1 Y3 Z1. **Qu** is one seed, counts as one letter.
   4. **Move** — one of your glyphlings, ≥1 hex along a leyline. Can't pass through or land on anything.
   5. **Cast** — from where it landed, plant one seed along any leyline, any distance, on an empty hex. It may fly over your own seeds and glyphlings, not other players'.
-  6. **Grow** — every word through the new seed, on every leyline, makes Magic = **letters + 1 per seed you own in it**. Shared letters count in each word. On one leyline, a word hidden inside the other words made this turn doesn't count (GARDENING, not DEN; SEAL + LEAP, not ALE). Words read top-to-bottom / left-to-right. Min length 2 (table option: 3).
+  6. **Grow** — (words = the **official Glyphtender word list**, 63,656 words with Zipf scores, carried over unchanged — TDD §2b) every word through the new seed, on every leyline, makes Magic = **letters + 1 per seed you own in it**. Shared letters count in each word. On one leyline, a word hidden inside the other words made this turn doesn't count (GARDENING, not DEN; SEAL + LEAP, not ALE). Words read top-to-bottom / left-to-right. Min length 2 (table option: 3).
   7. **Draw or refresh** — made Magic → draw 1. Made none → you may set aside any number of seeds, refill to 8, then return the set-aside seeds to the bag.
   8. You must move and cast if you can. Can move but can't cast (no seeds, no open hex) → just move.
   9. **Tangled** — a glyphling with no legal move. Checked fresh after every turn, so a glyphling hemmed in by another glyphling is freed if that one moves away (as the original). When a turn ends with **2 or more glyphlings tangled**, the game ends.
@@ -100,5 +100,6 @@ Releases: **alpha → beta → 1.0** (no "prototype" release — prototypes are 
 - ❓ **Board size per player count** — sims in beta; alpha ships Small + Large.
 - ❓ **Bag run-out** — can 120 run out on Large with 4 players? Sim. If it does: stop drawing.
 - ❓ **Starting player** — Yellow always, or random?
+- ❓ **AI vocabulary tiers** — code thresholds (Zipf 3/2/0) give ~22k/~44k/63k words; the design said ~5k/~20k/all (would be 4/3/0). (beta)
 - ❓ **Strategist personality** — multi-word specialist or DENY-first tactician? (beta)
 - **Risks:** (1) board unreadable on phones → F01 renders both boards at 390×844, 844×390, 1440×900 · (2) the undo flow feels wrong → F01 · (3) AI too slow in a browser → Web Worker, timed in beta.
