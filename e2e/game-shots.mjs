@@ -214,15 +214,18 @@ try {
       const planned = page.locator('[data-planned-seed] image')
       if ((await planned.getAttribute('opacity')) !== null) fail(`${size.name}: B010: the targeted seed is see-through (opacity)`)
       if (!(await planned.getAttribute('filter'))) fail(`${size.name}: B010: the targeted seed has no planned look`)
+      // the default (moonlit) keeps the letter legible: a brightness gradient map, not a pale wash over everything
+      if (garden.plannedSeedLook === 'moonlit' && !(await page.locator('#planned-seed-look feFuncR[type="table"]').count()))
+        fail(`${size.name}: B010: the moonlit look isn't drawn (no gradient map in the filter)`)
       if (size.name === 'phone-wide') return
       const tune = (data) => page.evaluate((data) => window.dispatchEvent(new CustomEvent('devkit:tuning', { detail: { file: 'garden', data } })), data)
-      for (const look of ['dimmed', 'greyed', 'misty']) {
+      for (const look of ['moonlit', 'stencil', 'misty', 'greyed', 'dimmed']) {
         await tune({ ...garden, plannedSeedLook: look })
         await page.waitForTimeout(200)
         await page.screenshot({ path: `${OUT}/b010-${look}-${size.width}x${size.height}.png` })
       }
       await tune(garden)
-      console.log(`ok   ${size.name} B010 planned seed looks · solid (filter, no opacity) · shots b010-*`)
+      console.log(`ok   ${size.name} B010 planned seed looks · solid (filter, no opacity) · ${garden.plannedSeedLook} drawn · shots b010-*`)
     }
     // B011: Refresh 2 (tray places 0 and 2 set aside) plays out on the tray — they shrink away, the new seeds grow into
     // their places — and only THEN does play pass on (the handoff). Slowed right down (sent as the Dev Kit would) so

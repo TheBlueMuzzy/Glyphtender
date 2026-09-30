@@ -11,7 +11,14 @@
     "ghostOpacity": "How visible the faded glyphling left where it started (tap it to send the glyphling back).",
     "yellow": "Yellow player's colour — used for their 'held' and 'planned' rings and their thrown seed.",
     "blue": "Blue player's colour — same uses as yellow.",
-    "plannedSeedLook": "How a targeted (not yet thrown) seed looks — always solid, nothing shows through it: dimmed = faded over a patch of hex colour · greyed = grey and darker · misty (default) = under a pale wash, like a ghost.",
+    "plannedSeedLook": "How a targeted (not yet thrown) seed looks — always solid, nothing shows through it: moonlit (default) = colourless moonlight-silver, a ghost of the seed, letter bright · stencil = a flat pale cut-out of the letter and border · misty = under a pale wash (letter hard to read) · greyed = grey and darker · dimmed = faded over a patch of hex colour.",
+    "plannedMoonLight": "\"moonlit\" look: the colour the BRIGHT parts (the letter, the border) turn.",
+    "plannedMoonShadow": "\"moonlit\" look: the colour the DARK parts (the tile behind the letter) turn. Keep it dark so the letter stands out.",
+    "plannedMoonBrightness": "\"moonlit\" look: lifts the letter towards plannedMoonLight. 1 = as bright as the seed, higher = brighter letter (and a lighter tile).",
+    "plannedStencilLetter": "\"stencil\" look: the colour of the letter and border.",
+    "plannedStencilTile": "\"stencil\" look: the colour of the plain tile behind the letter.",
+    "plannedStencilCut": "\"stencil\" look: how bright a part of the seed must be to count as letter. Lower = more of the picture (sparkles, vines) turns to letter.",
+    "plannedStencilSoftness": "\"stencil\" look: how soft the letter's edge is. Small = crisp but jagged, big = smooth but blurry.",
     "plannedMist": "\"misty\" look: the colour of the pale wash over a targeted seed.",
     "plannedMistStrength": "\"misty\" look: how thick the wash is. 0 = none (looks planted), 1 = the seed is hidden.",
     "plannedSeedOpacity": "\"dimmed\" look only: how strong the targeted seed's picture is over its hex-coloured patch. 1 = full colour.",
@@ -59,6 +66,21 @@
       0.1,
       0.9,
       0.05
+    ],
+    "plannedMoonBrightness": [
+      0.8,
+      2.5,
+      0.05
+    ],
+    "plannedStencilCut": [
+      0.05,
+      0.6,
+      0.01
+    ],
+    "plannedStencilSoftness": [
+      0.02,
+      0.4,
+      0.01
     ],
     "plannedSeedOpacity": [
       0.1,
@@ -133,10 +155,17 @@
   "ghostOpacity": 0.3,
   "yellow": "#f2c14e",
   "blue": "#5fd4f2",
-  "plannedSeedLook": "misty",
+  "plannedSeedLook": "moonlit",
   "plannedMist": "#dce8ff",
   "plannedMistStrength": 0.55,
   "plannedSeedOpacity": 0.45,
+  "plannedMoonShadow": "#0d1630",
+  "plannedMoonLight": "#eef4ff",
+  "plannedMoonBrightness": 1.5,
+  "plannedStencilTile": "#1c2742",
+  "plannedStencilLetter": "#dce8ff",
+  "plannedStencilCut": 0.24,
+  "plannedStencilSoftness": 0.16,
   "purple": "#b48cf2",
   "pink": "#f28cc4",
   "wordBorder": "#ffffff",
