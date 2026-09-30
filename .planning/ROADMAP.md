@@ -4,19 +4,19 @@ IDs are names, not build order — follow `needs:`.
 
 ## v0.1 — Sketch  ← current  (→ alpha)
 Goal: Muzzy moves a glyphling, casts a seed, undoes, and does it again — on his phone both ways up and on desktop — and decides how committing a turn should feel.
-- 🟢 F02 🧱 Project skeleton — must:alpha
-  what: Vite + React + TS, vitest, GitHub Pages auto-deploy (live link), PWA, phone-on-Wi-Fi dev link
-- ⏳ F01 ❓ Prototype: move → cast → undo (code sketch) — must:alpha · needs: F02
+- 🔨 F02 🧱 Project skeleton — must:alpha · sprint 1
+  what: Vite + React + TS, vitest, GitHub Pages deploy, PWA, phone-on-Wi-Fi dev link, Dev Kit (Console, Tuning, Color)
+- 🔨 F01 ❓ Prototype: move → cast → undo (code sketch) — must:alpha · needs: F02 · sprint 1
   what: both boards, night mood, stand-in art, tap + drag, undo / tap-again, a "Cast" button; no scoring, no turns. Lives in `sketches/`, thrown away after.
   why: answers *Try freely, commit once* and *Always readable* (can you read 117 hexes on a phone?) before the turn flow is built on them
 ```mermaid
 flowchart LR
-  F02[🟢 F02 Skeleton] --> F01[⏳ F01 Prototype]
+  F02[🔨 F02 Skeleton] --> F01[🔨 F01 Prototype]
 ```
 
 ## v0.2 — Plant a garden  (→ alpha)
 Goal: two players on one device draft, move, cast, grow words and make Magic on either board.
-- ⏳ F03 🧱 UI kit (Cozy, night colours) + Dev Kit (Console, Tuning, Color) — must:alpha · needs: F02
+- ⏳ F03 🧱 UI kit (Cozy, night colours) — must:alpha · needs: F02
 - ⏳ F04 🧱 Rules engine: boards, draft, move/cast legality, bag (120 + Qu), tangles, game end, tangle bonus — must:alpha · needs: F02
 - ⏳ F05 🧱 Official word list + word finder (union rule, Qu, min length) — must:alpha · needs: F02
 - ⏳ F06 🧱 Magic + draw / refresh — must:alpha · needs: F04, F05
