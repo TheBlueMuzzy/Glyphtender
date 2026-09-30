@@ -4,7 +4,10 @@
 // turns by taps (shots of the other player's turn arriving mid-glide) → Bo reloads mid-game and gets his seat back
 // → the host's browser closes: Bo becomes host, keeps playing, a bot takes Ada's seat after botTakesOverAfterMs
 // → Ada comes back by the code and takes her seat back → both play to the end → the Magic reveal + end table on
-// both → Menu leaves the room. Every WebSocket frame each browser RECEIVES is recorded: the run FAILS if one ever
+// both (just New game + Menu) → the guest's New game waits for the host; the host's New game takes BOTH back to the
+// lobby → Leave. Feel checks: only the player whose turn it is sees their glyphlings pulse; the other player's
+// turn pops its Magic on the watcher's screen too (word indicators on — the host's lobby option, in every view).
+// Every WebSocket frame each browser RECEIVES is recorded: the run FAILS if one ever
 // holds another player's seeds, the bag, the rng, the seed or any Magic before the game is over.
 // Also checks every screenshot (nothing past a screen edge, buttons ≥ 44 px) and a clean console.
 // Starts its OWN `partykit dev` (port 1997, partykit.json) and Vite (default 5311) and stops only those.
@@ -88,6 +91,8 @@ function player(name, context, size) {
     me.page = page
   }
   me.tap = (loc) => (size.mobile ? loc.tap() : loc.click())
+  // A glyphling whose turn it is pulses (it never holds still), so Playwright's "wait until stable" would wait forever
+  me.tapGlyph = (loc) => (size.mobile ? loc.tap({ force: true }) : loc.click({ force: true }))
   me.store = (fn) => me.page.evaluate(`(${fn})(window.__glyphtender.store.getState())`)
   me.room = (fn) => me.page.evaluate(`(${fn})(window.__glyphtender.online.getState())`)
   me.shot = async (label, settle = 400) => {
@@ -121,7 +126,7 @@ async function playTurn(p) {
     await p.tap(page.getByRole('button', { name: 'Keep all' }))
   } else {
     const mine = await p.store((s) => s.game.glyphlings.filter((g) => g.seat === s.game.current && !s.game.tangled.includes(g.id)).map((g) => g.id))
-    await p.tap(page.locator(`[data-glyph="${mine[Math.floor(Math.random() * mine.length)]}"]`))
+    await p.tapGlyph(page.locator(`[data-glyph="${mine[Math.floor(Math.random() * mine.length)]}"]`))
     const count = await option('move').count()
     await p.tap(option('move').nth(Math.floor(Math.random() * count)))
     const pick = await page.evaluate(() => window.__glyphtender.findCast(true) ?? window.__glyphtender.findCast(false))
@@ -143,9 +148,19 @@ async function playUntil(players, done, { seconds = 120, watch = null } = {}) {
     let played = false
     for (const p of players) {
       if (!(await myTurn(p))) continue
+      const watcher = players.find((other) => other !== p)
+      if (!feel.pulseChecked && watcher && (await p.store((s) => s.game.phase === 'play'))) {
+        // Whose turn: only the player to move sees their glyphlings pulse — never on the other screen
+        await p.page.waitForTimeout(100)
+        const pulses = (who) => who.page.evaluate(() => [...document.querySelectorAll('[data-pulse]')].filter((g) => g.getAnimations().length > 0).length)
+        const mine = await pulses(p), theirs = await pulses(watcher)
+        check(`${p.name}'s glyphlings pulse on their turn (${mine})`, mine > 0)
+        check(`nothing pulses on ${watcher.name}'s screen while ${p.name} plays (${theirs})`, theirs === 0)
+        console.log(`${mine > 0 && theirs === 0 ? 'ok  ' : 'FAIL'} turn pulse: ${p.name} ${mine} · ${watcher.name} ${theirs}`)
+        feel.pulseChecked = true
+      }
       await playTurn(p)
       played = true
-      const watcher = players.find((other) => other !== p)
       if (watch && watcher && (await p.store((s) => s.game.phase === 'play' || s.game.phase === 'refresh'))) {
         // The watcher's board replays the move: the glyphling glides first — picture it halfway
         const arrived = await watcher.page.waitForFunction(() => { const s = window.__glyphtender.store.getState(); return s.move && s.game.current !== s.online.mySeat }, null, { timeout: 5000 }).then(() => true, () => false)
@@ -156,11 +171,22 @@ async function playUntil(players, done, { seconds = 120, watch = null } = {}) {
           console.log(`ok   ${watcher.name} 4-incoming-turn (mid-glide)`)
         }
       }
+      // A turn that grew words: its Magic pops on the watcher's screen too, once the replayed seed lands
+      if (watcher && !feel.popsSeen && (await p.store((s) => s.game.lastTurn?.seat === s.online.mySeat && s.game.lastTurn.words.length > 0))) {
+        const popped = await watcher.page.waitForFunction(() => document.querySelectorAll('[data-score-pop]').length > 0, null, { timeout: 8000 }).then(() => true, () => false)
+        if (popped) {
+          feel.popsSeen = true
+          await watcher.page.waitForTimeout(300)
+          await watcher.page.screenshot({ path: `${OUT}/online-${watcher.page.viewportSize().width}x${watcher.page.viewportSize().height}-4b-incoming-pops.png` })
+          console.log(`ok   ${watcher.name} 4b-incoming-pops (${p.name}'s turn)`)
+        }
+      }
     }
     if (!played) await wait(250)
   }
 }
 const turnCount = (p) => p.store((s) => s.game?.turnCount ?? -1)
+const feel = { pulseChecked: false, popsSeen: false }
 
 try {
   // ---- Ada creates a room ----
@@ -196,10 +222,12 @@ try {
   for (const p of [ada, bo]) await p.page.waitForFunction(() => window.__glyphtender.store.getState().wordsStatus === 'ready' && window.__glyphtender.store.getState().game, null, { timeout: 15000 })
   check('Ada is Yellow (seat 0), Bo is Blue (seat 1)', (await ada.store((s) => s.online.mySeat)) === 0 && (await bo.store((s) => s.online.mySeat)) === 1)
   check('no handoff screen online', await ada.store((s) => s.handoff === null))
+  check('word indicators on (the host’s lobby option) on both screens', (await ada.store((s) => s.options.wordIndicators)) && (await bo.store((s) => s.options.wordIndicators)))
   await ada.shot('2-draft')
   await playUntil([ada, bo], async () => (await ada.store((s) => s.game.phase)) !== 'draft')
   const watch = { done: new Set() }
-  await playUntil([ada, bo], async () => (await turnCount(ada)) >= 4 && (await turnCount(bo)) >= 4, { watch })
+  await playUntil([ada, bo], async () => (await turnCount(ada)) >= 4 && (await turnCount(bo)) >= 4 && feel.popsSeen, { watch, seconds: 240 })
+  check('the other player’s turn popped its Magic on the watcher’s screen', feel.popsSeen)
   await ada.shot('3-mid-game')
   await bo.shot('3-mid-game')
 
@@ -233,13 +261,26 @@ try {
     await p.page.waitForTimeout(1500)
     await p.shot('5-reveal', 0)
     await p.tap(p.page.getByRole('button', { name: 'Skip' })) // the end table opens by itself after the reveal
-    await p.page.getByRole('dialog').getByRole('button', { name: 'Play again' }).waitFor()
+    await p.page.getByRole('dialog').getByRole('button', { name: 'New game' }).waitFor()
     await p.shot('6-end-table')
     check(`${p.name}'s end table has both names`, (await p.page.getByText('Ada', { exact: true }).count()) > 0 && (await p.page.getByText('Bo', { exact: true }).count()) > 0)
+    check(`${p.name}'s end table has no Play again`, (await p.page.getByRole('dialog').getByRole('button', { name: 'Play again' }).count()) === 0)
   }
-  // Menu → leave the room (through useRoom.leave) → the main menu
+  // New game: the guest waits for the host; the host's takes everyone back to the lobby
+  const host = (await bo.room((s) => s.room?.isHost)) ? bo : ada
+  const guest = host === bo ? ada : bo
+  await guest.tap(guest.page.getByRole('dialog').getByRole('button', { name: 'New game' }))
+  await guest.page.getByText('Waiting for the host to start the next game…').waitFor({ timeout: 3000 }).catch(() => fail(`${guest.name}: no "waiting for the host" after New game`))
+  check(`${guest.name} (guest) stays at the end table after New game`, await guest.store((s) => s.game?.phase === 'over'))
+  await host.tap(host.page.getByRole('dialog').getByRole('button', { name: 'New game' }))
   for (const p of [ada, bo]) {
-    await p.tap(p.page.getByRole('button', { name: 'Menu' }).last())
+    const inLobby = await p.page.getByRole('button', { name: 'Leave' }).waitFor({ timeout: 10000 }).then(() => true, () => false)
+    check(`${p.name} is back in the lobby after the host's New game`, inLobby && (await p.store((s) => s.game === null)))
+    await p.shot('7-back-in-lobby')
+  }
+  // Leave the room (through useRoom.leave) → the main menu
+  for (const p of [ada, bo]) {
+    await p.tap(p.page.getByRole('button', { name: 'Leave' }))
     await p.page.getByRole('button', { name: 'Play online' }).waitFor({ timeout: 5000 })
     check(`${p.name} left the room`, await p.room((s) => s.code === null))
   }

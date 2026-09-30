@@ -32,16 +32,18 @@ export function installDevHook() {
     playRest(seed = 1) {
       return playUntil(seed, (state) => state.phase === 'over')
     },
-    /** Plays random legal actions until some glyphling has only 1 move left, on a player's turn (for the danger cue). */
+    /** Plays random legal actions until some glyphling has only 1 move left, on a player's turn (for the danger cue).
+     *  If the garden tangles first, the game is left as it was (false) — try another seed. */
     playUntilDanger(seed = 1) {
-      return playUntil(seed, (state) => state.phase === 'play' && [...dangers(state).values()].includes('warning'))
+      return playUntil(seed, (state) => state.phase === 'play' && [...dangers(state).values()].includes('warning'), true)
     },
   }
   ;(window as unknown as { __glyphtender: typeof hook }).__glyphtender = hook
 }
 
-/** Random legal actions (the engine's sim player) until done(state) or the game ends; the store jumps there. */
-function playUntil(seed: number, done: (state: GameState) => boolean) {
+/** Random legal actions (the engine's sim player) until done(state) or the game ends; the store jumps there
+ *  (onlyIfDone: unless it never got there — then nothing changes). */
+function playUntil(seed: number, done: (state: GameState) => boolean, onlyIfDone = false) {
   const { game, words, stats: before, online } = useGameStore.getState()
   if (!game || !words || online) return false
   let state = game
@@ -53,6 +55,7 @@ function playUntil(seed: number, done: (state: GameState) => boolean) {
     state = applyAction(state, pick.action, words)
     if (pick.action.type === 'turn' && state.lastTurn) stats = addTurn(stats, state.lastTurn) // for the end table
   }
+  if (onlyIfDone && !done(state)) return false
   useGameStore.getState().loadState(state, stats)
   return done(state)
 }

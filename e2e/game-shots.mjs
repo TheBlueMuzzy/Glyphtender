@@ -1,9 +1,12 @@
 // THE GAME, PLAYED THROUGH THE REAL SCREEN — at phone-tall 390×844, phone-wide 844×390 and desktop 1440×900:
 // Play → Start (new-game screen) → snake draft (1 drag + 3 taps) → turns by tap (move, seed, cast, Cast · +N) and by drag, undo,
 // tray reorder + shuffle, a refresh → passing the device (Show my seeds) → fast-forward to the end with the dev hook →
-// Skip the Magic reveal → end table → Play again → Menu.
-// Checks the move glide (a planned move and Undo slide the glyphling; 4b = frozen halfway).
-// Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px, tray seeds real size, no console errors.
+// Skip the Magic reveal → end table → New game → a game with word indicators OFF → Settings → Tray position Flipped → Menu.
+// Checks the move glide (a planned move and Undo slide the glyphling; 4b = frozen halfway), the turn pulse (3b), the "no"
+// shake (3c, frozen mid-shake), the drop target while dragging (6), gold cast hexes right after the move (5a), the white
+// word border (7), the score pops (9b pops · 9c flying · 9d the total) and indicators off (13: no border, plain Cast, no pops).
+// Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px AND about a board hex tall, the prompt inside its
+// box and just above the tray, tray seeds real size, no console errors; the flipped layout (14) and its column width.
 // Starts its OWN dev server (default port 5188 — never Muzzy's 5180) and closes only that one at the end.
 //   npm run e2e:game [outDir] [port]
 import { mkdirSync } from 'node:fs'
@@ -33,6 +36,18 @@ function problems() {
   const hex = document.querySelector('.game-garden [data-hex]')?.getBoundingClientRect().width
   const tile = document.querySelector('.game-tray polygon')?.getBoundingClientRect().width
   if (hex && tile && tile < 43.5) out.push(`tray seed too small: ${Math.round(tile)} px`)
+  // The action buttons: about a board hex tall (its height: width × √3/2 — Muzzy: "finger-sized like a glyphling"), ≥ 44
+  const buttonMin = hex ? Math.max(44, Math.round((hex / 0.97) * Math.sqrt(3) / 2)) : 44
+  for (const b of document.querySelectorAll('.game-actions button')) {
+    if (b.getBoundingClientRect().height < buttonMin - 1.5) out.push(`action button shorter than a hex: ${b.textContent} ${Math.round(b.getBoundingClientRect().height)} < ${buttonMin}`)
+  }
+  // The prompt: its words inside its box (layout sizes — a pop animation's scale doesn't count), just above the tray
+  const prompt = document.querySelector('.game-prompt')
+  for (const words of document.querySelectorAll('.game-prompt .kit-text')) {
+    if (words.offsetWidth > prompt.clientWidth + 0.5 || words.scrollWidth > words.clientWidth + 0.5) out.push(`prompt overflows: ${words.textContent}`)
+  }
+  const trayBox = document.querySelector('.game-tray, .game-reveal')?.getBoundingClientRect()
+  if (prompt && trayBox && prompt.getBoundingClientRect().bottom > trayBox.top + 1) out.push('the prompt is not above the tray')
   // Real size: at least the board's hex width (unless even 4 in a row can't fit — then ≥ 44)
   if (hex && tile && tile < hex / 0.97 - 2 && tile < 43.5) out.push(`tray seed smaller than a board hex: ${Math.round(tile)} < ${Math.round(hex)}`)
   return { out, hex: Math.round((hex ?? 0) / 0.97), tile: Math.round(tile ?? 0) }
@@ -51,6 +66,8 @@ try {
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
     page.on('pageerror', (e) => errors.push(e.message))
     const tap = (loc) => (size.mobile ? loc.tap() : loc.click())
+    // A glyphling whose turn it is pulses (it never holds still), so Playwright's "wait until stable" would wait forever
+    const tapGlyph = (loc) => (size.mobile ? loc.tap({ force: true }) : loc.click({ force: true }))
     const store = (fn) => page.evaluate(`(${fn})(window.__glyphtender.store.getState())`)
     const shot = async (name) => {
       await glidesDone()
@@ -76,7 +93,10 @@ try {
       await page.mouse.move(a.x + a.width / 2 + 20, a.y + a.height / 2, { steps: 4 })
       const b = await (await target()).boundingBox()
       await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 })
-      if (screenshot) await page.screenshot({ path: `${OUT}/${size.name}-6-dragging.png` })
+      if (screenshot) {
+        await checkDropTarget()
+        await page.screenshot({ path: `${OUT}/${size.name}-6-drop-target.png` })
+      }
       await page.mouse.up()
     }
     // The same with a real finger (phones): the piece floats layout.dragLift px ABOVE the finger, so the finger
@@ -91,7 +111,8 @@ try {
       const b = await (await target()).boundingBox()
       const bx = b.x + b.width / 2, by = b.y + b.height / 2 + lift
       for (let i = 1; i <= 8; i++) await touch('touchMove', ax + 20 + ((bx - ax - 20) * i) / 8, ay + ((by - ay) * i) / 8)
-      await page.screenshot({ path: `${OUT}/${size.name}-6-dragging.png` })
+      await checkDropTarget()
+      await page.screenshot({ path: `${OUT}/${size.name}-6-drop-target.png` })
       await touch('touchEnd', bx, by)
     }
     // Moves glide (anim.json moveBase + movePerHex × hexes): is one running / wait until every glyphling has settled
@@ -109,6 +130,86 @@ try {
       await glidesDone()
     }
     const waitLanded = () => page.waitForFunction(() => !window.__glyphtender.store.getState().flying, null, { timeout: 5000 })
+    // Freeze every animation on `selector` at `at` ms (or, below 1, a share of each one's length), picture it, let it go on
+    const frozenShot = async (name, selector, at) => {
+      const count = await page.evaluate(([sel, at]) => {
+        let n = 0
+        for (const el of document.querySelectorAll(sel)) for (const a of el.getAnimations()) {
+          n++
+          a.pause()
+          a.currentTime = at < 1 ? a.effect.getComputedTiming().duration * at : at
+        }
+        return n
+      }, [selector, at])
+      await page.screenshot({ path: `${OUT}/${size.name}-${name}.png` })
+      await page.evaluate((sel) => document.querySelectorAll(sel).forEach((el) => el.getAnimations().forEach((a) => a.play())), selector)
+      return count
+    }
+    // The score pops after a word grows: each seed's "+1"/"+2" (9b), flying together (9c), the turn's total (9d).
+    // Every pop animation is frozen at the same moment (Web Animations' currentTime counts from the landing).
+    const scorePopShots = async () => {
+      const turn = await store((s) => ({ magic: s.game.lastTurn.magic, seeds: s.game.lastTurn.words.reduce((n, w) => n + w.hexes.length, 0) }))
+      const pops = await page.locator('[data-score-pop]').count()
+      const total = await page.locator('[data-score-total]').textContent()
+      if (pops !== turn.seeds) fail(`${size.name}: ${pops} score pops for ${turn.seeds} seeds in the words`)
+      if (total !== `+${turn.magic}`) fail(`${size.name}: the pops' total says ${total}, the turn made ${turn.magic}`)
+      const times = await page.evaluate(() => {
+        const timings = (el) => el.getAnimations().map((a) => a.effect.getComputedTiming())
+        const all = [...document.querySelectorAll('[data-score-pop]')].flatMap(timings)
+        const fly = Math.max(...all.map((t) => t.delay))
+        const flyTime = Math.min(...all.filter((t) => t.delay === fly).map((t) => t.duration))
+        const totalAt = timings(document.querySelector('[data-score-total]'))[0].delay
+        return { popped: fly - 60, flying: fly + flyTime * 0.5, total: totalAt + 450 }
+      })
+      // (the grown words' border fades on the same clock — frozen with them, so each picture is one true moment)
+      await frozenShot('9b-score-pops', '[data-score-pops] text, [data-grown]', times.popped)
+      await frozenShot('9c-pops-flying', '[data-score-pops] text, [data-grown]', times.flying)
+      await frozenShot('9d-score-total', '[data-score-pops] text, [data-grown]', times.total)
+      console.log(`${pops === turn.seeds ? 'ok  ' : 'FAIL'} ${size.name} 9b-9d score pops · ${pops} pops → ${total}`)
+    }
+    // Word indicators off: plan a word-making cast (trying each glyphling and move) — plain "Cast", no border, no pops
+    const indicatorsOffTurn = async () => {
+      for (let tries = 0; tries < 12; tries++) {
+        await page.evaluate((n) => window.__glyphtender.playUntilDanger(n), 3 + tries) // a garden with seeds on it
+        await page.waitForTimeout(300)
+        const mine = await store((s) => s.game.glyphlings.filter((g) => g.seat === s.game.current && !s.game.tangled.includes(g.id)).map((g) => g.id))
+        for (const id of mine) {
+          await tapGlyph(page.locator(`[data-glyph="${id}"]`))
+          const moves = await optionCount('move')
+          for (let m = 0; m < moves; m++) {
+            await tap(option('move', m))
+            const pick = await page.evaluate(() => window.__glyphtender.findCast(true))
+            if (!pick) {
+              await tapGlyph(page.locator(`[data-glyph="${id}"]`)) // pick the moved glyphling up again: its moves glow
+              continue
+            }
+            const pos = await store(`(s) => s.trayOrder[s.game.current].indexOf(${pick.seed})`)
+            await tap(page.locator(`[data-tray-pos="${pos}"]`))
+            await tap(page.locator(`[data-option="cast"] circle[data-hex="${pick.hex}"]`))
+            await shot('13-indicators-off')
+            const label = await castButton().textContent()
+            if (label !== 'Cast') fail(`${size.name}: indicators off but the button says "${label}"`)
+            if (await page.locator('[data-word-hex]').count()) fail(`${size.name}: indicators off but a word has a border`)
+            await tap(castButton())
+            await waitLanded()
+            await page.waitForTimeout(700)
+            if (await page.locator('[data-score-pops]').count()) fail(`${size.name}: indicators off but the Magic popped`)
+            console.log(`ok   ${size.name} 13-indicators-off · plain Cast, no border, no pops`)
+            return
+          }
+          // none of its moves makes a word: take it back (Undo), or let go of it
+          if (await store((s) => s.move !== null)) await tap(page.locator('.game-actions button', { hasText: 'Undo' }))
+          else if (await store((s) => s.selected !== null)) await tapGlyph(page.locator(`[data-glyph="${id}"]`))
+        }
+      }
+      fail(`${size.name}: found no word to make with indicators off`)
+    }
+    // While dragging over a legal hex: its "drop here" mark shows on that hex
+    const checkDropTarget = async () => {
+      const lit = await page.evaluate(() => document.querySelector('[data-drop-target][visibility="visible"]')?.getAttribute('data-drop-hex') ?? null)
+      if (!lit) fail(`${size.name}: no drop-target highlight under the dragged piece`)
+      else console.log(`ok   ${size.name} 6-drop-target · ${lit}`)
+    }
     const castButton = () => page.locator('.game-actions button').last()
     // Pass-and-play: when the device is being passed on, tap "Show my seeds" (it waits for a thrown seed to grow)
     const passIfAsked = async () => {
@@ -138,6 +239,20 @@ try {
     await passIfAsked()
     await shot('3-first-turn')
 
+    // ---- whose turn: your movable glyphlings pulse gently until one moves ----
+    const pulsing = await frozenShot('3b-turn-pulse', '[data-pulse]', 0.5)
+    const pulseIds = await store((s) => s.game.glyphlings.filter((g) => g.seat === s.game.current && !s.game.tangled.includes(g.id)).length)
+    if (pulsing !== pulseIds) fail(`${size.name}: ${pulsing} glyphlings pulse at the start of the turn (expected ${pulseIds})`)
+    else console.log(`ok   ${size.name} 3b-turn-pulse · ${pulsing} pulsing`)
+
+    // ---- the "no" shake: tapping another player's glyphling ----
+    const theirs = await store((s) => s.game.glyphlings.find((g) => g.seat !== s.game.current).id)
+    await tapGlyph(page.locator(`[data-glyph="${theirs}"]`))
+    const shaking = await frozenShot('3c-no-shake', `[data-shake="${theirs}"]`, 0.2)
+    if (shaking !== 1) fail(`${size.name}: tapping another player's glyphling did not shake it`)
+    else console.log(`ok   ${size.name} 3c-no-shake`)
+    if (await store((s) => s.selected !== null)) fail(`${size.name}: another player's glyphling was picked up`)
+
     // ---- turns ----
     // Turn 1 by taps, turn 2 by drags, turn 3 checks Undo. Then keep playing until we've seen a cast that
     // grows a word (outlines + glow) and a refresh (the dev hook picks a seed + hex for that; the taps are real).
@@ -154,16 +269,21 @@ try {
         if (turn === 1 && !size.mobile) {
           // B005: only the main mouse button plays — a right- or middle-click picks nothing up
           for (const button of ['right', 'middle']) {
-            await glyph.click({ button })
+            await glyph.click({ button, force: true })
             if (await store((s) => s.selected !== null)) fail(`${size.name}: a ${button}-click picked up a glyphling`)
           }
         }
-        await tap(glyph)
+        await tapGlyph(glyph)
         if (turn === 1) await shot('4-move-options')
         await tap(option('move', Math.floor((await optionCount('move')) / 3)))
         if (turn === 1) {
           if (!(await gliding())) fail(`${size.name}: the planned move did not glide`)
           else await midGlideShot('4b-gliding')
+          // the moved glyphling's cast range glows gold straight away, before a seed is picked
+          const gold = await optionCount('cast')
+          const withSeeds = await store((s) => s.game.hands[s.game.current].length > 0)
+          if (withSeeds && gold === 0) fail(`${size.name}: no gold cast hexes right after the move`)
+          await shot('5a-cast-range-after-move')
         }
       }
       if (!(await store((s) => s.move !== null))) { fail(`${size.name} turn ${turn}: no move planned`); break }
@@ -186,7 +306,11 @@ try {
         }
         if (!(await store((s) => s.cast !== null))) fail(`${size.name} turn ${turn}: the seed was not aimed`)
         const magic = Number((await castButton().textContent()).match(/\+(\d+)/)?.[1] ?? -1)
-        if (wantMagic && magic > 0) await shot('7-planned-words')
+        if (wantMagic && magic > 0) {
+          await shot('7-planned-words')
+          const borders = await page.locator('[data-planned-words] [data-word-hex]').count()
+          if (borders < 2) fail(`${size.name}: the planned word has no white border (${borders} hexes)`)
+        }
         if (turn === 3 && !undoChecked) {
           undoChecked = true
           await tap(page.locator('.game-actions button', { hasText: 'Undo' }))
@@ -203,8 +327,9 @@ try {
           await page.waitForTimeout(120)
           await page.screenshot({ path: `${OUT}/${size.name}-8-throw.png` })
           await waitLanded()
-          await page.waitForTimeout(350) // the runeblossom has sprouted; the words are glowing
+          await page.waitForTimeout(350) // the runeblossom has sprouted; the words keep their border for a moment
           await page.screenshot({ path: `${OUT}/${size.name}-9-grown.png` })
+          await scorePopShots()
           grewWords = true
         }
       } else {
@@ -254,11 +379,52 @@ try {
     if (await table.isVisible()) fail(`${size.name}: the end table reopened by itself after it was closed`)
     await tap(page.getByRole('button', { name: 'Results' }))
     await table.waitFor({ timeout: 3000 })
-    await table.getByRole('button', { name: 'Play again' }).click()
-    if (!(await store((s) => s.game?.phase === 'draft'))) fail(`${size.name}: Play again did not start a new draft`)
-    // Menu → Leave game → confirm → main menu
+    if (await table.getByRole('button', { name: 'Play again' }).count()) fail(`${size.name}: the end table still has Play again`)
+    await table.getByRole('button', { name: 'New game' }).click()
+    // ---- New game → the new-game screen: this time word indicators OFF ----
+    await page.getByRole('button', { name: 'Start' }).waitFor({ timeout: 3000 })
+    if (await store((s) => s.game !== null)) fail(`${size.name}: New game did not leave the finished game`)
+    await page.getByRole('switch', { name: 'Word indicators' }).click()
+    await page.screenshot({ path: `${OUT}/${size.name}-12a-new-game-indicators-off.png` })
+    await page.getByRole('button', { name: 'Start' }).click()
+    if (!(await store((s) => s.options.wordIndicators === false))) fail(`${size.name}: word indicators did not turn off`)
+    while (await store((s) => s.game.phase === 'draft')) await tap(option('move', Math.floor((await optionCount('move')) / 2)))
+    await passIfAsked()
+    await indicatorsOffTurn()
+    await passIfAsked()
+    if (await store((s) => s.game.phase === 'refresh')) await tap(page.getByRole('button', { name: 'Keep all' }))
+    await passIfAsked()
+
+    // ---- Settings → Gameplay → Tray position: Flipped (the tray above the board / on its left) ----
+    const sideBefore = await page.evaluate(() => document.querySelector('.game').dataset.layout === 'side')
+    const columnBefore = await page.evaluate(() => Math.round(document.querySelector('.game-panel').getBoundingClientRect().width))
     await tap(page.getByRole('button', { name: 'Menu' }))
     await shot('12-pause')
+    await page.getByRole('button', { name: 'Settings' }).click()
+    // (a tab bar on big screens; phones step through the tabs with ◀ Audio ▶)
+    const gameplayTab = page.getByRole('tab', { name: 'Gameplay' })
+    if (await gameplayTab.isVisible()) await gameplayTab.click()
+    else {
+      for (let i = 0; i < 8 && !(await page.getByRole('group', { name: 'Settings' }).textContent()).includes('Gameplay'); i++) {
+        await page.getByRole('button', { name: 'Next Settings' }).click()
+      }
+    }
+    await page.getByRole('button', { name: 'Next Tray position' }).click()
+    await page.screenshot({ path: `${OUT}/${size.name}-14a-settings-tray.png` })
+    await page.keyboard.press('Escape') // Settings
+    await page.keyboard.press('Escape') // Pause
+    await shot('14-flipped')
+    const flipped = await page.evaluate(() => {
+      const board = document.querySelector('.game-board').getBoundingClientRect()
+      const panel = document.querySelector('.game-panel').getBoundingClientRect()
+      const side = document.querySelector('.game').dataset.layout === 'side'
+      return { side, ok: side ? panel.right <= board.left + 1 : panel.bottom <= board.top + 1, column: Math.round(panel.width) }
+    })
+    if (!flipped.ok) fail(`${size.name}: flipped, but the tray is not ${flipped.side ? 'left of' : 'above'} the board`)
+    if (sideBefore && flipped.column !== columnBefore) fail(`${size.name}: the side column changed width when flipped (${columnBefore} → ${flipped.column})`)
+    console.log(`${flipped.ok ? 'ok  ' : 'FAIL'} ${size.name} 14-flipped · column ${columnBefore} → ${flipped.column}`)
+    // Menu → Leave game → confirm → main menu
+    await tap(page.getByRole('button', { name: 'Menu' }))
     await page.getByRole('button', { name: 'Leave game' }).click()
     await page.getByRole('dialog', { name: 'Leave this game?' }).getByRole('button', { name: 'Leave game' }).click()
     await page.getByRole('button', { name: 'Play', exact: true }).waitFor({ timeout: 3000 })
