@@ -112,7 +112,8 @@
       "winnerBadge": "★",
       "label": "The Magic reveal",
       "skip": "Skip",
-      "pop": "+{n}"
+      "pop": "+{n}",
+      "tangleDetail": "Tangles +{n}"
     }
   },
   "credits": {

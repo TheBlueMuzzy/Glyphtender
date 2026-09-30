@@ -1,6 +1,7 @@
 // THE GAME, PLAYED THROUGH THE REAL SCREEN — at phone-tall 390×844, phone-wide 844×390 and desktop 1440×900:
-// Play → snake draft (1 drag + 3 taps) → turns by tap (move, seed, cast, Cast · +N) and by drag, undo,
-// tray reorder + shuffle, a refresh → fast-forward to the end with the dev hook → results → Play again → Menu.
+// Play → Start (new-game screen) → snake draft (1 drag + 3 taps) → turns by tap (move, seed, cast, Cast · +N) and by drag, undo,
+// tray reorder + shuffle, a refresh → passing the device (Show my seeds) → fast-forward to the end with the dev hook →
+// Skip the Magic reveal → end table → Play again → Menu.
 // Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px, tray seeds real size, no console errors.
 // Starts its OWN dev server (default port 5188 — never Muzzy's 5180) and closes only that one at the end.
 //   npm run e2e:game [outDir] [port]
@@ -93,10 +94,18 @@ try {
     }
     const waitLanded = () => page.waitForFunction(() => !window.__glyphtender.store.getState().flying, null, { timeout: 5000 })
     const castButton = () => page.locator('.game-actions button').last()
+    // Pass-and-play: when the device is being passed on, tap "Show my seeds" (it waits for a thrown seed to grow)
+    const passIfAsked = async () => {
+      if (!(await store((s) => s.handoff !== null))) return
+      const show = page.getByRole('button', { name: 'Show my seeds' })
+      await show.waitFor({ timeout: 5000 })
+      await tap(show)
+    }
 
     // ---- menu → Play ----
     await page.goto(`http://127.0.0.1:${PORT}/`)
     await page.getByRole('button', { name: 'Play' }).click()
+    await page.getByRole('button', { name: 'Start' }).click() // the new-game screen's defaults: 2 players, Small
     await page.waitForFunction(() => window.__glyphtender?.store.getState().wordsStatus === 'ready', null, { timeout: 15000 })
     await shot('1-draft')
 
@@ -110,6 +119,7 @@ try {
     }
     const drafted = await store((s) => s.game.phase === 'play' && s.game.glyphlings.length === 4)
     if (!drafted) fail(`${size.name}: the draft did not place 4 glyphlings`)
+    await passIfAsked()
     await shot('3-first-turn')
 
     // ---- turns ----
@@ -180,6 +190,7 @@ try {
         if (!(await store((s) => s.game.phase !== 'refresh'))) fail(`${size.name}: refresh did not happen`)
         refreshed = true
       }
+      await passIfAsked()
       if (await store((s) => s.game.phase === 'over')) break
       // Between turns: reorder the tray by dragging, and shuffle it
       if (turn === 2) {
@@ -196,12 +207,16 @@ try {
     // ---- fast-forward to the end (dev hook: the engine's random player) ----
     const over = await page.evaluate(() => window.__glyphtender.playRest(7))
     if (!over) fail(`${size.name}: playRest did not finish the game`)
-    await page.getByRole('dialog', { name: 'The garden is tangled' }).waitFor({ timeout: 5000 })
-    await page.waitForTimeout(800) // result rows arrive one after another
+    // The Magic reveal starts once the last seed has grown; Skip jumps to the end and opens the end table
+    await page.waitForFunction(() => window.__glyphtender.store.getState().revealAt !== null, null, { timeout: 5000 })
+    await tap(page.getByRole('button', { name: 'Skip' }))
+    const table = page.getByRole('dialog', { name: /Grand Glyphtender/ })
+    await table.waitFor({ timeout: 5000 })
+    await page.waitForTimeout(500)
     await shot('11-game-over')
     const stars = await page.getByRole('img', { name: 'Winner' }).count()
     if (stars < 1) fail(`${size.name}: no winner marked`)
-    await page.getByRole('dialog', { name: 'The garden is tangled' }).getByRole('button', { name: 'Play again' }).click()
+    await table.getByRole('button', { name: 'Play again' }).click()
     if (!(await store((s) => s.game?.phase === 'draft'))) fail(`${size.name}: Play again did not start a new draft`)
     // Menu → Leave game → confirm → main menu
     await tap(page.getByRole('button', { name: 'Menu' }))

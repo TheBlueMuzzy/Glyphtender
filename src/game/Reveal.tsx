@@ -4,12 +4,12 @@
 // "Grand Glyphtender!". Then the end table opens. Skip (in the button row) jumps to the end at any moment;
 // with reduce motion on it starts at the end. Timings: content/tuning/anim.json (reveal…).
 // This panel takes the tray's place: one kit PlayerChip per player — "Magic ?" until their turn to count,
-// then the number counts up (the chip does that itself). Kit parts only: Grid, PlayerChip.
+// then the number counts up (the chip does that itself) with its tangle Magic under it. Kit parts only: Grid, PlayerChip.
 import { useEffect, useMemo } from 'react'
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { revealSteps, revealView, stepSeconds } from '../store/revealPlan'
-import { Grid, PlayerChip, reduceMotion, screens } from '../ui/kit'
+import { Grid, PlayerChip, fill, reduceMotion, screens } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
 import { playerName } from './prompt'
 import { useAnimTuning, useGardenTuning } from './useTuning'
@@ -56,7 +56,7 @@ export function RevealPanel() {
         const winner = view.announced && game.winners.includes(seat)
         return (
           <PlayerChip key={seat} size="s" name={playerName(seat)} avatar={glyphlingArt(seat)} color={colours[colourOf(seat)]}
-            score={shown ? magic : undefined} scoreIcon="✦" detail={shown ? undefined : w.secret}
+            score={shown ? magic : undefined} scoreIcon="✦" detail={shown ? fill(w.tangleDetail, { n: game.tangleMagic[seat] }) : w.secret}
             badge={winner ? w.winnerBadge : undefined} active={counting === seat || winner} words={{ score: w.magic }} />
         )
       })}

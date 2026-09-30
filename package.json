@@ -14,6 +14,7 @@
     "e2e:sketch": "node e2e/sketch-shots.mjs",
     "e2e:menu": "node e2e/menu-shots.mjs",
     "e2e:game": "node e2e/game-shots.mjs",
+    "e2e:pass": "node e2e/pass-and-play-shots.mjs",
     "sim": "node scripts/sim.mjs"
   },
   "dependencies": {
