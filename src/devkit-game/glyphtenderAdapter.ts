@@ -1,7 +1,8 @@
 // GLYPHTENDER'S DEV KIT ADAPTER — lets the Dev Kit's Snapshots and Bug capture tabs see the game.
 // Registered in src/devkit-game/tabs.ts, which only loads with the Dev Kit (so none of this ships at 1.0).
 //   getState:   the engine's GameState + the tray order the screen shows (everything else is the planned turn)
-//   setState:   jumps the store to that game — the planned move / cast / flying seed are cleared (store.loadState)
+//   setState:   jumps the store to that game — the planned move / cast / flying seed are cleared (store.loadState),
+//               and any open menu (end table, Pause) is closed
 //   canRestore: always, for now — there's no online play yet. Online games must say false here.
 //   onEvent:    a short line each time the game moves on: a draft placement, a turn, a phase change, a tangle, a note
 // Reads and writes the store only through its public getState / setState / subscribe / loadState.
@@ -11,6 +12,7 @@ import { getBoard } from '../engine/boards'
 import type { Hex } from '../engine/hex'
 import { SEAT_COLOURS, type GameState } from '../engine/types'
 import { useGameStore, type GameStore } from '../store/gameStore'
+import { closeAllScreens } from '../ui/newGame'
 
 /** What a snapshot holds for Glyphtender. */
 export interface GlyphtenderMoment {
@@ -98,6 +100,7 @@ export const glyphtenderAdapter: DevKitGame = {
   setState: (state) => {
     if (!isMoment(state)) throw new Error("that isn't a Glyphtender snapshot")
     const store = useGameStore.getState()
+    closeAllScreens() // a menu from the moment we're leaving (the end table, Pause) would sit on top, stuck
     if (!state.game) return store.leaveGame()
     store.loadState(state.game) // clears the planned move / cast / flying seed
     // Keep the tray order the snapshot had, if it still fits the hands (loadState reset it to 1, 2, 3…)

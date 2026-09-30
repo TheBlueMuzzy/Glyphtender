@@ -105,6 +105,7 @@ export function leaveToMenu() {
   useGameStore.getState().leaveGame()
 }
 
-function closeAllScreens() {
+/** Close every open menu (the Dev Kit's restore uses this too). */
+export function closeAllScreens() {
   for (let i = screens.current.length; i > 0; i--) screens.pop()
 }

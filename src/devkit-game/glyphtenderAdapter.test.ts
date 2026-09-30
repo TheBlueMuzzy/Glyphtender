@@ -1,7 +1,8 @@
 // Glyphtender's Dev Kit adapter: a snapshot round-trips through the store, and turns show up as events.
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { hexAt, position, wordsOf } from '../engine/testkit'
 import { useGameStore } from '../store/gameStore'
+import { screens } from '../ui/kit'
 import { describeGlyphtender, glyphtenderAdapter, type GlyphtenderMoment } from './glyphtenderAdapter'
 
 const store = () => useGameStore.getState()
@@ -71,5 +72,18 @@ describe('glyphtenderAdapter', () => {
   it('describes a moment in one line', () => {
     expect(describeGlyphtender({ game: null, trayOrder: [] })).toBe('main menu')
     expect(describeGlyphtender({ game: yellowToPlay(), trayOrder: [] })).toMatch(/^turn 0 · play · Yellow to move/)
+  })
+
+  it('restoring closes any open menu — the end table (or Pause) of the moment you left would be stuck on top', () => {
+    vi.stubGlobal('history', { state: null, pushState: () => {}, go: () => {} }) // the menus keep browser history
+    store().loadState(yellowToPlay())
+    screens.push('pause')
+    screens.push('gameOver')
+    glyphtenderAdapter.setState({ game: null, trayOrder: [] })
+    expect(screens.current).toEqual([])
+    screens.push('gameOver')
+    glyphtenderAdapter.setState({ game: yellowToPlay(), trayOrder: [] })
+    expect(screens.current).toEqual([])
+    vi.unstubAllGlobals()
   })
 })
