@@ -2,7 +2,7 @@
 
 > How the game is built. Plain English first; code names in `backticks` only where they help.
 > Living document — /define writes it, /develop keeps it true, /tdd shows it.
-> Last updated: 2026-09-30
+> Last updated: 2026-09-30 (sprint 03)
 
 ## 1. At a glance
 - **Platforms:** web — phone browsers (portrait + landscape) and desktop. Installable PWA.
@@ -26,9 +26,9 @@ flowchart LR
 ```
 - **Rules engine** (`src/engine/`) — the whole game as pure functions: `applyAction(state, action, words) → state` (the word list is passed in — too big to live in the state) plus `checkAction` (why an action is illegal, or null), `legalDraftHexes`, `legalMoves`, `legalCasts`, `previewTurn` (words + Magic for the Cast button), `findWords`, `tangledIds`. No React, no screen, no network. Seeded random (bag order, refresh put-backs; the generator's position lives in the state) so a game can be replayed from its seed + action list.
 - **Seats** (`src/seats/`) — who is in each chair. A local seat sends actions from taps; an online seat receives them from the server; an AI seat (beta) computes them. The engine doesn't know which.
-- **Game store** (`src/store/`) — current state, the pending (un-cast) move for undo, whose view is showing (pass-and-play), animation queue.
-- **View** (`src/game/`) — `Board` (SVG hexes, pieces, highlights, word outlines), `SeedTray`, `TurnBar`, `Handoff`, `Reveal`. Pointer Events; tap-tap and drag share one input hook.
-- **Layout shell** (`src/game/layout/`) — chooses **stacked** (tall) or **side tray** (wide) from the *shape of the free space* (aspect ≥ 1.15 → stacked), not the device. Board SVG auto-fits its box; zoom is optional with a Fit button. Sizes in `content/tuning/layout.json`.
+- **Game store** (`src/store/gameStore.ts`, Zustand; plain helpers in `turnPlan.ts`) — the engine's state, the word list (fetched once), the planned move + cast and what's held (undo = drop the plan), refresh set-aside, each seat's tray order, and `flying` (input locked while a seed is in the air). Its actions only change the game by sending an engine action (checkAction first). Later: whose view is showing (pass-and-play).
+- **View** (`src/game/`, built in sprint 03) — `GameScreen` (layout shell), `Board` (SVG hexes, pieces, highlights, word outlines, grown glow), `useThrow` (the Cast story), `SeedTray` (SVG), `trayLayout` (real-size maths), `TurnBar`, `ActionBar`, `GameOver`, `usePieceInput` (tap-tap and drag share one Pointer Events hook, on the whole screen), `prompt`, `usePreview`, `useTuning`, `art`, `devHook` (dev only). Later: `Handoff`, `Reveal`.
+- **Layout shell** (`src/game/GameScreen.tsx` + `game.css`) — chooses **stacked** (tall) or **side tray** (wide) from the *shape of the free space* (aspect ≥ 1.15 → stacked), not the device. Board SVG auto-fits its box; zoom (optional, with a Fit button) not built yet. Side layout: the right column is the tray's width (sidePanelShare × width). Sizes in `content/tuning/layout.json`.
 - **Menus/HUD** — UI kit screens only (MainMenu, ModeSelect, Settings, Pause, Lobby, Results, toasts). Board, tray and pieces are game components styled only with kit tokens.
 - **Online** (`party/server.ts`) — runs the *same engine*; server is the only one who knows the bag and every hand; each player is sent **their own view** (own seeds, others' seed counts, no Magic totals).
 
@@ -43,8 +43,8 @@ flowchart LR
 **Coordinates** — engine uses **axial hex coordinates** (q, r) — the standard (Red Blob Games) — so leylines are simple steps. Boards are defined in `content/data/boards.json` as column heights (`[4,7,8,9,10,9,10,9,8,7,4]`) like Muzzy's paper notation, converted at load. Designer notation `C4-3` shown in Dev Kit / bug reports.
 **Rules engine files** (`src/engine/`, built in sprint 02) — `types.ts` (GameState is plain JSON-able data: phase draft/play/refresh/over, current seat, snake order, glyphlings `{id, seat, hex}` with id = seat×2+0/1, seeds by hexKey, hands, bag (draw from the front), Magic, tangled ids, lastTurn, tangle bonus, winners, rng) · `setup.ts` (bag + snake order) · `draft.ts` · `moves.ts` · `turn.ts` (move + cast + Magic + draw) · `refresh.ts` · `wordFinder.ts` · `words.ts` (list loader) · `tangle.ts` (tangles, end, bonus, winners) · `engine.ts` (the one door: `applyAction`) · `sim.ts` (random/greedy players + invariants; `npm run sim`) · `testkit.ts` (hand-made positions by designer label). Actions: `{type:'draft', hex}` · `{type:'turn', glyphling, to, seed: hand index | null, target}` · `{type:'refresh', setAside: hand indexes}`. Illegal actions **throw** an Error with a plain-English reason. Rule numbers are copied from `content/tuning/rules.json` into `state.config.rules` at new game, so replays and online games keep the numbers they started with.
 **Words** — per leyline, collect the run of letters through the new seed; check every sub-run of ≥ min length containing the new seed; keep valid words; drop any word covered by the union of the other kept words on that line (GARDENING/DEN, SEAL+LEAP/ALE). Tested against every example in the digest.
-**Piece states + the throw** (from the F01 prototype) — every piece shows one of: options (glow + dot) · held (solid ring, player colour) · planned (pulsing halo at the hex edge, player colour; targeted seed faded) · done. The halo sits *outside* the art's own coloured frame. Cast plays: glyphling hop → seed flies a bezier arc (time = `flightBase` + `flightPerHex` × distance) → runeblossom sprouts with overshoot; the game state commits on landing; input is locked in flight. Frames mutate SVG attributes directly (no React state per frame). Numbers: `content/tuning/anim.json`, colours: `garden.json`.
-**Tray** — one row of 8 when 8 fit at ≥ `trayTileMin` (44 px), else 2 rows of 4 (portrait phones have spare height). Measured hex widths: phone portrait 36–42 px, landscape 38–41 px, desktop 89–97 px.
+**Piece states + the throw** (from the F01 prototype) — every piece shows one of: options (glow + dot) · held (solid ring, player colour) · planned (pulsing halo at the hex edge, player colour; targeted seed faded) · done. The halo sits *outside* the art's own coloured frame. Cast plays: glyphling hop → seed flies a bezier arc (time = `flightBase` + `flightPerHex` × distance) → runeblossom sprouts with overshoot; the game state commits on landing; input is locked in flight. Frames mutate SVG attributes directly (no React state per frame): the flight is a requestAnimationFrame loop on a ref, the hop / sprout / grown-word glow use the Web Animations API, the planned halo pulses with an SVG `<animate>`. After landing the words that grew glow in the player's colour and fade (`wordGlowTime`). Reduce motion → no flight, the turn commits at once. Numbers: `content/tuning/anim.json`, colours: `garden.json`.
+**Tray** — seeds are **real size: tray seed = the board's on-screen hex width, never below `trayTileMin` (44 px)**; one row of 8 if that fits, else 2 rows of 4 rather than shrinking; only if 4 still don't fit do they shrink to fit (never below 44). Maths in `src/game/trayLayout.ts` (tested). Measured (Small board, e2e): phone tall hex 42 → seed 44 (2×4) · phone wide 41 → 44 (2×4) · desktop 96 → 96 (2×4). Tray order is the screen's own (store), kept across turns; reorder by dragging within the tray; Shuffle.
 **Dictionary — the official Glyphtender word list** is the original's `words.txt`, **copied byte-for-byte** (blob `3280512a`, identical on the original's main and festive-booth): 63,657 words (63,656 line breaks — the last word, ROMAN, has none after it; Zipf ≥5/4/3/2 = 1,000 / 6,342 / 21,805 / 43,997), 2–15 letters, each with a **Zipf score** (how common it is: THE 7.73 … rare words 0). How it was made: Muzzy chose TWL in the Python prototype (2025-12-14) → 63,612-word list (2025-12-17) → cleaned: abbreviations out, scoring fixes (12-21) → +218 missing words incl. 2-letter words (12-22) → roman numerals out + Zipf column added for AI difficulty (12-23). **Never edit it by hand in code** — it lives in `public/words/words.csv` (marked binary in `.gitattributes`; a test checks its SHA-256); changes are deliberate, logged commits. The game uses the words; the **AI uses the Zipf scores** (difficulty + personality vocabulary). Loaded once, async, into a `Map<word, zipf>`; ~250 KB gzipped.
 **Multiplayer** (alpha, online milestone) — server-authoritative, same engine. Messages (first draft): `join`, `seat`, `start` → server; `action` (draft / move+cast / refresh) → server validates via engine → `view` to each player; `rejoin`, `leave`, `rematch`. Identity/rejoin/host rules copied from Roll Better (persistentId owns the seat; leave via `useRoom.leave()`). Detail: `design/online.md` when we get there.
 **Timers**
@@ -62,12 +62,12 @@ flowchart LR
 | `content/data/boards.json` | board shapes (column heights), default board per player count | Obsidian |
 | `content/data/bag.json` | seed counts per letter (incl. `Qu`) | Obsidian / Dev Kit → Tuning |
 | `content/tuning/rules.json` | hand size 8, min word 2, tangle bonus 3, tangles to end 2, ownership bonus 1 | Dev Kit → Tuning |
-| `content/tuning/layout.json` | stacked/side threshold, tray tile size, hex min size, gaps | Dev Kit → Tuning |
-| `content/tuning/anim.json` | throw (flight, arc, hop), sprout, later reveal timings | Dev Kit → Tuning |
-| `content/tuning/garden.json` | night garden colours, player colours, glow, halo, faded-seed strength | Dev Kit → Tuning |
+| `content/tuning/layout.json` | stacked/side threshold, tray seed minimum (44) + gap, side panel share, board margin, drag lift + drag start distance | Dev Kit → Tuning |
+| `content/tuning/anim.json` | throw (flight, arc, hop), sprout, halo pulse, grown-word glow; later reveal timings | Dev Kit → Tuning |
+| `content/tuning/garden.json` | night garden colours (board box background, hexes), 4 player colours, move/cast glow, word outline width, grown-word glow, ghost + faded-seed strength, flying-seed shine | Dev Kit → Tuning |
 | `content/ui/style.json` | UI kit look: Cozy preset + night colour tweaks (D09) — every menu/HUD colour, shadow, panel texture | Dev Kit → Color |
 | `content/ui/settings.json` | Settings screen rows (kit standard list; `"on": false` hides a row — language, account and placeholder links are off for now) | Obsidian |
-| `content/text/en.json` | every player-facing word ("tangled", "Magic", prompts) | Obsidian |
+| `content/text/en.json` | every player-facing word — menu, turn prompts, notes, buttons, pause, results (`game` section) | Obsidian |
 | `content/credits.json` | fonts, word list | organize-assets |
 
 ## 4. Standards
@@ -105,6 +105,18 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D15 · 2026-09-30 · Game over = the kit's Results dialog, pushed on the screen stack after the last runeblossom grows
+  Proposed by: Claude (autonomous)   Options: own end screen / kit GameOver / kit Results
+  Chose: kit Results (dim) — ranks, ★ winners (ties share 1st), "N Magic", Menu + Play again; Esc closes it to look at the board, a Results button reopens it. The staged reveal (F13) replaces it later
+D14 · 2026-09-30 · Tray order belongs to the screen, not the rules
+  Proposed by: Claude (autonomous)   Options: reorder the engine's hand (an action) / keep a display order in the store
+  Chose: display order in the store (hand indexes per seat), re-matched after each turn/refresh (survivors keep their place, new seeds go last). Reorder = drag within the tray (tap already means "pick up to cast")
+D13 · 2026-09-30 · Board AND tray are SVGs; their colours and sizes are plain attributes from content/ JSON
+  Proposed by: Claude (autonomous)   Options: tray as styled HTML tiles with game CSS variables / SVG
+  Chose: SVG — the tray draws seeds exactly like the board (real size), every number comes from garden.json/layout.json, and `npm run check:ui` can check src/game too (it rejects game CSS variables, so HTML tiles would have needed hard-coded sizes). game.css only arranges things
+D12 · 2026-09-30 · One store (Zustand) plans the turn; the engine only sees finished actions
+  Proposed by: Claude (autonomous)   Options: plan inside the engine (partial actions) / plan in the store
+  Chose: the store holds the planned move/cast and asks the engine for highlights (legalMoves/legalCasts/legalDraftHexes) and the preview; Cast sends one `turn` action when the seed lands
 D11 · 2026-09-30 · Illegal actions throw; checkAction gives the reason without throwing
   Proposed by: Claude (autonomous)   Options: throw / return a result type
   Chose: throw — the UI only offers legal options and asks checkAction first; the server wraps applyAction in try/catch
