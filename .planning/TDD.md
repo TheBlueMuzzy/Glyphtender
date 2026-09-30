@@ -2,13 +2,13 @@
 
 > How the game is built. Plain English first; code names in `backticks` only where they help.
 > Living document — /define writes it, /develop keeps it true, /tdd shows it.
-> Last updated: 2026-09-30 (sprint 04)
+> Last updated: 2026-09-30 (sprint 05 — online play)
 
 ## 1. At a glance
 - **Platforms:** web — phone browsers (portrait + landscape) and desktop. Installable PWA.
 - **Stack:** Vite + TypeScript + React, **2D SVG board (no Three.js)**, Zustand for screen state. Why: a flat hex board wants crisp, resizable, tappable shapes — SVG gives that for free, runs cool on phones, and every hex is a real element we can highlight and test.
-- **Where it runs online:** GitHub Pages (game) + PartyKit on Cloudflare (online rooms, from alpha's online milestone).
-- **Framework modules:** Game UI kit (Cozy, night colours) · Dev Kit · **rooms** (online; harvested from Roll Better during this game) · **ai** (beta; first AI module, built from the original's goal-selection model).
+- **Where it runs online:** GitHub Pages (game) + PartyKit on Cloudflare (online rooms, from alpha's online milestone). Built in sprint 05 and run **locally only** so far: `npm run party:dev` (PartyKit dev server on **port 1997** — `partykit.json`; Roll Better uses 1999) + `npm run dev`; `partykit` (dev dependency) + `partysocket` (the client's reconnecting WebSocket). Going live (`npm run party:deploy`) is Muzzy's call (/deliver).
+- **Framework modules:** Game UI kit 0.2.4 (Cozy, night colours) · Dev Kit · **rooms** 0.1.0 (online, `src/rooms/`; harvested from Roll Better during this game) · **ai** (beta; first AI module, built from the original's goal-selection model).
 - **Dev Kit tools used:** Console, Tuning, Color, **Snapshots** + **Bug capture** (kit 0.3.0, framework-first — F16/F17): the game plugs in through `src/devkit-game/glyphtenderAdapter.ts` (state = engine GameState + tray order; events = a line per placement/turn/refresh/phase/tangle/note); snapshots live in `content/snapshots/`, captures in `.planning/bugs/`. Later: Multiplayer (online milestone), AI (beta).
 
 ## 2. How it fits together
@@ -30,7 +30,7 @@ flowchart LR
 - **View** (`src/game/`, built in sprint 03) — `GameScreen` (layout shell), `Board` (SVG hexes, pieces, highlights, word outlines, grown glow), `useThrow` (the Cast story), `SeedTray` (SVG), `trayLayout` (real-size maths), `TurnBar`, `ActionBar`, `GameOver`, `usePieceInput` (tap-tap and drag share one Pointer Events hook, on the whole screen), `prompt`, `usePreview`, `useTuning`, `art`, `devHook` (dev only). Sprint 04: `Handoff` ("Pass to Blue"), `DangerCue` (thorny ring / vine), `Reveal` (the players' Magic chips in the tray's place + the reveal clock), `RevealMarks` (tangled glow + "+3" pops on the board), `GameOver` (the end table). Menus: `src/ui/NewGameScreen.tsx` + `newGame.ts` (choices remembered in localStorage), `menus.tsx` (Pause → Rules).
 - **Layout shell** (`src/game/GameScreen.tsx` + `game.css`) — chooses **stacked** (tall) or **side tray** (wide) from the *shape of the free space* (aspect ≥ 1.15 → stacked), not the device. Board SVG auto-fits its box; zoom (optional, with a Fit button) not built yet. Side layout: the right column is the tray's width (sidePanelShare × width). Sizes in `content/tuning/layout.json`.
 - **Menus/HUD** — UI kit screens only (MainMenu, Settings, Pause, HowToPlay = Rules, the new-game screen and end table built from kit Screen/Panel/ListRow/Stepper/Selector/Toggle, PlayerChip for the reveal, toasts). Board, tray and pieces are game components styled only with kit tokens.
-- **Online** (`party/server.ts`) — runs the *same engine*; server is the only one who knows the bag and every hand; each player is sent **their own view** (own seeds, others' seed counts, no Magic totals).
+- **Online** (`party/`, sprint 05) — `server.ts` is the rooms module's `RoomServer` with Glyphtender's plug-in `glyphtenderRules.ts`; it runs the *same engine*; the server is the only one who knows the bag, the rng and every hand (`serverGame.ts`); each player is sent **their own view** (`views.ts`: own seeds, others' as '?', no Magic until the end). On the device: `src/store/onlinePlay.ts` (views in, replays, my actions out) and `src/ui/online/` (session, join/create, lobby, the live connection).
 
 **Golden rules**
 - The engine never touches the screen or network; the screen never changes game state except by sending an action.
@@ -49,15 +49,28 @@ flowchart LR
 **Tangle danger** (`src/store/danger.ts`) — from the committed board with the engine's `legalMoves`: 1 move = warning (dashed "thorny" ring, owner's colour), 0 = tangled (a curly vine + leaves, the glyphling fades). Everyone's glyphlings; never during the draft; a held/planned glyphling shows its own ring instead.
 **The Magic reveal** (`src/store/revealPlan.ts`, pure + tested) — a list of steps from the finished game: tangles pulse → one bonus step per rival piece next to a tangled glyphling ("+3", same sum as the engine's tangle bonus) → one count step per player, lowest Magic first → winner. `revealAt` walks through them on timers (anim.json); Skip jumps to the end; reduce motion starts at the end; the end table opens when it finishes. Magic stays "?" on every chip until that player's count.
 **Dictionary — the official Glyphtender word list** is the original's `words.txt`, **copied byte-for-byte** (blob `3280512a`, identical on the original's main and festive-booth): 63,657 words (63,656 line breaks — the last word, ROMAN, has none after it; Zipf ≥5/4/3/2 = 1,000 / 6,342 / 21,805 / 43,997), 2–15 letters, each with a **Zipf score** (how common it is: THE 7.73 … rare words 0). How it was made: Muzzy chose TWL in the Python prototype (2025-12-14) → 63,612-word list (2025-12-17) → cleaned: abbreviations out, scoring fixes (12-21) → +218 missing words incl. 2-letter words (12-22) → roman numerals out + Zipf column added for AI difficulty (12-23). **Never edit it by hand in code** — it lives in `public/words/words.csv` (marked binary in `.gitattributes`; a test checks its SHA-256); changes are deliberate, logged commits. The game uses the words; the **AI uses the Zipf scores** (difficulty + personality vocabulary). Loaded once, async, into a `Map<word, zipf>`; ~250 KB gzipped.
-**Multiplayer** (alpha, online milestone) — server-authoritative, same engine. Messages (first draft): `join`, `seat`, `start` → server; `action` (draft / move+cast / refresh) → server validates via engine → `view` to each player; `rejoin`, `leave`, `rematch`. Identity/rejoin/host rules copied from Roll Better (persistentId owns the seat; leave via `useRoom.leave()`). Detail: [design/online.md](design/online.md) — who owns what, per-seat views, messages, seats/rejoin/host, turn timer + AFK, the rooms plug-in points, security, deploy, tests.
+**Multiplayer** (alpha, built in sprint 05) — server-authoritative, same engine. Design: [design/online.md](design/online.md). How it was built:
+- **Room** = the rooms module (`src/rooms/`, framework 0.1.0): codes, join/rejoin by persistentId, host + migration, ready/start, a bot takes a dropped/left/idle seat, empty-room clean-up; its own messages (`join`, `ready`, `start`, `leave`, `back_to_lobby`, `action` → `room`, `view`, `error`, `closed`).
+- **Glyphtender's messages** ride inside it (`party/protocol.ts`): player → `{ kind: 'play', action, version }` or `{ kind: 'sync' }`; server → a `GameView` `{ gameId, version, mySeat, names, change, by, game, turnEndsAt, results }`. `game` is GameState-shaped (the store, board, previews and danger cues work unchanged): other hands and the bag are '?' × count, rng + seed 0, every Magic zeroed until `phase: 'over'`; then `game` is the whole truth and `results.stats` the end table (gathered on the server).
+- **Server checks** (`glyphtenderRules.ts`): shape (the rooms checks helpers) → a seat in this game → its turn → `version` = the server's → the engine's `checkAction` → `applyAction`. Every refusal is a plain-English Error; the state is unchanged.
+- **The server's own turns** (`turnClock.ts`): a bot seat plays after `botTurnDelayMs`; the turn timer (host option, off by default) plays a turn on expiry and counts a missed turn. Both use the engine's greedy sim player and "keep all" on a refresh.
+- **Word list on the server**: bundled as text. esbuild has no .csv loader, so `scripts/server-words.mjs` copies `public/words/words.csv` → `party/words.gen.txt` (gitignored) before every build (`partykit.json` → `build.command`). Server bundle **915 KB minified / 293 KB gzipped** (Workers free limit: 3 MB gzipped).
+- **Device**: my seat plans exactly as pass-and-play; Cast posts at once and the throw flies; the view is applied when the seed lands (if it's late, it asks again every 3 s). Other seats' turns replay on the old view (glide → throw after `glideSeconds` → land → new view + sprout), queued in order. No handoff online. A reload goes straight back to the seat (room code in sessionStorage). Party host = `VITE_PARTY_HOST`, else the page's host + partykit.json's port.
+- **Screens**: main menu → Play online → name + Create / Join (kit Lobby) → lobby (kit Lobby + the host's options: Garden Auto/Small/Large, 2-letter words, Turn timer) → the game → end table (Play again = the host's rematch · New game = the host takes everyone to the lobby · Menu = leave). Connection lost → the kit's Reconnecting box.
+- **Tests**: `party/server.test.ts` (fake PartyKit + the real rooms module: whole games with every view checked for secrets; refusals; timer + bots) · `src/store/onlinePlay.test.ts` (the store against a fake room, incl. a whole game) · `npm run e2e:online` (two browsers + its own partykit dev on 1997 + Vite on 5311; every received WebSocket frame checked for secrets; reload, host drop, rejoin, reveal + end table on both).
 **Timers**
 | Timer | Length | Owned by | Starts when | On expiry |
 |---|---|---|---|---|
 | Handoff screen | none (tap to reveal); appears after growTime + wordGlowTime when a seed was thrown | client | turn passes to another local seat (and before turn 1) | — |
 | Grow animation | ~0.8 s (`content/tuning/anim.json`) | client | Cast committed | next turn shown |
 | Reveal steps | tangles 1.4 s · each +3 0.55 s · each count 1.5 s · winner 2.5 s (≈ 8 s for 2 players), skippable | client | game ends, after the last seed grows | next step; after the last → end table |
-| Online AFK | tbd (Roll Better: 2 auto-actions) | server | player's turn starts | alpha: skip/kick · beta: AI takes seat |
-| Rematch | 30 s | server | end screen | room closes |
+| Turn timer (online) | off by default; the host picks 60 / 90 / 120 s (`content/rooms.json` → turnTimerChoices) | server | a seat's turn starts (its refresh is the same turn) | the server plays a legal turn for them (greedy sim player, keep all) + 1 missed turn |
+| Idle → bot (online) | 2 missed turns in a row (`missedTurnsBeforeBot`) | server (rooms module) | the first missed turn | a bot takes the seat (alpha: the sim player · beta: an AI personality); a real move takes it back |
+| Dropped → bot (online) | 60 s (`botTakesOverAfterMs`) | server (rooms module) | a player's connection drops mid-game | a bot takes the seat; rejoining takes it back |
+| Bot turn (online) | 1.5 s (`botTurnDelayMs`) | server | it's a bot seat's turn | the bot plays (so the others can watch it) |
+| Waiting for my view (online) | 3 s, repeating | client | my action is sent | ask for the view again (`sync`); a same-version answer = the action was lost → the plan comes back |
+| Empty room (online) | 5 min (`keepEmptyRoomMs`) | server (rooms module) | the last player drops mid-game | the room is cleared (an empty lobby clears at once) |
+| Rematch (online) | none | — | results shown | the host's Play again / New game (the rooms module has no rematch vote) |
 
 ## 3. Data the game reads (editable by Muzzy — in Obsidian or the Dev Kit)
 | File | What's in it | Edited with |
@@ -71,6 +84,7 @@ flowchart LR
 | `content/ui/style.json` | UI kit look: Cozy preset + night colour tweaks (D09) — every menu/HUD colour, shadow, panel texture | Dev Kit → Color |
 | `content/ui/settings.json` | Settings screen rows (kit standard list; `"on": false` hides a row — language, account and placeholder links are off for now) | Obsidian |
 | `content/text/en.json` | every player-facing word — menu, new game (`newGame`), turn prompts, notes, buttons, pause, rules (3 pages), handoff, reveal, end table (`game` section) | Obsidian |
+| `content/rooms.json` | online rooms: seats 2–4, missed turns before a bot (2), dropped player → bot after (60 s), empty room kept (5 min), bots allowed (no) · Glyphtender: turn timer choices (the first = the default: 0 = off, then 60, 90, 120 s), bot turn delay (1.5 s). The server bundles it: a change needs a server rebuild | Obsidian |
 | `content/credits.json` | fonts, word list | organize-assets |
 
 ## 4. Standards
@@ -94,7 +108,8 @@ flowchart LR
 ## 6. Security & fairness
 - Online: clients only send *intentions*; the server's engine decides. Clients never receive other hands, the bag order or Magic totals — so a cheater can't read them.
 - Pass-and-play is on trust (it's one device).
-- Dev Kit tools that affect play (Snapshots restore, bag editing) are offline-only.
+- Dev Kit tools that affect play (Snapshots restore, bag editing) are offline-only: the adapter's `canRestore` is false in an online game and the dev hook's `playRest` / `playUntilDanger` do nothing (the server owns the game).
+- Online input checks: the rooms module refuses junk and messages over 16 KB; Glyphtender's checks refuse wrong shapes, other seats, stale versions and illegal moves. Names are trimmed to 16 characters. The persistentId (which owns a seat) is never sent to other players.
 - No secrets in the repo; `.env` gitignored.
 
 ## 7. Compliance & legal (general audience — not made for kids)
@@ -108,6 +123,33 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D31 · 2026-09-30 · Online end table: the host drives what's next
+  Proposed by: Claude (autonomous)   Options: everyone votes for a rematch (design §3) / the host decides
+  Chose: the host — the rooms module already lets the host start again (same seats) or go back to the lobby; others see "Waiting for the host…". A rematch vote can come later if friends want it
+D30 · 2026-09-30 · A reload goes straight back to the seat
+  Proposed by: Claude (autonomous)   Options: reload → menu, rejoin by code / remember the room for this tab
+  Chose: remember the room code in sessionStorage (per tab, gone when the tab closes); the persistentId gets the seat back. A NEW tab still joins by the code (tested)
+D29 · 2026-09-30 · Glyphtender's server port 1997 comes from partykit.json, passed to useRoom
+  Proposed by: Claude (autonomous)   Options: edit the kit's LOCAL_PARTY_PORT (1999) / pass the host in
+  Chose: pass `host` to useRoom (src/ui/online/session.ts partyHost) — the kit copy is never edited in the game
+D28 · 2026-09-30 · The host's table options sit in the lobby, under the players (UI kit 0.2.3: Lobby takes children)
+  Proposed by: Claude (autonomous)   Options: an options screen before Create / rows in the lobby (kit change)
+  Chose: rows in the lobby — the host sees who's there before picking the garden. Garden "Auto" = boards.json's default for however many sit down. Kit 0.2.4: the player list fills the card (a phone on its side still scrolls after ~1.5 rows — no room for more)
+D27 · 2026-09-30 · Turns the server plays use the engine's greedy sim player and "keep all"
+  Proposed by: Claude (autonomous)   Options: skip the turn / a random move / the greedy sim player
+  Chose: greedy (the rules say you must move and cast if you can; greedy makes a fair stand-in). Used for a bot seat (dropped 60 s, Leave, 2 missed turns — the rooms module's rules) and for the turn timer. Bot turns wait 1.5 s so others can watch. Beta: an AI personality
+D26 · 2026-09-30 · "Send me my view again" is a game action
+  Proposed by: Claude (autonomous)   Options: add a message to the rooms module / `{ kind: 'sync' }` inside `action`
+  Chose: a game action — onAction returns the state unchanged and the rooms module sends everyone their view (the others ignore it: same version). A sync answered with the SAME version while waiting means the server never got my action → the plan comes back to play again
+D25 · 2026-09-30 · Other players' turns come inside the view (lastTurn + who + version), not as separate events
+  Proposed by: Claude (autonomous)   Options: an event per turn + views / the view says what changed
+  Chose: the view — events arrive before views and would need matching up. useRoom keeps only the newest view, so one can occasionally be skipped: the store only replays when its old view is the moment before (their turn, the glyphling still on `from`); otherwise it just shows the new view (no animation, never wrong)
+D24 · 2026-09-30 · The server bundles the word list (a copy made before each build)
+  Proposed by: Claude (autonomous)   Options: fetch it from GitHub Pages / bundle it
+  Chose: bundle — measured 915 KB minified / 293 KB gzipped, ~10× under the Workers limit, and the server never depends on Pages. esbuild reads .txt as text but not .csv → scripts/server-words.mjs copies it to party/words.gen.txt (gitignored) via partykit.json build.command
+D23 · 2026-09-30 · Hidden seeds are '?' × count — for the bag too (the design said an empty bag + bagCount)
+  Proposed by: Claude (autonomous)   Options: an empty list + a count field / '?' in each hidden slot
+  Chose: '?' — the view stays exactly GameState-shaped, so every existing `bag.length` / hand-length check works unchanged, and it holds no more than the count. The random seed is zeroed too (seed + moves would rebuild the bag)
 D22 · 2026-09-30 · Danger cues read the committed board, not the planned move
   Proposed by: Claude (autonomous)   Options: follow the plan live / committed board only
   Chose: committed board — the cue is about the garden everyone can see; a planned move would make rivals' cues flicker while you try things. Everyone's glyphlings, never Magic
@@ -188,4 +230,5 @@ D01 · 2026-09-30 · One pure rules engine shared by client, server, AI and test
 - ~~Board readability on phones~~ — F01: 36–42 px hexes on phones. ~~Commit style~~ — F01: One Cast (D08).
 - **Word rule edge cases** (union rule) → table-driven tests from every example Muzzy gave.
 - **AI speed in a browser** (beta) → Web Worker + timing test.
-- **Online secrecy** — per-player views are new vs Roll Better (which showed everything) → design it in `design/online.md` before building.
+- ~~**Online secrecy**~~ — built (sprint 05): views hide it in the data; unit tests + the e2e check every view / every received frame.
+- **Server size** — 293 KB gzipped with the word list (limit 3 MB) — fine; re-measure if the AI (beta) moves onto the server.
