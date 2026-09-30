@@ -1,8 +1,10 @@
 // GLYPHTENDER'S DEV KIT ADAPTER — lets the Dev Kit's Snapshots and Bug capture tabs see the game.
 // Registered in src/devkit-game/tabs.ts, which only loads with the Dev Kit (so none of this ships at 1.0).
-//   getState:   the engine's GameState + the tray order the screen shows (everything else is the planned turn)
+//   getState:   the engine's GameState + the tray order the screen shows + the end table's stats + the table options
+//               (everything else is the planned turn)
 //   setState:   jumps the store to that game — the planned move / cast / flying seed are cleared (store.loadState),
-//               and any open menu (end table, Pause) is closed
+//               and any open menu (end table, Pause) is closed. Older snapshots without stats / options still restore
+//               (the stats start from nothing, the options stay as they are)
 //   canRestore: only offline — in an online game a restore would change play for the others (and this device only holds its own view)
 //   onEvent:    a short line each time the game moves on: a draft placement, a turn, a phase change, a tangle, a note
 // Reads and writes the store only through its public getState / setState / subscribe / loadState.
@@ -11,13 +13,18 @@ import type { DevKitGame } from '../devkit/devkitGame'
 import { getBoard } from '../engine/boards'
 import type { Hex } from '../engine/hex'
 import { SEAT_COLOURS, type GameState } from '../engine/types'
-import { useGameStore, type GameStore } from '../store/gameStore'
+import { useGameStore, type GameOptions, type GameStore } from '../store/gameStore'
+import type { PlayerStats } from '../store/stats'
 import { closeAllScreens } from '../ui/newGame'
 
 /** What a snapshot holds for Glyphtender. */
 export interface GlyphtenderMoment {
   game: GameState | null // null = on the main menu
   trayOrder: number[][]
+  /** The end table's numbers so far (best turn, longest word, words made). Missing in older snapshots. */
+  stats?: PlayerStats[]
+  /** The table options the game started with (Play again reuses them). Missing in older snapshots. */
+  options?: GameOptions | null
 }
 
 const seatName = (seat: number) => {
@@ -93,8 +100,8 @@ export const glyphtenderAdapter: DevKitGame = {
   version: `${versionFile.version}.${versionFile.build}`,
 
   getState: (): GlyphtenderMoment => {
-    const { game, trayOrder } = useGameStore.getState()
-    return { game, trayOrder }
+    const { game, trayOrder, stats, options } = useGameStore.getState()
+    return { game, trayOrder, stats, options }
   },
 
   setState: (state) => {
@@ -102,11 +109,12 @@ export const glyphtenderAdapter: DevKitGame = {
     const store = useGameStore.getState()
     closeAllScreens() // a menu from the moment we're leaving (the end table, Pause) would sit on top, stuck
     if (!state.game) return store.leaveGame()
-    store.loadState(state.game) // clears the planned move / cast / flying seed
+    const stats = state.stats?.length === state.game.config.players ? state.stats : undefined
+    store.loadState(state.game, stats) // clears the planned move / cast / flying seed
     // Keep the tray order the snapshot had, if it still fits the hands (loadState reset it to 1, 2, 3…)
     const fits = state.trayOrder?.length === state.game.hands.length &&
       state.trayOrder.every((order, seat) => order.length === state.game!.hands[seat].length)
-    useGameStore.setState({ landed: null, ...(fits ? { trayOrder: state.trayOrder } : {}) })
+    useGameStore.setState({ landed: null, ...(fits ? { trayOrder: state.trayOrder } : {}), ...(state.options ? { options: state.options } : {}) })
   },
 
   canRestore: () => useGameStore.getState().online === null, // online: never

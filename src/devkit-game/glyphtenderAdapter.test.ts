@@ -44,6 +44,26 @@ describe('glyphtenderAdapter', () => {
     expect(store().flying).toBe(false)
   })
 
+  it('B006: a snapshot carries the end table stats and the table options', () => {
+    store().startGame({ players: 2, seed: 7, minWordLength: 3, hideSeeds: false })
+    const stats = [{ bestTurn: 9, longestWord: 'GARDEN', wordsMade: 4 }, { bestTurn: 3, longestWord: 'AT', wordsMade: 1 }]
+    useGameStore.setState({ stats })
+    const options = store().options
+    const saved = JSON.parse(JSON.stringify(glyphtenderAdapter.getState())) as GlyphtenderMoment
+
+    store().startGame({ players: 2, seed: 99 }) // play on with other options and fresh stats
+    glyphtenderAdapter.setState(saved)
+    expect(store().stats).toEqual(stats)
+    expect(store().options).toEqual(options)
+  })
+
+  it('B006: an older snapshot without stats or options still restores', () => {
+    const old = { game: yellowToPlay(), trayOrder: [] }
+    glyphtenderAdapter.setState(old)
+    expect(store().game).toEqual(old.game)
+    expect(store().stats).toHaveLength(2)
+  })
+
   it('restoring the main menu leaves the game; junk is refused with a plain reason', () => {
     store().loadState(yellowToPlay())
     glyphtenderAdapter.setState({ game: null, trayOrder: [] })
