@@ -46,6 +46,7 @@
   2. Tap/drag a seed → hexes it can reach glow gold → tap/drop one: the seed sits there **faded** — targeted, not planted (tap it to take it back). **Undo** takes back the last step.
   3. **Cast** commits the turn — only then does the story play: the glyphling hops and **throws** the seed, it **arcs** to the target, lands, and the runeblossom **grows** out of the ground. Nothing can be touched while a seed is in the air.
   - Pinch/scroll zoom is optional; a Fit button snaps back.
+- **Seed tray size:** seeds in the tray are **real size — the same as a seed on the board** (Muzzy, 2026-09-30: "they were way too small on my desktop… they should be basically real size to how they'll look on the board"). Never smaller than a finger (44 px); if a phone can't fit 8 at board size, the tray wraps to 2 rows rather than shrinking.
 - **Piece states — one look for every piece** (glyphlings, seeds, tray): **options** = glowing hexes with a dot (teal move · gold cast) · **held** = solid ring in the player's colour · **planned** = pulsing halo at the hex edge in the player's colour (a targeted seed is also faded) · **done** = plain.
 - **Mechanics:**
 | Mechanic | What players end up doing → Target |
