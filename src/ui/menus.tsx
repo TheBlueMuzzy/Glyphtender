@@ -1,6 +1,6 @@
 // MENUS — the home page and the screens it opens, all built from the UI kit.
 // Words: content/text/en.json · settings rows: content/ui/settings.json · look: content/ui/style.json
-import { Credits, MainMenu, Pause, Settings, screens } from './kit'
+import { Credits, HowToPlay, MainMenu, Pause, Settings, screens } from './kit'
 import { GameOverScreen } from '../game/GameOver'
 import { leaveToMenu, openNewGame, playAgain } from './newGame'
 import text from '../../content/text/en.json'
@@ -40,10 +40,16 @@ export function CreditsScreen() {
   return <Credits people={text.credits.people} assets={credits} />
 }
 
-// PAUSE — the Menu button in the game: back to the garden, Settings, or leave (asks first).
+// PAUSE — the Menu button in the game: back to the garden, the Rules, Settings, or leave (asks first).
 export function PauseScreen() {
   const w = text.game.pause
-  return <Pause words={w} onSettings={() => screens.push('settings')} onQuit={leaveToMenu} />
+  return <Pause words={w} onHowToPlay={() => screens.push('rules')} onSettings={() => screens.push('settings')} onQuit={leaveToMenu} />
+}
+
+// RULES — a short how-to-play in three pages (words: en.json → game.rules), opened from Pause.
+export function RulesScreen() {
+  const { pages, ...words } = text.game.rules
+  return <HowToPlay pages={pages} words={words} />
 }
 
 // GAME OVER — the results over the tangled garden (src/game/GameOver.tsx).

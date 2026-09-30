@@ -4,11 +4,11 @@
 import { useGameStore } from './store/gameStore'
 import { GameScreen } from './game/GameScreen'
 import { ScreenStack, ToastStack, kitScreens } from './ui/kit'
-import { CreditsScreen, GameOverDialog, MainMenuScreen, PauseScreen, SettingsScreen } from './ui/menus'
+import { CreditsScreen, GameOverDialog, MainMenuScreen, PauseScreen, RulesScreen, SettingsScreen } from './ui/menus'
 import { playAgain } from './ui/newGame'
 import { NewGameScreen } from './ui/NewGameScreen'
 
-const menuScreens = { ...kitScreens, settings: SettingsScreen, credits: CreditsScreen, pause: PauseScreen, gameOver: GameOverDialog, newGame: NewGameScreen }
+const menuScreens = { ...kitScreens, settings: SettingsScreen, credits: CreditsScreen, pause: PauseScreen, gameOver: GameOverDialog, newGame: NewGameScreen, rules: RulesScreen }
 
 export default function App() {
   const inGame = useGameStore((s) => s.game !== null)
