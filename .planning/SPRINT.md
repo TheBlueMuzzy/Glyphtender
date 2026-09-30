@@ -30,5 +30,8 @@ Notes:
 - Measured hex width (task 9): phone portrait Small 42 px / Large 36 px · phone landscape 41 / 38 · desktop 97 / 89. Better than the 32–37 px predicted.
 - Found by the screenshot check: 8 seeds in one row don't fit a 390 px phone at finger size → portrait tray is 2 rows of 4 when needed (portrait has spare height anyway). Clipping check added to `npm run e2e:sketch`.
 - Found: you can cast back onto the hex your glyphling just left (it's empty) — that's where the ghost sits. With a seed selected the tap casts; otherwise it sends the glyphling back. Highlights draw above the ghost so it's visible. Real game: keep this rule, it's legal.
+- Muzzy on the sketch (2026-09-30): "this is close. it's better for sure" — **flow approved (One Cast)**; the *look* must sell the story: target the spot (seed looks ghosted) → on Cast the glyphling throws the seed, it arcs to the target, the runeblossom grows. Also: planned glyphling had no ring while the planned seed did → standardise.
+- Added: **design language** — options = glow + dot (teal move / gold cast) · held = solid ring in player colour · planned = pulsing halo at the hex edge in player colour (targeted seed also faded) · done = plain. Throw: glyphling hop → seed arcs (bezier, time = base + per-hex) → runeblossom sprouts with overshoot. All timings in `content/tuning/anim.json`, colours in `garden.json`. Input locked while a seed is in the air.
+- Halo sits at the hex edge (1.02), outside the art's own coloured frame — drawn on top of the frame it blended in.
 - /code-review skipped for the sketch (throwaway by design); runs on the real build from F04 on.
 - Live Pages link only updates at /deliver; sketch testing uses the Wi-Fi dev link.

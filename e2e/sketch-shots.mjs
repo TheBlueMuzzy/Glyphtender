@@ -35,11 +35,15 @@ for (const size of SIZES) {
     await page.screenshot({ path: `${OUT}/${size.name}-${board.toLowerCase()}-pending.png` })
     const castEnabled = await page.getByRole('button', { name: 'Cast', exact: true }).isEnabled()
     await tap(page.getByRole('button', { name: 'Cast', exact: true }))
+    await page.waitForTimeout(200)
+    await page.screenshot({ path: `${OUT}/${size.name}-${board.toLowerCase()}-throw.png` })
+    const planting = await page.locator('.prompt').textContent()
+    await page.waitForTimeout(1500) // seed lands, runeblossom grows
     const seedsOnBoard = await page.locator('.garden image[href*="runeblossoms"]').count()
     // Nothing may stick out past the screen edge (the tray used to clip on phones)
     const overflow = await page.evaluate(() => [...document.querySelectorAll('.seed, button')].some((el) => { const r = el.getBoundingClientRect(); return r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5 || r.left < -0.5 }))
     if (overflow) console.log('  clipped: something sticks out past the screen edge')
-    const ok = !overflow && moveDots > 0 && castDots > 0 && castEnabled && seedsOnBoard === 1
+    const ok = planting === 'Planting…' && !overflow && moveDots > 0 && castDots > 0 && castEnabled && seedsOnBoard === 1
     if (!ok) failures++
     console.log(`${ok ? 'ok  ' : 'FAIL'} ${size.name} ${board}: ${readout} · move options ${moveDots} · cast options ${castDots} · seeds after Cast ${seedsOnBoard}`)
   }

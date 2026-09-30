@@ -8,8 +8,9 @@ import boardsFile from '../../content/data/boards.json'
 import bagFile from '../../content/data/bag.json'
 import layoutFile from '../../content/tuning/layout.json'
 import gardenFile from '../../content/tuning/garden.json'
+import animFile from '../../content/tuning/anim.json'
 import { legalCasts, legalMoves, makeBag, type Colour, type Glyphling, type Seed } from './rules'
-import { GardenBoard, glyphlingArt, seedArt } from './GardenBoard'
+import { GardenBoard, glyphlingArt, seedArt, type Flight } from './GardenBoard'
 import './sketch.css'
 
 type BoardName = 'small' | 'large'
@@ -152,6 +153,24 @@ export function Sketch() {
   const act = useCallback((a: Action) => setS((prev) => reduce(prev, a)), [])
   const layout = useTuningState('layout', layoutFile)
   const colours = useTuningState('garden', gardenFile)
+  const timing = useTuningState('anim', animFile)
+  // After Cast: the glyphling throws the seed, it flies to the target, lands, and the runeblossom grows
+  const [flight, setFlight] = useState<Flight | null>(null)
+  const [sproutKey, setSproutKey] = useState<string | null>(null)
+  const castIt = () => {
+    if (!s.move || !s.cast || flight) return
+    const newLetter = bag.draw()
+    const target = hexKey(s.cast.hex)
+    setFlight({
+      glyphId: s.move.id, from: s.move.to, to: s.cast.hex, colour: s.activeColour,
+      onLanded: () => {
+        act({ type: 'commit', newLetter })
+        setFlight(null)
+        setSproutKey(target)
+        setTimeout(() => setSproutKey((k) => (k === target ? null : k)), timing.growTime * 1000 + 100)
+      },
+    })
+  }
   const [hexPx, setHexPx] = useState(0)
 
   // Layout by the SHAPE of the space, not the device: taller than `stackedAspect` → tray below, else beside
@@ -176,6 +195,7 @@ export function Sketch() {
   const lift = () => (drag.current?.touch ? layout.dragLift : 0)
 
   const onPointerDown = (e: React.PointerEvent) => {
+    if (flight) return // nothing to touch while a seed is in the air
     const t = e.target as Element
     drag.current = {
       glyph: t.closest('[data-glyph]')?.getAttribute('data-glyph') ?? undefined,
@@ -221,7 +241,7 @@ export function Sketch() {
   // ---- what to draw ----
   const board = BOARDS[s.boardName]
   const shownGlyphs = s.glyphlings.map((g) => ({ ...g, hex: posOf(s, g) }))
-  const shownSeeds = s.cast ? [...s.seeds, { hex: s.cast.hex, letter: s.trays[s.activeColour][s.cast.slot], colour: s.activeColour, pending: true }] : s.seeds
+  const shownSeeds = s.cast ? [...s.seeds, { hex: s.cast.hex, letter: s.trays[s.activeColour][s.cast.slot], colour: s.activeColour, planned: true }] : s.seeds
   const movingGlyph = s.move && s.glyphlings.find((g) => g.id === s.move!.id)
   const ghost = movingGlyph ? { hex: movingGlyph.hex, colour: movingGlyph.colour } : null
   const sel = s.selected
@@ -235,7 +255,7 @@ export function Sketch() {
     <div
       ref={rootRef}
       className={`sketch ${stacked ? 'stacked' : 'side'}`}
-      style={{ '--bg': colours.background, '--tile': `${tile}px`, '--panel': `${Math.round(layout.sidePanelShare * 100)}%`, '--tray-columns': trayColumns } as React.CSSProperties}
+      style={{ '--bg': colours.background, '--tile': `${tile}px`, '--panel': `${Math.round(layout.sidePanelShare * 100)}%`, '--tray-columns': trayColumns, '--player': colours[s.activeColour] } as React.CSSProperties}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -254,11 +274,12 @@ export function Sketch() {
 
       <div className="board-area">
         <GardenBoard board={board} glyphlings={shownGlyphs} seeds={shownSeeds} ghost={ghost} highlight={highlight}
-          selectedGlyph={sel && 'glyph' in sel ? sel.glyph : null} colours={colours} margin={layout.boardMargin} onHexSize={setHexPx} />
+          heldGlyph={sel && 'glyph' in sel ? sel.glyph : null} plannedGlyph={s.move?.id ?? null} flight={flight} sproutKey={sproutKey}
+          colours={colours} timing={timing} margin={layout.boardMargin} onHexSize={setHexPx} />
       </div>
 
       <section className="panel">
-        <p className="prompt" style={{ color: s.activeColour === 'yellow' ? '#f2c14e' : '#5fd4f2' }}>{prompt(s)}</p>
+        <p className="prompt">{flight ? 'Planting…' : prompt(s)}</p>
         <div className="tray">
           {s.trays[s.activeColour].map((letter, i) => {
             const cast = s.cast?.slot === i
@@ -271,10 +292,10 @@ export function Sketch() {
           })}
         </div>
         <div className="actions">
-          <button onClick={() => act({ type: 'undo' })} disabled={!s.cast && (!s.move || s.moveConfirmed)}>Undo</button>
+          <button onClick={() => act({ type: 'undo' })} disabled={!!flight || (!s.cast && (!s.move || s.moveConfirmed))}>Undo</button>
           {s.mode === 'confirmEach' && s.move && !s.moveConfirmed
             ? <button className="primary" onClick={() => act({ type: 'confirmMove' })}>Confirm move</button>
-            : <button className="primary" disabled={!s.cast} onClick={() => act({ type: 'commit', newLetter: bag.draw() })}>{commitLabel}</button>}
+            : <button className="primary" disabled={!s.cast || !!flight} onClick={castIt}>{commitLabel}</button>}
         </div>
       </section>
 

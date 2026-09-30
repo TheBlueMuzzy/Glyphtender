@@ -1,0 +1,30 @@
+{
+  "_help": {
+    "flightBase": "Seconds every thrown seed spends in the air, however short the throw.",
+    "flightPerHex": "Extra seconds in the air for each hex it travels.",
+    "arcHeight": "How high the seed arcs, as a share of the throw distance. 0 = flat.",
+    "seedSize": "Size of the flying seed, in hex sizes.",
+    "hopHeight": "How high the glyphling hops as it throws, in hex sizes.",
+    "hopTime": "How long the throwing hop takes, in seconds.",
+    "growTime": "How long the runeblossom takes to grow out of the ground, in seconds.",
+    "growFrom": "How small the runeblossom starts when it sprouts (0.1 = a tiny sprout, 1 = full size)."
+  },
+  "_ranges": {
+    "flightBase": [0.1, 1, 0.05],
+    "flightPerHex": [0, 0.15, 0.01],
+    "arcHeight": [0, 0.8, 0.05],
+    "seedSize": [0.1, 0.6, 0.02],
+    "hopHeight": [0, 0.6, 0.02],
+    "hopTime": [0.05, 0.5, 0.01],
+    "growTime": [0.1, 1.2, 0.05],
+    "growFrom": [0, 1, 0.05]
+  },
+  "flightBase": 0.3,
+  "flightPerHex": 0.05,
+  "arcHeight": 0.35,
+  "seedSize": 0.28,
+  "hopHeight": 0.25,
+  "hopTime": 0.18,
+  "growTime": 0.5,
+  "growFrom": 0.1
+}
