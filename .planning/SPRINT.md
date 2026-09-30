@@ -21,7 +21,7 @@ Done when: the real board (engine state) fills its box in both layouts with the 
 - [x] 🤖 8. Engine highlights (legalMoves / legalCasts), move, cast, undo + tap-again, "Cast · +N" from previewTurn (this move only), planned words outlined — store, Board, GameScreen
 - [x] 🤖 9. Throw + sprout on Cast (timings from anim.json), state commits on landing, grown words glow briefly — Board
 - [x] 🤖 10. Basic game over: kit dialog "The garden is tangled", each player's Magic, Play again — src/game/GameOver.tsx
-- [ ] 🤖 11. e2e: draft + turns + refresh + game over at 390×844, 844×390, 1440×900; nothing clipped; console clean — e2e/game-shots.mjs
+- [x] 🤖 11. e2e: draft + turns + refresh + game over at 390×844, 844×390, 1440×900; nothing clipped; console clean — e2e/game-shots.mjs
 - [ ] 🙋 12. Play a 2-player game on phone + desktop; also look at the night menus (from Sprint 02) and tweak colours in Dev Kit → Color if wanted
 Check: `npm test`, build, check:ui, check:devkit, e2e green; screenshots look right to Claude first.
 
@@ -44,3 +44,5 @@ Notes:
 - Dev only: `window.__glyphtender` (src/game/devHook.ts, never in a release build) — the e2e uses it to peek at the store, to pick a word-making cast, and to fast-forward to the end with the engine's random player.
 - Ask Muzzy: the turn bar shows the player's glyphling portrait + the prompt, with "Yellow's turn" underneath (the kit has no player-coloured text) — OK, or would you rather have the name in the prompt ("Yellow — move a glyphling")? Words are all in content/text/en.json → game.
 - Ask Muzzy: the results use the kit's Results list (1st / 2nd, ★ winner). Fine for now? (The staged reveal is F13.)
+- Task 11: `npm run e2e:game [outDir] [port]` (e2e/game-shots.mjs) starts its OWN Vite server (default port 5188 — never 5180) and closes only that one. At 390×844, 844×390 and 1440×900 it plays: Play → draft (1 drag + 3 taps) → turn 1 by taps → turn 2 by drags (a real finger drag with the lift on phones, the mouse on desktop) → tray reorder by drag + Shuffle → turn 3 Undo ×2 → keeps playing until it has seen a word grow (outlines, throw, glow) and a refresh → fast-forward to the end → Results → Play again → Menu → Leave game → main menu. Every shot checks: nothing past a screen edge, buttons ≥ 44 px, tray seed ≥ board hex (or ≥ 44), no console errors. All pass.
+- Screens look (Claude): phone tall — board fills the width (42 px hexes), tray 2×4 at 44 px at the bottom, turn bar on top; a band of empty night between board and tray (the board is width-limited). Phone wide — board left (41 px hexes), side column: portrait + Menu, prompt under them, tray 2×4, buttons (Cast drops to its own line). Desktop — board 96 px hexes, tray 2×4 at 96 px in the right column; the turn bar sits at the top of that column with empty space above the tray.

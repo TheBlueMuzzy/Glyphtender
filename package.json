@@ -13,6 +13,7 @@
     "check:ui": "node src/ui/kit/check-ui.mjs src/ui src/game --css src",
     "e2e:sketch": "node e2e/sketch-shots.mjs",
     "e2e:menu": "node e2e/menu-shots.mjs",
+    "e2e:game": "node e2e/game-shots.mjs",
     "sim": "node scripts/sim.mjs"
   },
   "dependencies": {
