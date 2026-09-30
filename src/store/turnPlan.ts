@@ -39,11 +39,15 @@ export function mayMoveOnly(game: GameState, move: PlannedMove | null): boolean 
   return game.hands[game.current].length === 0 || castOptions(game, move).length === 0
 }
 
-/** The glowing hexes for what's held right now (draft: every legal spot glows, nothing to hold). */
+/**
+ * The glowing hexes right now. Draft: every legal spot (nothing to hold). Holding a glyphling: where it can move.
+ * Otherwise, once a move is planned: where the moved glyphling can cast — straight away, before a seed is picked,
+ * and still while a seed is held or aimed (GDD §4 feel notes: "cast ranges show right after the move").
+ */
 export function highlightFor(game: GameState, move: PlannedMove | null, selected: Selection): Highlight | null {
   if (game.phase === 'draft') return { hexes: legalDraftHexes(game), kind: 'move' }
-  if (game.phase !== 'play' || !selected) return null
-  if (selected.kind === 'glyphling') return { hexes: legalMoves(game, selected.id), kind: 'move' }
+  if (game.phase !== 'play') return null
+  if (selected?.kind === 'glyphling') return { hexes: legalMoves(game, selected.id), kind: 'move' }
   return move ? { hexes: castOptions(game, move), kind: 'cast' } : null
 }
 

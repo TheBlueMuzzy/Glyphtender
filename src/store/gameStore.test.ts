@@ -3,7 +3,7 @@ import { hexAt, position, wordsOf } from '../engine/testkit'
 import { hexKey } from '../engine/hex'
 import { legalDraftHexes } from '../engine/engine'
 import { useGameStore } from './gameStore'
-import { moveInOrder, reconcileOrder, shuffled } from './turnPlan'
+import { castOptions, highlightFor, moveInOrder, reconcileOrder, shuffled } from './turnPlan'
 
 const store = () => useGameStore.getState()
 const words = wordsOf('AT', 'TA')
@@ -98,6 +98,41 @@ describe('game store — planning a turn (One Cast + undo)', () => {
     expect(store().move).not.toBeNull()
     store().tapHex(hexAt('C6-7')) // the ghost
     expect(store().move).toBeNull()
+  })
+
+  it('gold cast ranges show as soon as the move is planned — before a seed is picked, while aiming, and after Undo of the cast', () => {
+    yellowToPlay()
+    const lit = () => { const s = store(); return highlightFor(s.game!, s.move, s.selected) }
+    expect(lit()).toBeNull() // nothing held, nothing planned
+    store().tapGlyphling(0)
+    expect(lit()?.kind).toBe('move')
+    store().tapHex(hexAt('C6-6'))
+    const gold = castOptions(store().game!, store().move)
+    expect(gold.length).toBeGreaterThan(0)
+    expect(lit()).toEqual({ kind: 'cast', hexes: gold }) // no seed picked yet
+    store().tapSeed(0)
+    expect(lit()).toEqual({ kind: 'cast', hexes: gold })
+    store().tapHex(hexAt('C6-4'))
+    expect(lit()).toEqual({ kind: 'cast', hexes: gold }) // aimed: the other choices stay lit
+    store().undo()
+    expect(lit()).toEqual({ kind: 'cast', hexes: gold })
+    store().tapGlyphling(0) // re-pick the moved glyphling: its move options again
+    expect(lit()?.kind).toBe('move')
+    store().tapGlyphling(0)
+    expect(lit()).toEqual({ kind: 'cast', hexes: gold })
+    store().undo()
+    expect(lit()).toBeNull()
+  })
+
+  it('an aimed seed moves to another gold hex with one tap', () => {
+    yellowToPlay()
+    store().tapGlyphling(0)
+    store().tapHex(hexAt('C6-6'))
+    store().tapSeed(0)
+    store().tapHex(hexAt('C6-4'))
+    const other = castOptions(store().game!, store().move).find((h) => hexKey(h) !== hexKey(hexAt('C6-4')))!
+    store().tapHex(other)
+    expect(store().cast).toEqual({ seed: 0, target: other })
   })
 
   it('the game itself never changes while planning', () => {

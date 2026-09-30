@@ -271,6 +271,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
         return set({ cast: { seed: selected.index, target: hex }, selected: null, note: null })
       }
       if (cast && sameHex(cast.target, hex)) return set({ cast: null, note: null }) // the seed goes back to the tray
+      if (cast && !selected && hexIn(castOptions(game, move), hex)) return set({ cast: { ...cast, target: hex }, note: null }) // aim it elsewhere
       const origin = move && game.glyphlings.find((g) => g.id === move.glyphling)?.hex
       if (origin && sameHex(origin, hex)) return set({ ...noPlan() }) // tapped the ghost: the glyphling goes back
       set({ selected: null })
