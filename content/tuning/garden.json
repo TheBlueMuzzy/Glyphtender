@@ -24,7 +24,10 @@
     "vineWidth": "Thickness of that vine, in hex sizes.",
     "tangledDim": "How faded a tangled glyphling looks under its vine. 1 = not faded.",
     "revealPop": "Colour of the \"+3\" tangle bonuses that pop up at the end.",
-    "revealPopSize": "Size of the \"+3\" text, in hex sizes."
+    "revealPopSize": "Size of the \"+3\" text, in hex sizes.",
+    "scorePop": "Colour of the score pops (\"+1\", \"+2\" over each seed of a made word, and the turn's total).",
+    "scorePopSize": "Size of each seed's \"+1\" / \"+2\", in hex sizes.",
+    "scoreTotalSize": "Size of the turn's total (\"+6\") over the glyphling that cast, in hex sizes."
   },
   "_ranges": {
     "hexLineWidth": [
@@ -86,6 +89,16 @@
       0.3,
       1,
       0.05
+    ],
+    "scorePopSize": [
+      0.3,
+      1,
+      0.05
+    ],
+    "scoreTotalSize": [
+      0.5,
+      1.6,
+      0.05
     ]
   },
   "background": "#10162a",
@@ -112,5 +125,8 @@
   "vineWidth": 0.08,
   "tangledDim": 0.6,
   "revealPop": "#fff3c4",
-  "revealPopSize": 0.8
+  "revealPopSize": 0.8,
+  "scorePop": "#fff3c4",
+  "scorePopSize": 0.55,
+  "scoreTotalSize": 1
 }

@@ -1,7 +1,7 @@
 // The one door into the rules: applyAction(state, action, words) → the next state.
 // It never changes the state it's given. Illegal actions throw an Error saying why
 // (checkAction gives the same reason without throwing, for the UI).
-// Also for the UI: legalDraftHexes, legalMoves, legalCasts, previewTurn (re-exported below).
+// Also for the UI: legalDraftHexes, legalMoves, legalCasts, previewTurn, seedMagic (re-exported below).
 import { applyDraft, checkDraft } from './draft'
 import { applyRefresh, checkRefresh } from './refresh'
 import { applyTurn, checkTurn } from './turn'
@@ -37,5 +37,5 @@ export function applyAction(state: GameState, action: Action, words: WordList): 
 
 export { legalDraftHexes } from './draft'
 export { legalMoves, legalCasts } from './moves'
-export { previewTurn } from './turn'
+export { previewTurn, seedMagic } from './turn'
 export { newGame } from './setup'

@@ -1,11 +1,13 @@
 // PASS THE DEVICE — between two players on one device, when "hide seeds" is on: "Pass to Blue" in Blue's
 // colour, over the garden (still visible, dimmed). The tray stays hidden until Blue taps "Show my seeds".
 // The store decides WHEN (store.handoff — after the draft, and whenever play passes to another local player,
-// after any refresh). This screen only waits for a thrown seed to finish growing, so everyone sees the move.
+// after any refresh). This screen only waits for a thrown seed to finish growing (and its score pops to finish),
+// so everyone sees the move.
 // Kit parts only: Screen (dialog = dims what's under it), Panel, Avatar, Text, Button.
 import { useEffect, useState, type CSSProperties } from 'react'
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
+import { landingSeconds } from '../store/wordMarks'
 import { Avatar, Button, Panel, Screen, Text, fill, reduceMotion } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
 import { playerName } from './prompt'
@@ -20,11 +22,17 @@ export function Handoff({ stacked }: { stacked: boolean }) {
   const timing = useAnimTuning()
   const colours = useGardenTuning()
 
-  // After a throw, wait until the runeblossom has grown and its words have glowed
+  // After a throw, wait until the runeblossom has grown and its words' border and score pops are done
+  // (reduce motion: just long enough to read the turn's total, if it shows)
   const [ready, setReady] = useState<typeof handoff>(null)
   useEffect(() => {
     if (!handoff) return
-    const wait = handoff.afterGrow && !reduceMotion() ? (timing.growTime + timing.wordGlowTime) * 1000 : 0
+    const { game, options } = useGameStore.getState()
+    const pops = (options?.wordIndicators ?? true) && (game?.lastTurn?.words.length ?? 0) > 0
+    const seconds = !game || !handoff.afterGrow ? 0
+      : reduceMotion() ? (pops ? timing.scoreTotalHold : 0)
+      : landingSeconds(game, pops, timing)
+    const wait = seconds * 1000
     const timer = setTimeout(() => setReady(handoff), wait)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps

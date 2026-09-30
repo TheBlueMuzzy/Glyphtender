@@ -21,6 +21,7 @@ import { colourOf, glyphlingArt, seedArt } from './art'
 import { DangerCue } from './DangerCue'
 import { RevealMarks } from './RevealMarks'
 import { useGlide } from './useGlide'
+import { ScorePops } from './ScorePops'
 import { WordBorders } from './WordBorders'
 import { uniqueHexes } from '../store/wordMarks'
 import { usePreview } from './usePreview'
@@ -104,6 +105,9 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
   // Word indicators off: nothing shows which seeds make a word (players spot words themselves)
   const outlined = indicators && !flying ? uniqueHexes(preview?.words.flatMap((w) => w.hexes) ?? []) : []
   const grown = indicators && landed && game.lastTurn ? uniqueHexes(game.lastTurn.words.flatMap((w) => w.hexes)) : []
+  // The score pops belong to the seed that just landed (its turn grew words)
+  const turn = game.lastTurn
+  const pops = indicators && landed && turn?.target && hexKey(turn.target) === landed.key && turn.words.length > 0 ? turn : null
   const s = colours.pieceScale
   const at = (h: Hex) => hexToPixel(h, HEX)
 
@@ -179,6 +183,8 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
           </g>
         )
       })}
+
+      {pops && <ScorePops key={`pops-${landed?.count}`} game={game} turn={pops} colours={colours} timing={timing} />}
 
       {game.phase === 'over' && <RevealMarks game={game} steps={reveal} at={revealAt} colours={colours} timing={timing} />}
 

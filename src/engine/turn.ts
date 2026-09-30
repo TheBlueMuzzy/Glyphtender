@@ -41,12 +41,14 @@ export function moveAndCast(state: GameState, action: TurnAction): GameState {
   return { ...state, glyphlings, hands, seeds }
 }
 
+/** The Magic one seed adds to a word `seat` made: 1, + ownershipBonus when it's that player's own seed. */
+export function seedMagic(state: GameState, hex: Hex, seat: number): number {
+  return 1 + (state.seeds[hexKey(hex)]?.seat === seat ? state.config.rules.ownershipBonus : 0)
+}
+
 /** The Magic each word makes: its seeds + ownershipBonus for each of the caster's own seeds in it. */
 export function magicFor(state: GameState, found: FoundWord[], seat: number): MadeWord[] {
-  return found.map((w) => {
-    const own = w.hexes.filter((h) => state.seeds[hexKey(h)]?.seat === seat).length
-    return { word: w.word, hexes: w.hexes, magic: w.hexes.length + state.config.rules.ownershipBonus * own }
-  })
+  return found.map((w) => ({ word: w.word, hexes: w.hexes, magic: w.hexes.reduce((sum, h) => sum + seedMagic(state, h, seat), 0) }))
 }
 
 /** What a turn would make, without playing it — for the "Cast · +N" button. Throws if the turn is illegal. */

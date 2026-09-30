@@ -17,7 +17,15 @@
     "revealPopTime": "How long one \"+3\" takes to pop in (grow past full size and settle), in seconds.",
     "moveBase": "Seconds every glyphling move takes to glide to its new hex, however short the move.",
     "movePerHex": "Extra seconds of gliding for each hex the glyphling travels.",
-    "moveSettle": "How far a gliding glyphling slides past its new hex before settling back, in hex sizes. 0 = no bounce."
+    "moveSettle": "How far a gliding glyphling slides past its new hex before settling back, in hex sizes. 0 = no bounce.",
+    "scorePopDelay": "Score pops (word indicators on): seconds after a seed lands before its words' seeds start popping their Magic.",
+    "scorePopGap": "Score pops: seconds between one seed's pop and the next (they ripple along the word).",
+    "scoreWordGap": "Score pops: extra seconds before the next word's seeds pop, when a cast makes more than one word.",
+    "scorePopTime": "Score pops: how long one \"+1\" / \"+2\" takes to pop in (grow past full size and settle), in seconds.",
+    "scorePopHold": "Score pops: how long all the pops stay above their seeds before flying together, in seconds.",
+    "scoreFlyTime": "Score pops: how long the pops take to fly into the total over the glyphling that cast, in seconds.",
+    "scoreTotalHold": "Score pops: how long the turn's total (\"+6\") stays over the glyphling that cast, in seconds. With reduce motion only this total shows.",
+    "scoreTotalFade": "Score pops: how long the total takes to fade away, in seconds."
   },
   "_ranges": {
     "flightBase": [
@@ -109,6 +117,46 @@
       0,
       0.3,
       0.01
+    ],
+    "scorePopDelay": [
+      0,
+      1,
+      0.05
+    ],
+    "scorePopGap": [
+      0,
+      0.3,
+      0.01
+    ],
+    "scoreWordGap": [
+      0,
+      0.6,
+      0.05
+    ],
+    "scorePopTime": [
+      0.1,
+      1,
+      0.05
+    ],
+    "scorePopHold": [
+      0,
+      1.5,
+      0.05
+    ],
+    "scoreFlyTime": [
+      0.1,
+      1.2,
+      0.05
+    ],
+    "scoreTotalHold": [
+      0.2,
+      3,
+      0.1
+    ],
+    "scoreTotalFade": [
+      0.1,
+      1.5,
+      0.05
     ]
   },
   "flightBase": 0.3,
@@ -128,5 +176,13 @@
   "revealPopTime": 0.4,
   "moveBase": 0.15,
   "movePerHex": 0.04,
-  "moveSettle": 0.06
+  "moveSettle": 0.06,
+  "scorePopDelay": 0.25,
+  "scorePopGap": 0.08,
+  "scoreWordGap": 0.15,
+  "scorePopTime": 0.3,
+  "scorePopHold": 0.4,
+  "scoreFlyTime": 0.45,
+  "scoreTotalHold": 1,
+  "scoreTotalFade": 0.4
 }

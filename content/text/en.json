@@ -44,6 +44,7 @@
       "wordsFailed": "Couldn't load the words — tap Retry",
       "problem": "That can't be done — try again"
     },
+    "scorePop": "+{n}",
     "buttons": {
       "undo": "Undo",
       "cast": "Cast",

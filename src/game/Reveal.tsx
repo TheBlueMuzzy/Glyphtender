@@ -9,6 +9,7 @@ import { useEffect, useMemo } from 'react'
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { revealSteps, revealView, stepSeconds } from '../store/revealPlan'
+import { landingSeconds } from '../store/wordMarks'
 import { Grid, PlayerChip, fill, reduceMotion, screens } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
 import { playerName } from './prompt'
@@ -27,11 +28,12 @@ export function RevealPanel({ compact }: { compact: boolean }) {
   const steps = useMemo(() => revealSteps(game), [game])
   const end = steps.length
 
-  // Start once the last runeblossom has grown (reduce motion: straight to the end)
+  // Start once the last runeblossom has grown and its score pops are done (reduce motion: straight to the end)
+  const pops = useGameStore((s) => s.options?.wordIndicators ?? true)
   useEffect(() => {
     if (revealAt !== null) return
     const quick = reduceMotion()
-    const timer = setTimeout(() => setRevealAt(quick ? end : 0), quick ? 0 : (timing.growTime + timing.wordGlowTime) * 1000)
+    const timer = setTimeout(() => setRevealAt(quick ? end : 0), quick ? 0 : landingSeconds(game, pops, timing) * 1000)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealAt, end])
