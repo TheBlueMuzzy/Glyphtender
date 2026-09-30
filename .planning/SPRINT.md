@@ -13,7 +13,7 @@ Check: `npm test`; `npm run sim` prints game lengths + how often the bag runs ou
 ## F05 🧱 Official word list + word finder
 Done when: the original's words.txt is in the game byte-for-byte and every scoring example from the digest passes.
 - [x] 🤖 5. Copy words.txt unchanged → public/words/words.csv; loader → Map<word, zipf>; test the Zipf tier counts — src/engine/words.ts
-- [ ] 🤖 6. Word finder on the 3 leylines: reading direction, min length, Qu, union rule (GARDENING/DEN, SEAL+LEAP/ALE, HELP+PEA) — src/engine/words.ts
+- [x] 🤖 6. Word finder on the 3 leylines: reading direction, min length, Qu, union rule (GARDENING/DEN, SEAL+LEAP/ALE, HELP+PEA) — src/engine/words.ts
 
 ## F06 🧱 Magic + draw / refresh
 - [ ] 🤖 7. Magic = seeds + 1 per own seed; shared letters count per word; made Magic → draw 1 — src/engine/turn.ts
