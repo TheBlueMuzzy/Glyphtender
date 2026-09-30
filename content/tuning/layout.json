@@ -1,8 +1,8 @@
 {
   "_help": {
     "stackedAspect": "Screen shape that switches layouts: when the free space is this many times taller than wide (or more), the seed tray goes BELOW the board; otherwise it goes BESIDE it. 1.15 = slightly taller than square.",
-    "trayTileMax": "Biggest a seed in the tray can get, in pixels.",
-    "trayTileMin": "Smallest a seed in the tray can get, in pixels (44 = comfortable finger size).",
+    "trayTileMin": "Smallest a seed in the tray can get, in pixels (44 = comfortable finger size). Tray seeds are REAL SIZE — the same width as a hex on the board — and never smaller than this. If 8 don't fit in a row they wrap to 2 rows of 4 before they shrink.",
+    "trayGap": "Space between seeds in the tray, in pixels.",
     "sidePanelShare": "In the side-by-side layout, how much of the width the tray panel takes (0.3 = 30%).",
     "boardMargin": "Empty space around the board, in hex sizes.",
     "dragLift": "When dragging with a finger, how far above your finger the piece floats (pixels), so your finger doesn't hide it.",
@@ -10,16 +10,16 @@
   },
   "_ranges": {
     "stackedAspect": [0.8, 2, 0.05],
-    "trayTileMax": [40, 110, 2],
     "trayTileMin": [32, 64, 2],
+    "trayGap": [0, 20, 1],
     "sidePanelShare": [0.2, 0.45, 0.01],
     "boardMargin": [0, 1.5, 0.05],
     "dragLift": [0, 120, 4],
     "dragStartDistance": [2, 24, 1]
   },
   "stackedAspect": 1.15,
-  "trayTileMax": 64,
   "trayTileMin": 44,
+  "trayGap": 6,
   "sidePanelShare": 0.3,
   "boardMargin": 0.35,
   "dragLift": 56,

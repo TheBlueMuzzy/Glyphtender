@@ -5,7 +5,7 @@ What Muzzy will see change: a **Play** button on the menu → a real game on the
 
 ## F07 🧱 Board view + layout shell
 Done when: the real board (engine state) fills its box in both layouts with the F01 look; whose turn and what to do is always visible.
-- [ ] 🤖 1. Game store: engine state, official word list loaded once, planned move/cast, selection, undo — src/store/gameStore.ts (+ test)
+- [x] 🤖 1. Game store: engine state, official word list loaded once, planned move/cast, selection, undo — src/store/gameStore.ts (+ test)
 - [ ] 🤖 2. Board from the sketch, cleaned: SVG auto-fit, piece-state language (options / held / planned halo / done), ghost — src/game/Board.tsx
 - [ ] 🤖 3. Layout shell by screen shape + turn bar (player colour, prompt) — src/game/GameScreen.tsx
 - [ ] 🤖 4. Main menu "Play" → 2 players, Small board (until F14's new-game screen) — src/ui/menus.tsx
@@ -28,3 +28,5 @@ Check: `npm test`, build, check:ui, check:devkit, e2e green; screenshots look ri
 Ask Muzzy:
 Notes:
 - Tray seeds are real size (Muzzy 2026-09-30) — GDD §4 "Seed tray size".
+- Task 1: store = `src/store/gameStore.ts` (Zustand) + pure helpers `src/store/turnPlan.ts`. The store never changes the game except by sending an engine action (checkAction first). Tray order is the screen's own (a list of hand indexes per seat) — the rules don't care; after a turn/refresh survivors keep their place and new seeds go last. The draft and refresh don't wait for the word list; only Cast does.
+- Tuning: `layout.json` trayTileMax removed (tray = real size now), trayGap added; `garden.json` + purple/pink, wordOutlineWidth, grownGlowStrength; `anim.json` + pulseTime, wordGlowTime. The sketch's one use of trayTileMax became a plain 64 so it keeps its look.

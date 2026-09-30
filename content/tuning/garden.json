@@ -11,7 +11,11 @@
     "ghostOpacity": "How visible the faded glyphling left where it started (tap it to send the glyphling back).",
     "yellow": "Yellow player's colour — used for their 'held' and 'planned' rings and their thrown seed.",
     "blue": "Blue player's colour — same uses as yellow.",
-    "plannedSeedOpacity": "How faded a targeted (not yet thrown) seed looks. 1 = solid."
+    "plannedSeedOpacity": "How faded a targeted (not yet thrown) seed looks. 1 = solid.",
+    "purple": "Purple player colour — same uses as yellow.",
+    "pink": "Pink player colour — same uses as yellow.",
+    "wordOutlineWidth": "Thickness of the outline around the words a planned cast would make, in hex sizes.",
+    "grownGlowStrength": "How bright the words that just grew glow for a moment after the seed lands. 0 = no glow."
   },
   "_ranges": {
     "hexLineWidth": [
@@ -38,6 +42,16 @@
       0.1,
       1,
       0.05
+    ],
+    "wordOutlineWidth": [
+      0.02,
+      0.2,
+      0.01
+    ],
+    "grownGlowStrength": [
+      0,
+      1,
+      0.05
     ]
   },
   "background": "#10162a",
@@ -51,5 +65,9 @@
   "ghostOpacity": 0.3,
   "yellow": "#f2c14e",
   "blue": "#5fd4f2",
-  "plannedSeedOpacity": 0.45
+  "plannedSeedOpacity": 0.45,
+  "purple": "#b48cf2",
+  "pink": "#f28cc4",
+  "wordOutlineWidth": 0.07,
+  "grownGlowStrength": 0.6
 }

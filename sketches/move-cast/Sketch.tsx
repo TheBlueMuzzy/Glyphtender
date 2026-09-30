@@ -183,7 +183,7 @@ export function Sketch() {
     return () => ro.disconnect()
   }, [])
   const stacked = box.h / box.w >= layout.stackedAspect
-  const clamp = (v: number) => Math.max(layout.trayTileMin, Math.min(layout.trayTileMax, Math.floor(v)))
+  const clamp = (v: number) => Math.max(layout.trayTileMin, Math.min(64, Math.floor(v))) // 64 = the old layout.trayTileMax — removed from content in Sprint 03; the sketch keeps its look
   // Tray: one row of 8 if they fit at a comfortable finger size, else 2 rows of 4 (portrait phones have spare height)
   const oneRow = (box.w - 16 - 7 * 6) / 8
   const trayColumns = stacked && oneRow >= layout.trayTileMin ? 8 : 4
