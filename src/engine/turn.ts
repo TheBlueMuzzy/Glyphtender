@@ -2,7 +2,8 @@
 import { hexKey, type Hex } from './hex'
 import { findGlyphling, includesHex, legalCasts, legalMoves } from './moves'
 import { endTurn } from './tangle'
-import type { GameState, TurnSummary, WordList } from './types'
+import { findWords, type FoundWord } from './wordFinder'
+import type { GameState, MadeWord, TurnSummary, WordList } from './types'
 
 export type TurnAction = { type: 'turn'; glyphling: number; to: Hex; seed: number | null; target: Hex | null }
 
@@ -40,21 +41,44 @@ export function moveAndCast(state: GameState, action: TurnAction): GameState {
   return { ...state, glyphlings, hands, seeds }
 }
 
-/** Plays a whole turn and passes play to the next seat. */
-export function applyTurn(state: GameState, action: TurnAction, _words: WordList): GameState {
+/** The Magic each word makes: its seeds + ownershipBonus for each of the caster's own seeds in it. */
+export function magicFor(state: GameState, found: FoundWord[], seat: number): MadeWord[] {
+  return found.map((w) => {
+    const own = w.hexes.filter((h) => state.seeds[hexKey(h)]?.seat === seat).length
+    return { word: w.word, hexes: w.hexes, magic: w.hexes.length + state.config.rules.ownershipBonus * own }
+  })
+}
+
+/** What a turn would make, without playing it — for the "Cast · +N" button. Throws if the turn is illegal. */
+export function previewTurn(state: GameState, action: TurnAction, words: WordList): { words: MadeWord[]; magic: number } {
+  const after = moveAndCast(state, action)
+  if (!action.target || action.seed === null) return { words: [], magic: 0 }
+  const made = magicFor(after, findWords(after, action.target, words), state.current)
+  return { words: made, magic: made.reduce((sum, w) => sum + w.magic, 0) }
+}
+
+/** Plays a whole turn: move, cast, grow words into Magic, draw, and pass play on. */
+export function applyTurn(state: GameState, action: TurnAction, words: WordList): GameState {
   const after = moveAndCast(state, action) // throws if the turn is illegal
-  const from = findGlyphling(state, action.glyphling).hex
-  const letter = action.seed === null ? null : state.hands[state.current][action.seed]
+  const seat = state.current
+  const preview = previewTurn(state, action, words)
   const lastTurn: TurnSummary = {
-    seat: state.current,
+    seat,
     glyphlingId: action.glyphling,
-    from: { ...from },
+    from: { ...findGlyphling(state, action.glyphling).hex },
     to: { ...action.to },
-    letter,
+    letter: action.seed === null ? null : state.hands[seat][action.seed],
     target: action.target ? { ...action.target } : null,
-    words: [],
-    magic: 0,
+    words: preview.words,
+    magic: preview.magic,
     drew: 0,
   }
-  return endTurn({ ...after, lastTurn })
+  const magic = after.magic.map((m, s) => (s === seat ? m + preview.magic : m))
+  if (preview.words.length > 0) {
+    // Made Magic → draw 1 seed (if the bag isn't empty).
+    const drawn = after.bag.slice(0, 1)
+    const hands = after.hands.map((h, s) => (s === seat ? [...h, ...drawn] : h))
+    return endTurn({ ...after, magic, hands, bag: after.bag.slice(drawn.length), lastTurn: { ...lastTurn, drew: drawn.length } })
+  }
+  return endTurn({ ...after, magic, lastTurn })
 }

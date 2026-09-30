@@ -16,7 +16,7 @@ Done when: the original's words.txt is in the game byte-for-byte and every scori
 - [x] 🤖 6. Word finder on the 3 leylines: reading direction, min length, Qu, union rule (GARDENING/DEN, SEAL+LEAP/ALE, HELP+PEA) — src/engine/words.ts
 
 ## F06 🧱 Magic + draw / refresh
-- [ ] 🤖 7. Magic = seeds + 1 per own seed; shared letters count per word; made Magic → draw 1 — src/engine/turn.ts
+- [x] 🤖 7. Magic = seeds + 1 per own seed; shared letters count per word; made Magic → draw 1 — src/engine/turn.ts
 - [ ] 🤖 8. Refresh: set aside any number, refill to 8, return set-aside seeds to the bag; bag empty → stop drawing — src/engine/turn.ts
 
 ## F03 🧱 UI kit (Cozy, night colours)
