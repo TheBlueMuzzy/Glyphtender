@@ -2,6 +2,7 @@
 // A press that moves more than dragStartDistance becomes a drag: the piece floats under the pointer
 // (dragLift px ABOVE a finger, so the finger doesn't hide it) and dropping it = tapping where it's dropped.
 // While dragging, the legal hex under the floating piece lights up ("drop here", dropTarget.ts); an illegal one doesn't.
+// A tap or drag on something that can't be touched makes it shake "no" (store.refuseTap → nope.ts).
 // What was pressed is read from data attributes:
 //   data-glyph (board glyphling id) · data-hand (tray seed: hand index) + data-tray-pos (its place in the tray)
 //   data-draft (a glyphling waiting to be placed) · data-hex (a board hex, "q,r")
@@ -25,6 +26,8 @@ interface Press {
   y: number
   touch: boolean
   dragging: boolean
+  /** The piece said "no" when a drag started (it shook): the rest of this press does nothing. */
+  refused?: boolean
 }
 
 const numberAttr = (el: Element, name: string) => {
@@ -66,10 +69,16 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
     if (!game || !img) return
     let art: string | null = null
     if (p.glyph !== undefined) {
-      store().grabGlyphling(p.glyph)
+      const refused = store().refuseTap({ glyph: p.glyph })
+      store().grabGlyphling(p.glyph) // (a refused one still says why in the prompt)
+      if (refused) return void (p.refused = true)
       const g = game.glyphlings.find((x) => x.id === p.glyph)
       if (g && g.seat === game.current && game.phase === 'play' && !game.tangled.includes(g.id)) art = glyphlingArt(g.seat)
     } else if (p.hand !== undefined) {
+      if (store().refuseTap({ hand: p.hand })) {
+        store().tapSeed(p.hand) // (says "move a glyphling first")
+        return void (p.refused = true)
+      }
       store().grabSeed(p.hand)
       art = seedArt(game.hands[game.current][p.hand], game.current)
     } else if (p.draft) {
@@ -100,7 +109,7 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
 
   const onPointerMove = (e: PointerEvent) => {
     const p = press.current
-    if (!p || e.pointerId !== p.pointerId || (p.glyph === undefined && p.hand === undefined && !p.draft)) return
+    if (!p || p.refused || e.pointerId !== p.pointerId || (p.glyph === undefined && p.hand === undefined && !p.draft)) return
     if (!p.dragging && Math.hypot(e.clientX - p.x, e.clientY - p.y) > layout.dragStartDistance) startDrag(p)
     if (!p.dragging) return
     place(e)
@@ -116,6 +125,7 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
     const p = press.current
     if (!p || e.pointerId !== p.pointerId) return
     press.current = null
+    if (p.refused) return // it already shook when the drag started
     if (p.dragging) {
       place(e, false)
       showDropTarget(undefined, null)
@@ -126,9 +136,17 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
       if (hex) store().tapHex(hex)
       return
     }
-    if (p.glyph !== undefined) store().tapGlyphling(p.glyph)
-    else if (p.hand !== undefined) store().tapSeed(p.hand)
-    else if (p.hex) store().tapHex(p.hex)
+    // A tap: a piece that can't be touched shakes "no", then the tap goes on as usual (a note may say why)
+    if (p.glyph !== undefined) {
+      store().refuseTap({ glyph: p.glyph })
+      store().tapGlyphling(p.glyph)
+    } else if (p.hand !== undefined) {
+      store().refuseTap({ hand: p.hand })
+      store().tapSeed(p.hand)
+    } else if (p.hex) {
+      store().refuseTap({ hex: p.hex })
+      store().tapHex(p.hex)
+    }
   }
 
   const onPointerCancel = (e: PointerEvent) => {

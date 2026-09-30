@@ -18,6 +18,7 @@ import {
 import { isLocalHuman, localSeats, needsHandoff, type Seat } from './seats'
 import { addTurn, emptyStats, type PlayerStats } from './stats'
 import { revealSteps } from './revealPlan'
+import { nopeFor, type NopeTarget, type Tap } from './nope'
 
 /** Short messages for taps that can't do anything (their words live in content/text/en.json → game.notes). */
 export type Note = 'moveFirst' | 'notYours' | 'tangled' | 'wordsLoading' | 'wordsFailed' | 'problem'
@@ -81,6 +82,8 @@ export interface GameStore {
   online: OnlineLink | null
   /** Online: this device's action went to the server; nothing can be touched until its view comes back. */
   waiting: boolean
+  /** The last piece that said "no" to a tap (it shakes); the count changes every time, so the same piece can shake again. */
+  nope: (NopeTarget & { count: number }) | null
 
   startGame: (options: Partial<GameOptions> & { players: number; seed: number }) => void
   leaveGame: () => void
@@ -103,6 +106,8 @@ export interface GameStore {
   refresh: (keepAll?: boolean) => void
   moveTraySeed: (from: number, to: number) => void
   shuffleTray: () => void
+  /** Before a tap or drag does its thing: if the piece can't be touched it shakes "no" (nope.ts). True = refused. */
+  refuseTap: (tap: Tap) => boolean
   /** Dev and e2e only: jump straight to a game state (with the end table's numbers so far, if known). */
   loadState: (game: GameState, stats?: PlayerStats[]) => void
 }
@@ -178,6 +183,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
     revealAt: null,
     online: null,
     waiting: false,
+    nope: null,
 
     startGame: ({ players, seed, boardName, minWordLength, hideSeeds, wordIndicators }) => {
       const game = newGame({ players, seed, boardName, rules: minWordLength ? { minWordLength } : undefined })
@@ -348,6 +354,12 @@ export const useGameStore = create<GameStore>()((set, get) => {
       const order = [...trayOrder]
       order[game.current] = shuffled(order[game.current])
       set({ trayOrder: order })
+    },
+
+    refuseTap: (tap) => {
+      const target = nopeFor(get(), tap)
+      if (target) set({ nope: { ...target, count: (get().nope?.count ?? 0) + 1 } })
+      return target !== null
     },
 
     loadState: (game, stats) => set({

@@ -14,6 +14,7 @@ import { RevealPanel } from './Reveal'
 import { SeedTray } from './SeedTray'
 import { TurnBar } from './TurnBar'
 import { trayLayout } from './trayLayout'
+import { useNopeShake } from './useNopeShake'
 import { usePieceInput } from './usePieceInput'
 import { useGardenTuning, useLayoutTuning } from './useTuning'
 import './game.css'
@@ -67,6 +68,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   const dragLayer = useRef<SVGSVGElement>(null)
   const dragImage = useRef<SVGImageElement>(null)
   const input = usePieceInput({ layer: dragLayer, image: dragImage }, layout, Math.max(tray.tile, hexPx) * 1.2)
+  useNopeShake() // a tapped piece that can't be touched shakes "no"
 
   // When the garden tangles, the Magic reveal takes the tray's place (Reveal.tsx) and then opens the end table
   const over = game.phase === 'over'
