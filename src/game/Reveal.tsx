@@ -16,7 +16,8 @@ import { useAnimTuning, useGardenTuning } from './useTuning'
 
 const w = text.game.reveal
 
-/** compact: the narrow side column (a phone on its side) — one-line chips, no tangle line, so everything fits. */
+/** compact: the side column — one-line chips, no tangle line, one chip per line (the wide tiles keep them from
+ *  sitting side by side and running past the column's edge). */
 export function RevealPanel({ compact }: { compact: boolean }) {
   const game = useGameStore((s) => s.game)!
   const revealAt = useGameStore((s) => s.revealAt)
@@ -51,7 +52,7 @@ export function RevealPanel({ compact }: { compact: boolean }) {
   const view = revealView(steps, revealAt)
   const counting = view.current?.kind === 'count' ? view.current.seat : null
   return (
-    <Grid gap="s" min="s" className="game-reveal" aria-label={w.label}>
+    <Grid gap="s" min={compact ? 'l' : 's'} className="game-reveal" aria-label={w.label}>
       {game.magic.map((magic, seat) => {
         const shown = view.counted.includes(seat)
         const winner = view.announced && game.winners.includes(seat)

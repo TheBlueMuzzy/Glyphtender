@@ -19,10 +19,13 @@
     grid-template: "bar" auto "board" minmax(0, 1fr) "panel" auto / minmax(0, 1fr);
   }
   /* Wide space: board on the left; turn bar, tray and buttons in a column on the right
-     (the column is as wide as the tray, which is sized from layout.json → sidePanelShare) */
+     (the column is as wide as the tray, which is sized from layout.json → sidePanelShare). The ruler, an empty
+     SVG that wide, is the ONLY thing that sizes the column: the bar and panel are contained, so neither a long
+     prompt nor the reveal's narrow chips can widen or shrink it — the words wrap inside instead. */
   .game[data-layout="side"] {
     grid-template: "board bar" auto "board panel" minmax(0, 1fr) / minmax(0, 1fr) min-content;
   }
+  .game[data-layout="side"] :is(.game-bar, .game-panel) { contain: inline-size; }
 
   .game-bar { grid-area: bar; min-inline-size: 0; }
   .game-prompt { flex: 1 1 0; min-inline-size: 0; }
@@ -40,6 +43,7 @@
   .game-panel { grid-area: panel; display: flex; flex-direction: column; align-items: center; gap: var(--gap-s); min-block-size: 0; }
   .game[data-layout="side"] .game-panel { justify-content: center; }
   .game-tray { display: block; flex: none; overflow: visible; }
+  .game-column-ruler { grid-area: panel; align-self: start; display: block; pointer-events: none; }
   .game-reveal { inline-size: 100%; } /* the players' Magic chips, in the tray's place at the end */
 
   /* The dragged piece floats in this layer, over everything, never catching taps itself */

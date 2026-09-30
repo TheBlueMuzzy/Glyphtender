@@ -18,6 +18,7 @@ A right-click counts as a tap. / Tapping Results early then closing it within 1.
 ### B006 · P3 · open · found 2026-09-30 in F16
 Dev Kit snapshots don't carry the end-table stats or table options — a restored game's end table only counts turns played after the restore.
 ## Fixed (newest first)
+### (F13) · verified 2026-09-30 · fixed in "F13: fix side column shrinking during the reveal" · Guarded by: e2e/pass-and-play-shots.mjs (column width turn vs reveal + long-name prompt, 844×390 & 1440×900) — side column shrank to the reveal's chips, turn-bar prompt ran off screen
 ### (F13) · verified 2026-09-30 · fixed in dbbe5bc · Guarded by: src/store/revealPlan.test.ts — two +3s drawn on one hex (read as +3, was +6)
 ### (F16) · verified 2026-09-30 · fixed in 430f07c · Guarded by: src/devkit-game/glyphtenderAdapter.test.ts — restore left menus stuck on top
 ### (F09) · verified 2026-09-30 · fixed in 95b34eb · Guarded by: e2e + finger-id tracking — a second finger hijacked a drag (floating piece stuck)

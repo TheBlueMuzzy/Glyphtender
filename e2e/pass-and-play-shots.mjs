@@ -3,7 +3,9 @@
 // device each time (the tray stays hidden until "Show my seeds") → a glyphling with 1 move left shows its warning ring
 // (the dev hook fast-forwards to one) → fast-forward to the end → the Magic reveal plays by itself (mid + end shots)
 // → the end table → Play again (same options) → Menu → Leave → the new-game screen remembers 3 players.
-// Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px, no console errors.
+// Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px, the turn bar's words inside it, no console errors.
+// Side-by-side layouts (phone-wide, desktop): the right-hand column keeps one width from a normal turn through the
+// reveal, even with a very long player name in the prompt (it used to shrink to the reveal's chips — F13 bug).
 // Starts its OWN dev server (default port 5193 — never Muzzy's 5180) and closes only that one at the end.
 //   npm run e2e:pass [outDir] [port]
 import { mkdirSync } from 'node:fs'
@@ -31,6 +33,11 @@ function problems() {
     if (el.tagName === 'BUTTON' && (r.height < 43.5 || r.width < 43.5)) out.push(`small button: ${name} ${Math.round(r.width)}×${Math.round(r.height)}`)
     // a button whose words wrapped onto a second line
     if (el.tagName === 'BUTTON' && el.textContent.trim() && r.height > 70) out.push(`button words wrapped: ${name}`)
+  }
+  // the turn bar's words wrap inside their box (layout sizes, so a pop animation's scale doesn't count)
+  const box = document.querySelector('.game-prompt')
+  for (const words of document.querySelectorAll('.game-prompt .kit-text')) {
+    if (words.offsetWidth > box.clientWidth + 0.5 || words.scrollWidth > words.clientWidth + 0.5) out.push(`prompt overflows: ${words.textContent}`)
   }
   return out
 }
@@ -64,6 +71,8 @@ try {
     const optionCount = (kind) => page.locator(`[data-option="${kind}"] circle`).count()
     const waitLanded = () => page.waitForFunction(() => !window.__glyphtender.store.getState().flying, null, { timeout: 5000 })
     const traySeeds = () => page.locator('.game-tray image').count()
+    const side = () => page.evaluate(() => document.querySelector('.game').dataset.layout === 'side')
+    const columnWidth = () => page.evaluate(() => Math.round(document.querySelector('.game-panel').getBoundingClientRect().width))
 
     // The handoff: "Pass to <player>" over the dimmed garden, no seeds in the tray until "Show my seeds"
     const handoff = async (screenshot) => {
@@ -121,6 +130,7 @@ try {
       await handoff(turn === 2 ? '4-handoff' : null)
       if (turn === 2) await shot('5-next-turn')
     }
+    const turnColumn = await columnWidth()
 
     // ---- danger cue: fast-forward until a glyphling has only one move left ----
     check('reached a glyphling with 1 move left', await page.evaluate(() => window.__glyphtender.playUntilDanger(5)))
@@ -137,6 +147,32 @@ try {
     // Mid-reveal: once the first player's Magic is counting
     await page.waitForFunction(() => document.querySelectorAll('.game-reveal .kit-player-chip-score').length >= 1, null, { timeout: 20000 })
     await shot('7-reveal-mid', 300)
+    if (await side()) {
+      check(`the side column keeps its width in the reveal (turn ${turnColumn}px, reveal ${await columnWidth()}px)`, (await columnWidth()) === turnColumn)
+      // a very long player name in the prompt ("Counting …'s Magic"): it wraps, the column doesn't move
+      const names = await store((s) => s.seats.map((seat) => seat.name))
+      await page.evaluate(() => {
+        const { store } = window.__glyphtender
+        store.setState({ seats: store.getState().seats.map((seat) => ({ ...seat, name: 'Bartholomew the Greatest Gardener of the Tangled Glade' })) })
+      })
+      await page.waitForTimeout(400)
+      await page.screenshot({ path: `${OUT}/pass-${size.name}-7b-reveal-long-name.png` })
+      check('the side column keeps its width with a long name', (await columnWidth()) === turnColumn)
+      // only the prompt is checked here: the Magic chips don't shorten names (a kit PlayerChip matter)
+      // (layout sizes, not the on-screen box: the prompt's pop animation scales it up for a moment)
+      const prompt = await page.evaluate(() => {
+        const bar = document.querySelector('.game-bar')
+        const words = document.querySelector('.game-prompt .kit-text')
+        const inside = words.offsetWidth <= bar.clientWidth + 0.5 && words.scrollWidth <= words.clientWidth + 0.5
+        return { inside: inside && bar.getBoundingClientRect().right <= innerWidth + 0.5, lines: words.offsetHeight }
+      })
+      check(`the long prompt wraps inside the column (${prompt.lines}px tall)`, prompt.inside)
+      console.log(`${prompt.inside ? 'ok  ' : 'FAIL'} ${size.name} 7b-reveal-long-name`)
+      await page.evaluate((back) => {
+        const { store } = window.__glyphtender
+        store.setState({ seats: store.getState().seats.map((seat, i) => ({ ...seat, name: back[i] })) })
+      }, names)
+    }
     // The end of the reveal: the winner announced, just before the end table opens
     await page.getByText(/Grand Glyphtender/).first().waitFor({ timeout: 20000 })
     await shot('8-reveal-end', 300)

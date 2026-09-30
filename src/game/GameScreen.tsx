@@ -50,6 +50,11 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
   const room = stacked ? space.width : Math.floor(space.width * layout.sidePanelShare)
   const slots = game.phase === 'draft' ? 2 : game.config.rules.handSize
   const tray = trayLayout({ room, hexPx, slots, tileMin: layout.trayTileMin, gap: layout.trayGap })
+  // The side column keeps ONE width all game (draft, turns, handoff, reveal, end): its share of the screen,
+  // or a full tray if that's wider. The ruler below holds it open, so whatever sits in the tray's place
+  // (the reveal's narrow chips) can't shrink it and push the turn bar's words off the screen.
+  const fullTray = trayLayout({ room, hexPx, slots: game.config.rules.handSize, tileMin: layout.trayTileMin, gap: layout.trayGap })
+  const column = Math.max(room, fullTray.width)
 
   // Taps and drags for board + tray; the dragged piece floats in its own layer on top
   const dragLayer = useRef<SVGSVGElement>(null)
@@ -68,9 +73,11 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
         <Board onHexSize={onHexSize} sitOnTray={stacked} />
       </div>
       <section className="game-panel" aria-label="Seeds and actions">
-        {over ? <RevealPanel compact={!stacked} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : room} />}
+        {over ? <RevealPanel compact={!stacked} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : column} />}
         <ActionBar onPlayAgain={onPlayAgain} />
       </section>
+      {/* an empty SVG as wide as the side column (sizes are SVG attributes — TDD D13) */}
+      {!stacked && <svg className="game-column-ruler" width={column} height={0} aria-hidden="true" />}
       <svg ref={dragLayer} className="game-drag-layer" aria-hidden="true">
         <image ref={dragImage} visibility="hidden" />
       </svg>
