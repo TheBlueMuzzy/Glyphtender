@@ -16,7 +16,7 @@ import animJson from '../../content/tuning/anim.json'
 import { glideSeconds } from '../game/glide'
 import { useGameStore } from './gameStore'
 import { actionRefused, connectOnline, receiveView, stopOnline } from './onlinePlay'
-import { boardHighlight, castOptions } from './turnPlan'
+import { boardHighlight, castOptions, dropKind } from './turnPlan'
 
 let words: WordList
 beforeAll(() => { words = parseWordList(readFileSync('public/words/words.csv', 'utf8')) })
@@ -122,6 +122,15 @@ describe('online store — starting and the draft', () => {
     expect(store().waiting).toBe(false)
     expect(store().game!.glyphlings).toHaveLength(1)
     expect(store().online!.version).toBe(1)
+  })
+
+  it("Blue's placement: dragging my waiting glyphling over a glowing hex is no \"drop here\" (it isn't my turn)", () => {
+    store().tapHex(legalDraftHexes(store().game!)[0])
+    const glowing = legalDraftHexes(store().game!)[0]
+    expect(dropKind({ ...store(), game: store().game! }, glowing)).toBeNull() // my placement is at the server
+    deliver()
+    expect(store().game!.current).toBe(1)
+    expect(dropKind({ ...store(), game: store().game! }, legalDraftHexes(store().game!)[0])).toBeNull()
   })
 
   it('after the draft: my seeds are real, Blue\'s are "?", and no handoff screen', () => {

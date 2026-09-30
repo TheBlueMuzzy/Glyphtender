@@ -57,15 +57,21 @@ export function highlightFor(game: GameState, move: PlannedMove | null, selected
  * device that can still change — online, another player's turn is replayed with its move in the store (the glide),
  * and that move is not something to cast from here (no gold for them); nor is my own once it's gone to the server.
  */
-export function boardHighlight(s: { game: GameState; move: PlannedMove | null; selected: Selection; flying: boolean; waiting: boolean; seats: Seat[] }): Highlight | null {
+type LitState = { game: GameState; move: PlannedMove | null; selected: Selection; flying: boolean; waiting: boolean; seats: Seat[] }
+
+export function boardHighlight(s: LitState): Highlight | null {
   if (s.flying) return null
   if (s.game.phase === 'play' && (s.waiting || !isLocalHuman(s.seats, s.game.current))) return null
   return highlightFor(s.game, s.move, s.selected)
 }
 
-/** While dragging: if `hex` (under the lifted piece) is a legal drop, which option it is — else null (no highlight). */
-export function dropKind(game: GameState, move: PlannedMove | null, selected: Selection, hex: Hex | undefined): Highlight['kind'] | null {
-  const lit = hex ? highlightFor(game, move, selected) : null
+/**
+ * While dragging: if `hex` (under the lifted piece) is a legal drop, which option it is — else null (no highlight).
+ * Only on this device's own turn (online, my waiting glyphling can be dragged in the draft while someone else places).
+ */
+export function dropKind(s: LitState, hex: Hex | undefined): Highlight['kind'] | null {
+  if (s.waiting || !isLocalHuman(s.seats, s.game.current)) return null
+  const lit = hex ? boardHighlight(s) : null
   return lit && hex && hexIn(lit.hexes, hex) ? lit.kind : null
 }
 

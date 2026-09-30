@@ -111,8 +111,8 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
     if (!p.dragging) return
     place(e)
     const hex = hexAttr(underPiece(e, p))
-    const { game, move, selected } = store()
-    showDropTarget(hex, game ? dropKind(game, move, selected, hex) : null)
+    const s = store()
+    showDropTarget(hex, s.game ? dropKind({ ...s, game: s.game }, hex) : null)
   }
 
   // What's under the floating piece (lifted above a finger), not under the finger itself

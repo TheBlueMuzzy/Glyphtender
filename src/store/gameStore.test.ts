@@ -126,7 +126,7 @@ describe('game store — planning a turn (One Cast + undo)', () => {
 
   it('dragging: only a legal hex under the piece is a "drop here" (teal for a move, gold for a cast); anything else, none', () => {
     yellowToPlay()
-    const drop = (label: string) => { const s = store(); return dropKind(s.game!, s.move, s.selected, hexAt(label)) }
+    const drop = (label: string) => { const s = store(); return dropKind({ ...s, game: s.game! }, hexAt(label)) }
     store().grabGlyphling(0)
     expect(drop('C6-6')).toBe('move')
     expect(drop('C6-7')).toBeNull() // where it stands
@@ -135,7 +135,7 @@ describe('game store — planning a turn (One Cast + undo)', () => {
     store().grabSeed(0)
     expect(drop('C6-4')).toBe('cast')
     expect(drop('C6-6')).toBeNull() // the glyphling's own hex
-    expect(dropKind(store().game!, store().move, store().selected, undefined)).toBeNull() // over the tray, off the board
+    expect(dropKind({ ...store(), game: store().game! }, undefined)).toBeNull() // over the tray, off the board
   })
 
   it('an aimed seed moves to another gold hex with one tap', () => {
