@@ -70,7 +70,7 @@ flowchart LR
   F03 --> F17[✅ F17 Bug capture]
 ```
 
-## v0.4 — Play online  ✅ released 2026-09-30 (alpha v0.1.0) — online not yet tested on real devices
+## v0.4 — Play online  🎛️ built — NOT live: PartyKit's shared partykit.dev zone is full (2026-09-30); server moves to Muzzy's own Cloudflare (F23)
 Goal: 2–4 players on different devices join by room code and play a full game; seeds and Magic stay secret.
 - ✅ F18 🧱 Framework "rooms" module — harvested from Roll Better (create/join, identity, rejoin, host migration) — must:alpha · sprint 5
 - ✅ F19 🧱 Online server: same engine, per-player views (`design/online.md` first) — must:alpha · needs: F11, F18 · sprint 5

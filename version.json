@@ -11,7 +11,7 @@
     {
       "version": "0.1.0",
       "date": "2026-09-30",
-      "summary": "Alpha — play Glyphtender in your browser: 2–4 player pass-and-play and online rooms, seeds that fly and grow, score pops, tangle cues and the Magic reveal"
+      "summary": "Alpha — play Glyphtender in your browser: 2–4 player pass-and-play, seeds that fly and grow, score pops, tangle cues and the Magic reveal (online play waits for its server)"
     }
   ]
 }

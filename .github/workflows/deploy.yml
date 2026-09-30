@@ -44,7 +44,7 @@ jobs:
         env:
           NODE_ENV: production
           # The live online server (party/, deployed with `npx partykit deploy`) — public, not a secret
-          VITE_PARTY_HOST: glyphtender.thebluemuzzy.partykit.dev
+          # VITE_PARTY_HOST: <online server address> — off until the server has a home (PartyKit's shared partykit.dev zone is full, 2026-09-30; moving to Muzzy's own Cloudflare). Unset = 'Play online' hidden on the live site.
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

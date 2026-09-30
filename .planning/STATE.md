@@ -1,6 +1,6 @@
 ## ▶ RESUME HERE
-Released v0.1.0 (alpha) 2026-09-30 — live at https://thebluemuzzy.github.io/glyphtender/ (Pages deploys on push to main) + online server https://glyphtender.thebluemuzzy.partykit.dev. Online (F20–F22) still 🎛️ until tested with friends on real devices. Next: Muzzy tests with friends → `/bug` anything → then `/define` beta (AI opponents).
-Muzzy: open decisions (defaults built): word list B001 · online timer/away rules · Magic secrecy · desktop button size · framework merge of dev/rooms · Roll Better persistentId leak.
+Released v0.1.0 (alpha) 2026-09-30 — live at https://thebluemuzzy.github.io/glyphtender/ (pass-and-play; Pages deploys on push to main). **Online is NOT live:** `npx partykit deploy` fails — PartyKit's shared partykit.dev zone hit Cloudflare's 10,000 custom-domain limit (known issue since the Cloudflare acquisition; Roll Better only works because it got its address earlier). "Play online" + the Prototype link are hidden on live builds (shown in local dev). Next: F23 — move the server to Muzzy's own free Cloudflare account, then set VITE_PARTY_HOST in deploy.yml.
+Muzzy: create/log in to a free Cloudflare account, then run `! npx wrangler login` in the project → Claude does F23. · Open decisions (defaults built): word list B001 · online timer/away rules · Magic secrecy · desktop button size · merge framework dev/rooms · Roll Better persistentId leak.
 
 ## Where we are
 Stage: deliver · Milestone: alpha released · Sprint: — · Doing: friends testing · Branch: main · Version: 0.1.0.0 · Live: https://thebluemuzzy.github.io/glyphtender/ (alpha)
@@ -11,7 +11,7 @@ Stage: deliver · Milestone: alpha released · Sprint: — · Doing: friends tes
 **Muzzy's direction (2026-09-30):** phone (portrait AND landscape) + desktop — do responsive properly · first release = strong pass-and-play (AI replaces a seat next; online = "P0.5", reuse Roll Better's rooms if cheap) · tutorial not yet · UI kit **Cozy** style · think critically vs industry standards, don't just port.
 **BMUZ stress test:** log BMUZ gaps in `~/.claude/config/bmuz/reviews/2026-09-30-glyphtender-remake/FINDINGS.md` as we go.
 **Default branch:** main (deploys to GitHub Pages on push). Next work branch: `dev/beta` (made by /develop).
-**Release:** GitHub Pages (recipe ~/.claude/config/bmuz/release/github-pages.md) + PartyKit `npx partykit deploy` (server first, only when party/ or engine/content it uses changed) → glyphtender.thebluemuzzy.partykit.dev.
+**Release:** GitHub Pages (recipe ~/.claude/config/bmuz/release/github-pages.md) + online server: NOT on PartyKit's shared zone (full) — F23 moves it to Muzzy's own Cloudflare. Live builds hide Play online unless VITE_PARTY_HOST is set in deploy.yml.
 **Sims:** `npm run sim` (research/sims.md): bag runs out in 0–1.6% of games; games 42–67 turns.
 **Online dev:** `npm run party:dev` (PartyKit on port 1997 — Roll Better uses 1999) + `npm run dev`; e2e: `e2e:game`, `e2e:pass`, `e2e:online` (each starts its own servers; run one at a time).
 **Run:** `npx vite --host --port 5180` (dev port 5180) · tests `npm test` · sketch check `npm run e2e:sketch` (needs the dev server).
