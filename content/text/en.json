@@ -55,7 +55,7 @@
       "keepAll": "Keep all",
       "menu": "Menu",
       "results": "Results",
-      "playAgain": "Play again",
+      "newGame": "New game",
       "skip": "Skip",
       "retryWords": "Retry"
     },
@@ -79,7 +79,6 @@
       "noWord": "no words yet",
       "wordsMade": "{n} words",
       "separator": " · ",
-      "playAgain": "Play again",
       "newGame": "New game",
       "menu": "Menu"
     },

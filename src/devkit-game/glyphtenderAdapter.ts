@@ -23,7 +23,7 @@ export interface GlyphtenderMoment {
   trayOrder: number[][]
   /** The end table's numbers so far (best turn, longest word, words made). Missing in older snapshots. */
   stats?: PlayerStats[]
-  /** The table options the game started with (Play again reuses them). Missing in older snapshots. */
+  /** The table options the game started with (word indicators, hide seeds…). Missing in older snapshots. */
   options?: GameOptions | null
 }
 

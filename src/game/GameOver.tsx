@@ -1,7 +1,8 @@
 // THE END TABLE — opens when the Magic reveal finishes (or is skipped). Title: "Grand Glyphtender: Yellow!".
 // One row per player, best first (ties share a place): place, portrait, name (★ for the winner(s)), Magic, and
 // a line underneath with tangle Magic, best turn, longest word and words made (src/store/stats.ts).
-// Buttons: Menu · New game · Play again (same table options). Esc closes it to look at the garden;
+// Buttons: Menu · New game (the new-game screen; online: the host takes everyone to the lobby) — no Play again:
+// fewer, clearer options (GDD §4 feel notes). Esc closes it to look at the garden;
 // the Results button brings it back. Kit parts only: Screen (dialog), Panel, ScrollArea, ListRow, Row, Avatar,
 // Badge, Text, Button.
 import text from '../../content/text/en.json'
@@ -14,9 +15,9 @@ import { useGardenTuning } from './useTuning'
 
 const w = text.game.gameOver
 
-type Props = { onPlayAgain: () => void; onNewGame: () => void; onMenu: () => void }
+type Props = { onNewGame: () => void; onMenu: () => void }
 
-export function GameOverScreen({ onPlayAgain, onNewGame, onMenu }: Props) {
+export function GameOverScreen({ onNewGame, onMenu }: Props) {
   const game = useGameStore((s) => s.game)
   const stats = useGameStore((s) => s.stats)
   const colours = useGardenTuning()
@@ -40,11 +41,10 @@ export function GameOverScreen({ onPlayAgain, onNewGame, onMenu }: Props) {
             </ListRow>
           ))}
         </ScrollArea>
-        {/* One row when there's room; on a phone, Play again gets its own line on top (game.css) */}
+        {/* One row, sharing the width (game.css) */}
         <div className="game-end-buttons">
           <Button variant="ghost" onClick={onMenu}>{w.menu}</Button>
-          <Button variant="secondary" onClick={onNewGame}>{w.newGame}</Button>
-          <Button onClick={onPlayAgain}>{w.playAgain}</Button>
+          <Button onClick={onNewGame}>{w.newGame}</Button>
         </div>
       </Panel>
     </Screen>

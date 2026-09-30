@@ -99,7 +99,7 @@ describe('game store — passing the device (handoff)', () => {
     expect(store().handoff).toEqual({ seat: store().game!.current, afterGrow: false })
   })
 
-  it('a new game remembers its table options (for Play again)', () => {
+  it('a new game remembers its table options', () => {
     store().startGame({ players: 3, seed: 1, boardName: 'small', minWordLength: 3, hideSeeds: false })
     expect(store().options).toEqual({ players: 3, boardName: 'small', minWordLength: 3, hideSeeds: false, wordIndicators: true })
     expect(store().game?.config.rules.minWordLength).toBe(3)

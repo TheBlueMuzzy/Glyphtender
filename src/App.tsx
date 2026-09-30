@@ -9,7 +9,7 @@ import { ScreenStack, ToastStack, kitScreens } from './ui/kit'
 import { CreditsScreen, GameOverDialog, LobbyScreen, MainMenuScreen, OnlineStartScreen, PauseScreen, RulesScreen, SettingsScreen } from './ui/menus'
 import { OnlineSession } from './ui/online/OnlineSession'
 import { useOnline } from './ui/online/session'
-import { playAgain } from './ui/newGame'
+import { newGameFromEnd } from './ui/newGame'
 import { NewGameScreen } from './ui/NewGameScreen'
 
 const menuScreens = { ...kitScreens, settings: SettingsScreen, credits: CreditsScreen, pause: PauseScreen, gameOver: GameOverDialog, newGame: NewGameScreen, rules: RulesScreen, online: OnlineStartScreen }
@@ -21,7 +21,7 @@ export default function App() {
   return (
     <>
       <ScreenStack screens={menuScreens}>
-        {inGame ? <GameScreen onPlayAgain={playAgain} /> : online && inLobby ? <LobbyScreen /> : <MainMenuScreen />}
+        {inGame ? <GameScreen onNewGame={newGameFromEnd} /> : online && inLobby ? <LobbyScreen /> : <MainMenuScreen />}
       </ScreenStack>
       {online && <OnlineSession />}
       <ToastStack />

@@ -26,7 +26,7 @@ import './game.css'
 const HEX_HEIGHT = Math.sqrt(3) / 2 // a flat-top hex is this much as tall as it is wide
 const BIG_HEX = 64 // board hexes this wide (px) or more = a roomy screen: the prompt's words go up a size
 
-export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
+export function GameScreen({ onNewGame }: { onNewGame: () => void }) {
   const game = useGameStore((s) => s.game)!
   const loadWords = useGameStore((s) => s.loadWords)
   const wordsStatus = useGameStore((s) => s.wordsStatus)
@@ -96,7 +96,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
       <section className="game-panel" aria-label="Seeds and actions">
         <PromptLine big={hexPx >= BIG_HEX} />
         {over ? <RevealPanel compact={!stacked} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : column} />}
-        <ActionBar onPlayAgain={onPlayAgain} size={buttonPx} />
+        <ActionBar onNewGame={onNewGame} size={buttonPx} />
       </section>
       {/* an empty SVG as wide as the side column (sizes are SVG attributes — TDD D13) */}
       {!stacked && <svg className="game-column-ruler" width={column} height={0} aria-hidden="true" />}

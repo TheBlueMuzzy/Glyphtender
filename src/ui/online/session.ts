@@ -12,7 +12,6 @@ import { getPlayerName, setPlayerName } from '../../rooms/identity'
 import { stopOnline } from '../../store/onlinePlay'
 import { useGameStore } from '../../store/gameStore'
 import { toast } from '../kit'
-import { loadOnlineOptions } from './onlineOptions'
 
 export type Room = OnlineRoom<GameView, OnlineAction, OnlineOptions>
 
@@ -89,13 +88,6 @@ export function endOnline(why: string | null) {
   rememberRoom(null)
   useOnline.setState({ code: null, creating: false, room: null, joinError: why })
   if (useGameStore.getState().online) useGameStore.getState().leaveGame()
-}
-
-/** End table → Play again: the host starts a rematch (same seats, their last options); everyone else waits for it. */
-export function onlinePlayAgain() {
-  const room = useOnline.getState().room
-  if (room?.isHost) room.start(loadOnlineOptions())
-  else toast(text.game.prompts.waitingHost)
 }
 
 /** End table → New game: the host takes everyone back to the lobby (to change the options); everyone else waits. */

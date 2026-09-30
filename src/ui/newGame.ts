@@ -1,11 +1,11 @@
 // Starting and leaving a game from the menus. The new-game screen (NewGameScreen.tsx) picks the table
 // options; the last choices are remembered on this device (localStorage — never required: if the browser
-// won't store them, the defaults are used). Play again reuses the options the game started with.
+// won't store them, the defaults are used). At the end, New game comes back here (online: the lobby).
 import rulesJson from '../../content/tuning/rules.json'
 import { boardNames, defaultBoardFor } from '../engine/boards'
 import { useGameStore } from '../store/gameStore'
 import { screens } from './kit'
-import { leaveOnline, onlineBackToLobby, onlinePlayAgain } from './online/session'
+import { leaveOnline, onlineBackToLobby } from './online/session'
 
 /** What the new-game screen asks. */
 export interface NewGameChoices {
@@ -88,16 +88,8 @@ export function startNewGame(choices: NewGameChoices) {
   })
 }
 
-/** Play again: the same table options as the game just played, a fresh garden. (Online: the host's rematch.) */
-export function playAgain() {
-  if (useGameStore.getState().online) return onlinePlayAgain()
-  const options = useGameStore.getState().options
-  closeAllScreens()
-  if (!options) return startNewGame(loadChoices())
-  useGameStore.getState().startGame({ ...options, seed: randomSeed() })
-}
-
-/** End table → New game: back to the menu with the new-game screen open. (Online: the host takes everyone to the lobby.) */
+/** End table → New game (the only way on — GDD §4: fewer, clearer options): the new-game screen, with this
+ *  device's last choices. Online: the host takes everyone back to the lobby to start again; others wait for it. */
 export function newGameFromEnd() {
   if (useGameStore.getState().online) return onlineBackToLobby()
   leaveToMenu()

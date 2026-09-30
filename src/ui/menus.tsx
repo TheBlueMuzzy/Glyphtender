@@ -2,7 +2,7 @@
 // Words: content/text/en.json · settings rows: content/ui/settings.json · look: content/ui/style.json
 import { Credits, HowToPlay, MainMenu, Pause, Settings, screens } from './kit'
 import { GameOverScreen } from '../game/GameOver'
-import { leaveToMenu, newGameFromEnd, openNewGame, playAgain } from './newGame'
+import { leaveToMenu, newGameFromEnd, openNewGame } from './newGame'
 import { settingsChanged } from './gameSettings'
 import { LobbyScreen } from './online/LobbyScreen'
 import { OnlineStartScreen } from './online/OnlineStartScreen'
@@ -62,5 +62,5 @@ export function RulesScreen() {
 
 // GAME OVER — the end table over the tangled garden (src/game/GameOver.tsx).
 export function GameOverDialog() {
-  return <GameOverScreen onPlayAgain={playAgain} onNewGame={newGameFromEnd} onMenu={leaveToMenu} />
+  return <GameOverScreen onNewGame={newGameFromEnd} onMenu={leaveToMenu} />
 }

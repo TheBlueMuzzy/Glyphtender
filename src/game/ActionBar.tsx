@@ -3,7 +3,7 @@
 //            (word indicators off: plain "Cast" — the +N would tell you a word is there)
 //            (Retry instead of Cast if the word list couldn't be loaded — End turn never needs it)
 //   refresh: Keep all · Refresh N
-//   over:    Skip (while the Magic reveal plays) → then Results · Play again
+//   over:    Skip (while the Magic reveal plays) → then Results · New game
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { mayMoveOnly } from '../store/turnPlan'
@@ -15,7 +15,7 @@ import { usePreview } from './usePreview'
 const w = text.game.buttons
 
 /** size: how tall the buttons are, in px — about a board hex (finger-sized, like a glyphling), never below 44. */
-export function ActionBar({ onPlayAgain, size }: { onPlayAgain: () => void; size: number }) {
+export function ActionBar({ onNewGame, size }: { onNewGame: () => void; size: number }) {
   const s = useGameStore()
   const preview = usePreview()
   const game = s.game!
@@ -33,14 +33,14 @@ export function ActionBar({ onPlayAgain, size }: { onPlayAgain: () => void; size
   }
 
   if (game.phase === 'over') {
-    // While the Magic reveal plays: only Skip. After it: Results (the end table) + Play again.
+    // While the Magic reveal plays: only Skip. After it: Results (the end table) + New game.
     if (s.revealAt === null || s.revealAt < revealSteps(game).length) {
       return <Row gap="s" justify="center" className="game-actions"><Button size={size} variant="secondary" onClick={s.skipReveal}>{w.skip}</Button></Row>
     }
     return (
       <Row gap="s" justify="center" className="game-actions">
         <Button size={size} variant="secondary" onClick={() => screens.push('gameOver')}>{w.results}</Button>
-        <Button size={size} onClick={onPlayAgain}>{w.playAgain}</Button>
+        <Button size={size} onClick={onNewGame}>{w.newGame}</Button>
       </Row>
     )
   }

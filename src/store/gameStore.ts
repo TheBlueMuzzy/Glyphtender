@@ -23,7 +23,7 @@ import { nopeFor, type NopeTarget, type Tap } from './nope'
 /** Short messages for taps that can't do anything (their words live in content/text/en.json → game.notes). */
 export type Note = 'moveFirst' | 'notYours' | 'tangled' | 'wordsLoading' | 'wordsFailed' | 'problem'
 
-/** The table options a game starts with (the new-game screen). Play again reuses them. */
+/** The table options a game starts with (the new-game screen; online, the host's lobby options). */
 export interface GameOptions {
   players: number
   boardName: string
