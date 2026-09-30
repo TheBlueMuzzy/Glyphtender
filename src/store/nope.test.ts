@@ -42,9 +42,10 @@ describe('the "no" shake', () => {
     expect(nope({ hex: hexAt('C6-5') })).toBeNull()
   })
 
-  it('a tray seed shakes until I’ve moved, then it’s fine', () => {
+  it('a tray seed tapped before I’ve moved shakes (dragging it just reorders the tray); after the move it’s fine', () => {
     yellowToPlay()
     expect(nope({ hand: 1 })).toEqual({ kind: 'hand', key: '1' })
+    expect(nope({ hand: 1, drag: true })).toBeNull()
     store().tapGlyphling(0)
     store().tapHex(hexAt('C6-6'))
     expect(nope({ hand: 1 })).toBeNull()
@@ -65,6 +66,7 @@ describe('the "no" shake', () => {
     useGameStore.setState({ seats: [{ kind: 'online', name: 'Bo', colour: 'yellow' }, { kind: 'local', name: 'Me', colour: 'blue' }] })
     expect(nope({ glyph: 2 })).toEqual({ kind: 'glyph', key: '2' })
     expect(nope({ hand: 0 })).toEqual({ kind: 'hand', key: '0' })
+    expect(nope({ hand: 0, drag: true })).toEqual({ kind: 'hand', key: '0' })
   })
 
   it('quiet moments shake nothing: a seed in the air, the device being passed on, the game over', () => {

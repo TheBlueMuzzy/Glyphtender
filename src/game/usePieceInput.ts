@@ -75,10 +75,7 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
       const g = game.glyphlings.find((x) => x.id === p.glyph)
       if (g && g.seat === game.current && game.phase === 'play' && !game.tangled.includes(g.id)) art = glyphlingArt(g.seat)
     } else if (p.hand !== undefined) {
-      if (store().refuseTap({ hand: p.hand })) {
-        store().tapSeed(p.hand) // (says "move a glyphling first")
-        return void (p.refused = true)
-      }
+      if (store().refuseTap({ hand: p.hand, drag: true })) return void (p.refused = true) // (not my turn)
       store().grabSeed(p.hand)
       art = seedArt(game.hands[game.current][p.hand], game.current)
     } else if (p.draft) {
