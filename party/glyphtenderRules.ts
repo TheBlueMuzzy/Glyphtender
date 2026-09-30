@@ -7,6 +7,7 @@
 import roomsJson from '../content/rooms.json'
 import { boardNames, defaultBoardFor } from '../src/engine/boards'
 import { checkAction, newGame } from '../src/engine/engine'
+import { shuffle } from '../src/engine/rng'
 import type { Action, WordList } from '../src/engine/types'
 import { emptyStats } from '../src/store/stats'
 import { mustBeListWithoutRepeats, mustBeObject, mustBeOneOf, mustBeWholeNumber, nullOr } from '../src/rooms/server/checks'
@@ -49,7 +50,9 @@ function engineActionOf(raw: unknown): Action {
   }
 }
 
-const randomSeed = () => Math.floor(Math.random() * 2 ** 31)
+// A secret random number (0 … 2^31-1) from the server's cryptographic source. Not Math.random: its next
+// numbers can be worked out from earlier ones, and players see some of them (gameId, the seed at game over).
+const randomSeed = () => crypto.getRandomValues(new Uint32Array(1))[0] >>> 1
 
 export function makeRules({ words, randomSeed: seedMaker = randomSeed }: RulesSetup): Rules {
   return {
@@ -75,11 +78,15 @@ export function makeRules({ words, randomSeed: seedMaker = randomSeed }: RulesSe
     onStart(options, seats, room) {
       const players = seats.length
       const seed = seedMaker()
-      const game = newGame({
+      const made = newGame({
         players, seed,
         boardName: options.boardName === 'auto' ? defaultBoardFor(players) : options.boardName,
         rules: { minWordLength: options.minWordLength },
       })
+      // The engine's bag comes from ONE seed (2^31 choices): a PC can try them all against its own dealt hand
+      // (~30 min on one core) and rebuild every hand and the whole bag. So online the bag is shuffled again with
+      // a second secret number, and the rng (where set-aside seeds go back) gets a third — nothing to rebuild.
+      const game = { ...made, bag: shuffle(seedMaker(), made.bag).items, rng: seedMaker() }
       const state: ServerGame = {
         game, gameId: seedMaker(), version: 0,
         seatIds: seats.map((s) => s.id), names: seats.map((s) => s.name),

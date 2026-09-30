@@ -4,6 +4,7 @@
 // before the game was over (design/online.md §10).
 import { readFileSync } from 'node:fs'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { newGame } from '../src/engine/engine'
 import { randomAction } from '../src/engine/sim'
 import { parseWordList } from '../src/engine/words'
 import type { WordList } from '../src/engine/types'
@@ -38,9 +39,10 @@ class FakeConnection implements PartyConnection {
 type Server = RoomServer<ServerGame, OnlineOptions, OnlineAction, GameView, never>
 
 /** A room with `players` joined (the first is host), started with `options`. */
-function startRoom(players: number, options: Partial<OnlineOptions> = {}, seed = 7) {
-  let n = seed
-  const rules = makeRules({ words: () => words, randomSeed: () => (n = (n * 48271) % 2147483647) })
+function startRoom(players: number, options: Partial<OnlineOptions> = {}, seed: number | 'secret' = 7) {
+  let n = seed === 'secret' ? 0 : seed
+  const randomSeed = seed === 'secret' ? undefined : () => (n = (n * 48271) % 2147483647) // 'secret' = the real server’s random numbers
+  const rules = makeRules({ words: () => words, randomSeed })
   const party = new FakeParty()
   const server: Server = new RoomServer(party, rules, { ...settings, botTakesOverAfterMs: 0 })
   server.log = () => {} // quiet tests
@@ -117,6 +119,22 @@ describe('online server — secrets stay secret', () => {
     expect(dealt.game.hands[1].some((s) => s !== HIDDEN)).toBe(true)
     expect(dealt.game.hands[0]).toEqual(Array(8).fill(HIDDEN))
     expect(dealt.names).toEqual(['P0', 'P1'])
+  })
+})
+
+describe('online server — the bag can’t be worked out', () => {
+  it('the bag is not the shuffle of the game’s seed (a PC tries all 2^31 seeds against its own hand in ~30 min)', () => {
+    const { server } = startRoom(2)
+    const { game } = server.game!
+    expect(game.bag).not.toEqual(newGame({ players: 2, seed: game.config.seed }).bag)
+  })
+
+  it('the real server’s random numbers are secret ones, not Math.random (its next numbers can be worked out from earlier ones)', () => {
+    const mathRandom = vi.spyOn(Math, 'random')
+    const { server } = startRoom(2, {}, 'secret')
+    expect(server.game).not.toBeNull()
+    expect(mathRandom).not.toHaveBeenCalled()
+    mathRandom.mockRestore()
   })
 })
 
