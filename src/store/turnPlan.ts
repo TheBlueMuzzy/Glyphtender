@@ -3,6 +3,7 @@
 import { legalCasts, legalDraftHexes, legalMoves } from '../engine/engine'
 import { sameHex, type Hex } from '../engine/hex'
 import type { Action, GameState } from '../engine/types'
+import { isLocalHuman, type Seat } from './seats'
 
 /** A glyphling moved on screen but not cast yet. */
 export interface PlannedMove {
@@ -49,6 +50,17 @@ export function highlightFor(game: GameState, move: PlannedMove | null, selected
   if (game.phase !== 'play') return null
   if (selected?.kind === 'glyphling') return { hexes: legalMoves(game, selected.id), kind: 'move' }
   return move ? { hexes: castOptions(game, move), kind: 'cast' } : null
+}
+
+/**
+ * What the board lights up on THIS device: nothing while a seed flies; in play, only the plan of a player on this
+ * device that can still change — online, another player's turn is replayed with its move in the store (the glide),
+ * and that move is not something to cast from here (no gold for them); nor is my own once it's gone to the server.
+ */
+export function boardHighlight(s: { game: GameState; move: PlannedMove | null; selected: Selection; flying: boolean; waiting: boolean; seats: Seat[] }): Highlight | null {
+  if (s.flying) return null
+  if (s.game.phase === 'play' && (s.waiting || !isLocalHuman(s.seats, s.game.current))) return null
+  return highlightFor(s.game, s.move, s.selected)
 }
 
 /** While dragging: if `hex` (under the lifted piece) is a legal drop, which option it is — else null (no highlight). */

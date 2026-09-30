@@ -16,7 +16,7 @@ import animJson from '../../content/tuning/anim.json'
 import { glideSeconds } from '../game/glide'
 import { useGameStore } from './gameStore'
 import { actionRefused, connectOnline, receiveView, stopOnline } from './onlinePlay'
-import { castOptions } from './turnPlan'
+import { boardHighlight, castOptions } from './turnPlan'
 
 let words: WordList
 beforeAll(() => { words = parseWordList(readFileSync('public/words/words.csv', 'utf8')) })
@@ -157,6 +157,7 @@ describe('online store — turns', () => {
     me.mail = [] // the answer got lost
     store().finishCast()
     expect(store().waiting).toBe(true)
+    expect(boardHighlight({ ...store(), game: store().game! })).toBeNull() // my move is at the server: no more gold
     vi.advanceTimersByTime(3000)
     expect(sent.at(-1)).toEqual({ kind: 'sync' })
     deliver()
@@ -177,6 +178,7 @@ describe('online store — turns', () => {
     const turn = blueView().game.lastTurn!
     expect(store().game!.glyphlings).toEqual(before.glyphlings) // still the old view…
     expect(store().move).toEqual({ glyphling: turn.glyphlingId, to: turn.to }) // …with Blue's glyphling gliding
+    expect(boardHighlight({ ...store(), game: store().game! })).toBeNull() // no gold on my screen for Blue's move
     vi.advanceTimersByTime(glideSeconds(turn.from, turn.to, animJson) * 1000)
     if (turn.letter) {
       expect(store().flying).toBe(true)

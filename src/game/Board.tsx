@@ -16,7 +16,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { getBoard } from '../engine/boards'
 import { hexCorners, hexKey, hexToPixel, type Hex } from '../engine/hex'
 import { useGameStore } from '../store/gameStore'
-import { highlightFor } from '../store/turnPlan'
+import { boardHighlight } from '../store/turnPlan'
 import { dangers } from '../store/danger'
 import { revealSteps } from '../store/revealPlan'
 import { colourOf, glyphlingArt, seedArt } from './art'
@@ -48,6 +48,8 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   const flying = useGameStore((s) => s.flying)
   const landed = useGameStore((s) => s.landed)
   const revealAt = useGameStore((s) => s.revealAt)
+  const seats = useGameStore((s) => s.seats)
+  const waiting = useGameStore((s) => s.waiting)
   const indicators = useGameStore((s) => s.options?.wordIndicators ?? true)
   const finishCast = useGameStore((s) => s.finishCast)
   const colours = useGardenTuning()
@@ -115,7 +117,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   const player = colours[colourOf(seat)]
   const moved = move && game.glyphlings.find((g) => g.id === move.glyphling)
   const plannedLetter = cast ? game.hands[seat][cast.seed] : null
-  const highlight = flying ? null : highlightFor(game, move, selected)
+  const highlight = boardHighlight({ game, move, selected, flying, waiting, seats })
   const lit = board.cells.filter((h) => highlight?.hexes.some((x) => hexKey(x) === hexKey(h)))
   const glow = highlight?.kind === 'cast' ? colours.castGlow : colours.moveGlow
   // Word indicators off: nothing shows which seeds make a word (players spot words themselves)
