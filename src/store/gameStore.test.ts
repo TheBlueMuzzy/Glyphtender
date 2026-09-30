@@ -149,6 +149,18 @@ describe('game store — planning a turn (One Cast + undo)', () => {
     expect(store().cast).toEqual({ seed: 0, target: other })
   })
 
+  it('with a seed aimed, tapping the ghost still sends the glyphling back (its hex is gold too, but the ghost wins)', () => {
+    yellowToPlay()
+    store().tapGlyphling(0)
+    store().tapHex(hexAt('C6-6'))
+    store().tapSeed(0)
+    store().tapHex(hexAt('C6-4'))
+    expect(castOptions(store().game!, store().move).some((h) => hexKey(h) === hexKey(hexAt('C6-7')))).toBe(true) // the ghost's hex is gold
+    store().tapHex(hexAt('C6-7')) // the ghost
+    expect(store().move).toBeNull()
+    expect(store().cast).toBeNull()
+  })
+
   it('the game itself never changes while planning', () => {
     yellowToPlay()
     const before = store().game
