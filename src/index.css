@@ -1,4 +1,1 @@
 html, body, #root { height: 100%; margin: 0; }
-body { background: #141a2e; color: #f3e9d7; font-family: ui-rounded, system-ui, sans-serif; }
-.placeholder { display: grid; place-content: center; gap: 1rem; height: 100%; text-align: center; }
-.placeholder a { color: #e8a33d; font-size: 1.25rem; }

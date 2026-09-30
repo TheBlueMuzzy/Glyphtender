@@ -36,19 +36,19 @@
       { "id": "subtitles", "type": "toggle", "label": "Subtitles", "default": true, "on": false }
     ]},
     { "id": "language", "label": "Language", "rows": [
-      { "id": "language", "type": "selector", "label": "Language", "options": ["English", "Español", "Français", "Deutsch", "Português", "日本語"], "default": "English" }
+      { "id": "language", "type": "selector", "label": "Language", "options": ["English", "Español", "Français", "Deutsch", "Português", "日本語"], "default": "English", "on": false }
     ]},
     { "id": "account", "label": "Account", "rows": [
-      { "id": "playerName", "type": "button", "label": "Change your name" },
+      { "id": "playerName", "type": "button", "label": "Change your name", "on": false },
       { "id": "cloudSave", "type": "toggle", "label": "Save to the cloud", "default": false, "on": false },
-      { "id": "analytics", "type": "toggle", "label": "Share anonymous play data", "detail": "Helps us fix bugs. Never sold.", "default": false },
-      { "id": "privacy", "type": "link", "label": "Privacy policy", "url": "https://example.com/privacy" },
+      { "id": "analytics", "type": "toggle", "label": "Share anonymous play data", "detail": "Helps us fix bugs. Never sold.", "default": false, "on": false },
+      { "id": "privacy", "type": "link", "label": "Privacy policy", "url": "https://example.com/privacy", "on": false },
       { "id": "deleteAccount", "type": "destructive", "label": "Delete account and data", "button": "Delete", "confirm": "Your account, saves and scores will be deleted for good.", "on": false }
     ]},
     { "id": "about", "label": "About", "rows": [
       { "id": "version", "type": "info", "label": "Version", "default": "0.1.0" },
       { "id": "credits", "type": "button", "label": "Credits" },
-      { "id": "feedback", "type": "link", "label": "Send feedback", "url": "https://example.com/feedback" },
+      { "id": "feedback", "type": "link", "label": "Send feedback", "url": "https://example.com/feedback", "on": false },
       { "id": "resetProgress", "type": "destructive", "label": "Reset progress", "button": "Reset", "confirm": "All your unlocks and scores will be gone. This can’t be undone." }
     ]}
   ]

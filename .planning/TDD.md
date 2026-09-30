@@ -64,7 +64,8 @@ flowchart LR
 | `content/tuning/layout.json` | stacked/side threshold, tray tile size, hex min size, gaps | Dev Kit → Tuning |
 | `content/tuning/anim.json` | throw (flight, arc, hop), sprout, later reveal timings | Dev Kit → Tuning |
 | `content/tuning/garden.json` | night garden colours, player colours, glow, halo, faded-seed strength | Dev Kit → Tuning |
-| `content/ui/style.json` | Cozy preset + night colour tweaks | Dev Kit → Color |
+| `content/ui/style.json` | UI kit look: Cozy preset + night colour tweaks (D09) — every menu/HUD colour, shadow, panel texture | Dev Kit → Color |
+| `content/ui/settings.json` | Settings screen rows (kit standard list; `"on": false` hides a row — language, account and placeholder links are off for now) | Obsidian |
 | `content/text/en.json` | every player-facing word ("tangled", "Magic", prompts) | Obsidian |
 | `content/credits.json` | fonts, word list | organize-assets |
 
@@ -103,6 +104,9 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D09 · 2026-09-30 · Menus wear Cozy at night: garden night blues + warm cream text (content/ui/style.json tweaks)
+  Proposed by: Muzzy ("night time so when we do add magic sparkles, they 'pop' contrast wise")   Options: Cozy as-is (light parchment) / Cozy night tweaks
+  Chose: night tweaks — bg #10162a + panels #1c2742 (the garden's own), cream text #f3e9d7 (14.9:1 / 12.3:1), Cozy sage primary #4f7c5a, amber accent #e8a33d, gold focus #f2c14e, deep navy shadows; all body text ≥ 4.5:1
 D08 · 2026-09-30 · One Cast per turn with free undo; the throw animation plays only after Cast
   Proposed by: Claude (research) → decided by Muzzy after the F01 prototype   Options: one Cast / confirm each step
   Chose: one Cast — "it's better for sure"; Muzzy added the throw story and one halo style for planned pieces

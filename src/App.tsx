@@ -1,10 +1,17 @@
-// Placeholder home page until the real menus arrive (F14). Links to the current prototype.
+// Home page = the UI kit's main menu. Settings and Credits open on top through the kit's screen stack
+// (Back, Esc and phone Back close the top one).
+import { ScreenStack, ToastStack, kitScreens } from './ui/kit'
+import { CreditsScreen, MainMenuScreen, SettingsScreen } from './ui/menus'
+
+const menuScreens = { ...kitScreens, settings: SettingsScreen, credits: CreditsScreen }
+
 export default function App() {
   return (
-    <main className="placeholder">
-      <h1>Glyphtender</h1>
-      <p>The best speller doesn’t always win.</p>
-      <a href={`${import.meta.env.BASE_URL}sketches/move-cast/`}>Prototype: move → cast → undo</a>
-    </main>
+    <>
+      <ScreenStack screens={menuScreens}>
+        <MainMenuScreen />
+      </ScreenStack>
+      <ToastStack />
+    </>
   )
 }

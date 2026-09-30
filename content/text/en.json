@@ -1,0 +1,14 @@
+{
+  "_help": "Every word players read, one section per screen. Edit freely. A missing word falls back to the kit's English default.",
+  "mainMenu": {
+    "title": "Glyphtender",
+    "subtitle": "The best speller doesn't always win.",
+    "prototype": "Prototype: move → cast",
+    "settings": "Settings"
+  },
+  "credits": {
+    "people": [
+      { "role": "Game design & art", "names": ["Muzzy (TheBlueMuzzy)"] }
+    ]
+  }
+}
