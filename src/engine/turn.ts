@@ -1,6 +1,7 @@
 // A turn: move one glyphling, then cast a seed from where it landed.
 import { hexKey, type Hex } from './hex'
 import { findGlyphling, includesHex, legalCasts, legalMoves } from './moves'
+import { endTurn } from './tangle'
 import type { GameState, TurnSummary, WordList } from './types'
 
 export type TurnAction = { type: 'turn'; glyphling: number; to: Hex; seed: number | null; target: Hex | null }
@@ -56,14 +57,4 @@ export function applyTurn(state: GameState, action: TurnAction, _words: WordList
     drew: 0,
   }
   return endTurn({ ...after, lastTurn })
-}
-
-/** Finishes a turn: next seat's go. */
-export function endTurn(state: GameState): GameState {
-  return {
-    ...state,
-    phase: 'play',
-    current: (state.current + 1) % state.config.players,
-    turnCount: state.turnCount + 1,
-  }
 }

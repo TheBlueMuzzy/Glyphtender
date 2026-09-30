@@ -6,7 +6,7 @@ Goal: a full 2–4 player game can be played start to finish by script — draft
 Done when: every rule in GDD §4 has a test; a random-player simulation finishes thousands of games with no rule broken (seed count always 120 across bag + hands + board).
 - [x] 🤖 1. Game state, seeded random, new game + snake draft (non-edge, not next to a glyphling) — src/engine/{types,rng,setup,draft}.ts
 - [x] 🤖 2. Turn: move legality, cast legality (over own pieces, not others'), move-only when no cast possible — src/engine/turn.ts
-- [ ] 🤖 3. Tangles, game end at 2, tangle bonus (rivals only) — src/engine/tangle.ts
+- [x] 🤖 3. Tangles, game end at 2, tangle bonus (rivals only) — src/engine/tangle.ts
 - [ ] 🤖 4. Random-player simulation + invariants (seed conservation, turn order, termination) — src/engine/sim.ts, scripts/sim.mjs
 Check: `npm test`; `npm run sim` prints game lengths + how often the bag runs out.
 
