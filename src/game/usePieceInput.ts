@@ -16,6 +16,8 @@ interface Press {
   trayPos?: number
   draft?: boolean
   hex?: Hex
+  /** Which finger (or mouse) is pressing — a second finger is ignored until this one lifts. */
+  pointerId: number
   x: number
   y: number
   touch: boolean
@@ -79,6 +81,7 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
 
   const onPointerDown = (e: PointerEvent) => {
     if (store().flying) return // nothing to touch while a seed is in the air
+    if (!e.isPrimary) return // only the first finger plays; a second finger (or a palm) is ignored
     const t = e.target as Element
     press.current = {
       glyph: numberAttr(t, 'data-glyph'),
@@ -86,21 +89,22 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
       trayPos: numberAttr(t, 'data-tray-pos'),
       draft: !!t.closest('[data-draft]'),
       hex: hexAttr(t),
+      pointerId: e.pointerId,
       x: e.clientX, y: e.clientY, touch: e.pointerType === 'touch', dragging: false,
     }
   }
 
   const onPointerMove = (e: PointerEvent) => {
     const p = press.current
-    if (!p || (p.glyph === undefined && p.hand === undefined && !p.draft)) return
+    if (!p || e.pointerId !== p.pointerId || (p.glyph === undefined && p.hand === undefined && !p.draft)) return
     if (!p.dragging && Math.hypot(e.clientX - p.x, e.clientY - p.y) > layout.dragStartDistance) startDrag(p)
     if (p.dragging) place(e)
   }
 
   const onPointerUp = (e: PointerEvent) => {
     const p = press.current
+    if (!p || e.pointerId !== p.pointerId) return
     press.current = null
-    if (!p) return
     if (p.dragging) {
       place(e, false)
       // Where the piece was shown (lifted above a finger), not where the finger is
@@ -117,6 +121,7 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
   }
 
   const onPointerCancel = (e: PointerEvent) => {
+    if (press.current?.pointerId !== e.pointerId) return
     press.current = null
     place(e, false)
   }
