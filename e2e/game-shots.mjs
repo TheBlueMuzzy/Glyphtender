@@ -4,7 +4,7 @@
 // Skip the Magic reveal → end table → New game → a game with word indicators OFF → Settings → Tray position Flipped → Menu.
 // Checks the move glide (a planned move and Undo slide the glyphling; 4b = frozen halfway), the turn pulse (3b), the "no"
 // shake (3c, frozen mid-shake), the drop target while dragging (6), gold cast hexes right after the move (5a), the white
-// word border (7), the score pops (9b pops · 9c flying · 9d the total) and indicators off (13: no border, plain Cast, no pops).
+// word border (7), the score pops (9b pops · 9c flying · 9d the total; after every turn none of their numbers is left — B007) and indicators off (13: no border, plain Cast, no pops).
 // Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px AND about a board hex tall, the prompt inside its
 // box and just above the tray, tray seeds real size, no console errors; the flipped layout (14) and its column width.
 // Starts its OWN dev server (default port 5188 — never Muzzy's 5180) and closes only that one at the end.
@@ -13,6 +13,7 @@ import { mkdirSync } from 'node:fs'
 import { createServer } from 'vite'
 import { chromium } from 'playwright-core'
 import layout from '../content/tuning/layout.json' with { type: 'json' }
+import { leftoverPops } from './leftover-pops.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
 const PORT = Number(process.argv[3] ?? 5188)
@@ -219,6 +220,12 @@ try {
       await tap(show)
     }
 
+    // B007: after every turn, once its score pops have played, none of their numbers may still show
+    const noPopsLeft = async (when) => {
+      const left = await leftoverPops(page)
+      if (left.length) fail(`${size.name} ${when}: score numbers still on the board after the pops finished: ${left.join(' ')}`)
+    }
+
     // ---- menu → Play ----
     await page.goto(`http://127.0.0.1:${PORT}/`)
     await page.getByRole('button', { name: 'Play', exact: true }).click()
@@ -345,6 +352,7 @@ try {
         refreshed = true
       }
       await passIfAsked()
+      await noPopsLeft(`after turn ${turn}`)
       if (await store((s) => s.game.phase === 'over')) break
       // Between turns: reorder the tray by dragging, and shuffle it
       if (turn === 2) {

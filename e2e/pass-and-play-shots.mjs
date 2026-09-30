@@ -3,7 +3,7 @@
 // device each time (the tray stays hidden until "Show my seeds") → a glyphling with 1 move left shows its warning ring
 // (the dev hook fast-forwards to one) → fast-forward to the end → the Magic reveal plays by itself (mid + end shots)
 // → the end table → New game (the new-game screen remembers 3 players) → Start → Menu → Rules → Leave.
-// A turn that grows words: its score pops play BEFORE the handoff box covers the garden.
+// A turn that grows words: its score pops play BEFORE the handoff box covers the garden, and leave nothing behind (B007).
 // Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px (words on one line), the prompt's words inside
 // its box, no console errors.
 // Side-by-side layouts (phone-wide, desktop): the right-hand column keeps one width from a normal turn through the
@@ -13,6 +13,7 @@
 import { mkdirSync } from 'node:fs'
 import { createServer } from 'vite'
 import { chromium } from 'playwright-core'
+import { leftoverPops } from './leftover-pops.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
 const PORT = Number(process.argv[3] ?? 5193)
@@ -147,6 +148,9 @@ try {
         await tap(page.getByRole('button', { name: 'Keep all' }))
       }
       await handoff(turn === 2 ? '4-handoff' : null)
+      // B007: the pops played before the handoff — none of their numbers may still be on the board after it
+      const left = await leftoverPops(page)
+      check(`turn ${turn}: no score numbers left on the board (${left.join(' ')})`, left.length === 0)
       if (turn === 2) await shot('5-next-turn')
     }
     const turnColumn = await columnWidth()

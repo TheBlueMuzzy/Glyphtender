@@ -17,6 +17,7 @@ import { mkdirSync, readFileSync } from 'node:fs'
 import { createServer as netServer } from 'node:net'
 import { createServer } from 'vite'
 import { chromium } from 'playwright-core'
+import { leftoverPops } from './leftover-pops.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
 const VITE_PORT = Number(process.argv[3] ?? 5311)
@@ -179,6 +180,14 @@ async function playUntil(players, done, { seconds = 120, watch = null } = {}) {
           await watcher.page.waitForTimeout(300)
           await watcher.page.screenshot({ path: `${OUT}/online-${watcher.page.viewportSize().width}x${watcher.page.viewportSize().height}-4b-incoming-pops.png` })
           console.log(`ok   ${watcher.name} 4b-incoming-pops (${p.name}'s turn)`)
+        }
+      }
+      // B007 (mid-game turns): once a turn's pops have played — on the caster's screen and the watcher's replay —
+      // none of their numbers may still be on the board
+      if (watch) {
+        for (const who of [p, watcher].filter(Boolean)) {
+          const left = await leftoverPops(who.page)
+          check(`${who.name}: no score numbers left on the board after the pops (${left.join(' ')})`, left.length === 0)
         }
       }
     }

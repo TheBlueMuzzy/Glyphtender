@@ -51,9 +51,10 @@ export function ScorePops({ game, turn, colours, timing, pxPerHex }: Props) {
       // Pop in above its seed (grow past full size, settle) and stay…
       el.animate([{ transform: 'scale(0.2)', opacity: 0 }, { transform: `scale(${seedSwell})`, opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }],
         { delay: ms(line.startOf(pop)), duration: ms(timing.scorePopTime), easing: 'ease-out', fill: 'both' })
-      // …then fly with all the others into the total over the glyphling
+      // …then fly with all the others into the total over the glyphling, vanishing into it (B007: the last frame is
+      // held until the next landing, so it must be invisible — a faint "+2" used to stay on the board)
       const dx = caster.x - spots[i].x, dy = caster.y - TOTAL_ABOVE - spots[i].y
-      el.animate([{ transform: 'translate(0, 0) scale(1)', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px) scale(0.6)`, opacity: 0.2 }],
+      el.animate([{ transform: 'translate(0, 0) scale(1)', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px) scale(0.6)`, opacity: 0 }],
         { delay: ms(line.fly), duration: ms(timing.scoreFlyTime), easing: 'ease-in', fill: 'forwards' })
     })
     const totalSwell = 1 + juiceFor('totalPop').grow
