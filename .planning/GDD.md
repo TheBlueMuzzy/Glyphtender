@@ -1,69 +1,100 @@
 # Glyphtender — Game Design Document (GDD)
 > What the game is, how it plays, how it should feel. Aim for ~150 lines — detail lives in `design/` docs linked from here.
-> Current phase: Define   ·   Engineering plan: TDD.md (not yet)   ·   Milestones, ideas, known issues: ROADMAP.md (not yet)
-> **Remake** of the Unity game (`../glyphtender-original`). Everything known about the original: `research/original-digest.md`. References + directions: `research/discovery.md`. Direction chosen: **B — board-first modern** (same rules; flow and layout rebuilt to current board-game-app practice).
+> Current phase: Design   ·   Engineering plan: TDD.md (not yet)   ·   Milestones, ideas, known issues: ROADMAP.md (not yet)
+> **Remake** of the Unity game (`../glyphtender-original`). The original: `research/original-digest.md`. References + directions: `research/discovery.md`. Direction: **B — board-first modern** (same rules; flow and layout rebuilt to current board-game-app practice).
 
 ## 1. Pitch
-- **One line:** Hunt your rivals' glyphlings across a hex garden — every letter you cast is a wall *and* a chance to spell.
-- **In one breath:** Move a glyphling, cast a letter from where it lands. Letters score when they make words, but they also fence people in. Trap two glyphlings and the game ends; scores stay secret until the reveal. *An area-control game with a spelling element, not a spelling game with area control.*
-- **Platform:** web — phone (portrait **and** landscape) + desktop, one responsive layout. Installable (PWA).   **Audience:** general (not made for kids) · board-gamers and word-game players, 2–4 around one device, later online.
-- **References:** Game of the Amazons (our turn and ending skeleton) · Hive (surround to win, hex board on a phone) · Santorini (move-then-build turn, legal-move highlights) · Scrabble GO / Wordfeud (rack + board on a phone, live score on the commit button) · board-game apps for pass-and-play handoff, shape-based layouts, undo-until-commit, staged endings. Breakdowns in `research/discovery.md`.
+- **Theme:** You're competing to become the next **Grand Glyphtender**. Command your glyphlings to plant **runeblossom seeds** in the **Glyphwood Gardens**. Seeds grow into topiary shaped like letters; when letters form words they create **Magic**. Create the most Magic to prove you can keep magic alive in the Glyphwood!
+- **Catchphrase:** ***The best speller doesn't always win.***
+- **One line:** A cozy hex-garden game — move a glyphling, cast a seed, grow words into Magic; but where your garden grows matters as much as what it spells.
+- **Platform:** web — phone (portrait **and** landscape) + desktop, one responsive layout. Installable (PWA).   **Audience:** general (not made for kids) · board-gamers and word-game players, 2–4 around one device or online.
+- **References:** Game of the Amazons (turn + ending skeleton) · Hive (hex board on a phone, pieces hemmed in) · Santorini (move-then-build turn, legal-move highlights) · Scrabble GO / Wordfeud (rack + board on a phone, live score on the commit button) · board-game apps for handoff, shape-based layout, undo-until-commit, staged endings. `research/discovery.md`.
 
-## 2. Experience targets  (MDA — what players should feel; used by tuning and playtests)
+## 2. Experience targets  (MDA)
 | | Target | In players' words | We'll know when… (watchable) | Seen? |
 |---|---|---|---|---|
-| Primary | **Challenge — cunning** | "I boxed them in AND scored with the same letter." | players stop to hunt for double-duty casts; a tangle gets a groan or a cheer | — |
-| Secondary | **Tension — the secret score** | "Am I ahead…? I'll tangle myself and end it." | players deliberately self-tangle to end the game; audible reaction at the reveal | — |
-| Secondary | **Fellowship — around the table** | "Don't you dare put the Z there!" | banter during others' turns in pass-and-play; "again?" within a minute of the reveal | — |
-| Not this game | **A vocabulary exam** | — | a player who spells short words can still win by hunting | — |
-**Key moments:** the tangle · the double-duty cast · stealing someone's half-built word · the score reveal.
-**Watch-outs:** turns that feel like homework (staring at the rack) · a board you can't read on a phone · waiting through others' turns · an opening lockout (the snake draft exists to prevent it) · the best speller always winning.
+| Primary | **Cozy cleverness** (Challenge, gentle) | "That seed made a word *and* left their glyphling nowhere to go." | players pause to look for a cast that does two things; a smile or groan when a glyphling gets tangled | — |
+| Secondary | **Secret-Magic tension** | "Am I ahead…? I'll tangle myself and end it." | someone deliberately self-tangles to end the game; audible reaction at the reveal | — |
+| Secondary | **Fellowship** | "Don't you dare plant a Z there!" | banter during others' turns; "again?" within a minute of the reveal | — |
+| Not this game | **A vocabulary exam** · **a combat game** | — | a short-word speller still wins sometimes; nobody talks about "attacking" | — |
+**Key moments:** a glyphling gets tangled · the two-birds cast · growing someone else's half-word into yours · the Magic reveal.
+**Watch-outs:** turns that feel like homework (staring at the seeds) · a board you can't read on a phone · waiting through others' turns · an opening lockout (the snake draft prevents it) · the best speller always winning.
 
 ## 3. Pillars
-- **Hunt first, spell second** — area control decides games; words fuel it. *Settles:* no multiplier squares or letter values — word = length + ownership. The AI hunts before it spells.
-- **Always readable** — whose turn, what's legal, what just happened, at a glance, on a phone either way up. *Settles:* the board gets the space and always fits; everything else collapses around it; every legal option is highlighted.
-- **Try freely, commit once** — you can experiment on the board without penalty until you cast. *Settles:* one commit per turn with undo (pending Muzzy's feel test, F01).
-- **A cozy garden, not a spreadsheet** — soft, bubbly, satisfying; the game pauses so everyone can follow each move. *Settles:* animate casts and tangles; scores are revealed, not tallied in a corner.
-- **Every seat is swappable** — local human, online human or AI personality; the rules don't care. *Settles:* pass-and-play is built on seats, so AI and online plug in without touching the rules.
+- **The best speller doesn't always win** — where you plant matters as much as what you spell. *Settles:* no multiplier squares or letter values (word = letters + ownership); tangle bonuses stay big; AI personalities that don't spell well can still win.
+- **A cozy garden** — nobody is attacked: seeds grow, and glyphlings get *tangled* in the growing garden. *Settles:* wording ("tangled", never "trapped/killed"), soft animations, gentle AI banter (beta) — even the Bully is mischievous, not mean.
+- **Always readable** — whose turn, what's legal, what just grew, at a glance, on a phone either way up. *Settles:* the board gets the space and always fits; every legal option is highlighted.
+- **Try freely, commit once** — experiment on the board without penalty until you cast. *Settles:* one commit per turn with undo — **pending Muzzy's prototype (F01)**.
+- **Every seat is swappable** — local player, online player or AI; the rules don't care. *Settles:* pass-and-play is built on seats, so online and AI plug in without touching the rules.
 
 ## 4. How it plays
-Same rules as the original, with its rule bugs fixed — full rules in `research/original-digest.md §1`; written here in the Design part.
-- **Core loop:** move a glyphling → cast a runeblossom from where it landed → words through it score → draw or refresh → … until two glyphlings are tangled → the reveal.
+- **Core loop:** move a glyphling → cast a seed from where it landed → it grows → words make Magic → draw or refresh → … until two glyphlings are tangled → the Magic reveal.
+- **Rules** (numbers live in `content/`, not code):
+  1. **Board** — flat-top hex garden with 3 **leylines** (N–S, NE–SW, NW–SE; no horizontal). Small 85 hexes, Large 117. Default: Small for 2 players, Large for 3–4 (❓ sims may change it).
+  2. **Setup** — each player has 2 glyphlings (Yellow, Blue, Purple, Pink). **Snake draft** (1-2-2-1 · 1-2-3-3-2-1 · 1-2-3-4-4-3-2-1): place on a non-edge hex not next to another glyphling. Then everyone draws 8 seeds from the bag.
+  3. **Bag** — 120 seeds: A9 B2 C3 D4 E16 F3 G2 H6 I9 J1 K2 L5 M3 N7 O9 P2 **Qu1** R6 S7 T10 U4 V1 W3 X1 Y3 Z1. **Qu** is one seed, counts as one letter.
+  4. **Move** — one of your glyphlings, ≥1 hex along a leyline. Can't pass through or land on anything.
+  5. **Cast** — from where it landed, plant one seed along any leyline, any distance, on an empty hex. It may fly over your own seeds and glyphlings, not other players'.
+  6. **Grow** — every word through the new seed, on every leyline, makes Magic = **letters + 1 per seed you own in it**. Shared letters count in each word. On one leyline, a word hidden inside the other words made this turn doesn't count (GARDENING, not DEN; SEAL + LEAP, not ALE). Words read top-to-bottom / left-to-right. Min length 2 (table option: 3).
+  7. **Draw or refresh** — made Magic → draw 1. Made none → you may set aside any number of seeds, refill to 8, then return the set-aside seeds to the bag.
+  8. You must move and cast if you can. Can move but can't cast (no seeds, no open hex) → just move.
+  9. **Tangled** — a glyphling with no legal move. Checked fresh after every turn, so a glyphling hemmed in by another glyphling is freed if that one moves away (as the original). When a turn ends with **2 or more glyphlings tangled**, the game ends.
+  10. **Tangle bonus** — for each tangled glyphling, every *other* player gains **+3 Magic per seed or glyphling of theirs next to it**. Self-tangling next to your own seeds gives your rivals nothing.
+  11. **Magic is secret** until the end. Most Magic wins; ties share the win.
+- **Controls:** tap-tap *and* drag, always both (phone and mouse). Tap a glyphling → its moves light up → tap one. Tap or drag a seed → legal hexes light up with their Magic preview → tap one. Undo / tap-again to take back (per F01). **Cast · +N** commits. Pinch/scroll zoom is optional; a Fit button snaps back.
+- **Mechanics:**
+| Mechanic | What players end up doing → Target |
+|---|---|
+| Move then cast from the landing spot | reading two steps ahead: where to stand so the seed does double duty → Cozy cleverness |
+| Seeds block movement (anyone's) | planting to hem in, and to build safe pockets for yourself → Cozy cleverness |
+| Magic = letters + 1 per own seed | growing/stealing half-words on the board; ownership beats long words → *best speller doesn't always win* |
+| Refresh only when you made no Magic | a bad hand still plants a wall — no dead turns → avoids "homework" |
+| Secret Magic + game ends at 2 tangles | self-tangle gambles; guessing who's ahead → Secret-Magic tension |
+| Tangle bonus +3 per adjacent piece | planning *where* a glyphling gets tangled, not just whether → Cozy cleverness |
+| Snake draft | fair openings, no lockout → Fellowship |
+**Trap check (predictions, to verify with AI-vs-AI sims in beta):** best speller dominates → countered by ownership +1 and tangle bonuses · runaway leader → hidden Magic blunts kingmaking · first-player edge (Yellow always starts) → sim; random start is a Should · 4-player waiting → fast turns, short animations, handoff screen.
 
 ## 5. Systems
-Pass-and-play seats (first) · AI personalities (alpha — first framework AI module) · online rooms (beta — reuse Roll Better's PartyKit rooms) · stats + Wordsmith/Tanglesmith radar (beta). Detailed in the Design part.
+- **Seats** — every player seat is *local*, *online* or *AI*; all submit the same actions to the same rules engine. Pass-and-play = several local seats + handoff screen (hand hidden, board visible).
+- **Online (alpha)** — Roll Better's PartyKit rooms: room code, 2–4 players, rejoin, host leaves, AFK. Server runs the same rules engine, so it validates every move (the original never did).
+- **AI (beta)** — the goal-selection personality model from the original's `festive-booth` branch (7 goals, 7 personalities, fuzzy Magic perception, difficulty) → built as the **first framework AI module**, game-specific goal scorers stay in the game. Add Amazons-style "reachable moves" evaluation for garden pockets. Detail: `research/original-digest.md §2`; `design/ai.md` in beta.
+- **Stats (1.0)** — per-game table at the end (alpha), lifetime stats + Wordsmith/Tanglesmith radar later.
 
 ## 6. Look & sound
-UI: Game UI kit, **Cozy** style. Board art from the original to be judged at web size. Filled in the Design part with Muzzy.
+UI: Game UI kit, **Cozy** style. Garden art direction: *to capture with Muzzy* (current art: glowing vine-wrapped letters in rounded hexes on a dark starry background; fuzzy leaf-sprout glyphlings). Signature moment: seed arcs to the hex → buried → glyphling splashes magic water → letter topiary grows.
 
 ## 7. Scope
-Release stages: prototype → alpha → beta → 1.0. **Done** for a stage = all its musts done.
+Releases: **alpha → beta → 1.0** (no "prototype" release — prototypes are code sketches, like F01). **Done** = all its musts done.
 
-| Must — prototype (full pass-and-play) | Must — alpha (AI) | Must — beta (online) | Must — 1.0 | Should | Could | Won't (and why) |
-|---|---|---|---|---|---|---|
-| Rules engine with the original's bugs fixed (120-tile bag + Qu, discards return to the bag, union word rule) | AI framework module (goal-selection personalities, fuzzy perception, difficulty) | Online rooms: code, join, 2–4 players (Roll Better rooms) | Tutorial (progressive, first game) | Board themes | Async play (several games at once) | 2v2 teams — cut in the original as "less fun" |
-| Responsive layout: phone portrait, phone landscape, desktop; board always fits | 7 personalities with bios + taunt lines | Rejoin, host leaves, AFK → AI takes the seat | Accessibility pass (colour-blind glyphling marks, 200% text) | Colour preference per player | Spectators | Multiplier squares / letter values — breaks *Hunt first* |
-| Snake draft, move → cast turn with legal highlights, commit style from F01 | AI in any seat, 2–4 players (original was 2p only) | Rematch | Final art + audio pass | Random starting player (setting) | Leaderboards, accounts | Tilted 3D camera — breaks *Always readable* |
-| Hand tray: tap and drag, reorder, shuffle, swap (refresh) mode | AI plays at human pace (animated, speed setting) | Stats + radar screen | Credits, privacy, PWA polish | Undo history beyond one turn | 3D figurine glyphlings | Per-step confirm (unless F01 says otherwise) |
-| Live move score on the Cast button; words outlined | Cast + tangle animations ("bubbly") | | | Hint button ("show me a move") | Topiary-grow cast effect (might move up) | |
-| Tangle danger cues; tangle + game end + tangle bonus | Basic audio | | | | | |
-| Pass-and-play handoff screen (hidden hands) | End stats (per-player table) | | | | | |
-| Staged score reveal (basic) | Settings: tap/drag, tray side, AI speed | | | | | |
-| Main menu + new-game setup (players, board) — kit screens | | | | | | |
-| Dev Kit (tuning), deploy to GitHub Pages | | | | | | |
+**Must — alpha (pass-and-play + online)**
+- Rules engine (rules above, the original's bugs fixed) + dictionary
+- Responsive layout: phone portrait, phone landscape, desktop; board always fits
+- Snake draft; move → cast turn with legal highlights; commit style from F01
+- Seed tray: tap + drag, reorder, shuffle, refresh mode
+- Live Magic preview on the Cast button; words outlined as they grow
+- Tangle danger cues; tangle, game end, tangle bonus
+- Pass-and-play handoff screen; staged Magic reveal; end-of-game table
+- Main menu, new-game setup, settings, pause — UI kit, Cozy
+- Online rooms (Roll Better): create/join, 2–4, rejoin, host leaves, rematch
+- Grow animation (basic), Dev Kit tuning, GitHub Pages + PWA
+
+**Must — beta (AI)** — AI framework module · 7 personalities with bios and gentle banter · AI in any seat, 2–4 players, online AFK takeover · AI plays at human pace (speed setting) · basic audio · board-size / bag sims settle §9
+
+**Must — 1.0** — tutorial (progressive, first game) · accessibility pass (colour-blind glyphling marks, 200% text, reduce motion) · final art + audio · stats screen + radar · credits, privacy
+
+**Should** — board themes · colour preference · random starting player · hint ("show me a move") · topiary-grow cast effect (may move up)
+**Could** — async play (several games at once) · spectators · leaderboards/accounts · 3D figurine glyphlings
+**Won't** — 2v2 teams (cut in the original as "less fun") · multiplier squares / letter values (breaks *best speller doesn't always win*) · tilted 3D camera (breaks *Always readable*) · per-step confirm (unless F01 says otherwise)
 
 ## 8. Product
 - **Release path:** web (GitHub Pages) first; stores later if it earns it.   **Business:** none yet.
-- **Success looks like:** friends ask to play again; Muzzy prefers it to the Unity version; a full 4-player game on one phone never needs a zoom.
+- **Success looks like:** friends ask to play again; Muzzy prefers it to the Unity version; a 4-player game on one phone never needs a zoom.
 
 ## 9. Open questions
-- ❓ **Commit style** — one Cast + undo vs per-step confirm → decided by the **F01 feel test** (move → shoot → undo, no scoring).
-- ❓ **Board size** — Small 85 / Large 117 / paper 92 — one per player count? Decide from AI-vs-AI sims once the engine exists (alpha); prototype ships Small + Large.
-- ❓ **Bag run-out** — can 120 run out on Large with 4 players (117 + 32)? Sim. Original rule if it does: stop drawing.
-- ❓ **Starting player** — Yellow always, or random? (original wished for random)
-- ❓ **Strategist personality** — multi-word specialist (code) or DENY-first tactician (HANDOFF)? Settle in alpha.
-- ❓ **Look** — keep the dark starry art, or lighter to suit Cozy? Design part, with Muzzy.
-- **Risks** (and cheapest test):
-  1. *Board unreadable on a phone* (117 hexes, landscape height ~360 px) → F01 renders both boards at 390×844, 844×390, 1440×900. Math says ~32–37 px hexes — enough for a letter.
-  2. *The new commit flow feels wrong to Muzzy* → F01 feel test, before any of the turn flow is built on it.
-  3. *AI too slow in a browser* (~10k candidate moves/turn) → run it in a Web Worker; time it in alpha.
+- ❓ **Commit style** — one Cast + undo vs per-step confirm → **F01 prototype** (move → cast → undo, no scoring).
+- ❓ **Board size per player count** — sims in beta; alpha ships Small + Large.
+- ❓ **Bag run-out** — can 120 run out on Large with 4 players? Sim. If it does: stop drawing.
+- ❓ **Starting player** — Yellow always, or random?
+- ❓ **Strategist personality** — multi-word specialist or DENY-first tactician? (beta)
+- ❓ **Look** — garden art direction (see §6).
+- **Risks:** (1) board unreadable on phones → F01 renders both boards at 390×844, 844×390, 1440×900 · (2) the undo flow feels wrong → F01 · (3) AI too slow in a browser → Web Worker, timed in beta.
