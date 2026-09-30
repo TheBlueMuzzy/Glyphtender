@@ -1,0 +1,42 @@
+/* THE GAME SCREEN'S LAYOUT — arranging only (no colours or sizes here: colours come from
+   content/tuning/garden.json, sizes from layout.json, both applied to the SVGs in code; spacing uses kit gap names). */
+@layer game {
+  .game {
+    block-size: 100%;
+    display: grid;
+    gap: var(--gap-s);
+    overflow: hidden;
+    padding: max(var(--gap-s), env(safe-area-inset-top)) max(var(--gap-s), env(safe-area-inset-right))
+             max(var(--gap-s), env(safe-area-inset-bottom)) max(var(--gap-s), env(safe-area-inset-left));
+    /* the game handles every touch itself: no page scrolling, zooming, text selecting or long-press menus */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* Tall space: turn bar on top, board in the middle, tray + buttons below */
+  .game[data-layout="stacked"] {
+    grid-template: "bar" auto "board" minmax(0, 1fr) "panel" auto / minmax(0, 1fr);
+  }
+  /* Wide space: board on the left; turn bar, tray and buttons in a column on the right
+     (the column is as wide as the tray, which is sized from layout.json → sidePanelShare) */
+  .game[data-layout="side"] {
+    grid-template: "board bar" auto "board panel" minmax(0, 1fr) / minmax(0, 1fr) min-content;
+  }
+
+  .game-bar { grid-area: bar; min-inline-size: 0; }
+  .game-prompt { flex: 1 1 0; min-inline-size: 0; }
+
+  /* The board's box: the garden background and the board SVG on top of each other, filling it */
+  .game-board { grid-area: board; display: grid; min-block-size: 0; min-inline-size: 0; }
+  .game-board > svg { grid-area: 1 / 1; inline-size: 100%; block-size: 100%; display: block; contain: size; } /* contain: never pushes the layout */
+  /* a new runeblossom grows up out of the ground (useThrow animates the scale) */
+  .game-seed { transform-box: fill-box; transform-origin: 50% 80%; }
+
+  .game-panel { grid-area: panel; display: flex; flex-direction: column; align-items: center; gap: var(--gap-s); min-block-size: 0; }
+  .game[data-layout="side"] .game-panel { justify-content: center; }
+  .game-tray { display: block; flex: none; overflow: visible; }
+
+  /* The dragged piece floats in this layer, over everything, never catching taps itself */
+  .game-drag-layer { grid-area: 1 / 1 / -1 / -1; inline-size: 100%; block-size: 100%; pointer-events: none; overflow: visible; z-index: 1; contain: size; }
+}

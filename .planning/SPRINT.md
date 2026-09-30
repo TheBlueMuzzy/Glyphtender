@@ -6,9 +6,9 @@ What Muzzy will see change: a **Play** button on the menu → a real game on the
 ## F07 🧱 Board view + layout shell
 Done when: the real board (engine state) fills its box in both layouts with the F01 look; whose turn and what to do is always visible.
 - [x] 🤖 1. Game store: engine state, official word list loaded once, planned move/cast, selection, undo — src/store/gameStore.ts (+ test)
-- [ ] 🤖 2. Board from the sketch, cleaned: SVG auto-fit, piece-state language (options / held / planned halo / done), ghost — src/game/Board.tsx
-- [ ] 🤖 3. Layout shell by screen shape + turn bar (player colour, prompt) — src/game/GameScreen.tsx
-- [ ] 🤖 4. Main menu "Play" → 2 players, Small board (until F14's new-game screen) — src/ui/menus.tsx
+- [x] 🤖 2. Board from the sketch, cleaned: SVG auto-fit, piece-state language (options / held / planned halo / done), ghost — src/game/Board.tsx
+- [x] 🤖 3. Layout shell by screen shape + turn bar (player colour, prompt) — src/game/GameScreen.tsx
+- [x] 🤖 4. Main menu "Play" → 2 players, Small board (until F14's new-game screen) — src/ui/menus.tsx
 
 ## F08 🎮 Seed tray
 - [ ] 🤖 5. Tray seeds at real size (= on-board hex size, ≥ 44 px; wrap to 2 rows rather than shrink), tap + drag, reorder, shuffle — src/game/SeedTray.tsx
@@ -30,3 +30,8 @@ Notes:
 - Tray seeds are real size (Muzzy 2026-09-30) — GDD §4 "Seed tray size".
 - Task 1: store = `src/store/gameStore.ts` (Zustand) + pure helpers `src/store/turnPlan.ts`. The store never changes the game except by sending an engine action (checkAction first). Tray order is the screen's own (a list of hand indexes per seat) — the rules don't care; after a turn/refresh survivors keep their place and new seeds go last. The draft and refresh don't wait for the word list; only Cast does.
 - Tuning: `layout.json` trayTileMax removed (tray = real size now), trayGap added; `garden.json` + purple/pink, wordOutlineWidth, grownGlowStrength; `anim.json` + pulseTime, wordGlowTime. The sketch's one use of trayTileMax became a plain 64 so it keeps its look.
+- Tasks 2–4: `src/game/` — Board.tsx (SVG, piece states, ghost, highlights above the ghost), useThrow.ts (hop → arc → sprout → words glow; Web Animations + rAF on refs, never React state per frame; reduce motion = no flight), GameScreen.tsx (layout by shape of the free space), TurnBar.tsx (kit Avatar = the player's glyphling ringed + HudText prompt + kit Menu button → kit Pause), ActionBar.tsx, trayLayout.ts (+4 tests), usePieceInput.ts, game.css (arranging only). Menu: Play (main button) → 2 players, board from boards.json defaultForPlayers["2"], random seed (src/ui/newGame.ts); Pause → Leave game (asks first) → menu.
+- `npm run check:ui` now also checks `src/game` (board, tray, turn bar). To pass without hand-styling: board AND tray are SVGs whose colours/sizes are plain attributes from garden.json / layout.json; game.css only arranges (grid, kit gap names). The side panel's width = the tray SVG's width (sidePanelShare × width), so no game CSS variable is needed.
+- Framework gap (kit): a game can't give its own CSS a number from content/ (e.g. `--tray-tile`) — check-ui rejects any var() that isn't a kit style name. Worked around with SVG attributes; the kit could allow a `--game-…` prefix.
+- garden.json "background" now paints the board's box; the rest of the page is the UI style's bg (both #10162a) — change both together if the night colour changes.
+- Zoom (pinch/scroll + Fit) skipped — nice-to-have; the board always auto-fits. Noted for later.

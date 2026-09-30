@@ -1,6 +1,8 @@
 // MENUS — the home page and the screens it opens, all built from the UI kit.
 // Words: content/text/en.json · settings rows: content/ui/settings.json · look: content/ui/style.json
-import { Credits, MainMenu, Settings, screens } from './kit'
+import { Credits, MainMenu, Pause, Settings, screens } from './kit'
+import { GameOverScreen } from '../game/GameOver'
+import { leaveToMenu, playAgain, startNewGame } from './newGame'
 import text from '../../content/text/en.json'
 import settings from '../../content/ui/settings.json'
 import credits from '../../content/credits.json'
@@ -9,7 +11,7 @@ import version from '../../version.json'
 // The move → cast prototype is its own page (sketches/move-cast/), so the menu button goes there.
 const prototypeUrl = `${import.meta.env.BASE_URL}sketches/move-cast/`
 
-// HOME — title, tagline, and the menu buttons in our order (the first one is the main button).
+// HOME — title, tagline, and the menu buttons in our order (Play is the main button).
 export function MainMenuScreen() {
   const w = text.mainMenu
   return (
@@ -17,6 +19,7 @@ export function MainMenuScreen() {
       title={w.title}
       subtitle={w.subtitle}
       items={[
+        { label: w.play, onClick: startNewGame, primary: true },
         { label: w.prototype, onClick: () => window.location.assign(prototypeUrl) },
         { label: w.settings, onClick: () => screens.push('settings') },
       ]}
@@ -35,4 +38,15 @@ export function SettingsScreen() {
 // CREDITS — people from en.json, then every asset listed in content/credits.json.
 export function CreditsScreen() {
   return <Credits people={text.credits.people} assets={credits} />
+}
+
+// PAUSE — the Menu button in the game: back to the garden, Settings, or leave (asks first).
+export function PauseScreen() {
+  const w = text.game.pause
+  return <Pause words={w} onSettings={() => screens.push('settings')} onQuit={leaveToMenu} />
+}
+
+// GAME OVER — the results over the tangled garden (src/game/GameOver.tsx).
+export function GameOverDialog() {
+  return <GameOverScreen onPlayAgain={playAgain} onMenu={leaveToMenu} />
 }

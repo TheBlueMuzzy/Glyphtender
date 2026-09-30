@@ -3,12 +3,76 @@
   "mainMenu": {
     "title": "Glyphtender",
     "subtitle": "The best speller doesn't always win.",
+    "play": "Play",
     "prototype": "Prototype: move → cast",
     "settings": "Settings"
   },
+  "game": {
+    "players": {
+      "yellow": "Yellow",
+      "blue": "Blue",
+      "purple": "Purple",
+      "pink": "Pink"
+    },
+    "turnOf": "{player}'s turn",
+    "prompts": {
+      "draft": "{player} — place a glyphling ({n} of {total})",
+      "move": "Move a glyphling",
+      "moveHeld": "Move it to a glowing hex",
+      "cast": "Cast a seed from here",
+      "castHeld": "Cast it onto a golden hex",
+      "ready": "Happy? Cast it — or undo",
+      "moveOnly": "No seed to cast — end your turn",
+      "flying": "Planting…",
+      "refresh": "No Magic this turn — refresh seeds?",
+      "refreshDetail": "Tap seeds to set them aside",
+      "over": "The garden is tangled",
+      "loading": "Gathering the words…"
+    },
+    "notes": {
+      "moveFirst": "Move a glyphling first",
+      "notYours": "That one isn't yours",
+      "tangled": "That glyphling is tangled — it can't move",
+      "wordsLoading": "Still gathering the words — one moment",
+      "problem": "That can't be done — try again"
+    },
+    "buttons": {
+      "undo": "Undo",
+      "cast": "Cast",
+      "castMagic": "Cast · +{n}",
+      "endTurn": "End turn",
+      "shuffle": "Shuffle",
+      "refresh": "Refresh {n}",
+      "keepAll": "Keep all",
+      "menu": "Menu",
+      "results": "Results",
+      "playAgain": "Play again"
+    },
+    "pause": {
+      "title": "Paused",
+      "resume": "Back to the garden",
+      "settings": "Settings",
+      "quit": "Leave game",
+      "quitTitle": "Leave this game?",
+      "quitMessage": "The garden will be lost."
+    },
+    "gameOver": {
+      "title": "The garden is tangled",
+      "message": "Most Magic wins — ties share the win.",
+      "points": "{n} Magic",
+      "winner": "Winner",
+      "playAgain": "Play again",
+      "menu": "Menu"
+    }
+  },
   "credits": {
     "people": [
-      { "role": "Game design & art", "names": ["Muzzy (TheBlueMuzzy)"] }
+      {
+        "role": "Game design & art",
+        "names": [
+          "Muzzy (TheBlueMuzzy)"
+        ]
+      }
     ]
   }
 }
