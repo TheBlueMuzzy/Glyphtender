@@ -4,7 +4,7 @@ Goal: a full 2–4 player game can be played start to finish by script — draft
 
 ## F04 🧱 Rules engine
 Done when: every rule in GDD §4 has a test; a random-player simulation finishes thousands of games with no rule broken (seed count always 120 across bag + hands + board).
-- [ ] 🤖 1. Game state, seeded random, new game + snake draft (non-edge, not next to a glyphling) — src/engine/{types,rng,setup,draft}.ts
+- [x] 🤖 1. Game state, seeded random, new game + snake draft (non-edge, not next to a glyphling) — src/engine/{types,rng,setup,draft}.ts
 - [ ] 🤖 2. Turn: move legality, cast legality (over own pieces, not others'), move-only when no cast possible — src/engine/turn.ts
 - [ ] 🤖 3. Tangles, game end at 2, tangle bonus (rivals only) — src/engine/tangle.ts
 - [ ] 🤖 4. Random-player simulation + invariants (seed conservation, turn order, termination) — src/engine/sim.ts, scripts/sim.mjs
@@ -27,5 +27,7 @@ Done when: the original's words.txt is in the game byte-for-byte and every scori
 
 Ask Muzzy:
 Notes:
+- F04 engine: illegal actions THROW an Error with a plain reason; `checkAction(state, action, words)` returns the same reason (or null) without throwing, for the UI. The word list is passed into applyAction as a 3rd argument (it's too big to live in GameState). Rule numbers are copied from content/tuning/rules.json into `state.config.rules` at newGame, so a replay/online game uses the same numbers.
+- F04 engine: glyphling ids are seat × 2 + 0/1 (Yellow = 0,1 · Blue = 2,3 …). Hands are dealt 8 each in seat order from the front of the bag.
 - F03 task 9: kit 0.2.2 (framework db90181) installed with the Cozy preset; applyStyle + applyAccessibility wired in src/main.tsx; `npm run check:ui` passes. content/ui/settings.json = the kit's standard rows (accessibility tab kept).
 - Word Play (GMTK) feel reference being researched → .planning/research/wordplay.md
