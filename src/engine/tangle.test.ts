@@ -45,6 +45,20 @@ describe('tangled (GDD §4.9)', () => {
     expect(next.phase).toBe('play')
   })
 
+  it('skips a seat whose glyphlings are both tangled when the game goes on (tanglesToEnd 3)', () => {
+    const s = position({
+      rules: { tanglesToEnd: 3 },
+      glyphlings: { 0: 'C1-1', 1: 'C11-1', 2: 'C6-5', 3: 'C3-5' },
+      seeds: [{}, { 'C1-2': 'A', 'C2-2': 'B', 'C2-3': 'C', 'C11-2': 'D', 'C10-2': 'E', 'C10-3': 'F' }],
+      hands: [['S'], ['T']],
+      current: 1,
+    })
+    const next = applyAction(s, { type: 'turn', glyphling: 2, to: hexAt('C6-4'), seed: 0, target: hexAt('C6-5') }, words)
+    expect(next.tangled.sort()).toEqual([0, 1])
+    expect(next.phase).toBe('play')
+    expect(next.current).toBe(1) // Yellow can't move at all, so Blue plays again
+  })
+
   it('is checked fresh every turn: a glyphling hemmed in by another glyphling is freed when that one moves away', () => {
     const s = position({
       glyphlings: { 0: 'C1-1', 1: 'C6-5', 2: 'C1-2', 3: 'C8-5' },

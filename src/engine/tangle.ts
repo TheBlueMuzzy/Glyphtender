@@ -41,10 +41,16 @@ export function winnersOf(magic: number[]): number[] {
 export function endTurn(state: GameState): GameState {
   const tangled = tangledIds(state)
   const turnCount = state.turnCount + 1
-  if (tangled.length >= state.config.rules.tanglesToEnd) {
+  // Also ends if no glyphling at all can move (only possible when tanglesToEnd is set above 2).
+  const nobodyCanMove = tangled.length === state.glyphlings.length
+  if (tangled.length >= state.config.rules.tanglesToEnd || nobodyCanMove) {
     const tangleMagic = tangleBonus(state, tangled)
     const magic = state.magic.map((m, seat) => m + tangleMagic[seat])
     return { ...state, phase: 'over', tangled, tangleMagic, magic, winners: winnersOf(magic), turnCount }
   }
-  return { ...state, phase: 'play', tangled, current: (state.current + 1) % state.config.players, turnCount }
+  // Pass play on, skipping any seat whose glyphlings are all tangled — it has no move to make.
+  const canMove = (seat: number) => state.glyphlings.some((g) => g.seat === seat && !tangled.includes(g.id))
+  let next = (state.current + 1) % state.config.players
+  while (!canMove(next)) next = (next + 1) % state.config.players
+  return { ...state, phase: 'play', tangled, current: next, turnCount }
 }
