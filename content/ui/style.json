@@ -1,0 +1,23 @@
+{
+  "preset": "cozy",
+  "tweaks": {
+    "bg": "#10162a",
+    "on-bg": "#f3e9d7",
+    "surface": "#1c2742",
+    "on-surface": "#f3e9d7",
+    "primary": "#4f7c5a",
+    "on-primary": "#fffaf0",
+    "accent": "#e8a33d",
+    "danger": "#b0413e",
+    "on-danger": "#fffaf0",
+    "muted": "#b3a58f",
+    "border": "#3d5080",
+    "focus": "#f2c14e",
+    "on-game": "#fffaf0",
+    "game-shade": "#0a0e1c",
+    "depth-0": "0 2px 0 rgb(4 6 14 / 0.55)",
+    "depth-1": "0 4px 14px rgb(4 6 14 / 0.45), 0 1px 2px rgb(4 6 14 / 0.4)",
+    "depth-2": "0 14px 36px rgb(4 6 14 / 0.6)",
+    "panel-texture": "radial-gradient(rgb(243 233 215 / 0.05) 1px, transparent 1.5px) 0 0 / 6px 6px"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "_help": {
+    "minSeats": "Fewest seats (players + bots) a game can start with.",
+    "maxSeats": "Most seats in a room.",
+    "missedTurnsBeforeBot": "Turns in a row the server plays for an idle player before a bot takes their seat (Roll Better: 2).",
+    "botTakesOverAfterMs": "A player who drops out mid-game gets a bot after this long, in ms (0 = never). They can still come back.",
+    "keepEmptyRoomMs": "Everyone gone mid-game: how long (ms) the room waits for someone to come back before it's cleared.",
+    "allowBots": "May the host add bot seats in the lobby? (The game's rules must then play for bots.)",
+    "maxMessagesPerSecond": "Messages one player's connection may send per second; more are dropped unread (flooding). 0 = no limit.",
+    "turnTimerChoices": "Glyphtender: the turn timers the host can pick, in seconds (0 = off). The first one is the default.",
+    "botTurnDelayMs": "Glyphtender: how long (ms) the server waits before playing a turn for a seat a bot has taken (so players can watch it)."
+  },
+  "minSeats": 2,
+  "maxSeats": 4,
+  "missedTurnsBeforeBot": 2,
+  "botTakesOverAfterMs": 60000,
+  "keepEmptyRoomMs": 300000,
+  "allowBots": false,
+  "maxMessagesPerSecond": 10,
+  "turnTimerChoices": [0, 60, 90, 120],
+  "botTurnDelayMs": 1500
+}

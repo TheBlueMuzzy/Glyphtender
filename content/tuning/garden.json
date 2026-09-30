@@ -1,0 +1,186 @@
+{
+  "_help": {
+    "background": "Night sky behind everything.",
+    "hexFill": "Colour of an empty garden hex.",
+    "hexLine": "Outline colour of each hex.",
+    "hexLineWidth": "Outline thickness, in hex sizes.",
+    "moveGlow": "Highlight on hexes a glyphling can move to.",
+    "castGlow": "Highlight on hexes a seed can be cast to.",
+    "glowStrength": "How strong the highlights are. 0 = invisible, 1 = solid.",
+    "pieceScale": "Size of seeds and glyphlings inside their hex. 1 = fills the hex.",
+    "ghostOpacity": "How visible the faded glyphling left where it started (tap it to send the glyphling back).",
+    "yellow": "Yellow player's colour — used for their 'held' and 'planned' rings and their thrown seed.",
+    "blue": "Blue player's colour — same uses as yellow.",
+    "plannedSeedLook": "How a targeted (not yet thrown) seed looks — always solid, nothing shows through it: moonlit (default) = colourless moonlight-silver, a ghost of the seed, letter bright · stencil = a flat pale cut-out of the letter and border · misty = under a pale wash (letter hard to read) · greyed = grey and darker · dimmed = faded over a patch of hex colour.",
+    "plannedMoonLight": "\"moonlit\" look: the colour the BRIGHT parts (the letter, the border) turn.",
+    "plannedMoonShadow": "\"moonlit\" look: the colour the DARK parts (the tile behind the letter) turn. Keep it dark so the letter stands out.",
+    "plannedMoonBrightness": "\"moonlit\" look: lifts the letter towards plannedMoonLight. 1 = as bright as the seed, higher = brighter letter (and a lighter tile).",
+    "plannedStencilLetter": "\"stencil\" look: the colour of the letter and border.",
+    "plannedStencilTile": "\"stencil\" look: the colour of the plain tile behind the letter.",
+    "plannedStencilCut": "\"stencil\" look: how bright a part of the seed must be to count as letter. Lower = more of the picture (sparkles, vines) turns to letter.",
+    "plannedStencilSoftness": "\"stencil\" look: how soft the letter's edge is. Small = crisp but jagged, big = smooth but blurry.",
+    "plannedMist": "\"misty\" look: the colour of the pale wash over a targeted seed.",
+    "plannedMistStrength": "\"misty\" look: how thick the wash is. 0 = none (looks planted), 1 = the seed is hidden.",
+    "plannedSeedOpacity": "\"dimmed\" look only: how strong the targeted seed's picture is over its hex-coloured patch. 1 = full colour.",
+    "purple": "Purple player colour — same uses as yellow.",
+    "pink": "Pink player colour — same uses as yellow.",
+    "wordBorder": "Colour of the border round a made word — neutral (never a player colour).",
+    "wordBorderWidth": "Thickness of the white border round a made word (planned while aiming, and just after it grows), in hex sizes. It sits BEHIND the seeds, so only the part outside the letters shows. Word indicators on only.",
+    "grownGlowStrength": "How strong the word border is right after the words grow, before it fades (1 = as strong as while aiming). 0 = none.",
+    "seedShine": "The little highlight on a seed flying through the air.",
+    "warningWidth": "Thickness of the dashed \"thorny\" ring round a glyphling with only ONE move left, in hex sizes. Drawn in its owner's colour.",
+    "warningDash": "Length of each dash in that ring, in hex sizes (the gaps are a little shorter).",
+    "vine": "Colour of the vine that wraps a TANGLED glyphling (no moves left).",
+    "vineWidth": "Thickness of that vine, in hex sizes.",
+    "tangledDim": "How faded a tangled glyphling looks under its vine. 1 = not faded.",
+    "revealPop": "Colour of the \"+3\" tangle bonuses that pop up at the end.",
+    "revealPopSize": "Size of the \"+3\" text, in hex sizes.",
+    "scorePop": "Colour of the score pops (\"+1\", \"+2\" over each seed of a made word, and the turn's total).",
+    "scorePopSize": "Size of each seed's \"+1\" / \"+2\", in hex sizes.",
+    "scoreTotalSize": "Size of the turn's total (\"+6\") over the glyphling that cast, in hex sizes.",
+    "dropStrength": "While dragging a piece: how strong the \"drop here\" highlight is on the legal hex under it (brighter than the other options). 1 = solid.",
+    "scorePopMinPx": "The smallest a seed's \"+1\" / \"+2\" may be on screen, in pixels (small boards on phones would make it tiny). The total is drawn this much bigger too, relative to scoreTotalSize ÷ scorePopSize."
+  },
+  "_ranges": {
+    "hexLineWidth": [
+      0,
+      0.2,
+      0.01
+    ],
+    "glowStrength": [
+      0,
+      1,
+      0.05
+    ],
+    "pieceScale": [
+      0.6,
+      1.1,
+      0.01
+    ],
+    "ghostOpacity": [
+      0,
+      0.8,
+      0.05
+    ],
+    "plannedMistStrength": [
+      0.1,
+      0.9,
+      0.05
+    ],
+    "plannedMoonBrightness": [
+      0.8,
+      2.5,
+      0.05
+    ],
+    "plannedStencilCut": [
+      0.05,
+      0.6,
+      0.01
+    ],
+    "plannedStencilSoftness": [
+      0.02,
+      0.4,
+      0.01
+    ],
+    "plannedSeedOpacity": [
+      0.1,
+      1,
+      0.05
+    ],
+    "wordBorderWidth": [
+      0.04,
+      0.4,
+      0.01
+    ],
+    "grownGlowStrength": [
+      0,
+      1,
+      0.05
+    ],
+    "warningWidth": [
+      0.02,
+      0.2,
+      0.01
+    ],
+    "warningDash": [
+      0.05,
+      0.5,
+      0.01
+    ],
+    "vineWidth": [
+      0.02,
+      0.2,
+      0.01
+    ],
+    "tangledDim": [
+      0.2,
+      1,
+      0.05
+    ],
+    "revealPopSize": [
+      0.3,
+      1,
+      0.05
+    ],
+    "scorePopSize": [
+      0.3,
+      1,
+      0.05
+    ],
+    "scoreTotalSize": [
+      0.5,
+      1.6,
+      0.05
+    ],
+    "dropStrength": [
+      0.3,
+      1,
+      0.05
+    ],
+    "scorePopMinPx": [
+      8,
+      32,
+      1
+    ]
+  },
+  "background": "#10162a",
+  "hexFill": "#1c2742",
+  "hexLine": "#33456f",
+  "hexLineWidth": 0.06,
+  "moveGlow": "#5fd4c4",
+  "castGlow": "#f2c14e",
+  "glowStrength": 0.45,
+  "dropStrength": 0.9,
+  "pieceScale": 0.96,
+  "ghostOpacity": 0.3,
+  "yellow": "#f2c14e",
+  "blue": "#5fd4f2",
+  "plannedSeedLook": "moonlit",
+  "plannedMist": "#dce8ff",
+  "plannedMistStrength": 0.55,
+  "plannedSeedOpacity": 0.45,
+  "plannedMoonShadow": "#0d1630",
+  "plannedMoonLight": "#eef4ff",
+  "plannedMoonBrightness": 1.5,
+  "plannedStencilTile": "#1c2742",
+  "plannedStencilLetter": "#dce8ff",
+  "plannedStencilCut": 0.24,
+  "plannedStencilSoftness": 0.16,
+  "purple": "#b48cf2",
+  "pink": "#f28cc4",
+  "wordBorder": "#ffffff",
+  "wordBorderWidth": 0.2,
+  "grownGlowStrength": 1,
+  "seedShine": "#ffffff",
+  "warningWidth": 0.08,
+  "warningDash": 0.16,
+  "vine": "#8cc47e",
+  "vineWidth": 0.08,
+  "tangledDim": 0.6,
+  "revealPop": "#fff3c4",
+  "revealPopSize": 0.8,
+  "scorePop": "#fff3c4",
+  "scorePopSize": 0.7,
+  "scoreTotalSize": 1.2,
+  "scorePopMinPx": 16
+}

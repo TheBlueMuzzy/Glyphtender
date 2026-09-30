@@ -1,0 +1,230 @@
+{
+  "_help": {
+    "flightBase": "Seconds every thrown seed spends in the air, however short the throw.",
+    "flightPerHex": "Extra seconds in the air for each hex it travels.",
+    "arcHeight": "How high the seed arcs, as a share of the throw distance. 0 = flat.",
+    "seedSize": "Size of the flying seed, in hex sizes.",
+    "hopHeight": "How high the glyphling hops as it throws, in hex sizes.",
+    "hopTime": "How long the throwing hop takes, in seconds.",
+    "growTime": "How long the runeblossom takes to grow out of the ground, in seconds.",
+    "growFrom": "How small the runeblossom starts when it sprouts (0.1 = a tiny sprout, 1 = full size).",
+    "pulseTime": "How long one pulse of a planned piece's halo takes, in seconds.",
+    "wordGlowTime": "How long the words that just grew keep their white border after the seed lands (it fades out), in seconds — long enough to still frame them as their score pops fly off.",
+    "revealTangles": "End of game: how long the tangled glyphlings pulse before the bonuses are shown, in seconds.",
+    "revealBonus": "End of game: time for each \"+3\" tangle bonus to pop on a rival piece, in seconds (they pop one hex at a time).",
+    "revealCount": "End of game: time for each player's Magic to count up (lowest first), including a short pause after, in seconds.",
+    "revealWinner": "End of game: how long \"Grand Glyphtender!\" shows before the end table opens, in seconds.",
+    "revealPopTime": "How long one \"+3\" takes to pop in (grow past full size and settle), in seconds.",
+    "moveBase": "Seconds every glyphling move takes to glide to its new hex, however short the move.",
+    "movePerHex": "Extra seconds of gliding for each hex the glyphling travels.",
+    "moveSettle": "How far a gliding glyphling slides past its new hex before settling back, in hex sizes. 0 = no bounce.",
+    "scorePopDelay": "Score pops (word indicators on): seconds after a seed lands before its words' seeds start popping their Magic.",
+    "scorePopGap": "Score pops: seconds between one seed's pop and the next (they ripple along the word).",
+    "scoreWordGap": "Score pops: extra seconds before the next word's seeds pop, when a cast makes more than one word.",
+    "scorePopTime": "Score pops: how long one \"+1\" / \"+2\" takes to pop in (grow past full size and settle), in seconds.",
+    "scorePopHold": "Score pops: how long all the pops stay above their seeds before flying together, in seconds.",
+    "scoreFlyTime": "Score pops: how long the pops take to fly into the total over the glyphling that cast, in seconds.",
+    "scoreTotalHold": "Score pops: how long the turn's total (\"+6\") stays over the glyphling that cast, in seconds. With reduce motion only this total shows.",
+    "scoreTotalFade": "Score pops: how long the total takes to fade away, in seconds.",
+    "turnPulseTime": "Whose turn: how long one slow pulse of the current player's glyphlings takes, in seconds (they pulse until one is moved). How much they swell: feel.json → turnPulse.",
+    "noShakeTime": "\"No\" shake: how long the quick sideways shake takes when you tap something you can't move, in seconds. How far it moves: feel.json → noShake.",
+    "refreshShrinkTime": "Refresh: how long each set-aside seed takes to shrink away, in seconds.",
+    "refreshGrowTime": "Refresh: how long each new seed takes to grow into its slot (swelling a little past full size, then settling), in seconds. How much it swells: feel.json → refreshGrow.",
+    "refreshStagger": "Refresh: seconds between one slot starting and the next (they go one after another, left to right).",
+    "refreshPause": "Refresh: the pause between the last seed shrinking away and the new ones growing in, in seconds. Play passes to the next player only after they've grown."
+  },
+  "_ranges": {
+    "flightBase": [
+      0.1,
+      1,
+      0.05
+    ],
+    "flightPerHex": [
+      0,
+      0.15,
+      0.01
+    ],
+    "arcHeight": [
+      0,
+      0.8,
+      0.05
+    ],
+    "seedSize": [
+      0.1,
+      0.6,
+      0.02
+    ],
+    "hopHeight": [
+      0,
+      0.6,
+      0.02
+    ],
+    "hopTime": [
+      0.05,
+      0.5,
+      0.01
+    ],
+    "growTime": [
+      0.1,
+      1.2,
+      0.05
+    ],
+    "growFrom": [
+      0,
+      1,
+      0.05
+    ],
+    "pulseTime": [
+      0.4,
+      3,
+      0.1
+    ],
+    "wordGlowTime": [
+      0,
+      3,
+      0.1
+    ],
+    "revealTangles": [
+      0,
+      3,
+      0.1
+    ],
+    "revealBonus": [
+      0.1,
+      1.5,
+      0.05
+    ],
+    "revealCount": [
+      0.5,
+      3,
+      0.1
+    ],
+    "revealWinner": [
+      0.5,
+      5,
+      0.1
+    ],
+    "revealPopTime": [
+      0.1,
+      1,
+      0.05
+    ],
+    "moveBase": [
+      0,
+      0.6,
+      0.01
+    ],
+    "movePerHex": [
+      0,
+      0.15,
+      0.01
+    ],
+    "moveSettle": [
+      0,
+      0.3,
+      0.01
+    ],
+    "scorePopDelay": [
+      0,
+      1,
+      0.05
+    ],
+    "scorePopGap": [
+      0,
+      0.3,
+      0.01
+    ],
+    "scoreWordGap": [
+      0,
+      0.6,
+      0.05
+    ],
+    "scorePopTime": [
+      0.1,
+      1,
+      0.05
+    ],
+    "scorePopHold": [
+      0,
+      1.5,
+      0.05
+    ],
+    "scoreFlyTime": [
+      0.1,
+      1.2,
+      0.05
+    ],
+    "scoreTotalHold": [
+      0.2,
+      3,
+      0.1
+    ],
+    "scoreTotalFade": [
+      0.1,
+      1.5,
+      0.05
+    ],
+    "turnPulseTime": [
+      0.6,
+      4,
+      0.1
+    ],
+    "noShakeTime": [
+      0.1,
+      1,
+      0.05
+    ],
+    "refreshShrinkTime": [
+      0.05,
+      1,
+      0.05
+    ],
+    "refreshGrowTime": [
+      0.05,
+      1,
+      0.05
+    ],
+    "refreshStagger": [
+      0,
+      0.3,
+      0.01
+    ],
+    "refreshPause": [
+      0,
+      0.6,
+      0.05
+    ]
+  },
+  "flightBase": 0.3,
+  "flightPerHex": 0.05,
+  "arcHeight": 0.35,
+  "seedSize": 0.28,
+  "hopHeight": 0.25,
+  "hopTime": 0.18,
+  "growTime": 0.5,
+  "growFrom": 0.1,
+  "pulseTime": 1.2,
+  "wordGlowTime": 1.4,
+  "revealTangles": 1.4,
+  "revealBonus": 0.55,
+  "revealCount": 1.5,
+  "revealWinner": 2.5,
+  "revealPopTime": 0.4,
+  "moveBase": 0.15,
+  "movePerHex": 0.04,
+  "moveSettle": 0.06,
+  "scorePopDelay": 0.25,
+  "scorePopGap": 0.08,
+  "scoreWordGap": 0.15,
+  "scorePopTime": 0.3,
+  "scorePopHold": 0.4,
+  "scoreFlyTime": 0.45,
+  "scoreTotalHold": 1,
+  "scoreTotalFade": 0.4,
+  "turnPulseTime": 1.6,
+  "noShakeTime": 0.35,
+  "refreshShrinkTime": 0.25,
+  "refreshGrowTime": 0.35,
+  "refreshStagger": 0.07,
+  "refreshPause": 0.1
+}

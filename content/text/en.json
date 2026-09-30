@@ -1,0 +1,212 @@
+{
+  "_help": "Every word players read, one section per screen. Edit freely. A missing word falls back to the kit's English default.",
+  "mainMenu": {
+    "title": "Glyphtender",
+    "subtitle": "The best speller doesn't always win.",
+    "play": "Play",
+    "prototype": "Prototype: move → cast",
+    "settings": "Settings",
+    "playOnline": "Play online"
+  },
+  "game": {
+    "players": {
+      "yellow": "Yellow",
+      "blue": "Blue",
+      "purple": "Purple",
+      "pink": "Pink"
+    },
+    "turnOf": "{player}'s turn",
+    "prompts": {
+      "draft": "{player} — place a glyphling ({n} of {total})",
+      "move": "Move a glyphling",
+      "moveHeld": "Move it to a glowing hex",
+      "cast": "Cast a seed from here",
+      "castHeld": "Cast it onto a golden hex",
+      "ready": "Happy? Cast it — or undo",
+      "moveOnly": "No seed to cast — end your turn",
+      "flying": "Planting…",
+      "refresh": "No Magic this turn — refresh seeds?",
+      "refreshDetail": "Tap seeds to set them aside",
+      "over": "The garden is tangled",
+      "loading": "Gathering the words…",
+      "wordsFailed": "Couldn't load the words",
+      "handoff": "Pass to {player}",
+      "othersTurn": "{player} is playing…",
+      "othersDraft": "{player} is placing a glyphling…",
+      "othersRefresh": "{player} is refreshing seeds…",
+      "waitingHost": "Waiting for the host to start the next game…"
+    },
+    "notes": {
+      "moveFirst": "Move a glyphling first",
+      "notYours": "That one isn't yours",
+      "tangled": "That glyphling is tangled — it can't move",
+      "wordsLoading": "Still gathering the words — one moment",
+      "wordsFailed": "Couldn't load the words — tap Retry",
+      "problem": "That can't be done — try again"
+    },
+    "scorePop": "+{n}",
+    "buttons": {
+      "undo": "Undo",
+      "cast": "Cast",
+      "castMagic": "Cast · +{n}",
+      "endTurn": "End turn",
+      "shuffle": "Shuffle",
+      "refresh": "Refresh {n}",
+      "keepAll": "Keep all",
+      "menu": "Menu",
+      "results": "Results",
+      "newGame": "New game",
+      "skip": "Skip",
+      "retryWords": "Retry"
+    },
+    "pause": {
+      "title": "Paused",
+      "resume": "Back to the garden",
+      "settings": "Settings",
+      "quit": "Leave game",
+      "quitTitle": "Leave this game?",
+      "quitMessage": "The garden will be lost.",
+      "howToPlay": "Rules"
+    },
+    "gameOver": {
+      "title": "The garden is tangled",
+      "message": "Most Magic wins — ties share the win.",
+      "points": "{n} Magic",
+      "winner": "Winner",
+      "tangleMagic": "Tangles +{n}",
+      "bestTurn": "Best turn +{n}",
+      "longestWord": "Longest {word}",
+      "noWord": "no words yet",
+      "wordsMade": "{n} words",
+      "separator": " · ",
+      "newGame": "New game",
+      "menu": "Menu"
+    },
+    "handoff": {
+      "title": "Pass to {player}",
+      "message": "{player}, the garden is yours. Tap when only you can see.",
+      "show": "Show my seeds"
+    },
+    "rules": {
+      "title": "How to play",
+      "next": "Next",
+      "back": "Back",
+      "done": "Got it",
+      "page": "Page {n} of {total}",
+      "pages": [
+        {
+          "title": "Your turn",
+          "body": "Move one of your glyphlings any distance along a leyline — it can’t pass through anything. Then cast a seed from where it landed, along any leyline, onto an empty hex."
+        },
+        {
+          "title": "Words make Magic",
+          "body": "Every word the new seed makes, on every leyline, grows Magic: one per letter, plus one for each of your own seeds in it. Made Magic? Draw a seed. Made none? You may refresh your seeds."
+        },
+        {
+          "title": "A tangled garden",
+          "body": "A glyphling with nowhere to move is tangled. When two are tangled the game ends: each rival piece next to a tangled glyphling earns its owner +3. Magic stays secret until the end — most Magic becomes Grand Glyphtender!"
+        }
+      ]
+    },
+    "reveal": {
+      "tangles": "The garden is tangled",
+      "bonus": "Tangle bonus: +{n} for {player}",
+      "counting": "Counting {player}'s Magic…",
+      "winner": "Grand Glyphtender: {names}!",
+      "winners": "Grand Glyphtenders: {names}!",
+      "and": " & ",
+      "secret": "Magic ?",
+      "magic": "{n} Magic",
+      "winnerBadge": "★",
+      "label": "The Magic reveal",
+      "skip": "Skip",
+      "pop": "+{n}",
+      "tangleDetail": "Tangles +{n}"
+    }
+  },
+  "credits": {
+    "people": [
+      {
+        "role": "Game design & art",
+        "names": [
+          "Muzzy (TheBlueMuzzy)"
+        ]
+      }
+    ]
+  },
+  "newGame": {
+    "title": "New game",
+    "players": "Players",
+    "board": "Garden",
+    "boards": {
+      "small": "Small",
+      "large": "Large"
+    },
+    "boardDetail": "Small for 2 · Large for 3–4",
+    "twoLetterWords": "2-letter words",
+    "twoLetterDetail": "Off: words need 3+ letters",
+    "hideSeeds": "Hide seeds between turns",
+    "hideSeedsDetail": "Pass the device between turns",
+    "wordIndicators": "Word indicators",
+    "wordIndicatorsDetail": "Off: no word borders, no Magic numbers",
+    "start": "Start",
+    "back": "Back"
+  },
+  "online": {
+    "lobby": {
+      "title": "Play online",
+      "create": "Create a room",
+      "or": "or join a friend’s room",
+      "join": "Join",
+      "name": "Your name",
+      "room": "Room {code}",
+      "share": "Share this code",
+      "host": "Host",
+      "ready": "Ready",
+      "notReady": "Not ready",
+      "imReady": "I’m ready",
+      "notYet": "Not ready yet",
+      "start": "Start game",
+      "leave": "Leave",
+      "back": "Back",
+      "copy": "Copy",
+      "copied": "Code copied!",
+      "waitingHost": "Waiting for the host to start…",
+      "needPlayers": "Need at least {n} players",
+      "waitingReady": "Waiting for everyone to be ready"
+    },
+    "options": {
+      "board": "Garden",
+      "auto": "Auto",
+      "boardDetail": "Auto: Small for 2 · Large for 3–4",
+      "twoLetterWords": "2-letter words",
+      "twoLetterDetail": "Off: words need 3+ letters",
+      "timer": "Turn timer",
+      "timerOff": "Off",
+      "timerSeconds": "{n} s",
+      "timerDetail": "When time runs out, a turn is played for them",
+      "wordIndicators": "Word indicators",
+      "wordIndicatorsDetail": "Off: no word borders, no Magic numbers"
+    },
+    "errors": {
+      "nameNeeded": "Pick a name first",
+      "no_room": "There’s no room with that code — check the letters",
+      "room_full": "That room is full (4 players)",
+      "game_started": "That room’s game has already started",
+      "kicked": "The host removed you from the room",
+      "connected_elsewhere": "You opened the game in another tab — it has your seat now",
+      "room_closed": "The room closed",
+      "code_taken": "That code is in use — making another…",
+      "name_needed": "Pick a name first",
+      "left": "You left the room",
+      "notHost": "Only the host can do that",
+      "problem": "That didn’t work — {reason}",
+      "badCode": "A room code is 4 letters, like BAKU"
+    },
+    "reconnect": {
+      "title": "Reconnecting…",
+      "message": "Connection lost — getting you back into the garden.",
+      "quit": "Leave"
+    }
+  }
+}

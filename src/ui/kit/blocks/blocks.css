@@ -1,0 +1,187 @@
+/* THE BLOCKS' CSS — only what the built screens add on top of kit.css.
+   Same rules: style names only (no raw colours, px sizes or font names), same two layers. */
+
+/* ───────────── kit-base: layout only ───────────── */
+@layer kit-base {
+  /* Settings → Accessibility → Reduce motion: the same switch-off as the device setting in kit.css */
+  :root[data-reduce-motion] *, :root[data-reduce-motion] *::before, :root[data-reduce-motion] *::after {
+    animation-duration: 0s !important; animation-delay: 0s !important; transition-duration: 0s !important; scroll-behavior: auto !important;
+  }
+  :root[data-reduce-motion] button.kit-target:active { transform: none !important; }
+
+  /* Dialog-sized boxes: never wider than the screen */
+  .kit-modal { inline-size: 28rem; max-inline-size: 100%; }
+  .kit-menu { inline-size: 22rem; max-inline-size: 100%; }
+  .kit-wide { inline-size: 40rem; max-inline-size: 100%; }
+  .kit-tall { block-size: 44rem; max-block-size: 100%; }
+  .kit-menu .kit-button { inline-size: 100%; }
+  .kit-centred { text-align: center; }
+  .kit-nowrap { flex-wrap: nowrap; }
+  .kit-picture { display: block; inline-size: 100%; max-block-size: 12rem; object-fit: contain; }
+
+  /* Settings: a tab bar on wide screens, ◀ tab ▶ on phones */
+  .kit-settings-picker { display: none; }
+  .kit-settings-picker .kit-picker { inline-size: 100%; }
+  @media (max-width: 40rem) {
+    .kit-settings-tabs { display: none; }
+    .kit-settings-picker { display: block; }
+  }
+
+  /* Pips: little segments (lives, hearts, page dots) */
+  .kit-pip { inline-size: 0.875rem; block-size: 0.875rem; }
+
+  /* HUD: its slots let taps through to the game; only buttons and inputs catch them */
+  .kit-screen > [data-slot]:has(> .kit-hud-slot) { pointer-events: none; }
+  .kit-hud-slot { display: contents; }
+  .kit-hud-slot :is(button, input, [tabindex="0"]) { pointer-events: auto; }
+  .kit-hud-chip { display: inline-flex; flex-wrap: nowrap; padding: var(--gap-xs) var(--gap-s); }
+  .kit-hud-chip .kit-text { white-space: nowrap; overflow-wrap: normal; } /* short HUD words never break letter by letter */
+  /* A chip that starts with an avatar (or a player chip's icon) wraps it: the avatar sits flush in the chip's rounded
+     start, and only the text side keeps padding, so the chip is no wider than what's in it */
+  .kit-hud-chip:has(> :is(.kit-avatar, .kit-player-chip-icon):first-child) { padding-block: 0; padding-inline: 0 var(--gap-m); }
+  /* HUD text: plain words on the game, no plate. Never catches taps. */
+  .kit-hud-text { pointer-events: none; text-align: center; }
+  .kit-hud-text .kit-stack { align-items: center; }
+  .kit-hud-text .kit-text { overflow-wrap: normal; }
+  .kit-screen:has(> [data-slot] > .kit-hud-slot) > :is([data-slot="top"], [data-slot="bottom"]) { justify-self: center; }
+  /* Phones: the corners share the first row and the top-centre piece gets its own row below,
+     so three things never squeeze into one narrow line. Same at the bottom. */
+  @media (max-width: 40rem) {
+    .kit-screen:has(> [data-slot] > .kit-hud-slot) {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+      grid-template-areas: "top-left top-right" "top top" "center center" "bottom-left bottom-right" "bottom bottom";
+    }
+  }
+  /* Bar width (s / m / l): the bar keeps that length and its plate hugs it. Unset = it fills the room it's given. */
+  .kit-hud-chip[data-width] { inline-size: max-content; max-inline-size: 100%; }
+  .kit-hud-chip[data-width] > .kit-progress { flex: none; min-inline-size: 0; inline-size: var(--kit-bar-w); max-inline-size: 100%; }
+  .kit-hud-chip[data-width="s"] { --kit-bar-w: 4rem; }
+  .kit-hud-chip[data-width="m"] { --kit-bar-w: 8rem; }
+  .kit-hud-chip[data-width="l"] { --kit-bar-w: 14rem; }
+  .kit-banner { align-items: center; text-align: center; }
+  /* +N float-up: stacked on top of its number (same grid cell), so no positioning needed */
+  .kit-float-anchor { display: inline-grid; }
+  .kit-float-anchor > * { grid-area: 1 / 1; justify-self: center; }
+  .kit-float-up { font-weight: 800; white-space: nowrap; }
+  .kit-combo { display: inline-block; }
+  .kit-timer { display: inline-grid; place-items: center; inline-size: 3.5rem; aspect-ratio: 1; border-radius: 50%; }
+  /* Flow: the countdown number on a round plate, and the end-screen title */
+  .kit-countdown { display: inline-grid; place-items: center; min-inline-size: 11rem; padding: var(--gap-l); aspect-ratio: 1; border-radius: 50%; }
+  .kit-countdown .kit-text { font-size: calc(var(--text-display) * 2.75); line-height: 1; }
+  .kit-result-name { flex: 1 1 0; min-inline-size: 0; }
+  .kit-result-name { flex-wrap: nowrap; }
+  .kit-result-name > .kit-text { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kit-place { min-inline-size: 3.5ch; }
+  /* Results on a short, wide screen (a phone on its side): title, message and buttons on the left,
+     the list on the right, so the list keeps its height instead of shrinking to one row */
+  @media (max-height: 30rem) and (min-width: 40rem) {
+    .kit-results { display: grid; inline-size: 44rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+      grid-template-rows: auto auto minmax(0, 1fr); align-content: start; }
+    .kit-results > :not(.kit-scroll) { grid-column: 1; }
+    .kit-results > .kit-scroll { grid-column: 2; grid-row: 1 / -1; }
+    .kit-results > .kit-row:last-child { align-self: end; justify-content: start; }
+  }
+  /* Main menu: extra buttons (children) sit in the button column like the others */
+  .kit-main-menu-extra { display: contents; }
+  /* Main menu on a short, wide screen (a phone on its side): the title on the left, the buttons on the right.
+     With six or more buttons they go in two columns (main one(s) and extra buttons across both), so they still fit. */
+  @media (max-height: 30rem) and (min-width: 40rem) {
+    .kit-main-menu { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); align-items: center; inline-size: 46rem; }
+    .kit-main-menu-buttons:has(> .kit-button:nth-child(6)) { display: grid; grid-template-columns: 1fr 1fr; }
+    .kit-main-menu-buttons > .kit-button[data-variant="primary"], .kit-main-menu-extra > * { grid-column: 1 / -1; }
+  }
+  .kit-end-title { display: inline-block; }
+  .kit-dot { inline-size: 0.75rem; block-size: 0.75rem; border-radius: 50%; }
+
+  /* Player chip: a HUD plate for one player, placed by the game (never catches taps) */
+  .kit-player-chip { pointer-events: none; align-items: center; inline-size: max-content; }
+  .kit-player-chip-text { min-inline-size: 0; }
+  .kit-player-chip-score { display: inline-flex; align-items: center; gap: var(--gap-xs); white-space: nowrap; }
+  .kit-player-chip-icon { display: inline-grid; place-items: center; inline-size: var(--target-min); block-size: var(--target-min); font-size: var(--text-heading); }
+  .kit-player-chip[data-size="s"] :is(.kit-avatar, .kit-player-chip-icon) { inline-size: 2rem; block-size: 2rem; }
+  .kit-player-chip[data-size="s"] .kit-player-chip-icon { font-size: var(--text-body); }
+  /* xs: one line, as short as the text — a smaller avatar (smaller initials, which are only a picture: the name is read out)
+     and a badge no taller than the words beside it */
+  .kit-player-chip[data-size="xs"] :is(.kit-avatar, .kit-player-chip-icon) { inline-size: 1.5rem; block-size: 1.5rem; font-size: calc(var(--text-body) * 0.7); }
+  .kit-player-chip[data-size="xs"] .kit-badge { line-height: 1.2; }
+
+  /* PinnedBox: a piece stuck to a point in the game world. Scaled first (--kit-pin-scale, set by PinnedBox to fit
+     its box on the table), then shifted so the point lands on its right-middle / middle / left-middle.
+     Hidden until its first measure. Never catches taps (the game underneath gets them). */
+  .kit-pinned { inline-size: max-content; transform-origin: 0 0; transform: scale(var(--kit-pin-scale, 1)) translate(-100%, -50%); visibility: hidden; }
+  .kit-pinned[data-anchor="center"] { transform: scale(var(--kit-pin-scale, 1)) translate(-50%, -50%); }
+  .kit-pinned[data-anchor="left"] { transform: scale(var(--kit-pin-scale, 1)) translate(0, -50%); }
+  .kit-pinned[data-ready] { visibility: visible; }
+  .kit-pinned, .kit-pinned * { pointer-events: none; }
+
+  /* Toasts: a popover, centred sideways, newest at the bottom. data-place: top (default), center or bottom.
+     In a letterboxed game (--kit-frame-w / --kit-frame-h, see kit.css) they stay on the game picture, out of the black bars.
+     --kit-toasts-start / --kit-toasts-end: room to keep clear at the game picture's left / right edge (default none),
+     e.g. a game whose left half is its board: :root { --kit-toasts-start: calc(var(--kit-frame-w, 100vw) / 2); }
+     puts toasts over the right half. (Plain % would be of the window, not the game picture.) */
+  .kit-toasts { --kit-letterbox-h: calc((100dvh - var(--kit-frame-h, 100dvh)) / 2);
+    --kit-letterbox-w: calc((100vw - var(--kit-frame-w, 100vw)) / 2);
+    inset-block: 0 auto; inset-inline: calc(var(--kit-letterbox-w) + var(--kit-toasts-start, 0%)) calc(var(--kit-letterbox-w) + var(--kit-toasts-end, 0%));
+    margin: calc(var(--kit-letterbox-h) + max(var(--gap-m), env(safe-area-inset-top))) auto 0; padding: 0; border: 0; background: none;
+    overflow: visible; display: none; flex-direction: column; align-items: center; gap: var(--gap-s);
+    max-inline-size: calc(var(--kit-frame-w, 100vw) - var(--kit-toasts-start, 0%) - var(--kit-toasts-end, 0%) - 2 * var(--gap-m)); }
+  .kit-toasts[data-place="center"] { inset-block: 0; margin: auto; }
+  .kit-toasts[data-place="bottom"] { inset-block: auto 0; margin: 0 auto calc(var(--kit-letterbox-h) + max(var(--gap-m), env(safe-area-inset-bottom))); }
+  .kit-toasts:popover-open { display: flex; }
+  .kit-toast { padding: var(--gap-s) var(--gap-m); }
+  .kit-toast[data-dismissible] { flex-direction: row; align-items: center; padding-block: var(--gap-xs); padding-inline-end: var(--gap-xs); cursor: pointer; }
+
+  /* Tooltip: a popover next to its ⓘ button (anchor positioning), centred on older browsers */
+  .kit-tooltip { margin: var(--gap-xs); inset: auto; position-area: top; position-try-fallbacks: flip-block;
+    padding: var(--gap-s) var(--gap-m); max-inline-size: min(20rem, calc(100vw - 2 * var(--gap-m))); }
+  .kit-tooltip:not(:popover-open) { display: none; } /* Panel's display would otherwise show it */
+
+  .kit-empty { align-items: center; text-align: center; padding: var(--gap-l); }
+  .kit-spinner-big { display: inline-block; inline-size: 2.5rem; block-size: 2.5rem; border-width: 0.3rem; }
+}
+
+/* ───────────── kit-style: paint ───────────── */
+@layer kit-style {
+  .kit-toast[data-variant="danger"] { border-color: var(--danger); }
+  .kit-spinner-big { color: var(--primary); }
+  .kit-tooltip { animation: kit-fade var(--motion-fast) var(--ease); }
+  .kit-pip { background: var(--border); border-radius: var(--radius-control); corner-shape: var(--corner-shape); outline: var(--border-width) solid var(--ink); }
+  .kit-pip[data-state="on"] { background: var(--primary); filter: var(--glow); }
+
+  /* A HUD chip is a flat plate: no drop shadow, because a shadow under a pill is how buttons say "press me" */
+  .kit-hud-chip { background: var(--surface) var(--panel-texture); color: var(--on-surface); border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-control); corner-shape: var(--corner-shape); }
+  .kit-hud-chip[data-state="active"] { border-color: var(--accent); outline: 0.1875rem solid var(--accent); outline-offset: -0.1875rem; }
+  /* The avatar's turn ring sits inside it in a chip (the chip's own accent edge wraps it), so it never touches the text */
+  .kit-hud-chip .kit-avatar[data-state="active"] { outline-offset: -0.1875rem; }
+  /* HUD text: the on-game colour with a soft shade behind the letters (a halo, not a box) */
+  .kit-hud-text { color: var(--on-game);
+    text-shadow: 0 0.0625rem 0.125rem var(--game-shade), 0 0 0.375rem var(--game-shade), 0 0 0.75rem var(--game-shade); }
+  .kit-hud-text[data-tone="accent"] { color: var(--accent); }
+  .kit-hud-text .kit-stack { animation: var(--enter) var(--motion-normal) var(--ease) backwards; }
+  .kit-hud-text[data-pop] .kit-stack { animation: kit-attention calc(var(--motion-normal) * 1.5) var(--ease); }
+  /* Game numbers (scores, timers, places) use the style's number font — usually its display font */
+  .kit-float-anchor, .kit-timer, .kit-number, :is(.kit-float-anchor, .kit-number, .kit-place) .kit-text { font-family: var(--font-numbers); }
+  .kit-float-up { color: var(--primary); animation: kit-float-up calc(var(--motion-normal) * 4) var(--ease) forwards; }
+  .kit-float-up[data-variant="danger"] { color: var(--danger); }
+  .kit-combo { animation: kit-pop var(--motion-normal) var(--ease); }
+  .kit-timer { --kit-ring: var(--primary); color: var(--on-surface);
+    background: radial-gradient(closest-side, var(--surface) 74%, transparent 76%), conic-gradient(var(--kit-ring) calc(var(--kit-fill) * 1turn), var(--border) 0); }
+  .kit-timer[data-variant="danger"] { --kit-ring: var(--danger); }
+  .kit-error { color: var(--danger); font-weight: 600; }
+  .kit-countdown { background: var(--surface) var(--panel-texture); color: var(--on-surface); border: var(--border-width) solid var(--border);
+    box-shadow: var(--depth-2); animation: kit-pop var(--motion-normal) var(--ease); }
+  .kit-end-title { animation: kit-pop calc(var(--motion-normal) * 2) var(--ease) backwards; }
+  /* Results rows arrive one after another: each waits one fast motion longer than the row above */
+  .kit-result-row { animation: var(--enter) var(--motion-normal) var(--ease) backwards; animation-delay: calc(var(--kit-i, 0) * var(--motion-fast)); }
+  .kit-result-row + .kit-result-row { border-block-start: var(--border-width) solid var(--border); }
+  .kit-player-chip { transition: opacity var(--motion-normal) var(--ease), filter var(--motion-normal) var(--ease); }
+  .kit-player-chip[data-dim] { opacity: 0.35; }
+  .kit-dot[data-status="good"] { background: var(--primary); }
+  .kit-dot[data-status="weak"] { box-shadow: inset 0 0 0 0.1875rem var(--danger); } /* a hollow red dot: half there */
+  .kit-dot[data-status="lost"] { background: var(--danger); }
+}
+
+/* The +N float-up: rises and fades (a style's motion-normal × 4) */
+@keyframes kit-float-up { to { opacity: 0; transform: translateY(-1.75em); } }

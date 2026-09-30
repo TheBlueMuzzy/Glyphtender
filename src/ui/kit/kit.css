@@ -1,0 +1,257 @@
+/* THE KIT'S CSS
+   Four layers, weakest first: game-base (a game's old page-wide rules — put its index.css and
+   "* { … }" resets in here so they can't reach kit parts), kit-base (layout + accessibility floor,
+   no colours), kit-style (paints parts using the style variables), game (a game's own additions win).
+   The kit only touches its own things: screens, toasts, a .kit-scope wrapper (kit parts shown outside
+   a Screen, e.g. pinned to a 3D point: no layout, background or positioning of its own), and a page that opts in with
+   <body class="kit-page"> (a game built fully from the kit). A game's older UI keeps its own look.
+   No raw colours, px sizes or font names here — only var(--style-name). */
+@layer game-base, kit-base, kit-style, game;
+
+/* ───────────── kit-base: layout only, zero colours ───────────── */
+@layer kit-base {
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope, .kit-overlay),
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope, .kit-overlay) *,
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope, .kit-overlay) *::before,
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope, .kit-overlay) *::after { box-sizing: border-box; }
+  .kit-page { margin: 0; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) { font-size: var(--text-body); line-height: 1.4; font-synthesis: none; /* no fake bold on one-weight fonts */ }
+
+  /* Accessibility floor: visible focus ring for keyboard + gamepad */
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) :focus-visible { outline: 0.1875rem solid var(--focus); outline-offset: 0.125rem; }
+
+  /* Accessibility floor: every control is at least 44px to tap */
+  .kit-target { min-block-size: var(--target-min); min-inline-size: var(--target-min); }
+
+  /* Spacing: every box reads its gap name */
+  [data-gap="xs"] { gap: var(--gap-xs); }
+  [data-gap="s"] { gap: var(--gap-s); }
+  [data-gap="m"] { gap: var(--gap-m); }
+  [data-gap="l"] { gap: var(--gap-l); }
+  [data-gap="xl"] { gap: var(--gap-xl); }
+
+  /* Screen: fills its parent; 3×3 slots kept clear of notches. The ONLY absolute positioning in the kit. */
+  .kit-screen {
+    position: absolute; inset: 0;
+    display: grid; gap: var(--gap-m);
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "top-left top top-right" "center center center" "bottom-left bottom bottom-right";
+    padding: max(var(--gap-m), env(safe-area-inset-top)) max(var(--gap-m), env(safe-area-inset-right))
+             max(var(--gap-m), env(safe-area-inset-bottom)) max(var(--gap-m), env(safe-area-inset-left));
+    pointer-events: none; /* empty space lets taps reach the game */
+  }
+  .kit-screen > [data-slot] { pointer-events: auto; min-inline-size: 0; }
+  .kit-screen > [data-slot="top-left"] { grid-area: top-left; justify-self: start; }
+  .kit-screen > [data-slot="top"] { grid-area: top; }
+  .kit-screen > [data-slot="top-right"] { grid-area: top-right; justify-self: end; }
+  /* The centre never scrolls itself (that would clip shadows): put a ScrollArea inside a Panel for tall content */
+  .kit-screen > [data-slot="center"] { grid-area: center; place-self: center; display: flex; flex-direction: column; min-block-size: 0; max-block-size: 100%; max-inline-size: 100%; }
+  .kit-screen > [data-slot="bottom-left"] { grid-area: bottom-left; justify-self: start; }
+  .kit-screen > [data-slot="bottom"] { grid-area: bottom; }
+  .kit-screen > [data-slot="bottom-right"] { grid-area: bottom-right; justify-self: end; }
+  /* Screen stack layers: no box of their own, they only carry "inert" for the screens inside */
+  .kit-layer { display: contents; }
+  /* <ScreenStack overlay>: open screens cover the whole window above a game that isn't built from Screens */
+  .kit-overlay { position: fixed; inset: 0; z-index: var(--kit-overlay-z, 100); pointer-events: none; }
+  .kit-overlay[data-open] { pointer-events: auto; }
+  /* Game box: a letterboxed game (e.g. 16:9 in a wider or taller window) sets --kit-frame-w / --kit-frame-h
+     so overlay screens sit on the game picture, not in the black bars. The dim still covers the whole window.
+     Unset = 100%: screens fill the window as before. */
+  .kit-overlay .kit-screen { inline-size: var(--kit-frame-w, 100%); block-size: var(--kit-frame-h, 100%); margin: auto; }
+
+  .kit-panel, .kit-stack { display: flex; flex-direction: column; min-inline-size: 0; min-block-size: 0; }
+  .kit-panel { padding: var(--gap-l); }
+  @media (max-height: 30rem) { .kit-panel { padding: var(--gap-m); } } /* landscape phones: room for content */
+  .kit-row { display: flex; flex-wrap: wrap; align-items: center; }
+  .kit-row[data-justify="center"] { justify-content: center; }
+  .kit-row[data-justify="end"] { justify-content: flex-end; }
+  .kit-row[data-justify="between"] { justify-content: space-between; }
+  .kit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--kit-tile)), 1fr)); }
+  .kit-grid[data-min="s"] { --kit-tile: 8rem; }
+  .kit-grid[data-min="m"] { --kit-tile: 12rem; }
+  .kit-grid[data-min="l"] { --kit-tile: 18rem; }
+
+  /* ── Controls: shapes and sizes only ── */
+  /* A full reset, so a game's old "button { … }" rules (radius, padding, hover borders) never show through */
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) :is(button, input) { font: inherit; color: inherit; margin: 0;
+    padding: 0; border: 0; border-radius: 0; background: none; }
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) :focus:not(:focus-visible) { outline: none; } /* rings only for keys and pads */
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) button:disabled { cursor: not-allowed; }
+
+  .kit-text { margin: 0; overflow-wrap: anywhere; }
+  .kit-text[data-kind="display"] { font-size: var(--text-display); line-height: 1.1; font-weight: 800; }
+  .kit-text[data-kind="title"] { font-size: var(--text-title); line-height: 1.15; font-weight: 700; }
+  .kit-text[data-kind="heading"] { font-size: var(--text-heading); line-height: 1.2; font-weight: 700; }
+  .kit-text[data-kind="label"] { font-weight: 600; }
+
+  .kit-button { display: inline-flex; align-items: center; justify-content: center; gap: var(--gap-s);
+    padding: var(--gap-s) var(--gap-l); border-style: solid; font-weight: 600; text-align: center; user-select: none; }
+  /* Icon-only: the glyph is title-sized so it fills the (at least 44px) button instead of floating small in it */
+  .kit-button[data-icon] { padding: 0; aspect-ratio: 1; font-size: var(--text-title); line-height: 1; }
+  /* size="…px": as tall as the game asks (e.g. a board hex), and at least that wide — never below target-min */
+  .kit-button[data-sized] { min-block-size: max(var(--target-min), var(--kit-button-size)); min-inline-size: max(var(--target-min), var(--kit-button-size)); }
+  .kit-button:disabled:not([data-state="loading"]) { opacity: 0.5; }
+  .kit-spinner { inline-size: 1em; block-size: 1em; border-radius: 50%; border: 0.15em solid; animation: kit-spin 0.8s linear infinite; }
+  @keyframes kit-spin { to { transform: rotate(1turn); } }
+
+  .kit-toggle { display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; }
+  .kit-toggle-track { display: flex; align-items: center; inline-size: 3.25rem; block-size: 1.75rem; padding: 0.1875rem; }
+  .kit-toggle-thumb { inline-size: 1.375rem; block-size: 1.375rem; }
+  .kit-toggle[data-state="on"] .kit-toggle-thumb { transform: translateX(1.5rem); }
+
+  .kit-slider { appearance: none; -webkit-appearance: none; inline-size: 12rem; max-inline-size: 100%; background: none; cursor: pointer; }
+  .kit-slider::-webkit-slider-runnable-track { block-size: 0.5rem; }
+  .kit-slider::-moz-range-track { block-size: 0.5rem; }
+  .kit-slider::-webkit-slider-thumb { -webkit-appearance: none; inline-size: 1.5rem; block-size: 1.5rem; margin-block-start: -0.5rem; }
+  .kit-slider::-moz-range-thumb { inline-size: 1.5rem; block-size: 1.5rem; }
+
+  .kit-picker { display: inline-flex; align-items: center; gap: var(--gap-xs); max-inline-size: 100%; }
+  .kit-picker > .kit-button { flex: none; }
+  .kit-picker-value { flex: 1 1 5rem; min-inline-size: 0; text-align: center; font-weight: 600; overflow-wrap: anywhere; }
+  .kit-stepper .kit-picker-value { flex-basis: 2.5rem; }
+
+  .kit-tabs { display: flex; flex-wrap: wrap; gap: var(--gap-xs); padding: var(--gap-xs); }
+  .kit-tab { flex: 1 0 auto; padding: var(--gap-s) var(--gap-l); border: 0; background: none; font-weight: 600; }
+
+  .kit-field { display: flex; flex-direction: column; gap: var(--gap-xs); }
+  .kit-field-label { font-weight: 600; }
+  .kit-input { inline-size: 100%; min-inline-size: 0; padding: var(--gap-s) var(--gap-m); border-style: solid; }
+  .kit-roomcode { display: flex; flex-wrap: wrap; gap: var(--gap-s); }
+  .kit-roomcode-box { inline-size: 3rem; block-size: 3.5rem; padding: 0; text-align: center; font-size: var(--text-heading); font-weight: 700; text-transform: uppercase; }
+
+  .kit-listrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: var(--gap-s) var(--gap-m); inline-size: 100%; padding: var(--gap-s) 0; border: 0; background: none; text-align: start; }
+  .kit-listrow-text { display: flex; flex-direction: column; flex: 1 1 6rem; min-inline-size: 0; }
+  button.kit-listrow { padding-inline: 0; } /* link rows line up with value rows */
+
+  .kit-card { display: flex; flex-direction: column; gap: var(--gap-s); padding: var(--gap-l); text-align: start; border-style: solid; }
+  .kit-card-title { font-size: var(--text-heading); font-weight: 700; }
+
+  .kit-badge { display: inline-flex; align-items: center; white-space: nowrap; padding: 0 var(--gap-s); font-weight: 700; line-height: 1.6; border-style: solid; }
+  .kit-avatar { display: inline-grid; place-items: center; flex: none; inline-size: var(--target-min); block-size: var(--target-min); overflow: hidden; font-weight: 600; }
+  .kit-avatar img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+
+  .kit-progress { display: block; min-inline-size: 6rem; block-size: 0.75rem; overflow: hidden; }
+  .kit-progress-fill { display: block; block-size: 100%; inline-size: calc(var(--kit-fill, 0) * 100%); }
+
+  /* Bars and sliders share a line with their neighbours and grow to fill it */
+  :is(.kit-row, .kit-listrow) > .kit-slider { flex: 1 1 8rem; }
+  :is(.kit-row, .kit-listrow) > .kit-progress { flex: 1 1 6rem; }
+
+  /* A scroll box clips at its edge, so it keeps a little room inside for outlines, drop shadows and focus rings
+     (Cartoon's ink + press shadow poke out) and gives it back with a matching negative margin: text stays aligned. */
+  .kit-scroll { flex: 1 1 auto; min-block-size: 0; overflow: auto; overscroll-behavior: contain;
+    padding: 0.5rem; margin: -0.5rem; }
+  .kit-scroll[data-max="s"] { max-block-size: 10rem; }
+  .kit-scroll[data-max="m"] { max-block-size: 18rem; }
+  .kit-scroll[data-max="l"] { max-block-size: 28rem; }
+  /* On a short screen (landscape phone) only the scroll box gives up height; titles and buttons around it keep theirs */
+  .kit-panel:has(> .kit-scroll) > :not(.kit-scroll) { flex-shrink: 0; }
+
+  /* Accessibility floor: reduce motion turns animation off and presses don't shrink */
+  @media (prefers-reduced-motion: reduce) {
+    :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope), :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) *,
+    :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) *::before, :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) *::after {
+      animation-duration: 0s !important;
+      transition-duration: 0s !important;
+      animation-delay: 0s !important; /* nothing waits its turn either (Results rows) */
+      scroll-behavior: auto !important;
+    }
+    button.kit-target:active { transform: none !important; }
+  }
+}
+
+/* ───────────── kit-style: paint, from style variables only ───────────── */
+@layer kit-style {
+  .kit-page { background: var(--bg); }
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) { color: var(--on-bg); font-family: var(--font-body); }
+  .kit-overlay[data-open] { background: color-mix(in srgb, var(--bg) 70%, transparent); } /* dims the game under it */
+  .kit-panel {
+    background: var(--surface) var(--panel-texture); color: var(--on-surface);
+    border: var(--border-width) solid var(--border); border-radius: var(--radius-panel);
+  }
+  [data-depth="0"] { box-shadow: var(--depth-0); }
+  [data-depth="1"] { box-shadow: var(--depth-1); }
+  [data-depth="2"] { box-shadow: var(--depth-2); }
+
+  .kit-text[data-kind="display"], .kit-text[data-kind="title"], .kit-text[data-kind="heading"],
+  .kit-card-title, .kit-roomcode-box { font-family: var(--font-display); }
+  .kit-text[data-kind="caption"], .kit-listrow-detail { color: var(--muted); }
+  .kit-text:is([data-kind="display"], [data-kind="title"], [data-kind="heading"]),
+  .kit-card-title, .kit-button, .kit-tab, .kit-badge { text-transform: var(--text-case); }
+  :where(.kit-page, .kit-screen, .kit-toasts, .kit-scope) :focus-visible { filter: var(--glow); }
+
+  /* Appearing: panels and cards play the style's entrance once (fade, float, pop, blink, flicker) */
+  .kit-panel, .kit-card { animation: var(--enter) var(--motion-normal) var(--ease) backwards; }
+  /* A dialog dims what's under it, fading the dim in (its panel plays the entrance above) */
+  .kit-screen[data-dialog] { background: color-mix(in srgb, var(--bg) 70%, transparent); transition: background-color var(--motion-normal) var(--ease); }
+  @starting-style { .kit-screen[data-dialog] { background-color: transparent; } }
+
+  /* Pressing: things shrink and/or sink (the style decides how much and how fast).
+     A sinking button drops onto its shadow, so the shadow goes. */
+  button.kit-target { transition: transform var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease); }
+  button.kit-target:active:not(:disabled) { transform: translateY(var(--press-shift)) scale(var(--press-scale)); }
+  .kit-button:active:not(:disabled) { box-shadow: none; }
+
+  .kit-button, .kit-input, .kit-picker, .kit-tabs, .kit-badge, .kit-progress, .kit-avatar,
+  .kit-toggle-track, .kit-toggle-thumb, .kit-tab, .kit-slider::-webkit-slider-runnable-track,
+  .kit-slider::-webkit-slider-thumb { border-radius: var(--radius-control); }
+  .kit-slider::-moz-range-track, .kit-slider::-moz-range-thumb { border-radius: var(--radius-control); }
+  .kit-card { border-radius: var(--radius-panel); }
+  .kit-panel, .kit-card, .kit-button, .kit-input, .kit-picker, .kit-tabs, .kit-badge, .kit-progress, .kit-avatar,
+  .kit-toggle-track, .kit-toggle-thumb, .kit-tab { corner-shape: var(--corner-shape); }
+  /* The ink line: around filled buttons and badges, and framing bars and switch tracks */
+  .kit-toggle-track, .kit-progress { outline: var(--border-width) solid var(--ink); }
+
+  .kit-button, .kit-input, .kit-card, .kit-badge { border-width: var(--border-width); border-color: var(--border); }
+  .kit-button { box-shadow: var(--depth-0); }
+  .kit-button[data-variant="primary"] { background: var(--primary); color: var(--on-primary); border-color: var(--ink); filter: var(--glow); }
+  .kit-button[data-variant="secondary"] { background: var(--surface); color: var(--on-surface); }
+  .kit-button[data-variant="ghost"] { background: transparent; border-color: transparent; box-shadow: none; }
+  .kit-button[data-variant="danger"] { background: var(--danger); color: var(--on-danger); border-color: var(--ink); }
+  .kit-spinner { border-color: currentColor; border-inline-end-color: transparent; }
+
+  .kit-toggle-track { background: var(--muted); transition: background-color var(--motion-fast) var(--ease); }
+  .kit-toggle[data-state="on"] .kit-toggle-track { background: var(--primary); filter: var(--glow); }
+  .kit-toggle-thumb { background: var(--surface); box-shadow: var(--depth-1); transition: transform var(--motion-fast) var(--ease); }
+
+  .kit-slider::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--primary) calc(var(--kit-fill, 0) * 100%), var(--border) 0); }
+  .kit-slider::-moz-range-track { background: var(--border); }
+  .kit-slider::-moz-range-progress { background: var(--primary); block-size: 0.5rem; border-radius: var(--radius-control); }
+  .kit-slider::-webkit-slider-thumb { background: var(--surface); border: var(--border-width) solid var(--border); box-shadow: var(--depth-1); }
+  .kit-slider::-moz-range-thumb { background: var(--surface); border: var(--border-width) solid var(--border); box-shadow: var(--depth-1); }
+
+  .kit-picker, .kit-tabs, .kit-input { background: var(--surface); color: var(--on-surface); border: var(--border-width) solid var(--border); }
+  .kit-input { caret-color: var(--primary); }
+  .kit-tab { color: var(--muted); }
+  .kit-tab[data-state="active"] { background: var(--primary); color: var(--on-primary); }
+
+  .kit-listrow + .kit-listrow { border-block-start: var(--border-width) solid var(--border); }
+
+  .kit-card { background: var(--surface) var(--panel-texture); color: var(--on-surface); }
+  .kit-card[data-state="selected"] { border-color: var(--primary); outline: 0.1875rem solid var(--primary); outline-offset: -0.1875rem; }
+
+  .kit-badge[data-variant="neutral"] { background: var(--surface); color: var(--on-surface); }
+  .kit-badge[data-variant="primary"] { background: var(--primary); color: var(--on-primary); border-color: var(--ink); }
+  .kit-badge[data-variant="danger"] { background: var(--danger); color: var(--on-danger); border-color: var(--ink); }
+
+  /* Initials always in the body font at semibold, whatever they sit in: small, heavy display letters turn to blobs */
+  .kit-avatar { background: var(--kit-avatar-color, var(--primary)); color: var(--on-primary); font-family: var(--font-body); text-transform: none; }
+  .kit-avatar[data-state="active"] { outline: 0.1875rem solid var(--accent); outline-offset: 0.125rem; }
+
+  .kit-progress { background: var(--border); }
+  .kit-progress-fill { transition: inline-size var(--motion-normal) var(--ease); filter: var(--glow); }
+  .kit-progress[data-variant="primary"] .kit-progress-fill { background: var(--primary); }
+  .kit-progress[data-variant="accent"] .kit-progress-fill { background: var(--accent); }
+  .kit-progress[data-variant="danger"] .kit-progress-fill { background: var(--danger); }
+}
+
+/* Entrances named by the style's "enter" setting */
+@keyframes kit-fade { from { opacity: 0; } }
+@keyframes kit-float { from { opacity: 0; transform: translateY(0.75rem); } }
+@keyframes kit-pop { from { opacity: 0; transform: scale(0.85); } }
+@keyframes kit-attention { 0% { transform: scale(1); } 35% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes kit-blink { 0%, 24%, 50%, 74% { opacity: 0; } 25%, 49%, 75%, 100% { opacity: 1; } }
+@keyframes kit-flicker { 0% { opacity: 0; } 10% { opacity: 0.8; } 20% { opacity: 0.1; } 35% { opacity: 1; } 45% { opacity: 0.3; } 60%, 100% { opacity: 1; } }

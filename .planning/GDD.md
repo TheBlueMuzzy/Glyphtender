@@ -24,7 +24,7 @@
 - **The best speller doesn't always win** — where you plant matters as much as what you spell. *Settles:* no multiplier squares or letter values (word = letters + ownership); tangle bonuses stay big; AI personalities that don't spell well can still win.
 - **A cozy garden** — nobody is attacked: seeds grow, and glyphlings get *tangled* in the growing garden. *Settles:* wording ("tangled", never "trapped/killed"), soft animations, gentle AI banter (beta) — even the Bully is mischievous, not mean.
 - **Always readable** — whose turn, what's legal, what just grew, at a glance, on a phone either way up. *Settles:* the board gets the space and always fits; every legal option is highlighted.
-- **Try freely, commit once** — experiment on the board without penalty until you cast. *Settles:* one commit per turn with undo — **pending Muzzy's prototype (F01)**.
+- **Try freely, commit once** — experiment on the board without penalty until you cast. *Settles:* one commit per turn with undo — **confirmed by the F01 prototype** (Muzzy, 2026-09-30: "it's better for sure").
 - **Every seat is swappable** — local player, online player or AI; the rules don't care. *Settles:* pass-and-play is built on seats, so online and AI plug in without touching the rules.
 
 ## 4. How it plays
@@ -35,13 +35,31 @@
   3. **Bag** — 120 seeds: A9 B2 C3 D4 E16 F3 G2 H6 I9 J1 K2 L5 M3 N7 O9 P2 **Qu1** R6 S7 T10 U4 V1 W3 X1 Y3 Z1. **Qu** is one seed, counts as one letter.
   4. **Move** — one of your glyphlings, ≥1 hex along a leyline. Can't pass through or land on anything.
   5. **Cast** — from where it landed, plant one seed along any leyline, any distance, on an empty hex. It may fly over your own seeds and glyphlings, not other players'.
-  6. **Grow** — (words = the **official Glyphtender word list**, 63,656 words with Zipf scores, carried over unchanged — TDD §2b) every word through the new seed, on every leyline, makes Magic = **letters + 1 per seed you own in it**. Shared letters count in each word. On one leyline, a word hidden inside the other words made this turn doesn't count (GARDENING, not DEN; SEAL + LEAP, not ALE). Words read top-to-bottom / left-to-right. Min length 2 (table option: 3).
+  6. **Grow** — (words = the **official Glyphtender word list**, 63,657 words with Zipf scores, carried over unchanged — TDD §2b) every word through the new seed, on every leyline, makes Magic = **letters + 1 per seed you own in it**. Shared letters count in each word. On one leyline, a word hidden inside the other words made this turn doesn't count (GARDENING, not DEN; SEAL + LEAP, not ALE). Words read top-to-bottom / left-to-right. Min length 2 (table option: 3).
   7. **Draw or refresh** — made Magic → draw 1. Made none → you may set aside any number of seeds, refill to 8, then return the set-aside seeds to the bag.
   8. You must move and cast if you can. Can move but can't cast (no seeds, no open hex) → just move.
   9. **Tangled** — a glyphling with no legal move. Checked fresh after every turn, so a glyphling hemmed in by another glyphling is freed if that one moves away (as the original). When a turn ends with **2 or more glyphlings tangled**, the game ends.
   10. **Tangle bonus** — for each tangled glyphling, every *other* player gains **+3 Magic per seed or glyphling of theirs next to it**. Self-tangling next to your own seeds gives your rivals nothing.
   11. **Magic is secret** until the end. Most Magic wins; ties share the win.
-- **Controls:** tap-tap *and* drag, always both (phone and mouse). Tap a glyphling → its moves light up → tap one. Tap or drag a seed → legal hexes light up with their Magic preview → tap one. Undo / tap-again to take back (per F01). **Cast · +N** commits. Pinch/scroll zoom is optional; a Fit button snaps back.
+- **Controls** (proven in the F01 prototype): tap-tap *and* drag, always both (phone and mouse).
+  1. Tap/drag a glyphling → hexes it can reach glow teal → tap/drop one: it moves, leaving a faded ghost where it started (tap the ghost to send it back).
+  2. Tap/drag a seed → hexes it can reach glow gold → tap/drop one: the seed sits there **faded** — targeted, not planted (tap it to take it back). **Undo** takes back the last step.
+  3. **Cast** commits the turn — only then does the story play: the glyphling hops and **throws** the seed, it **arcs** to the target, lands, and the runeblossom **grows** out of the ground. Nothing can be touched while a seed is in the air.
+  - Pinch/scroll zoom is optional; a Fit button snaps back.
+- **Seed tray size:** seeds in the tray are **real size — the same as a seed on the board** (Muzzy, 2026-09-30: "they were way too small on my desktop… they should be basically real size to how they'll look on the board"). Never smaller than a finger (44 px); if a phone can't fit 8 at board size, the tray wraps to 2 rows rather than shrinking.
+- **Muzzy's feel notes (2026-09-30, after playing the alpha build):**
+  - **Score pops:** when a word grows, each seed shows its Magic above it (+1, or +2 for your own seed — HELP with H and P yours: +2 +1 +1 +2), then they fly together into one bigger total (+6) over the glyphling that cast the seed. (Only this turn's Magic — running totals stay secret.)
+  - **Word indicators** (new-game option, on/off): on = a made word is highlighted **behind** its seeds, thick like a border, in **white** (neutral, never a player colour); off = nothing tells you a word was made (no outline, no "+N", no pops — you spot words yourself).
+  - **Cast ranges show right after the move** — don't wait for a seed to be picked.
+  - **Drop target:** while dragging, the hex it would land on lights up (the zone reacts, not the piece).
+  - **Whose turn:** the current player's glyphlings pulse gently (small) until one is moved.
+  - **"No" shake:** tapping anything you can't move gives a quick shake.
+  - Before the move, seeds can't be dragged at all (not even to reorder) — they shake (Muzzy, B008)
+  - **Planned seed, not see-through:** "you shouldn't be able to see through the ghosted image of a placed seed… maybe there's another treatment… to make it a ghost while also keeping it not see-through" → a solid misty wash over the targeted seed (B010). Then: "the ghost letter isn't really legible due to contrast reasons… maybe there's a better way than to just push the values towards white?" → **moonlit**: the targeted seed turns colourless moonlight-silver but its letter stays as bright against its tile as a real seed's (garden.json plannedSeedLook: moonlit · stencil · misty · greyed · dimmed; research/ghost-pieces.md)
+  - **Refresh shows itself:** "the tiles they selected shrink, and new ones scale into their place. THEN it goes to the next player" — Keep all just goes on; online only you see it, on your own tray (B011)
+  - **Layout:** buttons finger-sized like a glyphling (also on PC); the seed tray about half as far from the board; a setting flips board ↔ tray; the prompt sits just above the tray in larger letters (not in the top bar).
+  - **End screen:** just "New game" (no "Play again" — fewer, clearer options).
+- **Piece states — one look for every piece** (glyphlings, seeds, tray): **options** = glowing hexes with a dot (teal move · gold cast) · **held** = solid ring in the player's colour · **planned** = pulsing halo at the hex edge in the player's colour (a targeted seed also turns colourless "moonlit" silver — solid, letter still bright — B010) · **done** = plain.
 - **Mechanics:**
 | Mechanic | What players end up doing → Target |
 |---|---|
@@ -56,7 +74,7 @@
 
 ## 5. Systems
 - **Seats** — every player seat is *local*, *online* or *AI*; all submit the same actions to the same rules engine. Pass-and-play = several local seats + handoff screen (hand hidden, board visible).
-- **Online (alpha)** — Roll Better's PartyKit rooms: room code, 2–4 players, rejoin, host leaves, AFK. Server runs the same rules engine, so it validates every move (the original never did).
+- **Online (alpha)** — Roll Better's PartyKit rooms: room code, 2–4 players, rejoin, host leaves, AFK. Server runs the same rules engine, so it validates every move (the original never did). Design: [design/online.md](design/online.md).
 - **AI (beta)** — the goal-selection personality model from the original's `festive-booth` branch (7 goals, 7 personalities, fuzzy Magic perception, difficulty) → built as the **first framework AI module**, game-specific goal scorers stay in the game. Add Amazons-style "reachable moves" evaluation for garden pockets. Detail: `research/original-digest.md §2`; `design/ai.md` in beta.
 - **Stats (1.0)** — per-game table at the end (alpha), lifetime stats + Wordsmith/Tanglesmith radar later.
 
@@ -89,17 +107,16 @@ Releases: **alpha → beta → 1.0** (no "prototype" release — prototypes are 
 
 **Should** — board themes · colour preference · random starting player · hint ("show me a move") · topiary-grow cast effect (may move up)
 **Could** — async play (several games at once) · spectators · leaderboards/accounts · 3D figurine glyphlings
-**Won't** — 2v2 teams (cut in the original as "less fun") · multiplier squares / letter values (breaks *best speller doesn't always win*) · tilted 3D camera (breaks *Always readable*) · per-step confirm (unless F01 says otherwise)
+**Won't** — 2v2 teams (cut in the original as "less fun") · multiplier squares / letter values (breaks *best speller doesn't always win*) · tilted 3D camera (breaks *Always readable*) · per-step confirm (F01 prototype: One Cast felt better)
 
 ## 8. Product
 - **Release path:** web (GitHub Pages) first; stores later if it earns it.   **Business:** none yet.
 - **Success looks like:** friends ask to play again; Muzzy prefers it to the Unity version; a 4-player game on one phone never needs a zoom.
 
 ## 9. Open questions
-- ❓ **Commit style** — one Cast + undo vs per-step confirm → **F01 prototype** (move → cast → undo, no scoring).
 - ❓ **Board size per player count** — sims in beta; alpha ships Small + Large.
 - ❓ **Bag run-out** — can 120 run out on Large with 4 players? Sim. If it does: stop drawing.
 - ❓ **Starting player** — Yellow always, or random?
 - ❓ **AI vocabulary tiers** — code thresholds (Zipf 3/2/0) give ~22k/~44k/63k words; the design said ~5k/~20k/all (would be 4/3/0). (beta)
 - ❓ **Strategist personality** — multi-word specialist or DENY-first tactician? (beta)
-- **Risks:** (1) board unreadable on phones → F01 renders both boards at 390×844, 844×390, 1440×900 · (2) the undo flow feels wrong → F01 · (3) AI too slow in a browser → Web Worker, timed in beta.
+- **Risks:** ~~board unreadable on phones~~ (F01: hexes 36–42 px on phones, both boards) · ~~undo flow feels wrong~~ (F01: approved) · AI too slow in a browser → Web Worker, timed in beta.

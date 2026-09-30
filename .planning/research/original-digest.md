@@ -32,7 +32,7 @@ Muzzy's intended (transcript 2025-12-15-03-16): A9 B2 C3 D4 E16 F3 G2 H6 I9 J1 K
 
 **Tangle + end** (`Core/TangleChecker.cs`) — a glyphling with no legal move is **tangled**. **Game ends when 2 glyphlings are tangled** (HANDOFF's "one" is wrong). Then for each tangled glyphling, each *opponent* scores **+3 per adjacent tile or glyphling they own**. Highest wins; ties allowed. Self-tangling against own tiles / the edge is a real strategy.
 
-**Dictionary — the official word list** — `Assets/Resources/words.txt`, 63,656 words (2–15 letters), 907 KB, CSV `WORD,ZIPF`. Same file on main and festive-booth (blob `3280512a`). Min length 2 (toggle "2-Letter off" → 3).
+**Dictionary — the official word list** — `Assets/Resources/words.txt`, 63,657 words (2–15 letters; 63,656 line breaks — no newline after the last word), 907 KB, CSV `WORD,ZIPF`. Same file on main and festive-booth (blob `3280512a`). Min length 2 (toggle "2-Letter off" → 3).
 History (a lot of Muzzy's work): TWL chosen by Muzzy in the Python prototype (2025-12-14, transcript) → 63,612-word list (12-17, `5353eaca`) → abbreviations out + subword scoring fixes (12-21, `e36d6126`) → +218 missing words incl. 2-letter words (12-22, `8522a373`) → roman numerals out (12-23, `89d5ad67`) → Zipf column added, AI difficulty tied to it (12-23, `9ffbed6b`). Zipf values match the `wordfreq` library (THE 7.73).
 **Real counts vs the code comments:** Zipf ≥5: 1,000 · ≥4: 6,342 · ≥3: 21,805 · ≥2: 43,997 · ≥0: 63,656 (6,091 words at 0 = unknown to the frequency data). Comments say "≥3 ≈ 5k, ≥2 ≈ 20k" — actually ≥4 ≈ 6k and ≥3 ≈ 22k. So Apprentice (≥3) really knows ~22k words, FirstClass (≥2) ~44k. ❓ for beta: keep the thresholds, or shift to 4/3/0 to match the intended ~5k/~20k/all.
 

@@ -1,0 +1,105 @@
+/* Dev Kit look — a plain developer tool, deliberately NOT the game's UI kit style,
+   so it never changes when you restyle the game with it. Dark, compact, readable on a phone. */
+
+.devkit {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483000; /* above everything in the game */
+  width: min(380px, 46vw);
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  background: #16171d;
+  color: #e8e8ee;
+  border: none;
+  border-left: 1px solid #34353f;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 0.35);
+  font: 13px/1.35 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  touch-action: pan-y;
+  /* undo the browser's popover defaults (centred box) */
+  inset: 0 0 0 auto;
+  margin: 0;
+  padding: 0 env(safe-area-inset-right) 0 0;
+  height: auto;
+  max-height: none;
+  overflow: hidden;
+}
+.devkit[hidden] { display: none; }
+.devkit button, .devkit input, .devkit select { font: inherit; color: inherit; }
+
+.devkit-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #34353f;
+  background: #1d1e26;
+}
+.devkit-title { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: #9a9bab; }
+.devkit-tabs { display: flex; gap: 4px; flex: 1; overflow-x: auto; }
+.devkit-tab {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.devkit-tab[aria-selected='true'] { background: #2c2e3a; border-color: #4a4c5c; }
+.devkit-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.devkit-close:hover, .devkit-tab:hover { background: #2c2e3a; }
+
+.devkit-live-note {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: #3a3320;
+  color: #ffd98a;
+  border-bottom: 1px solid #34353f;
+}
+
+.devkit-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.devkit-body[hidden] { display: none; }
+
+/* ---- shared bits every tool can use ---- */
+.devkit-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background: #1d1e26;
+  border-top: 1px solid #34353f;
+}
+.devkit-btn {
+  background: #2c2e3a;
+  border: 1px solid #4a4c5c;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.devkit-btn:hover:not(:disabled) { background: #383a4a; }
+.devkit-btn:disabled { opacity: 0.45; cursor: default; }
+.devkit-btn-main { background: #2f6fed; border-color: #2f6fed; color: #fff; font-weight: 600; }
+.devkit-btn-main:hover:not(:disabled) { background: #3f7ff5; }
+.devkit-status { width: 100%; font-size: 12px; color: #9a9bab; }
+.devkit-status.is-error { color: #ff7b7b; }
+.devkit-status.is-ok { color: #7bd88f; }
+.devkit-not-plugged { margin: 0; padding: 12px 10px; color: #9a9bab; }
+.devkit-not-plugged code { color: #e8e8ee; }
+
+/* Phone: the panel is narrow — drop the title so all the tabs fit without scrolling sideways */
+@media (max-width: 520px) {
+  .devkit-title { display: none; }
+  .devkit-tab { padding: 4px 7px; }
+}
