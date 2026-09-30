@@ -86,4 +86,11 @@ describe('glyphtenderAdapter', () => {
     expect(screens.current).toEqual([])
     vi.unstubAllGlobals()
   })
+
+  it('can restore offline, never in an online game', () => {
+    expect(glyphtenderAdapter.canRestore()).toBe(true)
+    useGameStore.setState({ online: { mySeat: 0, gameId: 1, version: 0, post: () => {}, landed: () => {} } })
+    expect(glyphtenderAdapter.canRestore()).toBe(false)
+    useGameStore.setState({ online: null })
+  })
 })

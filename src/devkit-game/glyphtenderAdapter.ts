@@ -3,7 +3,7 @@
 //   getState:   the engine's GameState + the tray order the screen shows (everything else is the planned turn)
 //   setState:   jumps the store to that game — the planned move / cast / flying seed are cleared (store.loadState),
 //               and any open menu (end table, Pause) is closed
-//   canRestore: always, for now — there's no online play yet. Online games must say false here.
+//   canRestore: only offline — in an online game a restore would change play for the others (and this device only holds its own view)
 //   onEvent:    a short line each time the game moves on: a draft placement, a turn, a phase change, a tangle, a note
 // Reads and writes the store only through its public getState / setState / subscribe / loadState.
 import versionFile from '../../version.json'
@@ -109,7 +109,7 @@ export const glyphtenderAdapter: DevKitGame = {
     useGameStore.setState({ landed: null, ...(fits ? { trayOrder: state.trayOrder } : {}) })
   },
 
-  canRestore: () => true, // no online play yet
+  canRestore: () => useGameStore.getState().online === null, // online: never
 
   onEvent: (send) => useGameStore.subscribe((after, before) => {
     for (const line of gameEvents(before, after)) send(line)

@@ -3,12 +3,14 @@
 // ever change the game by sending an engine action (checkAction first, then applyAction). Golden rule.
 // It also knows who sits in each seat (seats.ts), when the device is being passed on (handoff),
 // the end table's numbers (stats.ts) and how far the end-of-game Magic reveal has got.
+// ONLINE (onlinePlay.ts): this device plans its own seat exactly the same way, but the action goes to the
+// server instead of the engine, and the server's view of the game comes back and replaces `game`.
 import { create } from 'zustand'
 import text from '../../content/text/en.json'
 import { applyAction, checkAction, newGame } from '../engine/engine'
 import { hexKey, sameHex, type Hex } from '../engine/hex'
 import { parseWordList } from '../engine/words'
-import type { GameState, WordList } from '../engine/types'
+import type { Action, GameState, WordList } from '../engine/types'
 import {
   castOptions, hexIn, highlightFor, inHandOrder, isCurrents, mayMoveOnly, moveInOrder, reconcileOrder,
   shuffled, turnAction, type PlannedCast, type PlannedMove, type Selection,
@@ -37,6 +39,17 @@ export interface Handoff {
   afterGrow: boolean
 }
 
+/** An online game: which seat is this device's, the server's view version, and the way to the server (onlinePlay.ts). */
+export interface OnlineLink {
+  mySeat: number
+  gameId: number
+  version: number
+  /** Send this seat's action to the server (it answers with a new view). */
+  post: (action: Action) => void
+  /** A thrown seed landed (this device's own, or another player's being replayed). */
+  landed: () => void
+}
+
 export interface GameStore {
   game: GameState | null
   words: WordList | null
@@ -62,6 +75,10 @@ export interface GameStore {
   stats: PlayerStats[]
   /** How far the end-of-game Magic reveal has got (a step number in revealPlan.ts); null = not started. */
   revealAt: number | null
+  /** Online only (null in pass-and-play). */
+  online: OnlineLink | null
+  /** Online: this device's action went to the server; nothing can be touched until its view comes back. */
+  waiting: boolean
 
   startGame: (options: Partial<GameOptions> & { players: number; seed: number }) => void
   leaveGame: () => void
@@ -111,11 +128,27 @@ export const useGameStore = create<GameStore>()((set, get) => {
     return applyAction(game, action, words ?? NO_WORDS)
   }
 
+  // Online: check it here too (so a mistake shows at once), then the server plays it and sends the new view.
+  const sendOnline = (action: Action): boolean => {
+    const { game, online } = get()
+    if (!game || !online) return false
+    const problem = checkAction(game, action)
+    if (problem) {
+      console.warn('Illegal action from the screen:', problem)
+      set({ ...noPlan(), note: 'problem' })
+      return false
+    }
+    set({ waiting: true, selected: null, note: null }) // before posting: the answer may come back at once
+    online.post(action)
+    return true
+  }
+
   // May the screen touch the game right now? Not while a seed flies, not while the device is being
-  // passed on, and only when the seat whose turn it is belongs to a human on this device.
+  // passed on, not while waiting for the server, and only when the seat whose turn it is belongs to a
+  // human on this device.
   const canPlay = () => {
-    const { game, flying, handoff, seats } = get()
-    return game !== null && !flying && handoff === null && isLocalHuman(seats, game.current)
+    const { game, flying, handoff, seats, waiting } = get()
+    return game !== null && !flying && !waiting && handoff === null && isLocalHuman(seats, game.current)
   }
 
   // Once play has passed on: must the device be handed over first? (from = null: always — after the draft)
@@ -138,6 +171,8 @@ export const useGameStore = create<GameStore>()((set, get) => {
     handoff: null,
     stats: [],
     revealAt: null,
+    online: null,
+    waiting: false,
 
     startGame: ({ players, seed, boardName, minWordLength, hideSeeds }) => {
       const game = newGame({ players, seed, boardName, rules: minWordLength ? { minWordLength } : undefined })
@@ -150,7 +185,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
         trayOrder: game.hands.map((h) => inHandOrder(h.length)),
       })
     },
-    leaveGame: () => set({ ...noPlan(), game: null, flying: false, landed: null, handoff: null, revealAt: null }),
+    leaveGame: () => set({ ...noPlan(), game: null, flying: false, landed: null, handoff: null, revealAt: null, online: null, waiting: false }),
     showSeeds: () => set({ handoff: null }),
     setRevealAt: (step) => set({ revealAt: step }),
     skipReveal: () => {
@@ -211,6 +246,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
       const { game, move, cast, selected } = get()
       if (!game || !canPlay()) return
       if (game.phase === 'draft') {
+        if (get().online) return void sendOnline({ type: 'draft', hex })
         const next = send({ type: 'draft', hex })
         if (!next) return
         const dealt = next.phase === 'play' // the draft is over and seeds are dealt: pass the device before turn 1
@@ -247,10 +283,18 @@ export const useGameStore = create<GameStore>()((set, get) => {
       const { game, move, cast, words } = get()
       if (!game || !move || !canPlay()) return
       if (!words) return set({ note: 'wordsLoading' })
+      // Online: the action leaves the moment Cast is pressed, so the trip to the server hides inside the throw
+      if (get().online && (cast || mayMoveOnly(game, move))) {
+        if (cast) set({ flying: true }) // the throw starts now; the server's view waits for it to land
+        if (!sendOnline(turnAction(move, cast))) set({ flying: false })
+        return
+      }
       if (cast) return set({ flying: true, selected: null })
       if (mayMoveOnly(game, move)) get().finishCast()
     },
     finishCast: () => {
+      const online = get().online
+      if (online) return online.landed() // the server's view is applied there, not the engine's
       const { game, move, cast, trayOrder, stats } = get()
       if (!game || !move) return set({ flying: false })
       const next = send(turnAction(move, cast))
@@ -274,6 +318,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
       const { game, setAside, trayOrder } = get()
       if (!game || !canPlay() || game.phase !== 'refresh') return
       const chosen = keepAll ? [] : [...setAside].sort((a, b) => a - b)
+      if (get().online) return void sendOnline({ type: 'refresh', setAside: chosen })
       const next = send({ type: 'refresh', setAside: chosen })
       if (!next) return
       const seat = game.current

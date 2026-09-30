@@ -1,6 +1,6 @@
 // DEV ONLY (never in a release build): window.__glyphtender, so the e2e check and the console can
 // peek at the game and fast-forward it. playRest() plays random legal moves (the engine's sim player)
-// until the garden tangles, to reach the end screen quickly.
+// until the garden tangles, to reach the end screen quickly. The jumps do nothing in an online game (the server owns it).
 import { applyAction, previewTurn } from '../engine/engine'
 import { hexKey } from '../engine/hex'
 import { randomAction } from '../engine/sim'
@@ -39,8 +39,8 @@ export function installDevHook() {
 
 /** Random legal actions (the engine's sim player) until done(state) or the game ends; the store jumps there. */
 function playUntil(seed: number, done: (state: GameState) => boolean) {
-  const { game, words, stats: before } = useGameStore.getState()
-  if (!game || !words) return false
+  const { game, words, stats: before, online } = useGameStore.getState()
+  if (!game || !words || online) return false
   let state = game
   let stats = before
   let rng = seed
