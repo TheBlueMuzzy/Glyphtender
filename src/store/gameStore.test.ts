@@ -3,7 +3,7 @@ import { hexAt, position, wordsOf } from '../engine/testkit'
 import { hexKey } from '../engine/hex'
 import { legalDraftHexes } from '../engine/engine'
 import { useGameStore } from './gameStore'
-import { castOptions, highlightFor, moveInOrder, reconcileOrder, shuffled } from './turnPlan'
+import { castOptions, dropKind, highlightFor, moveInOrder, reconcileOrder, shuffled } from './turnPlan'
 
 const store = () => useGameStore.getState()
 const words = wordsOf('AT', 'TA')
@@ -122,6 +122,20 @@ describe('game store — planning a turn (One Cast + undo)', () => {
     expect(lit()).toEqual({ kind: 'cast', hexes: gold })
     store().undo()
     expect(lit()).toBeNull()
+  })
+
+  it('dragging: only a legal hex under the piece is a "drop here" (teal for a move, gold for a cast); anything else, none', () => {
+    yellowToPlay()
+    const drop = (label: string) => { const s = store(); return dropKind(s.game!, s.move, s.selected, hexAt(label)) }
+    store().grabGlyphling(0)
+    expect(drop('C6-6')).toBe('move')
+    expect(drop('C6-7')).toBeNull() // where it stands
+    expect(drop('C1-1')).toBeNull() // not in a straight line
+    store().tapHex(hexAt('C6-6'))
+    store().grabSeed(0)
+    expect(drop('C6-4')).toBe('cast')
+    expect(drop('C6-6')).toBeNull() // the glyphling's own hex
+    expect(dropKind(store().game!, store().move, store().selected, undefined)).toBeNull() // over the tray, off the board
   })
 
   it('an aimed seed moves to another gold hex with one tap', () => {

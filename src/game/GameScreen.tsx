@@ -86,7 +86,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
       {/* an empty SVG as wide as the side column (sizes are SVG attributes — TDD D13) */}
       {!stacked && <svg className="game-column-ruler" width={column} height={0} aria-hidden="true" />}
       <svg ref={dragLayer} className="game-drag-layer" aria-hidden="true">
-        <image ref={dragImage} visibility="hidden" />
+        <image ref={dragImage} visibility="hidden" opacity={0.85} />
       </svg>
     </div>
     <Handoff stacked={stacked} />

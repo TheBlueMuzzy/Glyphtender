@@ -51,6 +51,12 @@ export function highlightFor(game: GameState, move: PlannedMove | null, selected
   return move ? { hexes: castOptions(game, move), kind: 'cast' } : null
 }
 
+/** While dragging: if `hex` (under the lifted piece) is a legal drop, which option it is — else null (no highlight). */
+export function dropKind(game: GameState, move: PlannedMove | null, selected: Selection, hex: Hex | undefined): Highlight['kind'] | null {
+  const lit = hex ? highlightFor(game, move, selected) : null
+  return lit && hex && hexIn(lit.hexes, hex) ? lit.kind : null
+}
+
 /** The engine action for the planned turn (a move-only turn has no seed). */
 export function turnAction(move: PlannedMove, cast: PlannedCast | null): Action {
   return {

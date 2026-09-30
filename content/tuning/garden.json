@@ -27,7 +27,8 @@
     "revealPopSize": "Size of the \"+3\" text, in hex sizes.",
     "scorePop": "Colour of the score pops (\"+1\", \"+2\" over each seed of a made word, and the turn's total).",
     "scorePopSize": "Size of each seed's \"+1\" / \"+2\", in hex sizes.",
-    "scoreTotalSize": "Size of the turn's total (\"+6\") over the glyphling that cast, in hex sizes."
+    "scoreTotalSize": "Size of the turn's total (\"+6\") over the glyphling that cast, in hex sizes.",
+    "dropStrength": "While dragging a piece: how strong the \"drop here\" highlight is on the legal hex under it (brighter than the other options). 1 = solid."
   },
   "_ranges": {
     "hexLineWidth": [
@@ -99,6 +100,11 @@
       0.5,
       1.6,
       0.05
+    ],
+    "dropStrength": [
+      0.3,
+      1,
+      0.05
     ]
   },
   "background": "#10162a",
@@ -108,6 +114,7 @@
   "moveGlow": "#5fd4c4",
   "castGlow": "#f2c14e",
   "glowStrength": 0.45,
+  "dropStrength": 0.9,
   "pieceScale": 0.96,
   "ghostOpacity": 0.3,
   "yellow": "#f2c14e",

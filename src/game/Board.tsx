@@ -6,6 +6,7 @@
 //   held     — the piece you're holding: solid ring in the player's colour
 //   planned  — moved/targeted but not cast yet: pulsing halo at the hex edge (a targeted seed is also faded)
 //   done     — plain piece
+//   drop here — while dragging, the legal hex under the piece: a brighter, filled option (dropTarget.ts)
 // WORDS (word indicators on): a white border behind the seeds — planned while aiming, then after they grow (WordBorders.tsx).
 // MOVES glide from hex to hex (useGlide.ts) — a planned move, Undo, and moves made anywhere else.
 // DANGER CUES (DangerCue.tsx): 1 move left = dashed thorny ring in the owner's colour · tangled = a vine wraps it
@@ -147,6 +148,18 @@ export function Board({ onHexSize, sitOnTray = false }: Props) {
           <g key={`lit-${hexKey(h)}`} data-option={highlight?.kind}>
             <polygon data-hex={hexKey(h)} points={hexCorners(x, y, HEX * 0.97)} fill={glow} opacity={colours.glowStrength} />
             <circle data-hex={hexKey(h)} cx={x} cy={y} r={0.18} fill={glow} />
+          </g>
+        )
+      })}
+
+      {/* "Drop here" marks, one per option colour, hidden until a drag is over a legal hex (dropTarget.ts moves them).
+          The hex fills bright AND a glow ring spills past its edge, so it still shows round the piece floating over it. */}
+      {(['move', 'cast'] as const).map((kind) => {
+        const colour = kind === 'cast' ? colours.castGlow : colours.moveGlow
+        return (
+          <g key={`drop-${kind}`} data-drop-target={kind} visibility="hidden" pointerEvents="none">
+            <polygon points={hexCorners(0, 0, HEX * 1.16)} fill="none" stroke={colour} strokeWidth={0.26} strokeOpacity={colours.dropStrength} strokeLinejoin="round" />
+            <polygon points={hexCorners(0, 0, HEX * 0.97)} fill={colour} opacity={colours.dropStrength} />
           </g>
         )
       })}

@@ -1,13 +1,16 @@
 // TAP-TAP AND DRAG — one pointer handler for the whole game screen (board + tray), finger and mouse alike.
 // A press that moves more than dragStartDistance becomes a drag: the piece floats under the pointer
 // (dragLift px ABOVE a finger, so the finger doesn't hide it) and dropping it = tapping where it's dropped.
+// While dragging, the legal hex under the floating piece lights up ("drop here", dropTarget.ts); an illegal one doesn't.
 // What was pressed is read from data attributes:
 //   data-glyph (board glyphling id) · data-hand (tray seed: hand index) + data-tray-pos (its place in the tray)
 //   data-draft (a glyphling waiting to be placed) · data-hex (a board hex, "q,r")
 import { useRef, type PointerEvent, type RefObject } from 'react'
 import type { Hex } from '../engine/hex'
 import { useGameStore } from '../store/gameStore'
+import { dropKind } from '../store/turnPlan'
 import { glyphlingArt, seedArt } from './art'
+import { showDropTarget } from './dropTarget'
 import type { LayoutTuning } from './useTuning'
 
 interface Press {
@@ -99,8 +102,15 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
     const p = press.current
     if (!p || e.pointerId !== p.pointerId || (p.glyph === undefined && p.hand === undefined && !p.draft)) return
     if (!p.dragging && Math.hypot(e.clientX - p.x, e.clientY - p.y) > layout.dragStartDistance) startDrag(p)
-    if (p.dragging) place(e)
+    if (!p.dragging) return
+    place(e)
+    const hex = hexAttr(underPiece(e, p))
+    const { game, move, selected } = store()
+    showDropTarget(hex, game ? dropKind(game, move, selected, hex) : null)
   }
+
+  // What's under the floating piece (lifted above a finger), not under the finger itself
+  const underPiece = (e: PointerEvent, p: Press) => document.elementFromPoint(e.clientX, e.clientY - (p.touch ? layout.dragLift : 0))
 
   const onPointerUp = (e: PointerEvent) => {
     const p = press.current
@@ -108,8 +118,8 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
     press.current = null
     if (p.dragging) {
       place(e, false)
-      // Where the piece was shown (lifted above a finger), not where the finger is
-      const dropped = document.elementFromPoint(e.clientX, e.clientY - (p.touch ? layout.dragLift : 0))
+      showDropTarget(undefined, null)
+      const dropped = underPiece(e, p)
       const trayPos = dropped ? numberAttr(dropped, 'data-tray-pos') : undefined
       if (p.hand !== undefined && p.trayPos !== undefined && trayPos !== undefined) return store().moveTraySeed(p.trayPos, trayPos)
       const hex = hexAttr(dropped)
@@ -125,6 +135,7 @@ export function usePieceInput(drag: DragLayer, layout: LayoutTuning, size: numbe
     if (press.current?.pointerId !== e.pointerId) return
     press.current = null
     place(e, false)
+    showDropTarget(undefined, null)
   }
 
   return { onPointerDown, onPointerMove, onPointerUp, onPointerCancel }
