@@ -44,7 +44,8 @@ function startRoom(players: number, options: Partial<OnlineOptions> = {}, seed: 
   const randomSeed = seed === 'secret' ? undefined : () => (n = (n * 48271) % 2147483647) // 'secret' = the real server’s random numbers
   const rules = makeRules({ words: () => words, randomSeed })
   const party = new FakeParty()
-  const server: Server = new RoomServer(party, rules, { ...settings, botTakesOverAfterMs: 0 })
+  // (no flood limit here: a whole game is played within one real second)
+  const server: Server = new RoomServer(party, rules, { ...settings, botTakesOverAfterMs: 0, maxMessagesPerSecond: 0 })
   server.log = () => {} // quiet tests
   const conns = Array.from({ length: players }, (_, i) => {
     const conn = new FakeConnection(`tab-${i}`)
@@ -170,12 +171,14 @@ describe('online server — says no, and changes nothing', () => {
     expect(JSON.stringify(server.game)).toBe(before)
   })
 
-  it('sync sends my view again without changing the game', () => {
+  it('sync sends MY view again (only mine) without changing the game', () => {
     const { server, conns } = afterDraft()
     const before = conns[1].views().length
+    const others = conns[0].received.length
     const version = server.game!.version
     send(server, conns[1], { kind: 'sync' })
     expect(conns[1].views().length).toBe(before + 1)
+    expect(conns[0].received.length).toBe(others) // one player can't make the server message everyone
     expect(server.game!.version).toBe(version)
   })
 

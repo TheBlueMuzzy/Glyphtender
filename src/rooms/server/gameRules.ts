@@ -54,7 +54,10 @@ export interface GameRules<State, Options, Action, View, Event = never> {
   checkAction(raw: unknown): Action
   /** Make a new game for these seats (in seat order). Shared random setup (bags, seeds, goals) is made HERE, on the server. */
   onStart(options: Options, seats: Seat[], room: RoomTools<State, Event>): State
-  /** A player's move → the new state. Throw to refuse it. `seat` is who sent it (never trust an id inside the action). */
+  /**
+   * A player's move → the new state. Throw to refuse it. `seat` is who sent it (never trust an id inside the action).
+   * Return the SAME state object when nothing changed (e.g. "send me my view again"): then only the sender gets their view.
+   */
   onAction(state: State, seat: Seat, action: Action, room: RoomTools<State, Event>): State
   /** What this seat may see. Leave out anything that's secret from them. */
   viewFor(state: State, seat: Seat): View

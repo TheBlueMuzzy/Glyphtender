@@ -15,6 +15,8 @@ export interface RoomSettings {
   keepEmptyRoomMs: number
   /** May the host add bot seats in the lobby? (The game must then play for bots — see README.) */
   allowBots: boolean
+  /** Messages one connection may send per second; more are dropped unread (flooding). 0 = no limit. */
+  maxMessagesPerSecond: number
 }
 
 export const DEFAULT_SETTINGS: RoomSettings = {
@@ -24,6 +26,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   botTakesOverAfterMs: 60_000,
   keepEmptyRoomMs: 60_000,
   allowBots: false,
+  maxMessagesPerSecond: 10,
 }
 
 /** The game's settings (e.g. content/rooms.json) on top of the defaults. Notes like "_help" are ignored. */

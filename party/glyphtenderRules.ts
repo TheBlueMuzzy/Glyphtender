@@ -97,8 +97,8 @@ export function makeRules({ words, randomSeed: seedMaker = randomSeed }: RulesSe
     },
 
     onAction(state, seat, message, room) {
-      // "Send me my view again": nothing changes, everyone is just sent their view (stale ones are ignored)
-      if (message.kind === 'sync') return { ...state }
+      // "Send me my view again": nothing changes — the same state back, so only the sender is sent their view
+      if (message.kind === 'sync') return state
       const mine = state.seatIds.indexOf(seat.id)
       if (mine < 0) throw new Error('You aren’t playing in this game.')
       if (state.game.phase === 'over') throw new Error('The game is over.')

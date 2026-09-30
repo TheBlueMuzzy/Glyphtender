@@ -164,8 +164,9 @@ export function addBot(room: RoomData, settings: RoomSettings): SeatRecord | nul
 export function kick(room: RoomData, seatId: string): SeatRecord | null {
   const seat = findSeat(room, seatId)
   if (!seat || seat.isHost) return null
+  if (room.phase !== 'lobby' && isAddedBot(seat)) return null // mid-game a seat is never removed: the game still has it
   if (!isAddedBot(seat)) room.kicked.push(seat.persistentId)
-  if (room.phase === 'lobby' || isAddedBot(seat)) {
+  if (room.phase === 'lobby') {
     removeSeat(room, seatId)
   } else {
     handToBot(room, seatId)
