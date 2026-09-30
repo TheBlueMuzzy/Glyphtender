@@ -13,7 +13,7 @@ import { emptyStats } from '../src/store/stats'
 import { mustBeListWithoutRepeats, mustBeObject, mustBeOneOf, mustBeWholeNumber, nullOr } from '../src/rooms/server/checks'
 import type { GameRules } from '../src/rooms/server/gameRules'
 import type { OnlineAction, OnlineOptions, GameView } from './protocol'
-import { planNextTurn } from './turnClock'
+import { afterSeatChange, planNextTurn } from './turnClock'
 import { play, type ServerGame } from './serverGame'
 import { viewOf } from './views'
 
@@ -114,9 +114,7 @@ export function makeRules({ words, randomSeed: seedMaker = randomSeed }: RulesSe
     isOver: (state) => state.game.phase === 'over',
 
     // A bot took a seat (the player left, idled or stayed away): if it's that seat's turn, it plays now.
-    // A player came back: their turn clock starts again.
-    onSeatChange(state, _seat, change, room) {
-      return change === 'dropped' ? state : planNextTurn(state, room, words)
-    },
+    // A player took their seat back from a bot on their turn: their clock starts (turnClock.ts).
+    onSeatChange: (state, seat, change, room) => afterSeatChange(state, seat.id, change, room, words),
   }
 }

@@ -6,7 +6,7 @@
 // Turns the server plays: the engine's greedy sim player (a real move + cast, never a pass) and "keep all"
 // on a refresh. Beta swaps in a real AI personality here (design/online.md §6).
 import roomsJson from '../content/rooms.json'
-import type { RoomTools } from '../src/rooms/server/gameRules'
+import type { RoomTools, SeatChange } from '../src/rooms/server/gameRules'
 import { greedyAction } from '../src/engine/sim'
 import type { WordList } from '../src/engine/types'
 import { play, type ServerGame } from './serverGame'
@@ -38,6 +38,18 @@ export function planNextTurn(state: ServerGame, room: RoomTools<ServerGame, neve
     room.missedTurn(seatId)
   })
   return { ...state, turnEndsAt: Date.now() + ms }
+}
+
+/**
+ * A seat changed mid-game (a bot took it, or its player is back). Only the seat whose turn it is matters:
+ * a bot took it → the bot plays; its player took it back from a bot → their clock starts. A player who
+ * dropped out and came straight back keeps the clock that was already running — otherwise reconnecting
+ * would be a way to get more time (and anyone else's reconnect would restart the current player's clock).
+ */
+export function afterSeatChange(state: ServerGame, seatId: string, change: SeatChange, room: RoomTools<ServerGame, never>, words: () => WordList): ServerGame {
+  if (change === 'dropped' || seatId !== state.seatIds[state.game.current]) return state
+  if (change === 'back' && room.timers.isRunning(TURN_TIMER)) return state
+  return planNextTurn(state, room, words)
 }
 
 /** The server plays the whole turn for the current seat (move + cast, then "keep all" if it may refresh). */

@@ -215,6 +215,19 @@ describe('online server — the turn timer and idle players', () => {
     conns.forEach((conn) => conn.views().forEach(expectNoSecrets))
   })
 
+  it('dropping out and coming back doesn’t start the turn clock again — for them or for anyone else', () => {
+    vi.useFakeTimers()
+    const { server, conns } = startRoom(2, { turnSeconds: 60 })
+    vi.advanceTimersByTime(50_000) // Yellow's first placement: 10 s left
+    conns.forEach((conn, i) => { // Yellow's tab drops and comes straight back; then Blue's does too
+      server.onClose(conn)
+      server.onMessage(JSON.stringify({ type: 'join', name: `P${i}`, persistentId: `player-id-${i}`, create: false }), new FakeConnection(`tab-${i}-again`))
+    })
+    vi.advanceTimersByTime(10_000)
+    expect(server.game!.version).toBe(1) // her 60 s ran out: the server placed for her
+    expect(server.data.seats[0].missedTurns).toBe(1)
+  })
+
   it('a player who leaves mid-game is played by a bot, so the others can finish', () => {
     vi.useFakeTimers()
     const { server, conns } = startRoom(2)
