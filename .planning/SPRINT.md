@@ -4,7 +4,7 @@ Goal: 2–4 friends play a complete game on one phone — main menu → new game
 What Muzzy will see change: New game screen (2–4 players, board, 2-letter words), a "Pass to Blue" screen between turns, glyphlings close to tangled get a warning look, and a staged Magic reveal at the end. In the Dev Kit: Snapshots (save/restore any moment) and Bug capture. Stays the same: no online, no AI, no sound.
 
 ## F11 🧱 Seats + pass-the-device handoff
-- [ ] 🤖 1. Seats in the store: each seat local-human for now (the type allows online/AI later) — src/store/seats.ts
+- [x] 🤖 1. Seats in the store: each seat local-human for now (the type allows online/AI later) — src/store/seats.ts
 - [ ] 🤖 2. Handoff screen between local players: "Pass to Blue" in their colour, board visible + dimmed, seeds hidden until tapped; skipped when "hide seeds" is off — src/game/Handoff.tsx
 
 ## F14 🎮 Menus
@@ -29,3 +29,4 @@ Check: npm test, build, check:ui, check:devkit, e2e:game + new e2e green; Claude
 
 Ask Muzzy:
 Notes:
+- Task 1 (seats): src/store/seats.ts — a seat is local | online | ai + name + colour; the store holds seats (all local for now). Every tap goes through one question in the store, canPlay(): a game, no seed in the air, no handoff waiting, and the current seat is a local human on this device (online/AI seats plug in there). The store also keeps the table options (Play again reuses them) and the end table numbers (src/store/stats.ts: best turn, longest word, words made — gathered from each turn the engine reports; the rules never needed them). +11 tests.

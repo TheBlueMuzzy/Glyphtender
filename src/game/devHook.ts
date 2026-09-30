@@ -6,6 +6,7 @@ import { hexKey } from '../engine/hex'
 import { randomAction } from '../engine/sim'
 import { useGameStore } from '../store/gameStore'
 import { castOptions } from '../store/turnPlan'
+import { addTurn } from '../store/stats'
 
 export function installDevHook() {
   const hook = {
@@ -24,16 +25,18 @@ export function installDevHook() {
     },
     /** Plays random legal actions until the game is over. */
     playRest(seed = 1) {
-      const { game, words } = useGameStore.getState()
+      const { game, words, stats: before } = useGameStore.getState()
       if (!game || !words) return false
       let state = game
+      let stats = before
       let rng = seed
       for (let i = 0; i < 5000 && state.phase !== 'over'; i++) {
         const pick = randomAction(state, rng)
         rng = pick.rng
         state = applyAction(state, pick.action, words)
+        if (pick.action.type === 'turn' && state.lastTurn) stats = addTurn(stats, state.lastTurn) // for the end table
       }
-      useGameStore.getState().loadState(state)
+      useGameStore.getState().loadState(state, stats)
       return state.phase === 'over'
     },
   }
