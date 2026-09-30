@@ -20,9 +20,11 @@ import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
 type Props = {
   /** Reports how wide one hex is on screen (pixels), so the tray can match it. */
   onHexSize: (px: number) => void
+  /** Tall screens: sit the board at the bottom of its box, right above the tray (thumb reach, no gap). */
+  sitOnTray?: boolean
 }
 
-export function Board({ onHexSize }: Props) {
+export function Board({ onHexSize, sitOnTray = false }: Props) {
   const game = useGameStore((s) => s.game)!
   const move = useGameStore((s) => s.move)
   const cast = useGameStore((s) => s.cast)
@@ -95,7 +97,7 @@ export function Board({ onHexSize }: Props) {
 
   return (
     <svg ref={svgRef} className="game-garden" viewBox={`${view.minX} ${view.minY} ${view.w} ${view.h}`}
-      preserveAspectRatio="xMidYMid meet" role="img" aria-label="Garden">
+      preserveAspectRatio={sitOnTray ? 'xMidYMax meet' : 'xMidYMid meet'} role="img" aria-label="Garden">
       {board.cells.map((h) => {
         const { x, y } = at(h)
         return <polygon key={hexKey(h)} data-hex={hexKey(h)} points={hexCorners(x, y, HEX * 0.97)}

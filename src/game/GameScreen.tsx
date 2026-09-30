@@ -70,7 +70,7 @@ export function GameScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
       <header className="game-bar"><TurnBar /></header>
       <div className="game-board">
         <svg className="game-garden-back" aria-hidden="true"><rect width="100%" height="100%" fill={colours.background} /></svg>
-        <Board onHexSize={onHexSize} />
+        <Board onHexSize={onHexSize} sitOnTray={stacked} />
       </div>
       <section className="game-panel" aria-label="Seeds and actions">
         <SeedTray layout={tray} boxWidth={stacked ? tray.width : room} />

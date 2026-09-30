@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'src/ui/kit']),
+  globalIgnores(['dist', 'src/ui/kit', 'sketches']), // sketches = throwaway prototypes
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

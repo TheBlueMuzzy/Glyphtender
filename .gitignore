@@ -41,3 +41,4 @@ proto/results/
 
 # Playwright MCP screenshots
 .playwright-mcp/
+e2e-shots/
