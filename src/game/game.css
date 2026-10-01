@@ -85,6 +85,16 @@
   .game-prompt > * { grid-area: 1 / 1; min-inline-size: 0; }
   .game-prompt > :not(.game-prompt-sizer) { align-self: center; }
   .game-prompt-sizer { visibility: hidden; }
+  /* A prompt row: the glyphling of whoever the words are for, right beside the words, the two centred together. The
+     sizer row has the same columns, so the hidden words wrap at the same width as the real ones (B013) */
+  .game-prompt-row { display: grid; grid-template-columns: auto minmax(0, max-content); justify-content: center;
+    align-items: center; gap: var(--gap-s); }
+  .game-prompt-icon, .game-prompt-icon-space { display: flex; }
+  .game-prompt-icon[data-empty] { visibility: hidden; }
+  /* beside the board, with room: the prompt reaches out past the column's left side by the glyphling + gap, so the
+     words keep the column's width and stay centred over the tray (the avatar is target-min square) */
+  .game-prompt[data-hang] { inline-size: calc(100% + var(--target-min) + var(--gap-s));
+    margin-inline-start: calc(-1 * (var(--target-min) + var(--gap-s))); }
   .game-prompt-pile { display: grid; }
   .game-prompt-pile > * { grid-area: 1 / 1; }
   .game-ghost-words::before { content: attr(data-words); }

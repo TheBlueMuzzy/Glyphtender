@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { edgeMargin, sideGaps } from './margins'
+import { edgeMargin, promptHangRoom, sideGaps } from './margins'
 
 describe('the margin round the edges', () => {
   it('phones get the smallest margin; big screens a share of their shorter side', () => {
@@ -41,5 +41,16 @@ describe('even gaps with the board beside the tray', () => {
     const g = sideGaps({ ...base, width: 700, gap: 8, column: 300, insetShare: 0.1 })
     expect(Math.min(g.board, g.middle, g.column)).toBeGreaterThanOrEqual(0)
     expect(g.column + 8).toBeGreaterThanOrEqual(20)
+  })
+})
+
+describe('room for the glyphling beside the prompt (side layout)', () => {
+  const base = { width: 1000, height: 500, edge: 20, gap: 0, column: 200, content: 200, aspect: 1, insetShare: 0 }
+  it('the even gap left of the column, less the column’s own spare room and a margin kept clear', () => {
+    expect(promptHangRoom(base)).toBeCloseTo(340 / 3 - 20)
+    expect(promptHangRoom({ ...base, column: 260 })).toBeCloseTo(340 / 3 - 30 - 20)
+  })
+  it('too narrow (every gap is just the margin): no room', () => {
+    expect(promptHangRoom({ ...base, width: 700 })).toBe(0)
   })
 })

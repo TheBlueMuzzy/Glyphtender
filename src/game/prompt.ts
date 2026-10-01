@@ -88,6 +88,19 @@ export function promptSeat(s: PromptState): number {
   return game.current
 }
 
+/** Whose glyphling sits beside the prompt (so it's obvious who the words are for): the player to move (or the one the
+ *  device is passed to), online the other player whose turn it is too; during the reveal, whose Magic is counting, then
+ *  the winner. null = nobody in particular (the tangles being revealed, a shared win) — the spot stays, empty. */
+export function promptIconSeat(s: PromptState): number | null {
+  const game = s.game
+  if (!game) return null
+  if (game.phase !== 'over') return promptSeat(s)
+  const view = revealView(revealSteps(game), s.revealAt)
+  if (view.announced) return game.winners.length === 1 ? game.winners[0] : null
+  if (view.current?.kind === 'count' || view.current?.kind === 'bonus') return view.current.seat
+  return null
+}
+
 /** "Grand Glyphtender: Yellow!" — or, for a shared win, "Grand Glyphtenders: Yellow & Blue!" */
 export function winnerTitle(game: GameState): string {
   const names = game.winners.map(playerName).join(w.reveal.and)

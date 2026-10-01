@@ -33,6 +33,18 @@ export interface SideGapInput {
  *  When the screen is too narrow for that, the board fills the width between the margins instead. */
 export function sideGaps(p: SideGapInput): { board: number; middle: number; column: number } {
   const columnSpare = Math.max(0, (p.column - p.content) / 2) // the column's own room either side of the tray
+  const { gap, boardW } = evenGap(p)
+  const inset = boardW * p.insetShare // the hexes start this far inside the box
+  return {
+    board: Math.max(0, gap - p.gap - inset),
+    middle: Math.max(0, gap - 2 * p.gap - inset - columnSpare),
+    // the column's own box (the turn bar's ☰) never closer to the edge than the margin
+    column: Math.max(0, gap - p.gap - columnSpare, p.edge - p.gap),
+  }
+}
+
+/** The even gap you SEE (edge | board | tray | edge) in the side layout, px, and the board box's width. */
+function evenGap(p: SideGapInput): { gap: number; boardW: number } {
   // The board's box at the full height (between the top and bottom margins)…
   let boardW = Math.max(0, p.height - 2 * p.edge) * p.aspect
   // …what you SEE of it is the hexes (the box less its own margin, each side) and the tray: the rest of the width
@@ -43,11 +55,13 @@ export function sideGaps(p: SideGapInput): { board: number; middle: number; colu
     gap = p.edge
     boardW = Math.max(0, (p.width - p.content - 3 * gap) / (1 - 2 * p.insetShare))
   }
-  const inset = boardW * p.insetShare // the hexes start this far inside the box
-  return {
-    board: Math.max(0, gap - p.gap - inset),
-    middle: Math.max(0, gap - 2 * p.gap - inset - columnSpare),
-    // the column's own box (the turn bar's ☰) never closer to the edge than the margin
-    column: Math.max(0, gap - p.gap - columnSpare, p.edge - p.gap),
-  }
+  return { gap, boardW }
+}
+
+/** Side layout: how far the prompt line may reach out past the column's left side, px — the empty gap there (between
+ *  the board's hexes, or the screen's edge, and the column's box), less a margin kept clear. The glyphling beside the
+ *  prompt hangs out into it, so the words keep the column's full width (no extra wrapping on a phone on its side). */
+export function promptHangRoom(p: SideGapInput): number {
+  const columnSpare = Math.max(0, (p.column - p.content) / 2)
+  return Math.max(0, evenGap(p).gap - columnSpare - p.edge)
 }

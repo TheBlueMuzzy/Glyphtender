@@ -61,6 +61,20 @@ function problems() {
   for (const words of document.querySelectorAll('.game-prompt .kit-text')) {
     if (words.offsetWidth > box.clientWidth + 0.5 || words.scrollWidth > words.clientWidth + 0.5) out.push(`prompt overflows: ${words.textContent}`)
   }
+  // the glyphling beside the prompt is the player it's for (the one to move, or the one the device goes to), in their colour
+  const s = window.__glyphtender.store.getState()
+  if (s.game && s.game.phase !== 'over') {
+    const want = s.handoff?.seat ?? s.game.current
+    const icon = document.querySelector('.game-prompt-icon')
+    const avatar = icon?.querySelector('.kit-avatar')
+    const bar = document.querySelector('.game-turn-bar .kit-avatar')
+    if (!avatar || !avatar.checkVisibility({ visibilityProperty: true })) out.push('no glyphling beside the prompt')
+    else {
+      if (icon.dataset.seat !== String(want)) out.push(`the prompt's glyphling is seat ${icon.dataset.seat}, not ${want}`)
+      const colour = (el) => getComputedStyle(el).getPropertyValue('--kit-avatar-color').trim()
+      if (!colour(avatar) || colour(avatar) !== colour(bar)) out.push(`the prompt's glyphling colour ${colour(avatar)} ≠ the turn bar's ${colour(bar)}`)
+    }
+  }
   return out
 }
 

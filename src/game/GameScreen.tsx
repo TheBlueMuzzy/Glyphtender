@@ -20,7 +20,7 @@ import { Board } from './Board'
 import { boardView } from './boardPlace'
 import { EndBar } from './EndBar'
 import { Handoff } from './Handoff'
-import { edgeMargin, sideGaps } from './margins'
+import { edgeMargin, promptHangRoom, sideGaps } from './margins'
 import { RevealPanel } from './Reveal'
 import { PromptLine } from './PromptLine'
 import { SeedTray } from './SeedTray'
@@ -90,10 +90,13 @@ export function GameScreen({ onNewGame }: { onNewGame: () => void }) {
   // so it's that much shorter). Beside the board, the spare width is shared so edge | board | tray | edge look even.
   const boardBox = useMemo(() => boardView(getBoard(game.config.boardName).cells, layout.boardMargin), [game.config.boardName, layout.boardMargin])
   const margin = Math.max(0, edge - space.gap)
-  const side = sideGaps({
+  const sideInput = {
     width: space.width, height: space.height, edge, gap: space.gap, column, content: fullTray.width,
     aspect: boardBox.w / boardBox.h, insetShare: layout.boardMargin / boardBox.w,
-  })
+  }
+  const side = sideGaps(sideInput)
+  // Beside the board, the prompt's glyphling may hang out into the gap left of the column (the words keep its width)
+  const hangRoom = stacked ? 0 : promptHangRoom(sideInput)
   const rulers = stacked
     ? { left: margin, right: margin, middle: 0 }
     : flipped ? { left: side.column, right: side.board, middle: side.middle } : { left: side.board, right: side.column, middle: side.middle }
@@ -129,7 +132,7 @@ export function GameScreen({ onNewGame }: { onNewGame: () => void }) {
         <Board onHexSize={onHexSize} traySide={traySide} />
       </div>
       <section className="game-panel" aria-label="Seeds and actions">
-        <PromptLine big={hexPx >= BIG_HEX} fixed={stacked && !ended} />
+        <PromptLine big={hexPx >= BIG_HEX} fixed={stacked && !ended} hangRoom={hangRoom} />
         {over ? <RevealPanel compact={!stacked && hexPx < BIG_HEX} big={hexPx >= BIG_HEX} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : column} />}
         {!ended && <ActionBar size={buttonPx} fixed={stacked} />}
       </section>

@@ -84,6 +84,8 @@ try {
 
     await page.goto(`http://127.0.0.1:${PORT}/`)
     await page.getByRole('button', { name: 'Play', exact: true }).click()
+    // Hide seeds is off by default — switch it on, so the handoff's "Pass to …" prompt is measured too
+    await page.getByRole('switch', { name: 'Hide seeds between turns' }).click()
     await page.getByRole('button', { name: 'Start' }).click()
     await page.waitForFunction(() => window.__glyphtender?.store.getState().wordsStatus === 'ready', null, { timeout: 15000 })
     await moment('draft')
