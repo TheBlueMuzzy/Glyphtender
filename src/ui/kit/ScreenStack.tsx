@@ -3,7 +3,9 @@
 //     <GameHud />            ← the always-there bottom layer
 //   </ScreenStack>
 // Each screen is a component that returns a <Screen>. A dialog is just <Screen dialog> pushed on top.
-// Everything under the top screen is inert: it can be seen but not clicked, tapped or focused.
+// Everything under the top screen is inert: it can't be clicked, tapped or focused. Open screens under the top one
+// are also hidden (so a Pause panel never peeks out from behind the Rules opened from it): only the top screen shows,
+// over one dim; the one under it comes back when it closes. The game (children) stays visible under the dim.
 //
 // overlay: for a game whose own view isn't built from kit Screens (a letterboxed canvas, its own HUD
 // with z-indexes). Put <ScreenStack overlay screens={…} /> next to the game, with no children:
@@ -34,8 +36,13 @@ export function ScreenStack({ screens, children, overlay }: ScreenStackProps) {
   // which only React 19 understands), and before the focus code below runs, so a closing screen's
   // opener is clickable again by the time focus goes back to it.
   // Layer 0 is the game (children); layer 1 is the first open screen, and so on.
+  // Open screens under the top one (layers 1 … depth-1) are hidden too: data-covered → visibility hidden (kit.css),
+  // which keeps their scroll position and state for when they come back.
   useLayoutEffect(() => {
-    layers.current.forEach((layer, i) => layer?.toggleAttribute('inert', i < depth))
+    layers.current.forEach((layer, i) => {
+      layer?.toggleAttribute('inert', i < depth)
+      layer?.toggleAttribute('data-covered', i > 0 && i < depth)
+    })
   }, [depth, top])
 
   // Keyboard/gamepad focus: into a screen when it opens (or is swapped in by replace),
@@ -60,7 +67,8 @@ export function ScreenStack({ screens, children, overlay }: ScreenStackProps) {
   const open = stack.map((name, i) => {
     const Screen = screens[name]
     return (
-      <div key={`${i}-${name}`} className="kit-layer" ref={(el) => { layers.current[i + 1] = el }}>
+      // data-over: opened on top of another screen — its dim is there at once (the one under it was already dimming)
+      <div key={`${i}-${name}`} className="kit-layer" data-over={i > 0 || undefined} ref={(el) => { layers.current[i + 1] = el }}>
         {Screen ? <Screen /> : null}
       </div>
     )

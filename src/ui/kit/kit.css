@@ -52,6 +52,9 @@
   .kit-screen > [data-slot="bottom-right"] { grid-area: bottom-right; justify-self: end; }
   /* Screen stack layers: no box of their own, they only carry "inert" for the screens inside */
   .kit-layer { display: contents; }
+  /* An open screen with another one on top is hidden (ScreenStack sets data-covered): only the top screen shows.
+     visibility (not display: none) keeps its scroll position; !important so no game rule can make it peek through */
+  .kit-layer[data-covered], .kit-layer[data-covered] * { visibility: hidden !important; }
   /* <ScreenStack overlay>: open screens cover the whole window above a game that isn't built from Screens */
   .kit-overlay { position: fixed; inset: 0; z-index: var(--kit-overlay-z, 100); pointer-events: none; }
   .kit-overlay[data-open] { pointer-events: auto; }
@@ -189,7 +192,11 @@
   .kit-panel, .kit-card { animation: var(--enter) var(--motion-normal) var(--ease) backwards; }
   /* A dialog dims what's under it, fading the dim in (its panel plays the entrance above) */
   .kit-screen[data-dialog] { background: color-mix(in srgb, var(--bg) 70%, transparent); transition: background-color var(--motion-normal) var(--ease); }
-  @starting-style { .kit-screen[data-dialog] { background-color: transparent; } }
+  @starting-style {
+    .kit-screen[data-dialog] { background-color: transparent; }
+    /* opened over another screen: the dim was already there (the screen under it hides at once), so no fade-in flash */
+    .kit-layer[data-over] .kit-screen[data-dialog] { background-color: color-mix(in srgb, var(--bg) 70%, transparent); }
+  }
 
   /* Pressing: things shrink and/or sink (the style decides how much and how fast).
      A sinking button drops onto its shadow, so the shadow goes. */

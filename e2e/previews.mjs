@@ -6,6 +6,7 @@
 // (no WebSocket, no POST from any frame), and the real Pause menu still there at the end. No scroll bar sideways
 // anywhere in the Dev Kit or a preview's bar: rows that don't fit are dot carousels (◀ ▶ + dots) — checked on the
 // phone: the tool tabs page with ▶ / ◀ and the selected tab is always whole in view.
+// Stacked screens (Rules over Pause, …): only the top open screen shows (UI kit 0.2.8).
 // Starts its OWN dev server (default port 5197 — never Muzzy's 5180) and closes only that one.
 //   npm run e2e:previews [outDir] [port]
 import { mkdirSync } from 'node:fs'
@@ -165,6 +166,17 @@ try {
       // Something drew in the frame
       const drawn = await frame.evaluate(() => document.getElementById('root')?.children.length ?? 0)
       if (!drawn) fail(`${name}: the frame drew nothing`)
+      // Only the TOP open screen of the stack shows (UI kit 0.2.8): e.g. Rules opened from Pause — no Pause panel
+      // peeking out behind it. (Layer 0 is the game / home page; the rest are the open screens, newest last.)
+      const stack = await frame.evaluate(() => {
+        const open = [...document.querySelectorAll('.kit-layer')].slice(1)
+        const shown = (layer) => [...layer.querySelectorAll('.kit-screen')].some((el) => getComputedStyle(el).visibility === 'visible')
+        return { open: open.length, shown: open.map(shown) }
+      })
+      if (stack.open > 1 && !(stack.shown.slice(0, -1).every((v) => !v) && stack.shown.at(-1))) {
+        fail(`${name}: ${stack.open} screens open and not only the top one shows (${JSON.stringify(stack.shown)})`)
+      }
+      if (item.id === 'rules' && stack.open !== 2) fail(`${name}: expected Pause + Rules open (got ${stack.open})`)
       await page.screenshot({ path: `${OUT}/${size.name}-${String(n + 1).padStart(2, '0')}-${name}.png` })
       shots++
       ;(await page.evaluate(sidewaysProblems)).forEach((p) => fail(`${name} preview bar: ${p}`))
