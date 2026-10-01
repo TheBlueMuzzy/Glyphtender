@@ -60,6 +60,11 @@
   - **Refresh shows itself:** "the tiles they selected shrink, and new ones scale into their place. THEN it goes to the next player" — Keep all just goes on; online only you see it, on your own tray (B011)
   - **Layout:** buttons finger-sized like a glyphling (also on PC); the seed tray about half as far from the board; a setting flips board ↔ tray; the prompt sits just above the tray in larger letters (not in the top bar).
   - **End screen:** just "New game" (no "Play again" — fewer, clearer options).
+  - **End screen overhaul (F26, 2026-10-01 — Muzzy: the old table was "confusing, cluttered, cramped, and didn't highlight interesting things"; research/end-screen.md):** after the staged Magic reveal, three pages with tabs, swipeable sideways — **Results · Story · Scorecard** — with **Menu · New game** pinned on every page.
+    - **Results:** "Grand Glyphtender: Yellow!", then the winner big and centred (glyphling, name, Magic in the biggest words on the screen, a thin bar split into Magic from Words and from Tangles); everyone else smaller underneath in place order. Ties: "Shared win!" with the winners side by side, lower ties "=2nd". On a phone on its side and on desktop: a podium, 2nd · **1st** · 3rd · 4th, the winner raised in the middle (Muzzy's "the thing you're trying to do is in the middle"), with the highlights beside it. Online, your own card says "You".
+    - **Highlights (awards):** 3 (4 with 4 players) short titles with a reason — The deciding turn / Photo finish, Biggest turn, Two birds, Borrowed bloom, Knot tier / Brave knot, Tangle harvest, Comeback, Secret leader, Longest word, Solo grower, Rare seed, Generous gardener, Fresh start. **They never add Magic and never name anyone worst; nobody gets a second until everyone has one** (Fellowship). Tapping one opens the Story at that moment.
+    - **Story:** everyone's secret Magic, round by round, finally shown — one line per player (own colour + end shape), a dotted last step for the tangle bonus in its own shaded column ("the best speller doesn't always win" made visible), marks for tangles (ringed in the tangler's colour), award moments (stars) and lead changes; tap a mark → "Round 7 · Blue cast N: GARDEN + DEN, +14". The lines draw themselves in (reduce motion: at once).
+    - **Scorecard:** one column per player: Magic (total · from words · solo words — only your own seeds · from tangles), Words (2-letter — only when 2-letter words count · 3 · 4 · 5 · 6+ · longest · best turn), Play (multi-word turns · seeds refreshed · tangled a rival · got tangled); the best in each row softly tinted.
 - **Piece states — one look for every piece** (glyphlings, seeds, tray): **options** = glowing hexes with a dot (teal move · gold cast) · **held** = solid ring in the player's colour · **planned** = pulsing halo at the hex edge in the player's colour (a targeted seed also turns colourless "moonlit" silver — solid, letter still bright — B010) · **done** = plain.
 - **Mechanics:**
 | Mechanic | What players end up doing → Target |
@@ -97,7 +102,7 @@ Releases: **alpha → beta → 1.0** (no "prototype" release — prototypes are 
 - Seed tray: tap + drag, reorder, shuffle, refresh mode
 - Live Magic preview on the Cast button; words outlined as they grow
 - Tangle danger cues; tangle, game end, tangle bonus
-- Pass-and-play handoff screen; staged Magic reveal; end-of-game table
+- Pass-and-play handoff screen; staged Magic reveal; end screen (Results · Story · Scorecard, F26)
 - Main menu, new-game setup, settings, pause — UI kit, Cozy
 - Online rooms (Roll Better): create/join, 2–4, rejoin, host leaves, rematch
 - Grow animation (basic), Dev Kit tuning, GitHub Pages + PWA

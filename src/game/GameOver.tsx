@@ -100,9 +100,10 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
     setPage('story')
   }
   // A tapped mark tells its moment — and any marks drawn on top of it (same round, nearly the same Magic)
-  const captions = selected === null ? [w.chart.hint]
-    : selected === 'tangles' ? [tangleBonusCaption(game, name)]
-    : markersNear(end.chart, selected).map((m) => markerCaption(game, m, end.awards, name))
+  const tapped = typeof selected === 'number' && selected >= end.chart.markers.length ? null : selected // (another game since)
+  const captions = tapped === null ? [w.chart.hint]
+    : tapped === 'tangles' ? [tangleBonusCaption(game, name)]
+    : markersNear(end.chart, tapped).map((m) => markerCaption(game, m, end.awards, name))
 
   return (
     <Screen dialog label={winnerTitle(game)}>
