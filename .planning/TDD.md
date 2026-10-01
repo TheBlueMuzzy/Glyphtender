@@ -9,7 +9,7 @@
 - **Stack:** Vite + TypeScript + React, **2D SVG board (no Three.js)**, Zustand for screen state. Why: a flat hex board wants crisp, resizable, tappable shapes — SVG gives that for free, runs cool on phones, and every hex is a real element we can highlight and test.
 - **Where it runs online:** GitHub Pages (game) + **Muzzy's own Cloudflare account** (online rooms): Cloudflare Workers + Durable Objects through **PartyServer** (PartyKit's open-source successor) — live at `glyphtender.joebrogno.workers.dev` (F23, D46). `party/worker.ts` is the front door, `party/server.ts` the room; config `wrangler.json`. Local: `npm run party:dev` (`wrangler dev` on **port 1997**; Roll Better uses 1999) + `npm run dev`. Deploy: `npm run party:deploy` (Muzzy's call — it's public). Client: `partysocket` (reconnecting WebSocket), unchanged.
 - **Framework modules:** Game UI kit 0.2.5 (Cozy, night colours; 0.2.5 = Button `size`) · Dev Kit · **rooms** 0.1.0 (online, `src/rooms/`; harvested from Roll Better during this game) · **ai** (beta; first AI module, built from the original's goal-selection model).
-- **Dev Kit tools used:** Console, Tuning, Color, **Snapshots** + **Bug capture** (kit 0.3.0, framework-first — F16/F17): the game plugs in through `src/devkit-game/glyphtenderAdapter.ts` (state = engine GameState + tray order; events = a line per placement/turn/refresh/phase/tangle/note); snapshots live in `content/snapshots/`, captures in `.planning/bugs/`. Later: Multiplayer (online milestone), AI (beta).
+- **Dev Kit tools used:** Console, Tuning, Color, **Snapshots** + **Bug capture** (kit 0.3.0, framework-first — F16/F17): the game plugs in through `src/devkit-game/glyphtenderAdapter.ts` (state = engine GameState + tray order; events = a line per placement/turn/refresh/phase/tangle/note); snapshots live in `content/snapshots/`, captures in `.planning/bugs/`. **Screens** (kit 0.4.0, F27, D49 — dev only): previews of gated screens (handoff, Magic reveal + end table 2/3/4p + tie, Pause, Rules, New game, online lobby host/guest 4 seats, couldn't join, bot took a seat / away, reconnecting, word list didn't load) in a sandbox frame over the game; list + sample data in `src/devkit-game/previews.tsx` + `sampleGames.ts` (seeded sim games); proved by `npm run e2e:previews`. Later: Multiplayer (online milestone), AI (beta).
 
 ## 2. How it fits together
 ```mermaid
@@ -137,6 +137,21 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D49 · 2026-10-01 · Dev Kit screen previews run in a sandbox FRAME (a second copy of the page), framework-first, dev only (F27)
+  Proposed by: Muzzy ("showing windows/screens/states that are usually gated… not let it break the game… these are just previews")
+  Options: render the screens over the real game with a store override (a context / provider in every screen that reads
+  useGameStore / useOnline — a refactor of most screens) / split screens into pure "view" components (bigger refactor) /
+  load the game's own page again in an iframe with ?devkit-preview=<id>, fill ITS stores with sample data.
+  Chose: the frame — its own stores, screen stack and toasts for free, so no screen changed and nothing can be left behind.
+  What two same-site pages still share is blocked in the frame (framework devkit/kit/previews/sandbox.ts): storage writes
+  stay in the frame, WebSockets never connect, only GETs leave, history steps / sounds / service worker / new windows off;
+  each block counted. The overlay is a modal dialog (game inert); Esc / ✕ / Back close it (Back via one history entry with the
+  SAME state, so the kit screen stack's depth count never changes). Buttons inside still work but stay inside (New game deals
+  a game in the frame). Dev only, unlike the rest of the Dev Kit: the tab is a lazy import behind import.meta.env.DEV and so is
+  main.tsx's frame branch; check:devkit fails if previews reach either build. Sample games = the engine's sim from fixed seeds
+  (src/devkit-game/sampleGames.ts), so they follow rule changes. Game-side changes: main.tsx (frame branch) and the screen map
+  moved to src/ui/menuScreens.ts (the online previews draw the app without its live connection — devkit-game/PreviewApp.tsx).
+  Framework: dev/devkit-previews (from dev/devkit-tools, the Dev Kit 0.3.0 branch; devkit/ is identical in dev/rooms), kit 0.4.0.
 D47 · 2026-10-01 · The Q seed is a plain "Q" (letter id 'Q', spells "Q"); bag U4→U5, E16→E15 (F24)
   Proposed by: Muzzy (his call — ROADMAP Ideas)   Options: keep "Qu" as one seed / plain Q with the id still 'Qu' / plain Q, id 'Q'
   Chose: id 'Q' — every seed is now one capital letter that spells itself (spell() is just toUpperCase, art is <letter>-<colour>.webp),
