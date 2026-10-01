@@ -372,3 +372,13 @@ export function storyChart(game: GameState, awards: Award[], maxMarkers: number)
   const max = Math.max(1, ...series.flatMap((s) => s.points))
   return { rounds, series, markers, max }
 }
+
+/** Marker `index` first, then any other markers drawn on top of it: the same round and nearly the same Magic
+ *  (within `share` of the chart's height) — a finger can't pick between them, so the caption tells them all. */
+export function markersNear(chart: StoryChart, index: number, share = 0.08): ChartMarker[] {
+  const at = chart.markers[index]
+  if (!at) return []
+  const valueOf = (m: ChartMarker) => chart.series[m.seat].points[m.x]
+  const near = chart.markers.filter((m, i) => i !== index && m.x === at.x && Math.abs(valueOf(m) - valueOf(at)) <= chart.max * share)
+  return [at, ...near]
+}
