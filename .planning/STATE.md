@@ -1,9 +1,9 @@
 ## ▶ RESUME HERE
-F23 built on branch `dev/online`: the online server now runs on Muzzy's own Cloudflare (PartyServer + wrangler, TDD D46) and is **live** at glyphtender.joebrogno.workers.dev — e2e:online passes against it (full game, 0 leaks). deploy.yml now sets VITE_PARTY_HOST, so **Play online appears on the live site once `/deliver` merges dev/online** (v0.1.1). Next: Muzzy tries online (phone + PC) → "approved" → `/deliver`.
-Open decisions (defaults built): word list B001 · online timer/away rules · Magic secrecy · desktop button size · merge framework dev/rooms · Roll Better persistentId leak.
+Released v0.2.0 (alpha + online) 2026-10-01 — live at https://thebluemuzzy.github.io/glyphtender/ with Play online (server: glyphtender.joebrogno.workers.dev on Muzzy's Cloudflare). Next: Muzzy plays the new phone layout + online with friends (open look questions below) → then the two queued changes (ROADMAP Ideas): Q is plain Q + one more U, and the word spotlight (words light up one at a time) → `/sprint`.
+Muzzy hasn't checked yet: ~60px spare room under the buttons on 390-wide phones (reserved so "Cast · +88" never jumps the board) · prompt says "Ada is playing…" while a bot plays her seat · the board shifts once when the draft ends. Open decisions (defaults built): word list B001 · online timer/away rules · Magic secrecy · desktop button size · merge framework dev/rooms · Roll Better persistentId leak.
 
 ## Where we are
-Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: F23 — built, waiting on Muzzy's try · Branch: dev/online · Version: 0.1.0.0 · Live: https://thebluemuzzy.github.io/glyphtender/ (alpha)
+Stage: deliver · Milestone: v0.4 Play online ✅ · Sprint: — · Doing: friends testing online · Branch: main · Version: 0.2.0.0 · Live: https://thebluemuzzy.github.io/glyphtender/ (alpha, online)
 
 ## Key facts
 **Remake.** Web remake of the Unity game. The original is read-only reference at `../glyphtender-original` (GitHub `TheBlueMuzzy/glyphtender-original`, renamed from `Glyphtender` 2026-09-30). Never copy it wholesale — pull ideas/assets across deliberately. Digest: `.planning/research/original-digest.md`.
@@ -18,6 +18,7 @@ Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: F23 — b
 **Don't re-break:** a score pop's LAST animation frame must be invisible (opacity 0) — the pops stay in the page until the next landing, held by fill (B007; e2e/leftover-pops.mjs) · before the move a tray seed can't be dragged at all, not even to reorder — it shakes (B008, Muzzy's call). · a targeted seed is never see-through — no opacity on it, only a plannedSeedLook filter (B010) · after Refresh N the handoff / next player waits until the tray's shrink → grow has played (B011) · in portrait the prompt frame and the button row have a FIXED height (hidden copies of every line/row hold it) — the board never moves with the words or a wrapping Cast label; a new prompt or button wording needs no code, but a new KIND of line goes into promptSizers / the ActionBar sizer (B013; e2e:portrait) · layout.json bottomRoom keeps the tray and buttons clear of the phone's gesture edge (B014). · online, a seat's here / away / bot status comes from the room message (seat kind + connected) — the TurnBar badge and the seat toasts read it there, not from the game view (B015).
 
 ## Log
+- 2026-10-01 — Released v0.2.0: online play live (own Cloudflare), phone portrait layout fixes B012–B014, bot badge B015, room code label; review caught a reconnect seat bug (fixed, live-tested).
 - 2026-09-30 — F23: online server moved to Muzzy's own Cloudflare (PartyServer); deployed + e2e green against live.
 - 2026-09-30 — Alpha release prep: live online host set, returning-player update check, credits; all checks green. Delivering v0.1.0.
 - 2026-09-30 — Sprint 06 Feel pass (autonomous): Muzzy's 11 playtest notes built + 7 bugs fixed by e2e and review; 197 tests.

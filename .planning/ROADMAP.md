@@ -1,5 +1,5 @@
 # Glyphtender — Roadmap
-Release target: beta — musts not set (/define) · alpha — released 2026-09-30 (v0.1.0)
+Release target: beta — musts not set (/define) · alpha — released 2026-09-30 (v0.1.0) · online added 2026-10-01 (v0.2.0)
 IDs are names, not build order — follow `needs:`.
 
 ## v0.1 — Sketch  ✅ done 2026-09-30
@@ -70,25 +70,25 @@ flowchart LR
   F03 --> F17[✅ F17 Bug capture]
 ```
 
-## v0.4 — Play online  🎛️ built · server live on Muzzy's Cloudflare (F23) — the live site shows Play online after /deliver
+## v0.4 — Play online  ✅ released 2026-10-01 (v0.2.0)
 Goal: 2–4 players on different devices join by room code and play a full game; seeds and Magic stay secret.
 - ✅ F18 🧱 Framework "rooms" module — harvested from Roll Better (create/join, identity, rejoin, host migration) — must:alpha · sprint 5
 - ✅ F19 🧱 Online server: same engine, per-player views (`design/online.md` first) — must:alpha · needs: F11, F18 · sprint 5
-- 🎛️ F20 🎮 Create / join a room, 2–4 players (kit Lobby) — must:alpha · needs: F19, ~F14 · sprint 5
+- ✅ F20 🎮 Create / join a room, 2–4 players (kit Lobby) — must:alpha · needs: F19, ~F14 · sprint 5
   why: play with friends anywhere → Fellowship
-- 🎛️ F21 🎮 Rejoin, host leaves, idle players — must:alpha · needs: F20
-- 🎛️ F22 🎮 Rematch — must:alpha · needs: F20, ~F13
-- 🔨 F23 🧱 Online server on Muzzy's own Cloudflare (PartyServer + wrangler — TDD D46) — must:alpha · needs: F19
+- ✅ F21 🎮 Rejoin, host leaves, idle players — must:alpha · needs: F20
+- ✅ F22 🎮 Rematch — must:alpha · needs: F20, ~F13
+- ✅ F23 🧱 Online server on Muzzy's own Cloudflare (PartyServer + wrangler — TDD D46) — must:alpha · needs: F19
 ```mermaid
 flowchart LR
   F18[✅ F18 Rooms module] --> F19[✅ F19 Server]
   F11[✅ F11 Seats] --> F19
-  F19 --> F20[🎛️ F20 Lobby]
+  F19 --> F20[✅ F20 Lobby]
   F14[✅ F14 Menus] --> F20
-  F20 --> F21[🎛️ F21 Rejoin / idle]
-  F20 --> F22[🎛️ F22 Rematch]
+  F20 --> F21[✅ F21 Rejoin / idle]
+  F20 --> F22[✅ F22 Rematch]
   F13[✅ F13 Reveal] --> F22
-  F19 --> F23[🔨 F23 Own Cloudflare]
+  F19 --> F23[✅ F23 Own Cloudflare]
 ```
 
 ## Later

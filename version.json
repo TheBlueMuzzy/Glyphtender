@@ -1,6 +1,6 @@
 {
   "name": "Glyphtender",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "build": 0,
   "history": [
     {
@@ -12,6 +12,11 @@
       "version": "0.1.0",
       "date": "2026-09-30",
       "summary": "Alpha — play Glyphtender in your browser: 2–4 player pass-and-play, seeds that fly and grow, score pops, tangle cues and the Magic reveal (online play waits for its server)"
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-10-01",
+      "summary": "Play online with friends — room codes, rejoin, a robot badge when a bot takes a seat; the phone layout no longer jumps or fights your phone's gestures"
     }
   ]
 }
