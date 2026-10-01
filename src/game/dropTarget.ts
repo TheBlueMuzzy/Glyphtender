@@ -1,6 +1,6 @@
 // "DROP HERE" — while a piece is dragged, the legal hex under it lights up brighter than the other options
-// (the zone reacts, not the piece). Board.tsx draws one hidden mark per option colour ([data-drop-target="move"]
-// teal, [data-drop-target="cast"] gold) at the board's origin; this moves the right one onto the hex and shows it.
+// (the zone reacts, not the piece). Board.tsx draws one hidden mark per option kind ([data-drop-target="move"]
+// and [data-drop-target="cast"], in the player's colour) at the board's origin; this moves the right one onto the hex and shows it.
 // Plain DOM attributes, set on each pointer move — no React state per frame.
 import { hexToPixel, type Hex } from '../engine/hex'
 import { HEX } from './useThrow'

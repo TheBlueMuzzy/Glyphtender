@@ -89,7 +89,7 @@ export function GardenBoard(p: Props) {
   }, [flight, timing])
 
   const lit = new Set(p.highlight?.hexes.map(hexKey))
-  const glow = p.highlight?.kind === 'cast' ? colours.castGlow : colours.moveGlow
+  const glow = p.highlight?.kind === 'cast' ? '#f2c14e' : '#5fd4c4' // the F01 sketch keeps its old gold / teal (the game now uses the player's colour)
   const s = colours.pieceScale
   const ring = (x: number, y: number, colour: Colour, kind: 'held' | 'planned') => (
     // Drawn at the hex's own edge, outside the art's coloured frame, so it reads as a halo, not part of the tile

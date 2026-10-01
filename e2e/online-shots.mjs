@@ -1,7 +1,8 @@
 // A 2-PLAYER ONLINE GAME THROUGH THE REAL SCREENS AND A REAL LOCAL SERVER — a phone (390×844, Ada, the host)
 // and a desktop (1440×900, Bo) in two separate browsers (own storage = two different players):
 // Play online → Create (code) / Join by code → lobby (Bo ready, one shot at 844×390) → Start → the draft and a few
-// turns by taps (shots of the other player's turn arriving mid-glide) → Bo reloads mid-game and gets his seat back
+// turns by taps (shots of the other player's turn arriving: its trail in their colour before the glide, mid-glide, then
+// the trail faint after the landing) → Bo reloads mid-game and gets his seat back
 // → the host's browser closes: Bo becomes host, keeps playing, a bot takes Ada's seat after botTakesOverAfterMs
 // (B015: Bo sees "Away", then a toast + the robot badge on Ada's portrait — shots 4c/4d — and "Ada is back" after)
 // → Ada comes back by the code and takes her seat back → both play to the end → the Magic reveal + end table on
@@ -16,6 +17,8 @@
 //   npm run e2e:online [outDir] [vitePort] [partyPort]
 import { mkdirSync, readFileSync } from 'node:fs'
 import { leftoverPops } from './leftover-pops.mjs'
+import garden from '../content/tuning/garden.json' with { type: 'json' }
+import anim from '../content/tuning/anim.json' with { type: 'json' }
 import { makePlayer, secretsIn, startServers } from './online-kit.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
@@ -98,8 +101,45 @@ async function playUntil(players, done, { seconds = 120, watch = null } = {}) {
         console.log(`${mine > 0 && theirs === 0 ? 'ok  ' : 'FAIL'} turn pulse: ${p.name} ${mine} · ${watcher.name} ${theirs}`)
         feel.pulseChecked = true
       }
+      // Turn trails: the watcher sees the mover's trail in THEIR colour before the glide (slowed for this one turn, sent
+      // as the Dev Kit's Tuning tab would, so the picture can't miss it), and after the landing it stays on, faint
+      const trailWatch = watch && watcher && !watch.trail.has(watcher.name) && (await p.store((s) => s.game.phase === 'play'))
+      const tuneAnim = (who, data) => who.page.evaluate((data) => window.dispatchEvent(new CustomEvent('devkit:tuning', { detail: { file: 'anim', data } })), data)
+      let faintCheck = null // after the glide shot below
+      if (trailWatch) await tuneAnim(watcher, { ...anim, trailLead: 1.5, trailHold: 1.5 })
       await playTurn(p)
       played = true
+      if (trailWatch) {
+        watch.trail.add(watcher.name)
+        const seat = await p.store((s) => s.online.mySeat)
+        const colour = garden[['yellow', 'blue', 'purple', 'pink'][seat]]
+        const trailOn = (mode) => watcher.page.evaluate(([mode, seat]) => {
+          const t = document.querySelector(`[data-trail="${mode}"][data-trail-seat="${seat}"]`)
+          return t ? [...new Set([...t.querySelectorAll('[data-trail-part] > :last-child')].map((el) => el.getAttribute('stroke')))] : null
+        }, [mode, seat])
+        const live = await watcher.page.waitForFunction((seat) => window.__glyphtender.store.getState().trail?.seat === seat, seat, { timeout: 5000 }).then(() => true, () => false)
+        const tag = `online-${watcher.page.viewportSize().width}x${watcher.page.viewportSize().height}`
+        if (live) {
+          await watcher.page.waitForTimeout(900)
+          const strokes = await trailOn('live')
+          check(`${watcher.name} sees ${p.name}'s trail live, in ${p.name}'s colour ${colour} (${strokes})`, strokes?.join() === colour)
+          check(`${watcher.name}: nothing moves while ${p.name}'s trail draws on`, await watcher.store((s) => s.move === null))
+          await watcher.page.screenshot({ path: `${OUT}/${tag}-4a-incoming-trail.png` })
+          console.log(`ok   ${watcher.name} 4a-incoming-trail · ${p.name}'s trail in ${colour}, before the glide`)
+        } else fail(`${watcher.name} never saw ${p.name}'s trail`)
+        await tuneAnim(watcher, anim)
+        faintCheck = async () => {
+          const faint = await watcher.page.waitForFunction((seat) => {
+            const s = window.__glyphtender.store.getState()
+            return !s.trail && !s.move && !s.flying && s.game.lastTurn?.seat === seat && document.querySelector(`[data-trail="faint"][data-trail-seat="${seat}"]`)
+          }, seat, { timeout: 10000 }).then(() => true, () => false)
+          check(`${watcher.name} still sees ${p.name}'s last turn, faint, after it landed`, faint && (await trailOn('faint'))?.join() === colour)
+          if (faint) {
+            await watcher.page.screenshot({ path: `${OUT}/${tag}-4c-faint-trail.png` })
+            console.log(`ok   ${watcher.name} 4c-faint-trail · ${p.name}'s last turn stays, faint`)
+          }
+        }
+      }
       if (watch && watcher && (await p.store((s) => s.game.phase === 'play' || s.game.phase === 'refresh'))) {
         // The watcher's board replays the move: the glyphling glides first — picture it halfway
         const arrived = await watcher.page.waitForFunction(() => { const s = window.__glyphtender.store.getState(); return s.move && s.game.current !== s.online.mySeat }, null, { timeout: 5000 }).then(() => true, () => false)
@@ -110,6 +150,7 @@ async function playUntil(players, done, { seconds = 120, watch = null } = {}) {
           console.log(`ok   ${watcher.name} 4-incoming-turn (mid-glide)`)
         }
       }
+      if (faintCheck) await faintCheck()
       // A turn that grew words: its Magic pops on the watcher's screen too, once the replayed seed lands
       if (watcher && !feel.popsSeen && (await p.store((s) => s.game.lastTurn?.seat === s.online.mySeat && s.game.lastTurn.words.length > 0))) {
         const popped = await watcher.page.waitForFunction(() => document.querySelectorAll('[data-score-pop]').length > 0, null, { timeout: 8000 }).then(() => true, () => false)
@@ -172,7 +213,7 @@ try {
   check('word indicators on (the host’s lobby option) on both screens', (await ada.store((s) => s.options.wordIndicators)) && (await bo.store((s) => s.options.wordIndicators)))
   await ada.shot('2-draft')
   await playUntil([ada, bo], async () => (await ada.store((s) => s.game.phase)) !== 'draft')
-  const watch = { done: new Set() }
+  const watch = { done: new Set(), trail: new Set() }
   await playUntil([ada, bo], async () => (await turnCount(ada)) >= 4 && (await turnCount(bo)) >= 4 && feel.popsSeen, { watch, seconds: 240 })
   check('the other player’s turn popped its Magic on the watcher’s screen', feel.popsSeen)
   await ada.shot('3-mid-game')

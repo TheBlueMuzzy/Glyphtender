@@ -27,6 +27,7 @@
     "e2e:previews": "node e2e/previews.mjs",
     "e2e:end": "node e2e/end-screen-shots.mjs",
     "e2e:margins": "node e2e/layout-margins.mjs",
+    "e2e:trails": "node e2e/trail-shots.mjs",
     "fixtures:end": "node scripts/end-fixtures.mjs"
   },
   "dependencies": {
