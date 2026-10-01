@@ -3,7 +3,9 @@
 // remember everything (the store, open screens, storage, history, address) → ` → Screens → open EVERY preview
 // (each variant), wait for it, screenshot it, close it (✕; one with Esc, one with the Back button) → after each:
 // the real game is unchanged. Also: no console errors, no problems reported by a preview, nothing sent
-// (no WebSocket, no POST from any frame), and the real Pause menu still there at the end.
+// (no WebSocket, no POST from any frame), and the real Pause menu still there at the end. No scroll bar sideways
+// anywhere in the Dev Kit or a preview's bar: rows that don't fit are dot carousels (◀ ▶ + dots) — checked on the
+// phone: the tool tabs page with ▶ / ◀ and the selected tab is always whole in view.
 // Starts its OWN dev server (default port 5197 — never Muzzy's 5180) and closes only that one.
 //   npm run e2e:previews [outDir] [port]
 import { mkdirSync } from 'node:fs'
@@ -39,6 +41,30 @@ function realMoment() {
   })
 }
 
+/** Dev Kit parts that scroll sideways (there should be none — carousels instead), and carousel items cut in half
+ *  on the page being shown. Runs in the page. */
+function sidewaysProblems() {
+  const out = []
+  for (const el of document.querySelectorAll('aside.devkit *, dialog.devkit-preview *')) {
+    if (el.tagName === 'IFRAME' || el.closest('iframe')) continue
+    const x = getComputedStyle(el).overflowX
+    if ((x === 'auto' || x === 'scroll') && el.scrollWidth > el.clientWidth + 1) out.push(`scrolls sideways: ${el.className}`)
+  }
+  for (const view of document.querySelectorAll('.dk-carousel-view')) {
+    if (!view.offsetParent) continue // (a hidden panel)
+    const box = view.getBoundingClientRect()
+    const clipped = Number(/inset\([^ ]+ ([\d.]+)px/.exec(view.style.clipPath)?.[1] ?? 0) // the page's window
+    const right = box.right - clipped
+    for (const item of view.querySelector('.dk-carousel-track').children) {
+      const r = item.getBoundingClientRect()
+      const inside = r.left >= box.left - 1 && r.right <= right + 1
+      const outside = r.right <= box.left + 1 || r.left >= right - 1
+      if (!inside && !outside && r.width <= box.width) out.push(`half-shown in a carousel: ${(item.textContent || '').trim().slice(0, 20)}`)
+    }
+  }
+  return out
+}
+
 const server = await createServer({ server: { port: PORT, strictPort: true, host: '127.0.0.1' }, logLevel: 'warn' })
 await server.listen()
 const browser = await chromium.launch()
@@ -71,12 +97,51 @@ try {
 
     // ` → Screens
     await page.keyboard.press('Backquote')
+    // (a tab on another carousel page: ▶ to it first, like a person would)
+    const tabInView = (name) => page.evaluate((name) => {
+      const view = document.querySelector('.devkit-tabs .dk-carousel-view').getBoundingClientRect()
+      const tab = [...document.querySelectorAll('.devkit-tab')].find((t) => t.textContent === name).getBoundingClientRect()
+      return tab.left >= view.left - 1 && tab.right <= view.right + 1
+    }, name)
+    for (let i = 0; i < 6 && !(await tabInView('Screens')); i++) {
+      await page.getByRole('button', { name: 'Next tools' }).click()
+      await page.waitForTimeout(250)
+    }
     await page.getByRole('tab', { name: 'Screens' }).click()
     const buttons = page.locator('.devkit [data-preview]')
     await buttons.first().waitFor()
     const list = await buttons.evaluateAll((els) => els.map((b) => ({ id: b.dataset.preview, variant: b.dataset.variant ?? '', label: b.textContent })))
     console.log(`  ${list.length} previews to open`)
+    await page.waitForTimeout(300) // the carousel turns to the Screens tab
     await page.screenshot({ path: `${OUT}/${size.name}-0-screens-tab.png` })
+    ;(await page.evaluate(sidewaysProblems)).forEach((p) => fail(`Dev Kit: ${p}`))
+    const tabWhole = async () => page.evaluate(() => {
+      const view = document.querySelector('.devkit-tabs .dk-carousel-view').getBoundingClientRect()
+      const tab = document.querySelector('.devkit-tab[aria-selected="true"]').getBoundingClientRect()
+      return tab.left >= view.left - 1 && tab.right <= view.right + 1
+    })
+    if (!(await tabWhole())) fail('Dev Kit: the selected tab is not whole in view')
+    // A phone can't fit every tool tab: ◀ ▶ + dots page through them (no scroll bar)
+    if (size.mobile) {
+      const prev = page.getByRole('button', { name: 'Previous tools' })
+      if (!(await prev.isVisible())) fail('phone: the Dev Kit tabs have no ◀ ▶ (they do not all fit)')
+      else {
+        const dot = () => page.locator('.devkit-tabs .dk-carousel-dot[aria-current="true"]').getAttribute('aria-label')
+        const was = await dot()
+        await prev.click()
+        await page.waitForTimeout(300)
+        if ((await dot()) === was) fail('phone: ◀ did not turn the Dev Kit tabs')
+        for (let i = 0; i < 6 && !(await tabInView('Color')); i++) { await prev.click(); await page.waitForTimeout(250) }
+        if (!(await tabInView('Color'))) fail('phone: ◀ to the first page does not show Color')
+        await page.screenshot({ path: `${OUT}/${size.name}-0-tabs-page1.png` })
+        ;(await page.evaluate(sidewaysProblems)).forEach((p) => fail(`Dev Kit (tabs turned): ${p}`))
+        for (let i = 0; i < 6 && !(await tabInView('Screens')); i++) {
+          await page.getByRole('button', { name: 'Next tools' }).click()
+          await page.waitForTimeout(250)
+        }
+        if (!(await tabInView('Screens'))) fail('phone: ▶ did not bring Screens back')
+      }
+    }
 
     for (const [n, item] of list.entries()) {
       const name = `${item.id}${item.variant ? `-${item.variant}` : ''}`
@@ -102,6 +167,7 @@ try {
       if (!drawn) fail(`${name}: the frame drew nothing`)
       await page.screenshot({ path: `${OUT}/${size.name}-${String(n + 1).padStart(2, '0')}-${name}.png` })
       shots++
+      ;(await page.evaluate(sidewaysProblems)).forEach((p) => fail(`${name} preview bar: ${p}`))
 
       // Inside the sandbox things still work — they just can't reach out: Start on the new-game screen saves the
       // choices (blocked, kept in the frame) and deals a game IN THE FRAME; the real game below doesn't notice

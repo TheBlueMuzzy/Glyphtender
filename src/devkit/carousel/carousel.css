@@ -1,0 +1,41 @@
+/* Dot carousel (Carousel.tsx): ◀ [window onto the row] ▶, the dots under the window. No scroll bar anywhere. */
+.dk-carousel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 2px;
+  min-width: 0;
+}
+/* clip, not hidden: a hidden box can still be scrolled by the browser (e.g. to show a focused item), which would
+   fight the slide. clip can't be scrolled at all. */
+.dk-carousel-view { grid-column: 2; grid-row: 1; min-width: 0; overflow: hidden; overflow: clip; overflow-clip-margin: 2px; }
+.dk-carousel-track {
+  position: relative; /* the items' offsetLeft is measured from here */
+  display: flex;
+  align-items: center;
+  gap: var(--dk-carousel-gap, 4px);
+  width: max-content;
+  transition: transform 200ms ease;
+}
+.dk-carousel-track > * { flex: none; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .dk-carousel-track { transition: none; } }
+.dk-carousel-arrow {
+  grid-row: 1;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #4a4c5c;
+  border-radius: 6px;
+  background: #2c2e3a;
+  color: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.dk-carousel-arrow[data-side='prev'] { grid-column: 1; }
+.dk-carousel-arrow[data-side='next'] { grid-column: 3; }
+.dk-carousel-arrow:hover:not(:disabled) { background: #383a4a; }
+.dk-carousel-arrow:disabled { opacity: 0.3; cursor: default; }
+.dk-carousel-dots { grid-column: 2; grid-row: 2; display: flex; justify-content: center; gap: 2px; }
+.dk-carousel-dot { width: 14px; height: 10px; padding: 0; border: none; background: none; cursor: pointer; } /* the dot is its middle */
+.dk-carousel-dot::before { content: ''; display: block; width: 6px; height: 6px; margin: auto; border-radius: 50%; background: #4a4c5c; }
+.dk-carousel-dot[aria-current='true']::before { background: #e8e8ee; }

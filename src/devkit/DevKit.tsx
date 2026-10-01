@@ -6,10 +6,12 @@
 //   Open:  the ` key (desktop) or triple-tap the top-right corner (phone)
 //   Close: Esc, the ✕ button, or ` again
 // Tools are tabs across the top: the kit's own (KIT_TABS), then the game's own from src/devkit-game/tabs.ts.
+// More than fit → ◀ ▶ and page dots (carousel/Carousel.tsx), never a sideways scroll bar.
 // The one rule (DEVKIT.md): tools edit content/ JSON files, never code.
 import { Suspense, lazy, useEffect, useRef, useState, type ComponentType } from 'react'
 import { gameTabs } from '../devkit-game/tabs'
 import { CaptureTab } from './capture/CaptureTab'
+import { Carousel } from './carousel/Carousel'
 import { ColorTab } from './color/ColorTab'
 import { CAN_SAVE } from './saveContent'
 import { SnapshotsTab } from './snapshots/SnapshotsTab'
@@ -117,7 +119,8 @@ export function DevKit({ tabs = [...KIT_TABS, ...gameTabs] }: { tabs?: DevKitTab
     <aside ref={panel} {...{ popover: 'manual' }} className="devkit" data-devkit={DEVKIT_MARKER} hidden={!open} aria-label="Dev Kit">
       <header className="devkit-top">
         <strong className="devkit-title">Dev Kit</strong>
-        <nav className="devkit-tabs" role="tablist">
+        {/* More tools than fit (a phone): a dot carousel, never a sideways scroll bar */}
+        <Carousel className="devkit-tabs" label="Tools" role="tablist" active={tabs.findIndex((t) => t.id === tabId)}>
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -129,7 +132,7 @@ export function DevKit({ tabs = [...KIT_TABS, ...gameTabs] }: { tabs?: DevKitTab
               {t.label}
             </button>
           ))}
-        </nav>
+        </Carousel>
         <button className="devkit-close" onClick={closeFromButton} aria-label="Close the Dev Kit" title="Close (Esc)">
           ✕
         </button>

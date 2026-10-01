@@ -1,6 +1,7 @@
 // THE PREVIEW OVERLAY — a full-screen box on top of the real game, holding the sandbox frame (frame.tsx).
 //   Bar: PREVIEW badge · the screen's name · its variants · size (fit the window / phone 390×844 / desktop 1440×900,
-//   scaled down to fit) · ↻ replay · what the sandbox blocked · ✕ Close.
+//   scaled down to fit) · ↻ replay · what the sandbox blocked · ✕ Close. The middle ones sit in a dot carousel (◀ ▶ +
+//   dots) when they don't fit — on a phone they get their own row under the badge, name and ✕.
 //   It's a modal <dialog>: the real game underneath can't be touched while it's open.
 //   Closing (✕, Esc, or the phone's Back) removes the frame — the real game is exactly as it was, since nothing
 //   in the frame could reach it (sandbox.ts).
@@ -8,6 +9,7 @@
 // stack, which counts its entries, sees no change). Back pops that entry and closes the preview, instead of
 // closing a real menu or leaving the page. ✕ / Esc step back over it.
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { Carousel } from '../carousel/Carousel'
 import type { FrameMessage } from './frame'
 import { previewUrl, type DevKitPreview } from './previewTypes'
 import { blockedLine } from './overlayLogic'
@@ -117,7 +119,8 @@ export function PreviewOverlay({ preview, variant, onVariant, onClose }: Props) 
       <header className="dp-bar">
         <span className="dp-badge">Preview</span>
         <strong className="dp-name">{preview.label}</strong>
-        <div className="dp-scroll">
+        {/* Variants, size, replay, what was blocked: a dot carousel when they don't all fit (a phone), no scroll bar */}
+        <Carousel className="dp-options" label="Preview options">
           {preview.variants && preview.variants.length > 1 && (
             <span className="dp-group" role="group" aria-label="Variant">
               {preview.variants.map((v) => (
@@ -135,7 +138,7 @@ export function PreviewOverlay({ preview, variant, onVariant, onClose }: Props) 
           </span>
           <button className="dp-chip" onClick={restart} title="Play it again from the start">↻ Replay</button>
           <span className="dp-blocked" data-preview-blocked>{ready ? blockedLine(counts) : 'loading…'}</span>
-        </div>
+        </Carousel>
         <button className="dp-close" onClick={() => onClose(false)} aria-label="Close the preview" title="Close (Esc) — back to the real game">✕ Close</button>
       </header>
       {problems.length > 0 && <p className="dp-problem" role="alert">This preview hit a problem: {problems.join(' · ')}</p>}

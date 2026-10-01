@@ -53,7 +53,13 @@
   text-transform: uppercase;
 }
 .dp-name { overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
-.dp-scroll { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+.dp-options { flex: 1; min-width: 0; --dk-carousel-gap: 8px; } /* a Carousel (no scroll bar) */
+/* Phone: the options get a row of their own under the badge, name and ✕ */
+@media (max-width: 640px) {
+  .dp-bar { flex-wrap: wrap; row-gap: 2px; }
+  .dp-name { flex: 1; max-width: none; }
+  .dp-options { order: 1; flex-basis: 100%; }
+}
 .dp-group { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: #16171d; }
 .dp-chip {
   background: none;
