@@ -256,6 +256,7 @@ try {
     await p.page.getByRole('dialog').getByRole('button', { name: 'New game' }).waitFor()
     await p.shot('6-end-table')
     check(`${p.name}'s end table has both names`, (await p.page.getByText('Ada', { exact: true }).count()) > 0 && (await p.page.getByText('Bo', { exact: true }).count()) > 0)
+    check(`${p.name}'s end screen marks their own card "You"`, (await p.page.getByRole('dialog').getByText('You', { exact: true }).count()) === 1)
     check(`${p.name}'s end table has no Play again`, (await p.page.getByRole('dialog').getByRole('button', { name: 'Play again' }).count()) === 0)
   }
   // New game: the guest waits for the host; the host's takes everyone back to the lobby
