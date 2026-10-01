@@ -12,7 +12,9 @@
     "maxMarkers": "Story chart: the most moment markers drawn on the lines (tangles first, then award moments, then lead changes).",
     "chartDrawSeconds": "Story chart: how long the lines take to draw themselves in, left to right, when the page opens (0 = at once; reduce motion = at once).",
     "chartLineWidth": "Story chart: line thickness, in chart units (the chart is 360 wide).",
-    "chartHeight": "Story chart: height, in chart units (the chart is 360 wide)."
+    "chartHeight": "Story chart: its smallest height, in px (it grows to fill the page).",
+    "pageFill": "Results and Scorecard pages: everything on the page grows until it fills this share of the page's height (0.94 = 94%), so a big screen isn't a small page floating in empty space. Never smaller than normal size.",
+    "maxZoom": "Results and Scorecard pages: the most they may grow to fill a big screen (2.25 = 2¼ times normal size)."
   },
   "_ranges": {
     "awardsFor2": [1, 6, 1],
@@ -26,7 +28,9 @@
     "maxMarkers": [0, 12, 1],
     "chartDrawSeconds": [0, 4, 0.1],
     "chartLineWidth": [1, 6, 0.5],
-    "chartHeight": [160, 320, 10]
+    "chartHeight": [160, 320, 10],
+    "pageFill": [0.6, 1, 0.01],
+    "maxZoom": [1, 2.5, 0.05]
   },
   "awardsFor2": 3,
   "awardsFor3": 3,
@@ -56,5 +60,7 @@
   "maxMarkers": 6,
   "chartDrawSeconds": 1.5,
   "chartLineWidth": 3,
-  "chartHeight": 220
+  "chartHeight": 220,
+  "pageFill": 0.94,
+  "maxZoom": 2.25
 }

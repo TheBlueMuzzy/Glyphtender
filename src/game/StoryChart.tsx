@@ -13,9 +13,12 @@ import type { GardenTuning } from './useTuning'
 import text from '../../content/text/en.json'
 
 const w = text.game.gameOver.chart
-const FONT = 15 // chart words, px
-const PAD = { left: 34, right: 52, top: 14, bottom: 28 }
 const MIN_TANGLE_COLUMN = 44
+
+/** The chart's word size, px: 15 on a phone, growing with the chart's width up to 22 on a big screen (readable at desktop). */
+const fontFor = (width: number) => Math.round(Math.min(22, Math.max(15, width / 46)))
+/** Room around the plot for the numbers on the left, the totals on the right and the round labels underneath. */
+const padFor = (font: number) => ({ left: Math.round(font * 2.3), right: Math.round(font * 3.5), top: 14, bottom: Math.round(font * 1.9) })
 
 /** Each seat's end-of-line shape (so lines aren't told apart by colour alone). */
 export function SeatShape({ seat, x, y, size, colour, ring }: { seat: number; x: number; y: number; size: number; colour: string; ring?: boolean }) {
@@ -80,6 +83,9 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
     after.current?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: ms, fill: 'backwards' })
   }, [width, tuning.chartDrawSeconds])
 
+  const FONT = fontFor(width)
+  const PAD = padFor(FONT)
+  const S = FONT / 15 // marks and end shapes grow with the words
   const plotW = Math.max(0, width - PAD.left - PAD.right)
   const tangleW = Math.max(MIN_TANGLE_COLUMN, plotW / (chart.rounds + 1))
   const step = chart.rounds > 0 ? (plotW - tangleW) / chart.rounds : 0
@@ -146,9 +152,9 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
                 stroke={colour(s.seat)} strokeWidth={lineWidth} strokeDasharray={`${lineWidth} ${lineWidth * 1.6}`} strokeLinecap="round" />
             ))}
             {/* Each line's end: its shape, and its total beside it */}
-            {chart.series.map((s) => <SeatShape key={s.seat} seat={s.seat} x={X(end)} y={Y(s.points[end])} size={12} colour={colour(s.seat)} ring />)}
+            {chart.series.map((s) => <SeatShape key={s.seat} seat={s.seat} x={X(end)} y={Y(s.points[end])} size={12 * S} colour={colour(s.seat)} ring />)}
             {labels.map((l) => (
-              <text key={l.seat} x={X(end) + 12} y={l.y} dy="0.35em" fontSize={FONT} fontWeight={700} fill="var(--on-surface)">{l.total}</text>
+              <text key={l.seat} x={X(end) + 12 * S} y={l.y} dy="0.35em" fontSize={FONT} fontWeight={700} fill="var(--on-surface)">{l.total}</text>
             ))}
             {/* The moments */}
             {chart.markers.map((m, i) => {
@@ -158,16 +164,16 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
               return (
                 <g key={i} role="button" tabIndex={0} aria-label={label(m)} aria-pressed={on} className="game-end-chart-hit"
                   onClick={() => onSelect(on ? null : i)} onKeyDown={key(i)} data-marker={m.kind}>
-                  <circle cx={x} cy={y} r={22} fill="transparent" />
-                  {on && <circle cx={x} cy={y} r={13} fill="none" stroke="var(--focus)" strokeWidth={2.5} />}
+                  <circle cx={x} cy={y} r={Math.max(22, 16 * S)} fill="transparent" />
+                  {on && <circle cx={x} cy={y} r={13 * S} fill="none" stroke="var(--focus)" strokeWidth={2.5} />}
                   {m.kind === 'tangle' && (
                     <>
-                      <circle cx={x} cy={y} r={8} fill="var(--surface)" stroke={colour(m.by ?? m.seat)} strokeWidth={3} />
-                      <circle cx={x} cy={y} r={3.5} fill={colour(m.seat)} />
+                      <circle cx={x} cy={y} r={8 * S} fill="var(--surface)" stroke={colour(m.by ?? m.seat)} strokeWidth={3} />
+                      <circle cx={x} cy={y} r={3.5 * S} fill={colour(m.seat)} />
                     </>
                   )}
-                  {m.kind === 'award' && <polygon points={star(x, y, 9)} fill="var(--accent)" stroke="var(--surface)" strokeWidth={2} />}
-                  {m.kind === 'lead' && <line x1={x} x2={x} y1={y - 11} y2={y + 11} stroke={colour(m.seat)} strokeWidth={3} strokeLinecap="round" />}
+                  {m.kind === 'award' && <polygon points={star(x, y, 9 * S)} fill="var(--accent)" stroke="var(--surface)" strokeWidth={2} />}
+                  {m.kind === 'lead' && <line x1={x} x2={x} y1={y - 11 * S} y2={y + 11 * S} stroke={colour(m.seat)} strokeWidth={3} strokeLinecap="round" />}
                 </g>
               )
             })}

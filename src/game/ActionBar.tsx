@@ -3,12 +3,14 @@
 //            (word indicators off: plain "Cast" — the +N would tell you a word is there)
 //            (Retry instead of Cast if the word list couldn't be loaded — End turn never needs it)
 //   refresh: Keep all · Refresh N
-//   over:    Skip (while the Magic reveal plays) → then See results (reopens the end screen, which See board closed) · New game
+//   over:    Skip (while the Magic reveal plays) — a normal-size button, not a board-hex one (the reveal is calm,
+//            centred: Muzzy at 768×343). After the reveal there's no ActionBar: the end bar (EndBar.tsx — ☰ · See
+//            results · New game) sits at the bottom, in the very same spot as on the end screen.
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { mayMoveOnly } from '../store/turnPlan'
 import { revealSteps } from '../store/revealPlan'
-import { Button, Row, fill, screens } from '../ui/kit'
+import { Button, Row, fill } from '../ui/kit'
 import { wordListUrl } from './art'
 import { usePreview } from './usePreview'
 import { Ghost } from './PromptLine'
@@ -21,7 +23,7 @@ const w = text.game.buttons
  *  2 lines while "Keep all · Refresh" fits on 1; without this the board would jump each time.
  *  In portrait the buttons are also compact (kit: less room each side of the label), so the longest row,
  *  "Shuffle · Undo · Cast · +88", fits ONE line on a 360-wide phone — no second row of space held under them. */
-export function ActionBar({ onNewGame, size, fixed }: { onNewGame: () => void; size: number; fixed: boolean }) {
+export function ActionBar({ size, fixed }: { size: number; fixed: boolean }) {
   const phase = useGameStore((s) => s.game!.phase)
   if (phase === 'draft') return null
   return (
@@ -42,19 +44,15 @@ export function ActionBar({ onNewGame, size, fixed }: { onNewGame: () => void; s
             <Button size={size} compact={fixed} variant="secondary"><Ghost words={w.keepAll} /></Button>
             <Button size={size} compact={fixed}><Ghost words={fill(w.refresh, { n: 8 })} /></Button>
           </Row>
-          <Row gap="s" justify="center">
-            <Button size={size} compact={fixed} variant="secondary"><Ghost words={w.results} /></Button>
-            <Button size={size} compact={fixed}><Ghost words={w.newGame} /></Button>
-          </Row>
         </div>
       )}
-      <ActionRow onNewGame={onNewGame} size={size} fixed={fixed} />
+      <ActionRow size={size} fixed={fixed} />
     </div>
   )
 }
 
 /** The real buttons for this moment. */
-function ActionRow({ onNewGame, size, fixed }: { onNewGame: () => void; size: number; fixed: boolean }) {
+function ActionRow({ size, fixed }: { size: number; fixed: boolean }) {
   const s = useGameStore()
   const preview = usePreview()
   const game = s.game!
@@ -73,16 +71,11 @@ function ActionRow({ onNewGame, size, fixed }: { onNewGame: () => void; size: nu
   }
 
   if (game.phase === 'over') {
-    // While the Magic reveal plays: only Skip. After it: See results (the end screen) + New game.
+    // While the Magic reveal plays: only Skip, normal size. After it: nothing here (the end bar — GameScreen.tsx)
     if (s.revealAt === null || s.revealAt < revealSteps(game).length) {
-      return <Row gap="s" justify="center" className="game-actions"><Button size={size} compact={fixed} variant="secondary" onClick={s.skipReveal}>{w.skip}</Button></Row>
+      return <Row gap="s" justify="center" className="game-actions"><Button variant="secondary" onClick={s.skipReveal}>{w.skip}</Button></Row>
     }
-    return (
-      <Row gap="s" justify="center" className="game-actions">
-        <Button size={size} compact={fixed} variant="secondary" onClick={() => screens.push('gameOver')}>{w.results}</Button>
-        <Button size={size} compact={fixed} onClick={onNewGame}>{w.newGame}</Button>
-      </Row>
-    )
+    return null
   }
 
   // (online, another player's replayed plan is on the board — it's not mine to preview)

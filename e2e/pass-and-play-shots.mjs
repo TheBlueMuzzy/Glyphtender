@@ -219,12 +219,13 @@ try {
     const table = page.getByRole('dialog', { name: /Grand Glyphtender/ })
     await table.waitFor({ timeout: 10000 })
     await shot('9-end-table', 700)
-    // The end screen (F26): everyone on the first page — every glyphling on screen without scrolling, the winner big
+    // The end screen (F26): everyone on the first page — every player's glyphling on screen without scrolling, the winner
+    // big (the highlights under them may scroll on a phone on its side)
     check(`the end screen shows ${COUNT} players`, (await table.locator('.game-end-player').count()) === COUNT)
     check('a winner is shown big', (await table.locator('.game-end-player[data-winner]').count()) >= 1)
     const allInView = await page.evaluate(() => {
       const box = document.querySelector('.game-end .kit-scroll').getBoundingClientRect()
-      return [...document.querySelectorAll('.game-end-art')].every((a) => { const r = a.getBoundingClientRect(); return r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5 })
+      return [...document.querySelectorAll('.game-end-player .game-end-art')].every((a) => { const r = a.getBoundingClientRect(); return r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5 })
     })
     check('every player is on the first page without scrolling', allInView)
     // the breakdown is one tab away

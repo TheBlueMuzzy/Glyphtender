@@ -4,11 +4,11 @@
 // scrolling); everyone else smaller underneath, in place order ("=2nd" for ties).
 // A shared win puts the winners side by side at the same size under "Shared win!".
 // Wide screens (phone on its side, desktop): everyone in one row — a podium 2nd · 1st · 3rd · 4th, the winner raised
-// (2 players: 1st · 2nd; a shared win: the winners first) — with the
-// highlights beside it (Muzzy's "the thing you're trying to do is in the middle").
-// Highlights: the awards (stats.ts pickAwards), straight under the players — one compact row each (glyphling, title,
-// reason); tapping one opens the Story chart at that moment. Tall phones (390×844): the whole page fits, no scrolling
-// (Muzzy: "move highlights under the Grand Glyphtender: Color main results section, no scrolling").
+// (2 players: 1st · 2nd; a shared win: the winners first) — Muzzy's "the thing you're trying to do is in the middle".
+// Highlights: the awards (stats.ts pickAwards), ALWAYS UNDER the players at every size, never beside them (Muzzy:
+// "move highlights under the Grand Glyphtender: Color main results section, no scrolling") — one compact row each
+// (glyphling, title, reason; two to a line on a wide screen); tapping one opens the Story chart at that moment.
+// The page fits without scrolling (e2e:end); a big screen draws it all bigger (game.css --end-zoom).
 // Kit parts: Stack, Row, Text, Badge, ListRow. The art and the split bar are game graphics (like the board).
 import text from '../../content/text/en.json'
 import { logIsComplete } from '../engine/log'
@@ -51,9 +51,9 @@ export function EndResults({ title, game, ranked, cards, awards, colours, wide, 
     : shared ? ranked
     : ranked.length >= 3 ? [others[0], winners[0], ...others.slice(1)] : [winners[0], ...others]
   const highlights = awards.length > 0 && (
-    <Stack gap="xs" className="game-end-highlights">
+    <Stack gap="xs" className="game-end-highlights" data-wide={wide || undefined}>
       <Text kind="heading">{w.highlights}</Text>
-      {awards.map((a) => {
+      <div className="game-end-awards">{awards.map((a) => {
         const { title, reason } = awardText(a, name)
         return (
           <ListRow key={a.id} onClick={() => onAward(a)} label={
@@ -69,7 +69,7 @@ export function EndResults({ title, game, ranked, cards, awards, colours, wide, 
             </Row>
           } />
         )
-      })}
+      })}</div>
     </Stack>
   )
   return (
