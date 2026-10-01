@@ -207,6 +207,14 @@
       "title": "Reconnecting…",
       "message": "Connection lost — getting you back into the garden.",
       "quit": "Leave"
+    },
+    "seats": {
+      "bot": "{name}: a bot is playing for them",
+      "away": "Away",
+      "awayLabel": "{name} is away — their seat waits for them",
+      "botLeft": "{name} left — a bot is playing for them",
+      "botIdle": "{name} is idle — a bot is playing for them",
+      "back": "{name} is back"
     }
   }
 }

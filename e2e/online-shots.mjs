@@ -3,6 +3,7 @@
 // Play online → Create (code) / Join by code → lobby (Bo ready, one shot at 844×390) → Start → the draft and a few
 // turns by taps (shots of the other player's turn arriving mid-glide) → Bo reloads mid-game and gets his seat back
 // → the host's browser closes: Bo becomes host, keeps playing, a bot takes Ada's seat after botTakesOverAfterMs
+// (B015: Bo sees "Away", then a toast + the robot badge on Ada's portrait — shots 4c/4d — and "Ada is back" after)
 // → Ada comes back by the code and takes her seat back → both play to the end → the Magic reveal + end table on
 // both (just New game + Menu) → the guest's New game waits for the host; the host's New game takes BOTH back to the
 // lobby → Leave. Feel checks: only the player whose turn it is sees their glyphlings pulse; the other player's
@@ -262,11 +263,38 @@ try {
   check('after a reload Bo is back in his seat, same game', await bo.store(`(s) => s.online.mySeat === ${boBefore.seat} && s.online.version >= ${boBefore.version}`))
 
   // ---- the host's browser closes: Bo becomes host and keeps playing; a bot takes Ada's seat ----
+  // B015: every toast Bo's screen shows from here on is written down (they only stay a few seconds)
+  await bo.page.evaluate(() => {
+    window.__toastsSeen = []
+    new MutationObserver(() => {
+      for (const t of document.querySelectorAll('.kit-toast')) if (!window.__toastsSeen.includes(t.textContent)) window.__toastsSeen.push(t.textContent)
+    }).observe(document.body, { childList: true, subtree: true, characterData: true })
+  })
+  const toastsSeen = () => bo.page.evaluate(() => window.__toastsSeen)
+  const badge = (status) => bo.page.locator(`.game-turn-bar [data-seat-status="${status}"]`).count()
+  const adaSeat = () => bo.room((s) => s.room?.room?.seats[0]?.kind)
+  const boSize = bo.page.viewportSize()
   await ada.page.close()
   await bo.page.waitForFunction(() => window.__glyphtender.online.getState().room?.isHost, null, { timeout: 10000 })
   console.log(`ok   host moved to Bo · waiting ${BOT_AFTER_MS / 1000} s for a bot to take Ada's seat`)
   const before = await turnCount(bo)
-  await playUntil([bo], async () => (await turnCount(bo)) >= before + 3 || (await bo.store((s) => s.game.phase === 'over')), { seconds: BOT_AFTER_MS / 1000 + 60 })
+  // Ada's turn while she's away: her portrait on Bo's screen says "Away"
+  await playUntil([bo], async () => (await badge('away')) > 0 || (await adaSeat()) === 'bot', { seconds: BOT_AFTER_MS / 1000 + 30 })
+  check('B015: Bo sees "Away" on Ada\'s portrait while her seat waits', (await badge('away')) > 0)
+  if ((await badge('away')) > 0) await bo.page.screenshot({ path: `${OUT}/online-${boSize.width}x${boSize.height}-4c-away.png` })
+  await playUntil([bo], async () => (await adaSeat()) === 'bot', { seconds: BOT_AFTER_MS / 1000 + 30 })
+  // The bot plays Ada's turns: her portrait on Bo's screen wears the robot badge — desktop, then phone size
+  for (const size of [boSize, { width: 390, height: 844 }]) {
+    await bo.page.setViewportSize(size)
+    await playUntil([bo], async () => (await badge('bot')) > 0 || (await bo.store((s) => s.game?.phase === 'over')), { seconds: 30 })
+    const shown = (await badge('bot')) > 0
+    check(`B015: the robot badge on Ada's portrait (Bo, ${size.width}x${size.height})`, shown)
+    if (shown) await bo.page.screenshot({ path: `${OUT}/online-${size.width}x${size.height}-4d-bot-badge.png` })
+    console.log(`${shown ? 'ok  ' : 'FAIL'} Bo ${size.width}x${size.height} 4d-bot-badge`)
+  }
+  await bo.page.setViewportSize(boSize)
+  check(`B015: Bo was told "Ada left — a bot is playing for them" (${(await toastsSeen()).join(' | ')})`, (await toastsSeen()).includes('Ada left — a bot is playing for them'))
+  await playUntil([bo], async () => (await turnCount(bo)) >= before + 3 || (await bo.store((s) => s.game.phase === 'over')), { seconds: 60 })
   check('the game went on without the host', (await turnCount(bo)) > before)
 
   // ---- Ada comes back (a new tab: joins by the code) and takes her seat back ----
@@ -277,6 +305,11 @@ try {
   await ada.tap(ada.page.getByRole('button', { name: 'Join', exact: true }))
   await ada.page.waitForFunction(() => window.__glyphtender.store.getState().online?.mySeat === 0, null, { timeout: 15000 })
   console.log('ok   Ada is back in seat 0')
+  // B015: Bo is told, and on Ada's next turn her portrait has no badge
+  await bo.page.waitForFunction(() => window.__toastsSeen.includes('Ada is back'), null, { timeout: 5000 })
+    .catch(async () => fail(`B015: Bo wasn't told "Ada is back" (${(await toastsSeen()).join(' | ')})`))
+  await playUntil([ada, bo], async () => (await bo.store((s) => s.game.phase === 'over' || s.game.current === 0)))
+  check('B015: no badge on Ada\'s portrait once she\'s back', (await badge('bot')) + (await badge('away')) === 0)
 
   // ---- play it out, then the Magic reveal and the end table on both ----
   await playUntil([ada, bo], async () => (await ada.store((s) => s.game?.phase === 'over')) && (await bo.store((s) => s.game?.phase === 'over')), { seconds: 400 })
