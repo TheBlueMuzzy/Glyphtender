@@ -29,16 +29,18 @@
 .devkit[hidden] { display: none; }
 .devkit button, .devkit input, .devkit select { font: inherit; color: inherit; }
 
+/* Two rows: the small title + ✕, then the tool tabs on their own row, using the panel's full width */
 .devkit-top {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 6px 6px;
   border-bottom: 1px solid #34353f;
   background: #1d1e26;
 }
+.devkit-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .devkit-title { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: #9a9bab; }
-.devkit-tabs { flex: 1; } /* a Carousel: as many tabs as fit, ◀ ▶ + dots for the rest */
+.devkit-tabs { min-width: 0; } /* a Carousel: as many tabs as fit, ◀ ▶ + dots for the rest */
 .devkit-tab {
   background: none;
   border: 1px solid transparent;
@@ -98,8 +100,7 @@
 .devkit-not-plugged { margin: 0; padding: 12px 10px; color: #9a9bab; }
 .devkit-not-plugged code { color: #e8e8ee; }
 
-/* Phone: the panel is narrow — drop the title so more tabs fit on a carousel page */
+/* Phone: the panel is narrow (300 px) — tighter tabs, so 4 fit on a carousel page */
 @media (max-width: 520px) {
-  .devkit-title { display: none; }
-  .devkit-tab { padding: 4px 7px; }
+  .devkit-tab { padding: 4px 6px; }
 }

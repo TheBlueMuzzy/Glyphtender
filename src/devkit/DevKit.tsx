@@ -5,7 +5,7 @@
 // Release builds can't Save (no dev server) — tools offer Copy for Claude instead (CAN_SAVE in saveContent.ts).
 //   Open:  the ` key (desktop) or triple-tap the top-right corner (phone)
 //   Close: Esc, the ✕ button, or ` again
-// Tools are tabs across the top: the kit's own (KIT_TABS), then the game's own from src/devkit-game/tabs.ts.
+// Tools are tabs on their own full-width row under the title: the kit's own (KIT_TABS), then the game's own from src/devkit-game/tabs.ts.
 // More than fit → ◀ ▶ and page dots (carousel/Carousel.tsx), never a sideways scroll bar.
 // The one rule (DEVKIT.md): tools edit content/ JSON files, never code.
 import { Suspense, lazy, useEffect, useRef, useState, type ComponentType } from 'react'
@@ -117,8 +117,14 @@ export function DevKit({ tabs = [...KIT_TABS, ...gameTabs] }: { tabs?: DevKitTab
   // The panel stays mounted while hidden, so unsaved edits survive closing and reopening it.
   return (
     <aside ref={panel} {...{ popover: 'manual' }} className="devkit" data-devkit={DEVKIT_MARKER} hidden={!open} aria-label="Dev Kit">
+      {/* Two rows: a small title + ✕, then the tool tabs across the panel's FULL width (more tabs per page) */}
       <header className="devkit-top">
-        <strong className="devkit-title">Dev Kit</strong>
+        <div className="devkit-title-row">
+          <strong className="devkit-title">Dev Kit</strong>
+          <button className="devkit-close" onClick={closeFromButton} aria-label="Close the Dev Kit" title="Close (Esc)">
+            ✕
+          </button>
+        </div>
         {/* More tools than fit (a phone): a dot carousel, never a sideways scroll bar */}
         <Carousel className="devkit-tabs" label="Tools" role="tablist" active={tabs.findIndex((t) => t.id === tabId)}>
           {tabs.map((t) => (
@@ -133,9 +139,6 @@ export function DevKit({ tabs = [...KIT_TABS, ...gameTabs] }: { tabs?: DevKitTab
             </button>
           ))}
         </Carousel>
-        <button className="devkit-close" onClick={closeFromButton} aria-label="Close the Dev Kit" title="Close (Esc)">
-          ✕
-        </button>
       </header>
       {!CAN_SAVE && (
         <p className="devkit-live-note">Live build: changes last until you refresh — copy them for Claude to keep.</p>

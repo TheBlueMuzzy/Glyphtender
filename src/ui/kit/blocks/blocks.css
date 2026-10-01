@@ -15,6 +15,9 @@
   .kit-wide { inline-size: 40rem; max-inline-size: 100%; }
   .kit-tall { block-size: 44rem; max-block-size: 100%; }
   .kit-menu .kit-button { inline-size: 100%; }
+  /* A menu inside a dialog (Pause) fills the dialog's width, so the room left and right of the buttons is the
+     dialog's own padding on both sides — even all round (it used to keep its 22rem and leave a wide gap on the right) */
+  .kit-modal > .kit-menu { inline-size: 100%; }
   .kit-centred { text-align: center; }
   .kit-nowrap { flex-wrap: nowrap; }
   .kit-picture { display: block; inline-size: 100%; max-block-size: 12rem; object-fit: contain; }
