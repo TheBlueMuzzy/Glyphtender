@@ -1,17 +1,17 @@
 // A TURN TRAIL on the board, in the player's colour (trail.ts says which one shows and how):
-//   from ring → dotted move path → to ring → dashed cast arc → dashed target ring.
-//   plan  — only the path and the arc (the planned halos already ring both ends)
+//   from ring → dotted move path → to ring → dashed target ring.
+//   plan  — only the path (the planned halos already ring both ends and the aimed hex)
 //   live  — another player's replayed turn: the parts draw on one after another over anim.json trailLead
 //           (Web Animations, no React state per frame; reduce motion = it's simply there)
-//   faint — the last turn, at garden.json trailFaint; a live trail fades down to it (same element, trailFade)
-// It sits UNDER the seeds and glyphlings (Board.tsx), so it never covers a letter. Every line has a dark casing
-// so it still reads over a highlight of the same colour.
+// No cast arc (Muzzy: casts are straight-line shots — an arc reads as jumping over things), and it's gone once the
+// seed lands. It sits UNDER the seeds and glyphlings (Board.tsx), so it never covers a letter. Every line has a dark
+// casing so it still reads over a highlight of the same colour.
 import { useLayoutEffect, useRef } from 'react'
 import { hexCorners, hexToPixel } from '../engine/hex'
 import { trailKey, type Trail, type TrailMode } from '../store/trail'
 import { reduceMotion } from '../ui/kit'
 import { colourOf } from './art'
-import { castPath, drawSteps, movePath } from './trailShape'
+import { drawSteps, movePath } from './trailShape'
 import { HEX } from './useThrow'
 import type { AnimTuning, GardenTuning } from './useTuning'
 
@@ -22,7 +22,7 @@ export function TurnTrail({ trail, mode, colours, timing }: Props) {
   const key = trailKey(trail)
   const live = mode === 'live'
 
-  // Live: draw the parts on in order (rings fade in; lines are revealed along their length by a mask)
+  // Live: draw the parts on in order (rings fade in; the path is revealed along its length by a mask)
   useLayoutEffect(() => {
     const group = ref.current
     if (!group || !live || reduceMotion()) return
@@ -40,37 +40,13 @@ export function TurnTrail({ trail, mode, colours, timing }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, live])
 
-  // Once the replayed turn has landed (live → faint): fade down rather than drop
-  const wasLive = useRef(live)
-  useLayoutEffect(() => {
-    const group = ref.current
-    if (group && wasLive.current && mode === 'faint' && !reduceMotion()) {
-      group.animate([{ opacity: colours.trailStrength }, { opacity: colours.trailFaint }], { duration: timing.trailFade * 1000, easing: 'ease-out' })
-    }
-    wasLive.current = live
-    // Only a change of mode fades (colours / timing are read when it starts)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode])
-
   const colour = colours[colourOf(trail.seat)]
   const w = colours.trailWidth
   const steps = drawSteps(trail.target !== null)
   const path = movePath(trail.from, trail.to, HEX)
-  const arc = trail.target ? castPath(trail.to, trail.target, HEX, timing.arcHeight) : null
-  const rings = mode !== 'plan'
   const at = (h: Trail['from']) => hexToPixel(h, HEX)
-  const opacity = mode === 'faint' ? colours.trailFaint : colours.trailStrength
   const draw = (part: keyof typeof steps) => (live ? { 'data-draw': steps[part].join(',') } : {})
-  const masked = (part: 'path' | 'arc') => (live ? `url(#trail-reveal-${part})` : undefined)
 
-  // A line with a dark casing under it; `dash` = the line's dash pattern
-  const line = (part: 'path' | 'arc', d: string, dash: string, width: number) => (
-    <g data-trail-part={part} mask={masked(part)}>
-      <path d={d} fill="none" stroke={colours.background} strokeOpacity={0.55} strokeWidth={width + 0.07}
-        strokeDasharray={dash} strokeLinecap="round" />
-      <path d={d} fill="none" stroke={colour} strokeWidth={width} strokeDasharray={dash} strokeLinecap="round" />
-    </g>
-  )
   // A ring at the hex's edge (it peeks out round a piece standing there); dashed for the cast target
   const ring = (part: 'from' | 'to' | 'target', h: Trail['from'], dashed: boolean) => {
     const { x, y } = at(h)
@@ -84,23 +60,26 @@ export function TurnTrail({ trail, mode, colours, timing }: Props) {
     )
   }
 
+  // The dotted move path, with a dark casing under it
+  const dash = `0 ${w * 2.4}`
   return (
-    <g ref={ref} data-trail={mode} data-trail-seat={trail.seat} data-trail-key={key} pointerEvents="none" opacity={opacity}>
+    <g ref={ref} data-trail={mode} data-trail-seat={trail.seat} data-trail-key={key} pointerEvents="none" opacity={colours.trailStrength}>
       {live && (
         <defs>
-          {(['path', 'arc'] as const).map((part) => (
-            <mask key={part} id={`trail-reveal-${part}`} maskUnits="userSpaceOnUse" x={-200} y={-200} width={400} height={400}>
-              <path d={part === 'path' ? path : arc ?? path} fill="none" stroke="white" strokeWidth={w * 6} pathLength={1}
-                strokeDasharray="1 2" data-draw={steps[part].join(',')} data-draw-line="" />
-            </mask>
-          ))}
+          <mask id="trail-reveal-path" maskUnits="userSpaceOnUse" x={-200} y={-200} width={400} height={400}>
+            <path d={path} fill="none" stroke="white" strokeWidth={w * 6} pathLength={1}
+              strokeDasharray="1 2" data-draw={steps.path.join(',')} data-draw-line="" />
+          </mask>
         </defs>
       )}
-      {rings && ring('from', trail.from, false)}
-      {line('path', path, `0 ${w * 2.4}`, w * 1.35)}
-      {rings && ring('to', trail.to, false)}
-      {arc && line('arc', arc, `${w * 2.4} ${w * 1.8}`, w)}
-      {rings && trail.target && ring('target', trail.target, true)}
+      {live && ring('from', trail.from, false)}
+      <g data-trail-part="path" mask={live ? 'url(#trail-reveal-path)' : undefined}>
+        <path d={path} fill="none" stroke={colours.background} strokeOpacity={0.55} strokeWidth={w * 1.35 + 0.07}
+          strokeDasharray={dash} strokeLinecap="round" />
+        <path d={path} fill="none" stroke={colour} strokeWidth={w * 1.35} strokeDasharray={dash} strokeLinecap="round" />
+      </g>
+      {live && ring('to', trail.to, false)}
+      {live && trail.target && ring('target', trail.target, true)}
     </g>
   )
 }

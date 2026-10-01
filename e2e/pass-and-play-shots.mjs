@@ -4,8 +4,8 @@
 // (the dev hook fast-forwards to one) → fast-forward to the end → the Magic reveal plays by itself (mid + end shots)
 // → the end table → New game (the new-game screen remembers 3 players) → Start → Menu → Rules → Leave.
 // A turn that grows words: its score pops play BEFORE the handoff box covers the garden, and leave nothing behind (B007).
-// Turn trails: the move / cast options and the planned path are in the CURRENT player's colour; after each handoff the
-// next player sees the previous turn's trail, faint, in the previous player's colour.
+// Turn trails: the move options and the planned path are in the CURRENT player's colour, the cast options in a lighter
+// shade of it (garden.json castShade), no cast arc; once a turn has landed no trail is left (not after the handoff either).
 // Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px (words on one line), the prompt's words inside
 // its box, no console errors.
 // Side-by-side layouts (phone-wide, desktop): the right-hand column keeps one width from a normal turn through the
@@ -18,6 +18,7 @@ import { createServer } from 'vite'
 import { chromium } from 'playwright-core'
 import { leftoverPops } from './leftover-pops.mjs'
 import garden from '../content/tuning/garden.json' with { type: 'json' }
+import { castColour } from '../src/game/castShade.ts'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
 const PORT = Number(process.argv[3] ?? 5193)
@@ -119,6 +120,7 @@ try {
       return {
         mode: t?.getAttribute('data-trail') ?? null, seat: t ? Number(t.getAttribute('data-trail-seat')) : null,
         strokes: t ? [...new Set([...t.querySelectorAll('[data-trail-part] > :last-child')].map((el) => el.getAttribute('stroke')))].join() : '',
+        arc: !!t?.querySelector('[data-trail-part="arc"]'),
         options: [...new Set([...document.querySelectorAll('[data-option] > polygon[data-hex]')].map((el) => el.getAttribute('fill')))].join(),
       }
     })
@@ -177,8 +179,9 @@ try {
         await tap(page.locator(`[data-tray-pos="${pos}"]`))
         await tap(page.locator(`[data-option="cast"] circle[data-hex="${pick.hex}"]`))
         const plan = await trailNow()
-        check(`turn ${turn}: ${PLAYERS[seat]}'s planned path + arc and cast options in their colour (${JSON.stringify(plan)})`,
-          plan.mode === 'plan' && plan.seat === seat && plan.strokes === colourOf(seat) && plan.options === colourOf(seat))
+        check(`turn ${turn}: ${PLAYERS[seat]}'s planned path in their colour, no arc, cast options a lighter shade of it (${JSON.stringify(plan)})`,
+          plan.mode === 'plan' && plan.seat === seat && plan.strokes === colourOf(seat) && !plan.arc
+          && plan.options === castColour(colourOf(seat), garden.background, garden.castShade))
       }
       await tap(page.locator('.game-actions button').last()) // Cast (or End turn)
       await waitLanded()
@@ -200,11 +203,10 @@ try {
         await tap(page.getByRole('button', { name: 'Keep all' }))
       }
       await handoff(turn === 2 ? '4-handoff' : null)
-      // The next player sees the turn just played, faint, in the colour of the player who played it
+      // The turn just played left no trail behind (Muzzy: "the dotted line/paths … shouldn't [stick around] post cast")
       const last = await trailNow()
-      check(`turn ${turn}: after the handoff ${PLAYERS[seat]}'s turn stays on the board, faint, in their colour (${JSON.stringify(last)})`,
-        last.mode === 'faint' && last.seat === seat && last.strokes === colourOf(seat))
-      if (turn === 2) await page.screenshot({ path: `${OUT}/${TAG}-${size.name}-4c-last-turn-faint.png` })
+      check(`turn ${turn}: after the handoff no trail is left from ${PLAYERS[seat]}'s turn (${JSON.stringify(last)})`, last.mode === null)
+      if (turn === 2) await page.screenshot({ path: `${OUT}/${TAG}-${size.name}-4c-after-handoff-no-trail.png` })
       // B007: the pops played before the handoff — none of their numbers may still be on the board after it
       const left = await leftoverPops(page)
       check(`turn ${turn}: no score numbers left on the board (${left.join(' ')})`, left.length === 0)

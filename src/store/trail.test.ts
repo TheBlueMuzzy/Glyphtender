@@ -1,4 +1,4 @@
-// Turn trails: which trail the board shows (plan / live / faint) and its from → to → target, through the real store.
+// Turn trails: which trail the board shows (plan / live — nothing once a turn has landed) and its from → to → target.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { hexAt, position, wordsOf } from '../engine/testkit'
 import { useGameStore } from './gameStore'
@@ -37,7 +37,7 @@ describe('turn trails', () => {
     expect(trailOf({ ...turn, letter: null, target: null })?.target).toBeNull() // a move-only turn: no arc
   })
 
-  it('the key names the turn (the same turn keeps it from live to faint; another turn gets a new one)', () => {
+  it('the key names the turn (another turn gets a new one)', () => {
     const a = { seat: 0, glyphlingId: 0, from: hexAt('C6-7'), to: hexAt('C6-6'), target: hexAt('C6-4') }
     expect(trailKey(a)).toBe(trailKey({ ...a }))
     expect(trailKey(a)).not.toBe(trailKey({ ...a, target: null }))
@@ -63,26 +63,22 @@ describe('turn trails', () => {
     expect(shown()?.trail.target).toBeNull()
   })
 
-  it('after the turn lands, its trail stays on the board, faint — until the next player picks something up', () => {
+  it("the trail is gone once the seed lands — nothing stays after the cast (Muzzy: shouldn't stick around post cast)", () => {
     yellowToPlay()
     planYellowTurn()
     store().startCast()
-    expect(shown()?.mode).toBe('plan') // the seed flies along the planned arc
+    expect(shown()?.mode).toBe('plan') // while the seed flies, the planned path is still there
     store().finishCast()
-    const mine = { seat: 0, glyphlingId: 0, from: hexAt('C6-7'), to: hexAt('C6-6'), target: hexAt('C6-4') }
-    expect(shown()).toEqual({ mode: 'faint', trail: mine })
+    expect(shown()).toBeNull() // landed: no trail
     expect(store().game!.phase).toBe('refresh') // no word: Yellow may refresh first
     vi.useFakeTimers()
     store().refresh(true)
     vi.advanceTimersByTime(5000)
     vi.useRealTimers()
-    store().showSeeds() // the handoff (pass-and-play): the next player sees who moved where, and cast from where
+    store().showSeeds() // the handoff (pass-and-play): no old trail on the next player's board
     expect(store().game!.current).toBe(1)
-    expect(shown()).toEqual({ mode: 'faint', trail: mine })
-    store().tapGlyphling(3) // Blue picks up a glyphling: the last turn's trail goes
+    expect(store().game!.lastTurn).not.toBeNull()
     expect(shown()).toBeNull()
-    store().tapGlyphling(3) // let go again: it's back
-    expect(shown()?.mode).toBe('faint')
   })
 
   it('a replayed turn (online) shows live, over any plan, until the store clears it', () => {
@@ -94,18 +90,12 @@ describe('turn trails', () => {
     expect(shown()).toBeNull() // (no lastTurn in this position)
   })
 
-  it('no trail in the draft, during a refresh, or at the end (the reveal owns the garden)', () => {
+  it('no trail in the draft or at the end (the reveal owns the garden)', () => {
     store().startGame({ players: 2, seed: 7 })
     expect(shown()).toBeNull()
     yellowToPlay()
-    planYellowTurn()
-    store().startCast()
-    store().finishCast()
-    useGameStore.setState({ setAside: [0] })
-    expect(shown()).toBeNull()
-    useGameStore.setState({ setAside: [], revealAt: 0 })
-    expect(shown()).toBeNull()
-    useGameStore.setState({ revealAt: null, game: { ...store().game!, phase: 'over' } })
+    const replayed = { seat: 1, glyphlingId: 2, from: hexAt('C11-1'), to: hexAt('C10-1'), target: null }
+    useGameStore.setState({ trail: replayed, game: { ...store().game!, phase: 'over' } })
     expect(shown()).toBeNull()
   })
 })

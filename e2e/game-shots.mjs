@@ -4,7 +4,7 @@
 // (Show my seeds) → fast-forward to the end with the dev hook →
 // Skip the Magic reveal → end table → New game → a game with word indicators OFF → Settings → Tray position Flipped → Menu.
 // Checks the move glide (a planned move and Undo slide the glyphling; 4b = frozen halfway), the turn pulse (3b), the "no"
-// shake (3c, frozen mid-shake), the drop target while dragging (6), cast rings + planned path in the player's colour right after the move (5a), the white
+// shake (3c, frozen mid-shake), the drop target while dragging (6), cast options (a lighter shade) + planned path in the player's colour right after the move (5a), the white
 // word border (7), the score pops (9b pops · 9c flying · 9d the total; after every turn none of their numbers is left — B007) and indicators off (13: no border, plain Cast, no pops).
 // Checks every screenshot: nothing past a screen edge, buttons ≥ 44 px AND about a board hex tall, the prompt inside its
 // box and just above the tray, tray seeds real size, no console errors; the flipped layout (14) and its column width.
@@ -17,6 +17,7 @@ import layout from '../content/tuning/layout.json' with { type: 'json' }
 import garden from '../content/tuning/garden.json' with { type: 'json' }
 import anim from '../content/tuning/anim.json' with { type: 'json' }
 import { leftoverPops } from './leftover-pops.mjs'
+import { castColour } from '../src/game/castShade.ts'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
 const PORT = Number(process.argv[3] ?? 5188)
@@ -359,8 +360,8 @@ try {
         if (turn === 1) {
           if (!(await gliding())) fail(`${size.name}: the planned move did not glide`)
           else await midGlideShot('4b-gliding')
-          // the moved glyphling's cast range shows straight away, before a seed is picked — dashed rings in the
-          // player's colour, and a dotted path from where it stood (turn trails: colour = whose turn, shape = move / cast)
+          // the moved glyphling's cast range shows straight away, before a seed is picked — the filled template in a
+          // lighter shade of the player's colour (castShade, no dashed outline), and a dotted path from where it stood
           const gold = await optionCount('cast')
           const withSeeds = await store((s) => s.game.hands[s.game.current].length > 0)
           if (withSeeds && gold === 0) fail(`${size.name}: no cast hexes right after the move`)
@@ -370,9 +371,10 @@ try {
             trail: document.querySelector('[data-trail="plan"] [data-trail-part="path"] > :last-child')?.getAttribute('stroke') ?? null,
           }))
           const colour = garden[['yellow', 'blue', 'purple', 'pink'][await store((s) => s.game.current)]]
-          if (withSeeds && (look.options !== colour || look.rings !== gold)) fail(`${size.name}: cast options not dashed rings in the player's colour ${colour} (${JSON.stringify(look)})`)
+          const tint = castColour(colour, garden.background, garden.castShade)
+          if (withSeeds && (look.options !== tint || look.rings !== 0)) fail(`${size.name}: cast options not filled in ${tint} (a lighter ${colour}) without dashes (${JSON.stringify(look)})`)
           if (look.trail !== colour) fail(`${size.name}: no dotted path in the player's colour from the glyphling's spot (${look.trail})`)
-          else console.log(`ok   ${size.name} 5a cast rings + planned path in the player's colour ${colour}`)
+          else console.log(`ok   ${size.name} 5a cast options in ${tint} (lighter ${colour}) + planned path in ${colour}`)
           await shot('5a-cast-range-after-move')
         }
       }

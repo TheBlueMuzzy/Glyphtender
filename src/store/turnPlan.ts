@@ -20,7 +20,7 @@ export interface PlannedCast {
 /** The piece being held: a glyphling on the board or a seed in the tray (by hand index). */
 export type Selection = { kind: 'glyphling'; id: number } | { kind: 'seed'; index: number } | null
 
-/** Which hexes to light up, and how (in the player's colour: filled = move there, ringed = cast there). */
+/** Which hexes to light up, and how (the same filled template: move = the player's colour, cast = a lighter shade). */
 export interface Highlight {
   hexes: Hex[]
   kind: 'move' | 'cast'

@@ -5,7 +5,7 @@
 //   · OTHER seats' turns arrive as views with `lastTurn`. They're replayed on the OLD view first — their trail
 //     draws on in their colour and holds (trail.ts; anim.json trailLead + trailHold), the glyphling glides
 //     from → to, the throw starts after glideSeconds, lands — then the new view is applied and the runeblossom
-//     sprouts; the trail stays on, faint, until the next action. Views that arrive meanwhile wait in the inbox and play in order.
+//     sprouts; the trail is gone with the landing. Views that arrive meanwhile wait in the inbox and play in order.
 //   · Anything else (draft placements, refreshes, a rejoin after a gap) is simply applied.
 //   · MY refresh plays out on my own tray (B011, refreshFx.ts): the set-aside seeds shrink while the action
 //     travels; its view waits for the shrink, then the new seeds grow in. Nobody else sees my seeds.

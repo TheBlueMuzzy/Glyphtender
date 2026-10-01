@@ -2,8 +2,8 @@
 // data-hex (hexKey) and data-glyph (glyphling id); usePieceInput turns them into store actions.
 //
 // PIECE STATES — one look for every piece (GDD §4 "Piece states"):
-//   options  — hexes you could pick, in the CURRENT PLAYER's colour; move vs cast told apart by shape, not hue:
-//              move there = soft filled hex + dot · cast there = dashed ring + faint wash + hollow dot
+//   options  — hexes you could pick, in the CURRENT PLAYER's colour: a soft filled hex + dot. Move there = the
+//              player's colour · cast there = the same template in a lighter shade of it (garden.json castShade)
 //   held     — the piece you're holding: solid ring in the player's colour
 //   planned  — moved/targeted but not cast yet: pulsing halo at the hex edge (a targeted seed also gets a solid
 //              "not planted yet" look — garden.json plannedSeedLook, PlannedSeedLook.tsx)
@@ -12,8 +12,8 @@
 // WORDS (word indicators on): a white border behind the seeds — planned while aiming, then after they grow, until play
 // moves on (WordBorders.tsx). 2+ words → the word spotlight: one word lit at a time, looping, with a "QUA +4" label (F25).
 // MOVES glide from hex to hex (useGlide.ts) — a planned move, Undo, and moves made anywhere else.
-// TURN TRAILS (TurnTrail.tsx, trail.ts), in the player's colour, under the pieces: the plan (dotted path + dashed arc),
-// another player's replayed turn (draws on before the glide), and the last turn, faint, until the next action.
+// TURN TRAILS (TurnTrail.tsx, trail.ts), in the player's colour, under the pieces: the plan (dotted move path) and
+// another player's replayed turn (draws on before the glide). No cast arc; gone once the seed lands.
 // DANGER CUES (DangerCue.tsx): 1 move left = dashed thorny ring in the owner's colour · tangled = a vine wraps it
 // Colours: content/tuning/garden.json · timings: anim.json · margin: layout.json.
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -26,6 +26,7 @@ import { dangers } from '../store/danger'
 import { revealSteps } from '../store/revealPlan'
 import { colourOf, glyphlingArt, seedArt } from './art'
 import { boardShift, boardView, type TraySide } from './boardPlace'
+import { castColour } from './castShade'
 import { DangerCue } from './DangerCue'
 import { PLANNED_FILTER_ID } from './plannedLook'
 import { PlannedSeedFilter } from './PlannedSeedLook'
@@ -67,8 +68,6 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   const refreshing = useGameStore((s) => s.refreshFx !== null)
   const indicators = useGameStore((s) => s.options?.wordIndicators ?? true)
   const replayTrail = useGameStore((s) => s.trail)
-  const setAside = useGameStore((s) => s.setAside)
-  const refreshFx = useGameStore((s) => s.refreshFx)
   const finishCast = useGameStore((s) => s.finishCast)
   const colours = useGardenTuning()
   const timing = useAnimTuning()
@@ -127,6 +126,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   // ---- what's where, with the planned move and cast shown ----
   const seat = game.current
   const player = colours[colourOf(seat)]
+  const castTint = castColour(player, colours.background, colours.castShade) // the cast options: the same template, another shade
   const moved = move && game.glyphlings.find((g) => g.id === move.glyphling)
   const plannedLetter = cast ? game.hands[seat][cast.seed] : null
   const highlight = boardHighlight({ game, move, selected, flying, waiting, seats })
@@ -143,11 +143,8 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   // The grown words' labels show once the score pops have flown into the total (reduce motion: there are no seed pops)
   const labelWait = useMemo(() => (pops && !reduceMotion() ? popTimeline(scorePops(game, pops), timing).fly + timing.scoreFlyTime : 0),
     [pops, game, timing])
-  // The turn trail: a replayed turn (live), my plan, or the last turn (faint) — trail.ts
-  const shownTrail = useMemo(
-    () => boardTrail({ game, trail: replayTrail, move, cast, selected, flying, setAside, refreshFx, revealAt }),
-    [game, replayTrail, move, cast, selected, flying, setAside, refreshFx, revealAt],
-  )
+  // The turn trail: a replayed turn (live) or my plan — trail.ts
+  const shownTrail = useMemo(() => boardTrail({ game, trail: replayTrail, move, cast }), [game, replayTrail, move, cast])
   useWordSpotlight(svgRef, 'planned', planned, 0, 1, timing, colours.spotlightLabel)
   useWordSpotlight(svgRef, 'grown', grown, landed?.count ?? 0, colours.grownGlowStrength, timing, colours.spotlightLabel)
   const s = colours.pieceScale
@@ -191,21 +188,15 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
       )}
 
       {/* Options sit above the ghost, so a hex you can cast back onto is still clearly lit */}
-      {/* Move = soft filled hex + dot; cast = dashed ring + faint wash + hollow dot — both in the player's colour */}
+      {/* One template — soft filled hex + dot: move = the player's colour, cast = a lighter shade of it (castShade) */}
       {lit.map((h) => {
         const { x, y } = at(h)
-        if (highlight?.kind === 'cast') return (
-          <g key={`lit-${hexKey(h)}`} data-option="cast">
-            <polygon data-hex={hexKey(h)} points={hexCorners(x, y, HEX * 0.97)} fill={player} opacity={colours.castFill} />
-            <polygon points={hexCorners(x, y, HEX * 0.8)} fill="none" stroke={player} strokeWidth={0.07} strokeDasharray="0.17 0.11"
-              strokeLinejoin="round" opacity={colours.castRing} pointerEvents="none" />
-            <circle data-hex={hexKey(h)} cx={x} cy={y} r={0.15} fill={colours.hexFill} stroke={player} strokeWidth={0.07} opacity={colours.castRing} />
-          </g>
-        )
+        const cast = highlight?.kind === 'cast'
         return (
           <g key={`lit-${hexKey(h)}`} data-option={highlight?.kind}>
-            <polygon data-hex={hexKey(h)} points={hexCorners(x, y, HEX * 0.97)} fill={player} opacity={colours.glowStrength} />
-            <circle data-hex={hexKey(h)} cx={x} cy={y} r={0.18} fill={player} />
+            <polygon data-hex={hexKey(h)} points={hexCorners(x, y, HEX * 0.97)} fill={cast ? castTint : player}
+              opacity={cast ? colours.castFill : colours.glowStrength} />
+            <circle data-hex={hexKey(h)} cx={x} cy={y} r={0.18} fill={cast ? castTint : player} />
           </g>
         )
       })}
@@ -213,7 +204,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
       {/* "Drop here" marks, one per option kind, hidden until a drag is over a legal hex (dropTarget.ts moves them).
           The hex fills bright AND a glow ring spills past its edge, so it still shows round the piece floating over it. */}
       {(['move', 'cast'] as const).map((kind) => {
-        const colour = player
+        const colour = kind === 'cast' ? castTint : player
         return (
           <g key={`drop-${kind}`} data-drop-target={kind} visibility="hidden" pointerEvents="none">
             <polygon points={hexCorners(0, 0, HEX * 1.16)} fill="none" stroke={colour} strokeWidth={0.26} strokeOpacity={colours.dropStrength} strokeLinejoin="round" />

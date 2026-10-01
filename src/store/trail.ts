@@ -2,13 +2,13 @@
 // paths when other players take their turns, it might help us understand the current state of the game — who is
 // playing, where did they move from, where did they shoot from"). Plain functions (tested in trail.test.ts);
 // TurnTrail.tsx draws them.
-//   plan  — my own turn being planned: a dotted path from the glyphling's spot to where it's moving, and a dashed
-//           arc to the targeted hex (the planned halos already ring both ends)
+//   plan  — my own turn being planned: a dotted path from the glyphling's spot to where it's moving (the planned
+//           halos already ring both ends and the aimed hex)
 //   live  — another player's turn being replayed online: their trail draws on (from ring → dotted path → to ring →
-//           arc → target ring) and holds a moment BEFORE the glide and throw play (anim.json trailLead / trailHold)
-//   faint — the last turn's trail stays on the board, faint, until the next action (a pick-up, a plan, a refresh,
-//           the next replay), so a glance tells who moved where and cast from where. Pass-and-play's next player
-//           sees the previous turn this way after the handoff.
+//           target ring) and holds a moment BEFORE the glide and throw play (anim.json trailLead / trailHold)
+// NO cast arc (Muzzy 2026-10-01: "i don't want players thinking that shots jump things. they are 'straight line
+// shots'") and NOTHING after the landing ("the dotted line/paths stick around and shouldn't post cast"): a trail
+// is gone once the seed lands — for my own turn and for a replay.
 import { hexKey, type Hex } from '../engine/hex'
 import type { GameState, TurnSummary } from '../engine/types'
 import type { GameStore } from './gameStore'
@@ -22,7 +22,7 @@ export interface Trail {
   target: Hex | null
 }
 
-export type TrailMode = 'plan' | 'live' | 'faint'
+export type TrailMode = 'plan' | 'live'
 
 /** A finished turn's trail (null before the first turn). */
 export function trailOf(turn: TurnSummary | null | undefined): Trail | null {
@@ -30,15 +30,14 @@ export function trailOf(turn: TurnSummary | null | undefined): Trail | null {
   return { seat: turn.seat, glyphlingId: turn.glyphlingId, from: turn.from, to: turn.to, target: turn.target }
 }
 
-/** Names a trail: the same turn keeps the same name while it goes from live to faint (so it fades, not redraws). */
+/** Names a trail (a new name = a new trail, drawn on afresh). */
 export const trailKey = (t: Trail) => `${t.seat}:${t.glyphlingId}:${hexKey(t.from)}>${hexKey(t.to)}>${t.target ? hexKey(t.target) : '-'}`
 
-type TrailState = Pick<GameStore, 'game' | 'trail' | 'move' | 'cast' | 'selected' | 'flying' | 'setAside' | 'refreshFx' | 'revealAt'>
+type TrailState = Pick<GameStore, 'game' | 'trail' | 'move' | 'cast'>
 
 /**
- * Which trail the board shows right now, and how:
- * a replay's trail (live) → else the turn being planned on this board (plan) → else, while nobody is doing
- * anything yet, the last turn's (faint). Nothing in the draft or once the game is over (the reveal owns the garden).
+ * Which trail the board shows right now, and how: a replay's trail (live) → else the turn being planned on this
+ * board (plan) → else none (a landed turn leaves no trail). Nothing in the draft or once the game is over.
  */
 export function boardTrail(s: TrailState): { trail: Trail; mode: TrailMode } | null {
   const game = s.game
@@ -48,9 +47,7 @@ export function boardTrail(s: TrailState): { trail: Trail; mode: TrailMode } | n
     const plan = planTrail(game, s.move, s.cast?.target ?? null)
     return plan && { trail: plan, mode: 'plan' }
   }
-  const busy = s.cast || s.selected || s.flying || s.setAside.length > 0 || s.refreshFx !== null || s.revealAt !== null
-  const last = busy ? null : trailOf(game.lastTurn)
-  return last && { trail: last, mode: 'faint' }
+  return null
 }
 
 /** The planned turn as a trail: the glyphling's real spot → where it's planned to go → the aimed hex. */

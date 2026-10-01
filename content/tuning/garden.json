@@ -41,11 +41,10 @@
     "scoreTotalSize": "Size of the turn's total (\"+6\") over the glyphling that cast, in hex sizes.",
     "dropStrength": "While dragging a piece: how strong the \"drop here\" highlight is on the legal hex under it (brighter than the other options). 1 = solid.",
     "scorePopMinPx": "The smallest a seed's \"+1\" / \"+2\" may be on screen, in pixels (small boards on phones would make it tiny). The total is drawn this much bigger too, relative to scoreTotalSize ÷ scorePopSize.",
-    "castRing": "Cast highlights: how strong the dashed ring round each hex a seed can be cast to (in the current player's colour — move vs cast is told apart by shape, not colour). 1 = solid.",
-    "castFill": "Cast highlights: how strong the faint wash inside each cast ring is. 0 = rings only.",
-    "trailWidth": "Turn trails (the dotted move path and dashed cast arc, in the player's colour): line thickness, in hex sizes.",
-    "trailStrength": "Turn trails: how strong a trail is while you plan your turn and while another player's turn is replayed. 1 = solid.",
-    "trailFaint": "Turn trails: how strong the LAST turn's trail stays on the board until the next action (a pick-up, a plan, a refresh, the next replay). 0 = it goes away. It's drawn under the seeds and glyphlings, so it never covers a letter."
+    "castFill": "Cast highlights: how strong the filled hex is on each hex a seed can be cast to (the same template as a move — filled hex + dot — in a lighter shade of the current player's colour, see castShade). 1 = solid.",
+    "trailWidth": "Turn trails (the dotted move path and the rings, in the player's colour): line thickness, in hex sizes.",
+    "trailStrength": "Turn trails: how strong a trail is while you plan your turn and while another player's turn is replayed (it's gone once the seed lands). 1 = solid.",
+    "castShade": "Cast highlights: how much lighter (+) or darker (−) than the player's colour the cast options are, so a cast reads apart from a move at a glance. +0.5 = halfway to white · 0 = the same colour as a move · −0.5 = halfway to the night sky."
   },
   "_ranges": {
     "hexLineWidth": [
@@ -158,15 +157,10 @@
       32,
       1
     ],
-    "castRing": [
-      0.2,
+    "castFill": [
+      0.1,
       1,
       0.05
-    ],
-    "castFill": [
-      0,
-      0.6,
-      0.02
     ],
     "trailWidth": [
       0.02,
@@ -178,9 +172,9 @@
       1,
       0.05
     ],
-    "trailFaint": [
-      0,
-      1,
+    "castShade": [
+      -0.9,
+      0.9,
       0.05
     ]
   },
@@ -225,9 +219,8 @@
   "scorePopSize": 0.7,
   "scoreTotalSize": 1.2,
   "scorePopMinPx": 16,
-  "castRing": 0.85,
-  "castFill": 0.2,
+  "castFill": 0.75,
   "trailWidth": 0.08,
   "trailStrength": 0.9,
-  "trailFaint": 0.55
+  "castShade": 0.4
 }

@@ -182,7 +182,7 @@ describe('online store — turns', () => {
     expect(store().online!.version).toBeGreaterThan(4)
   })
 
-  it("Blue's turn is replayed on the old view: their trail, then the glide, the throw, the new view — and the trail stays, faint", () => {
+  it("Blue's turn is replayed on the old view: their trail, then the glide, the throw, the new view — and then the trail is gone", () => {
     finishDraft()
     yellowPlansAndCasts()
     deliver()
@@ -215,7 +215,7 @@ describe('online store — turns', () => {
     expect(store().game!.hands[1].every((s) => s === HIDDEN)).toBe(true)
     expect(store().move).toBeNull()
     expect(store().trail).toBeNull()
-    if (store().game!.phase === 'play') expect(boardTrail(store())).toEqual({ mode: 'faint', trail }) // until my next action
+    expect(boardTrail(store())).toBeNull() // landed: no trail stays on the board
   })
 
   it('a sync answered with the same version means my action was lost: the plan comes back to play again', () => {

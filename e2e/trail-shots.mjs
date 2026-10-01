@@ -1,12 +1,13 @@
 // TURN TRAILS + PLAYER-COLOUR TEMPLATES, through the real screen, at 390×844, 844×390, 1099×846 and 1440×900 —
 // for a Yellow AND a Blue player (Muzzy, 2026-10-01: "the color of the movement/casting template should match the
 // color of the player… if we could see the paths when other players take their turns…"):
-//   faint     — the previous player's turn stays on the board, faint, in THEIR colour, until the next action
+//   landed    — right after the previous turn landed: NO trail on the board (Muzzy: "shouldn't [stick around] post cast")
 //   plan-move — holding the moved glyphling: move hexes filled in MY colour + the dotted path to the planned spot
-//   plan-cast — a seed aimed: dashed cast rings in MY colour + the dashed arc to the target (the throw's own curve)
-//   replay    — another player's replayed turn drawing on (frozen at 60%: from ring → path → to ring → arc → target)
-// Checks the colours, the shapes (move = filled, cast = dashed rings), the faint strength, and that the trail sits under
-// the seeds and glyphlings. Starts its OWN dev server (default port 5281 — never Muzzy's 5180) and closes only that one.
+//   plan-cast — a seed aimed: the same filled template in a LIGHTER shade of my colour (garden.json castShade), the
+//               dotted path, and NO cast arc (Muzzy: casts are straight-line shots)
+//   replay    — another player's replayed turn drawing on (frozen at 60%: from ring → path → to ring → target ring)
+// Checks the colours (cast = castColour of mine, not my plain colour), no dashed option outlines, no arc, and that the
+// trail sits under the seeds and glyphlings. Starts its OWN dev server (default port 5281 — never Muzzy's 5180) and closes only that one.
 //   npm run e2e:trails [outDir] [port]
 import { mkdirSync } from 'node:fs'
 import { createServer } from 'vite'
@@ -59,10 +60,11 @@ try {
         mode: trail?.getAttribute('data-trail') ?? null, seat: trail ? Number(trail.getAttribute('data-trail-seat')) : null,
         strokes: [...new Set(strokes)], parts, opacity: trail ? Number(getComputedStyle(trail).opacity) : null,
         under: order >= 0 && (firstPiece < 0 || order < firstPiece),
-        options: options.map((o) => ({ kind: o.getAttribute('data-option'), fill: o.querySelector('polygon').getAttribute('fill'), dashed: !!o.querySelector('[stroke-dasharray]') })),
+        options: options.map((o) => ({ kind: o.getAttribute('data-option'), fill: o.querySelector('polygon').getAttribute('fill'), dot: o.querySelector('circle')?.getAttribute('fill'), dashed: !!o.querySelector('[stroke-dasharray]') })),
       }
     })
     const expectTrail = (b, mode, seat, parts, where) => {
+      if (b.parts.includes('arc')) fail(`${size.name} ${where}: a cast arc is drawn (casts are straight-line shots — no arc)`)
       const colour = garden[COLOURS[seat]]
       if (b.mode !== mode || b.seat !== seat) return fail(`${size.name} ${where}: trail ${b.mode} of seat ${b.seat}, expected ${mode} of seat ${seat}`)
       if (b.strokes.join() !== colour) fail(`${size.name} ${where}: trail drawn in ${b.strokes}, expected ${COLOURS[seat]} ${colour}`)
@@ -70,13 +72,17 @@ try {
       if (!b.under) fail(`${size.name} ${where}: the trail is drawn over the seeds / glyphlings`)
       console.log(`ok   ${size.name} ${where} · ${mode} trail in ${COLOURS[seat]} · ${b.parts.join(' → ')} · opacity ${b.opacity}`)
     }
-    const expectOptions = (b, kind, seat, where) => {
-      const colour = garden[COLOURS[seat]]
+    // Move options = the player's colour; cast options = the same template in castShade's lighter (or darker) shade
+    const castTint = (colour) => page.evaluate(([c, night, shade]) => import('/src/game/castShade.ts').then((m) => m.castColour(c, night, shade)),
+      [colour, garden.background, garden.castShade])
+    const expectOptions = async (b, kind, seat, where) => {
+      const colour = kind === 'cast' ? await castTint(garden[COLOURS[seat]]) : garden[COLOURS[seat]]
       const mine = b.options.filter((o) => o.kind === kind)
       if (!mine.length) return fail(`${size.name} ${where}: no ${kind} options lit`)
-      if (mine.some((o) => o.fill !== colour)) fail(`${size.name} ${where}: ${kind} options not in ${COLOURS[seat]} (${[...new Set(mine.map((o) => o.fill))]})`)
-      if (mine.some((o) => o.dashed !== (kind === 'cast'))) fail(`${size.name} ${where}: ${kind} options have the wrong shape (cast = dashed ring, move = filled)`)
-      else console.log(`ok   ${size.name} ${where} · ${mine.length} ${kind} options in ${COLOURS[seat]} (${kind === 'cast' ? 'dashed rings' : 'filled'})`)
+      if (kind === 'cast' && colour === garden[COLOURS[seat]]) fail(`${size.name} ${where}: cast options look just like move options (castShade 0)`)
+      if (mine.some((o) => o.fill !== colour || o.dot !== colour)) fail(`${size.name} ${where}: ${kind} options not in ${colour} (${[...new Set(mine.map((o) => o.fill))]})`)
+      if (mine.some((o) => o.dashed)) fail(`${size.name} ${where}: ${kind} options have a dashed outline`)
+      else console.log(`ok   ${size.name} ${where} · ${mine.length} ${kind} options filled in ${colour} (${COLOURS[seat]}${kind === 'cast' ? `, castShade ${garden.castShade}` : ''})`)
     }
 
     await page.goto(`http://127.0.0.1:${PORT}/`)
@@ -143,33 +149,32 @@ try {
       await page.evaluate(() => window.__glyphtender.store.setState({ handoff: null }))
       const before = await store((s) => s.game.lastTurn.seat)
 
-      // faint: the previous player's turn, in their colour
-      await shot(`${who}-to-play-faint`)
-      const faint = await board()
-      expectTrail(faint, 'faint', before, ['from', 'path', 'to'], `${who} to play: last turn faint`)
-      if (Math.abs(faint.opacity - garden.trailFaint) > 0.02) fail(`${size.name}: the last turn's trail is at ${faint.opacity}, garden.json trailFaint ${garden.trailFaint}`)
+      // landed: the previous player's turn has landed — no trail stays on the board
+      await shot(`${who}-to-play-landed`)
+      const landed = await board()
+      if (landed.mode !== null) fail(`${size.name}: a trail (${landed.mode}, seat ${landed.seat}) is still on the board after seat ${before}'s turn landed`)
+      else console.log(`ok   ${size.name} ${who} to play · no trail left from seat ${before}'s landed turn`)
 
       // plan-move: move, then pick the moved glyphling up again (its moves glow in my colour + the dotted path)
       await tap(page.locator(`[data-glyph="${turn.glyphling}"]`))
-      if ((await board()).mode !== null) fail(`${size.name}: the faint trail is still on after ${who} picked up a glyphling`)
-      expectOptions(await board(), 'move', seat, `${who} holding a glyphling`)
+      await expectOptions(await board(), 'move', seat, `${who} holding a glyphling`)
       await tap(page.locator(`[data-option="move"] circle[data-hex="${turn.to}"]`))
       await tap(page.locator(`[data-glyph="${turn.glyphling}"]`))
       await shot(`${who}-plan-move`)
       const planMove = await board()
       expectTrail(planMove, 'plan', seat, ['path'], `${who} plan-move`)
-      expectOptions(planMove, 'move', seat, `${who} plan-move`)
+      await expectOptions(planMove, 'move', seat, `${who} plan-move`)
       await tap(page.locator(`[data-glyph="${turn.glyphling}"]`)) // let go: the cast rings show
 
-      // plan-cast: aim the seed (dashed rings + the dashed arc)
+      // plan-cast: aim the seed (the lighter cast template + the dotted path — no arc)
       const pos = await store(`(s) => s.trayOrder[s.game.current].indexOf(${turn.seed})`)
       await tap(page.locator(`[data-tray-pos="${pos}"]`))
       await tap(page.locator(`[data-option="cast"] circle[data-hex="${turn.target}"]`))
       await shot(`${who}-plan-cast`)
       const planCast = await board()
-      expectTrail(planCast, 'plan', seat, ['path', 'arc'], `${who} plan-cast`)
-      expectOptions(planCast, 'cast', seat, `${who} plan-cast`)
-      if (seat === 1 && size.name === 'laptop') {
+      expectTrail(planCast, 'plan', seat, ['path'], `${who} plan-cast`)
+      await expectOptions(planCast, 'cast', seat, `${who} plan-cast`)
+      if (seat === 1 && (size.name === 'laptop' || size.name === 'phone-tall')) {
         // Purple and pink on the same night board (sent as the Dev Kit's Tuning tab would; the file's colours come back)
         const tune = (data) => page.evaluate((data) => window.dispatchEvent(new CustomEvent('devkit:tuning', { detail: { file: 'garden', data } })), data)
         for (const other of ['purple', 'pink']) {
@@ -198,7 +203,7 @@ try {
       }, 0.6 * 1000 * anim.trailLead)
       await page.screenshot({ path: `${OUT}/${size.name}-trail-${who}-replay-mid.png` })
       if (!drawing) fail(`${size.name}: the replayed trail didn't draw on (no animations)`)
-      expectTrail(await board(), 'live', seat, ['from', 'path', 'to', 'arc', 'target'], `${who} replay (drawing on: ${drawing} parts)`)
+      expectTrail(await board(), 'live', seat, ['from', 'path', 'to', 'target'], `${who} replay (drawing on: ${drawing} parts)`)
       await page.evaluate(() => document.querySelectorAll('[data-trail] [data-draw]').forEach((el) => el.getAnimations().forEach((a) => a.finish())))
       await page.screenshot({ path: `${OUT}/${size.name}-trail-${who}-replay-drawn.png` })
       await page.evaluate(() => window.__glyphtender.store.setState({ trail: null }))

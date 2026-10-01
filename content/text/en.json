@@ -21,7 +21,7 @@
       "move": "Move a glyphling",
       "moveHeld": "Move it to a glowing hex",
       "cast": "Cast a seed from here",
-      "castHeld": "Cast it onto a ringed hex",
+      "castHeld": "Cast it onto a pale hex",
       "ready": "Happy? Cast it — or undo",
       "moveOnly": "No seed to cast — end your turn",
       "flying": "Planting…",

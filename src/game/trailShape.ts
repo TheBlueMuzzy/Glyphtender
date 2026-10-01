@@ -1,6 +1,5 @@
-// The shapes a turn trail is drawn with (TurnTrail.tsx) — plain maths, tested in trailShape.test.ts.
-// The cast arc is the SAME curve the thrown seed flies (useThrow.ts uses throwHandle too), so a replayed
-// seed travels exactly along the dashed arc it was shown on.
+// The shapes a turn trail is drawn with (TurnTrail.tsx) and the thrown seed's curve (useThrow.ts) — plain maths,
+// tested in trailShape.test.ts. (No cast arc is drawn — Muzzy: casts are straight-line shots; the flight is separate.)
 import { hexToPixel, type Hex } from '../engine/hex'
 
 type Point = { x: number; y: number }
@@ -19,20 +18,12 @@ export function movePath(from: Hex, to: Hex, size: number): string {
   return `M ${n(a.x)} ${n(a.y)} L ${n(b.x)} ${n(b.y)}`
 }
 
-/** The throw's arc from hex to hex, as an SVG path. */
-export function castPath(from: Hex, to: Hex, size: number, arcHeight: number): string {
-  const a = hexToPixel(from, size), b = hexToPixel(to, size)
-  const h = throwHandle(a, b, arcHeight)
-  return `M ${n(a.x)} ${n(a.y)} Q ${n(h.x)} ${n(h.y)} ${n(b.x)} ${n(b.y)}`
-}
-
 /**
  * When each part of a replayed trail draws on, as [start, end] shares of trailLead:
- * the from ring → the dotted path → the to ring → the cast arc → the target ring. A move-only turn's parts
- * spread over the whole lead.
+ * the from ring → the dotted path → the to ring → the target ring. A move-only turn's parts spread over the whole lead.
  */
-export function drawSteps(cast: boolean): Record<'from' | 'path' | 'to' | 'arc' | 'target', [number, number]> {
+export function drawSteps(cast: boolean): Record<'from' | 'path' | 'to' | 'target', [number, number]> {
   return cast
-    ? { from: [0, 0.15], path: [0.1, 0.45], to: [0.4, 0.55], arc: [0.5, 0.88], target: [0.82, 1] }
-    : { from: [0, 0.25], path: [0.15, 0.8], to: [0.7, 1], arc: [1, 1], target: [1, 1] }
+    ? { from: [0, 0.2], path: [0.12, 0.6], to: [0.52, 0.75], target: [0.7, 1] }
+    : { from: [0, 0.25], path: [0.15, 0.8], to: [0.7, 1], target: [1, 1] }
 }
