@@ -9,7 +9,9 @@
     "growTime": "How long the runeblossom takes to grow out of the ground, in seconds.",
     "growFrom": "How small the runeblossom starts when it sprouts (0.1 = a tiny sprout, 1 = full size).",
     "pulseTime": "How long one pulse of a planned piece's halo takes, in seconds.",
-    "wordGlowTime": "How long the words that just grew keep their white border after the seed lands (it fades out), in seconds — long enough to still frame them as their score pops fly off.",
+    "wordGlowTime": "How long after a seed lands the garden stays clear before the handoff box or the end-of-game reveal may cover it (with no score pops), in seconds. (The words that grew stay outlined until play moves on — see spotlightHold.)",
+    "spotlightHold": "Word spotlight: when a cast makes 2 or more words, they light up ONE at a time (QUA → TAB → AY → round again) until play moves on. This is how long each word stays lit, in seconds. (One word just stays lit.) Also while aiming a cast that would make 2+ words.",
+    "spotlightFade": "Word spotlight: how long each word takes to fade in and to fade out, in seconds. The next word starts after the last one has faded, so only one is ever lit. Reduce motion = no fade (the words just step).",
     "revealTangles": "End of game: how long the tangled glyphlings pulse before the bonuses are shown, in seconds.",
     "revealBonus": "End of game: time for each \"+3\" tangle bonus to pop on a rival piece, in seconds (they pop one hex at a time).",
     "revealCount": "End of game: time for each player's Magic to count up (lowest first), including a short pause after, in seconds.",
@@ -83,6 +85,16 @@
       0,
       3,
       0.1
+    ],
+    "spotlightHold": [
+      0.3,
+      3,
+      0.05
+    ],
+    "spotlightFade": [
+      0,
+      0.5,
+      0.01
     ],
     "revealTangles": [
       0,
@@ -205,6 +217,8 @@
   "growFrom": 0.1,
   "pulseTime": 1.2,
   "wordGlowTime": 1.4,
+  "spotlightHold": 0.8,
+  "spotlightFade": 0.12,
   "revealTangles": 1.4,
   "revealBonus": 0.55,
   "revealCount": 1.5,
