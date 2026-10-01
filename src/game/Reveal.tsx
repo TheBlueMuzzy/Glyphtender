@@ -17,8 +17,9 @@ import { useAnimTuning, useGardenTuning } from './useTuning'
 
 const w = text.game.reveal
 
-/** compact: the side column — one-line chips, no tangle line, one chip per line (the wide tiles keep them from
- *  sitting side by side and running past the column's edge). */
+/** One-line chips, one chip per line (the wide tiles keep them from sitting side by side: a chip never shrinks,
+ *  so two in a row on a phone ran into each other — "Yellow ★ ✦ 44" over Blue's chip, B016).
+ *  compact: the side column — no tangle Magic beside the name (too narrow). */
 export function RevealPanel({ compact }: { compact: boolean }) {
   const game = useGameStore((s) => s.game)!
   const revealAt = useGameStore((s) => s.revealAt)
@@ -54,12 +55,12 @@ export function RevealPanel({ compact }: { compact: boolean }) {
   const view = revealView(steps, revealAt)
   const counting = view.current?.kind === 'count' ? view.current.seat : null
   return (
-    <Grid gap="s" min={compact ? 'l' : 's'} className="game-reveal" aria-label={w.label}>
+    <Grid gap="s" min="l" className="game-reveal" aria-label={w.label}>
       {game.magic.map((magic, seat) => {
         const shown = view.counted.includes(seat)
         const winner = view.announced && game.winners.includes(seat)
         return (
-          <PlayerChip key={seat} size={compact ? 'xs' : 's'} name={playerName(seat)} avatar={glyphlingArt(seat)} color={colours[colourOf(seat)]}
+          <PlayerChip key={seat} size="xs"name={playerName(seat)} avatar={glyphlingArt(seat)} color={colours[colourOf(seat)]}
             score={shown ? magic : undefined} scoreIcon="✦"
             detail={!shown ? w.secret : compact ? undefined : fill(w.tangleDetail, { n: game.tangleMagic[seat] })}
             badge={winner ? w.winnerBadge : undefined} active={counting === seat || winner} words={{ score: w.magic }} />
