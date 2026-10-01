@@ -1,6 +1,18 @@
 # Glyphtender — Bugs
-Open: 3 (P0 0 · P1 0 · P2 1 · P3 2)
+Open: 6 (P0 0 · P1 0 · P2 3 · P3 3)
 ## Open
+### B014 · P2 · open · found 2026-09-30 in F23 online test · v0.1.0 (dev/online) · Muzzy's phone, portrait
+Bottom buttons sit at the screen edge — dragging up or pressing them fires the phone's edge gestures
+Steps: 1. Phone, portrait 2. Drag a seed up from the tray, or tap a bottom button · Expected: the game gets the touch · Actual: the phone's home/back gesture can trigger instead · How often: often, near the bottom edge
+Fix idea: a bottom margin for the whole UI (at least the phone's safe-area inset + room for the gesture zone), tunable in content/
+### B013 · P2 · open · found 2026-09-30 in F23 online test · v0.1.0 (dev/online) · Muzzy's phone, portrait
+The board jumps when the instruction text changes its number of lines
+Steps: 1. Phone, portrait 2. Play a turn — the instruction line changes (1 line ↔ 2 lines) · Expected: the board stays still · Actual: the board shifts up/down with the text · How often: every time the line count changes
+Fix idea (Muzzy): a fixed frame for the instruction text, sized for the longest message, so the board never moves
+### B012 · P3 · open · found 2026-09-30 in F23 online test · v0.1.0 (dev/online) · Muzzy's phone, portrait
+The board crowds the instruction text — it should sit a bit higher
+Steps: 1. Phone, portrait 2. Look at the gap between the instruction text and the board · Expected: clear breathing room · Actual: the board crowds the text · How often: always
+Likely shares a fix with B013 (the text frame) and B014 (the bottom margin) — one portrait layout pass
 ### B009 · P2 · can't reproduce (Muzzy's device OK 2026-09-30 — test-only touch emulation) · found 2026-09-30 by e2e:game while fixing B008 · v0.0.0.2 · e2e phones (touch emulation)
 The first tap on Cast after a touch drag isn't heard (phone sizes in e2e:game)
 Steps: e2e:game phone-tall/phone-wide turn 2 — drag the glyphling by finger (CDP touch), aim a seed, tap Cast · Expected: the seed is thrown · Actual: pointerdown/pointerup/touchend reach the button but the browser sends no click, so turn 2 never casts on phones and the next "turn" finishes it (hidden until now; desktop is fine, and with no touch drag first the tap works). Not known yet whether a real phone does this or it's the test's touch emulation — check on a phone: drag a glyphling, drag/tap a seed onto a hex, tap Cast once
