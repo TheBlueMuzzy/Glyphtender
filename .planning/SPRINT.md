@@ -24,7 +24,7 @@ Done when: after a cast, words light up one at a time (QUA → TAB → AY → lo
 
 ## F26 🎮 Game log + end screen overhaul
 Done when: the end screen leads with big scores (winner obvious), then per-player breakdowns and a score-over-time chart with moment dots; works 2/3/4 players on phone portrait, landscape, desktop; online-safe (log hidden until the game is over)
-- [ ] 🤖 10. Research: end/results screens in digital board & word games + "interesting moments" → research/end-screen.md
+- [x] 🤖 10. Research: end/results screens in digital board & word games + "interesting moments" → research/end-screen.md
 - [ ] 🤖 11. Engine game log: per turn — seat, words (letters, owners, Magic), tangles, refreshes, Magic after the turn — src/engine; server views hide it until over (secrecy tests)
 - [ ] 🤖 12. Stats from the log: solo-word Magic, word counts by length (2*,3,4,5,6+), tangle Magic, letters refreshed, multi-word turns, moments (best word, biggest turn, lead changes…) — src/game/stats.ts + tests
 - [ ] 🤖 13. End screen design + build from kit parts (game-ui): scores → breakdowns → chart with dots; layout for 2/3/4 players; text in en.json
@@ -38,3 +38,4 @@ Done when: a Dev Kit tab lists the gated screens (end screen 2/3/4p, reveal, han
 - [ ] 🤖 17. e2e: open every preview, close, game unchanged; Dev Kit stays out of live builds
 
 Notes:
+- Research (task 10): research/end-screen.md — 3 swipe pages Results · Story · Scorecard; winner big + centred ABOVE the others on phone (a 2-1-3-4 podium is hard to read at 390 px and with ties — podium only in landscape/desktop; weighs Muzzy's "winner in the middle"); awards never add points, ≤1 per player until all have one; chart = cumulative Magic per round + a final Tangles column, end-of-line labels, knot/star/tick markers. "2*" read as 2-letter words shown only when the table allows them — Ask Muzzy to confirm.
