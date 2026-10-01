@@ -152,7 +152,7 @@ export interface GameState {
   bag: string[]
   /** Magic per seat (secret from other players in the UI). */
   magic: number[]
-  /** Ids of glyphlings with no legal move, checked after every turn. */
+  /** Ids of glyphlings with no legal move, checked when the draft ends and after every turn. */
   tangled: number[]
   lastTurn: TurnSummary | null
   /** Tangle bonus each seat got at the end (all 0 until the game is over). */

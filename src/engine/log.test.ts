@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { applyAction } from './engine'
+import { getBoard } from './boards'
+import { applyAction, legalDraftHexes, legalMoves } from './engine'
+import { neighbours } from './hex'
 import { logOf } from './log'
 import { randomAction } from './sim'
 import { newGame } from './setup'
@@ -103,4 +105,23 @@ describe('the game log (log.ts)', () => {
       }
     })
   }
+
+  it('a glyphling already stuck when the draft ends is not credited to the first turn (only that turn’s tangles count)', () => {
+    // A hand-built draft (Dev Kit / test positions can put seeds down first): glyphling 0 boxed in by seeds,
+    // and seat 0's second glyphling still to place — the last placement of a 2-player snake draft
+    const board = getBoard('small')
+    const boxed = hexAt('C6-7')
+    const ring = Object.fromEntries(neighbours(board, boxed).map((h) => [board.label(h), 'E']))
+    const s = position({ glyphlings: { 0: 'C6-7', 2: 'C11-1', 3: 'C11-4' }, seeds: [ring] })
+    const draft: GameState = { ...s, phase: 'draft', draftIndex: s.draftOrder.length - 1, current: s.draftOrder.at(-1)! }
+    expect(draft.current).toBe(0)
+    const placed = applyAction(draft, { type: 'draft', hex: legalDraftHexes(draft)[0] }, words)
+    expect(placed.phase).toBe('play')
+    expect(placed.tangled).toEqual([0]) // stuck from the start of play
+    const mover = placed.glyphlings.find((g) => g.seat === 0 && g.id !== 0)!
+    const next = applyAction(placed, { type: 'turn', glyphling: mover.id, to: legalMoves(placed, mover.id)[0], seed: null, target: null }, words)
+    const [turn] = logOf(next).turns
+    expect(turn.tangledAfter).toContain(0)
+    expect(turn.newlyTangled).not.toContain(0)
+  })
 })

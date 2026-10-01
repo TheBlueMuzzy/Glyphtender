@@ -2,6 +2,7 @@
 import { hexKey, isEdge, neighbours, type Hex } from './hex'
 import { getBoard } from './boards'
 import { includesHex } from './moves'
+import { tangledIds } from './tangle'
 import type { GameState } from './types'
 
 /** Hexes a glyphling may be placed on: on the board, not an edge, empty, and not next to any glyphling. */
@@ -35,5 +36,8 @@ export function applyDraft(state: GameState, hex: Hex): GameState {
   // Draft done: deal a full hand to each seat in seat order, from the front of the bag.
   const bag = [...state.bag]
   const hands = state.hands.map(() => bag.splice(0, state.config.rules.handSize))
-  return { ...state, glyphlings, draftIndex, hands, bag, phase: 'play', current: 0 }
+  const started: GameState = { ...state, glyphlings, draftIndex, hands, bag, phase: 'play', current: 0 }
+  // Who's stuck as play starts — the baseline the first turn's log compares with, so a glyphling that was already
+  // stuck isn't credited as a tangle to the first player (a legal draft never boxes one in; hand-built positions can)
+  return { ...started, tangled: tangledIds(started) }
 }
