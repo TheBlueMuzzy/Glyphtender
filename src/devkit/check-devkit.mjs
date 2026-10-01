@@ -10,6 +10,7 @@
 //   false → dist/ has NO Dev Kit code, and ` does nothing
 //   true  → dist/ has the Dev Kit, ` opens it, shows the live-build note, no Save button (release builds
 //           can't write files), and Copy for Claude answers (if a tab has one)
+// Both ways: no screen previews (the Screens tab is dev-only) — and no preview-frame code in main.tsx's build.
 // Both ways: the dev server's save endpoint is never in a build. The build matching content/devkit.json
 // runs last, so dist/ is left as the real release build.
 import { execSync, spawn } from 'node:child_process'
@@ -19,6 +20,7 @@ import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const MARKER = 'bmuz-devkit-console' // DevKit.tsx puts it on the panel; it must be missing when the Dev Kit is off
+const PREVIEWS_MARKER = 'bmuz-devkit-previews' // the Screens tab (previews/PreviewOverlay.tsx) — dev only, never in ANY build
 const PRODUCTION = { NODE_ENV: 'production' } // same as the real release build
 
 /** --port 5198 --base /x/ → { port: 5198, base: '/x/' } */
@@ -102,6 +104,7 @@ async function main() {
     check(all.length > 0, 'dist/ has files')
     if (devkitOn) check(all.includes(MARKER), 'Dev Kit code IS in dist/')
     else check(!all.includes(MARKER) && !all.includes('__devkit'), 'NO Dev Kit code in dist/')
+    check(!all.includes(PREVIEWS_MARKER) && !all.includes('devkit-preview='), 'NO screen previews in dist/ (they are dev-only)')
     const base = baseArg ?? baseFromIndexHtml(readFileSync(join(dist, 'index.html'), 'utf8'))
     const gameUrl = `http://localhost:${port}${base}`
 

@@ -7,7 +7,7 @@
 //   Close: Esc, the ✕ button, or ` again
 // Tools are tabs across the top: the kit's own (KIT_TABS), then the game's own from src/devkit-game/tabs.ts.
 // The one rule (DEVKIT.md): tools edit content/ JSON files, never code.
-import { useEffect, useRef, useState, type ComponentType } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState, type ComponentType } from 'react'
 import { gameTabs } from '../devkit-game/tabs'
 import { CaptureTab } from './capture/CaptureTab'
 import { ColorTab } from './color/ColorTab'
@@ -23,6 +23,15 @@ const DEVKIT_MARKER = 'bmuz-devkit-console'
 /** One tool = one tab. A game adds its own in src/devkit-game/tabs.ts. */
 export type DevKitTab = { id: string; label: string; Panel: ComponentType }
 
+// Loaded on first use, and only in dev: in a release build import.meta.env.DEV is false, so this import is dropped
+const ScreensTab = import.meta.env.DEV ? lazy(() => import('./previews/PreviewsTab')) : null
+function ScreensPanel() {
+  return ScreensTab && <Suspense fallback={<p className="devkit-not-plugged">Loading…</p>}><ScreensTab /></Suspense>
+}
+
+// While a screen preview is open it owns the keys (Esc closes it) and the whole window, so the panel stands aside
+const previewOpen = () => document.querySelector('dialog.devkit-preview[open]') !== null
+
 const KIT_TABS: DevKitTab[] = [
   { id: 'color', label: 'Color', Panel: ColorTab },
   // Only when the game has content/tuning/*.json files
@@ -30,6 +39,8 @@ const KIT_TABS: DevKitTab[] = [
   // These two need the game's adapter (registerDevKitGame, devkitGame.ts); without it they say how to add it
   { id: 'snapshots', label: 'Snapshots', Panel: SnapshotsTab },
   { id: 'bugs', label: 'Bugs', Panel: CaptureTab },
+  // Screen previews: DEV ONLY — never in a release build, even while inReleaseBuilds is true (previews/PreviewsTab.tsx)
+  ...(ScreensTab ? [{ id: 'screens', label: 'Screens', Panel: ScreensPanel }] : []),
 ]
 
 const CORNER_SIZE_PX = 64 // the invisible top-right square you triple-tap on a phone
@@ -62,6 +73,7 @@ export function DevKit({ tabs = [...KIT_TABS, ...gameTabs] }: { tabs?: DevKitTab
   // ` toggles, Esc closes
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (previewOpen()) return
       if ((e.key === '`' || e.code === 'Backquote') && !isTyping(e.target)) {
         e.preventDefault()
         setOpen((o) => !o)
@@ -81,7 +93,7 @@ export function DevKit({ tabs = [...KIT_TABS, ...gameTabs] }: { tabs?: DevKitTab
     const onDown = (e: PointerEvent) => {
       const inCorner = e.clientX > window.innerWidth - CORNER_SIZE_PX && e.clientY < CORNER_SIZE_PX
       const onPanel = (e.target as HTMLElement | null)?.closest?.('.devkit')
-      if (!inCorner || onPanel) return
+      if (!inCorner || onPanel || previewOpen()) return
       const now = performance.now()
       taps = taps.filter((t) => now - t < TRIPLE_TAP_MS)
       taps.push(now)
