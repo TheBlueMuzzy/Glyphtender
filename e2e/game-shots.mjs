@@ -457,7 +457,7 @@ try {
     await table.waitFor({ timeout: 5000 })
     await page.waitForTimeout(500)
     await shot('11-game-over')
-    const stars = await page.getByRole('img', { name: 'Winner' }).count()
+    const stars = await page.locator('.game-end-player[data-winner]').count()
     if (stars < 1) fail(`${size.name}: no winner marked`)
     // B005: closed results stay closed (nothing reopens them by itself); the Results button brings them back
     await page.keyboard.press('Escape')

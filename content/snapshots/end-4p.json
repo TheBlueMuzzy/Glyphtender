@@ -1,0 +1,2931 @@
+{
+  "_help": "A Dev Kit snapshot: press ` → Snapshots → Restore to jump here. A finished game (greedy sim players, official words) — the Magic reveal plays, then the end screen. Made by scripts/end-fixtures.mjs.",
+  "name": "End screen: 4 players",
+  "savedAt": "2026-10-01T05:15:50.889Z",
+  "game": "Glyphtender",
+  "version": "0.2.0.0",
+  "summary": "turn 47 · over · winner Yellow · 69 / 63 / 60 / 52 Magic",
+  "state": {
+    "game": {
+      "config": {
+        "players": 4,
+        "boardName": "large",
+        "seed": 2,
+        "rules": {
+          "handSize": 8,
+          "minWordLength": 2,
+          "ownershipBonus": 1,
+          "tangleBonus": 3,
+          "tanglesToEnd": 2
+        }
+      },
+      "phase": "over",
+      "current": 2,
+      "draftOrder": [
+        0,
+        1,
+        2,
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      "draftIndex": 8,
+      "glyphlings": [
+        {
+          "id": 0,
+          "seat": 0,
+          "hex": {
+            "q": 12,
+            "r": -7
+          }
+        },
+        {
+          "id": 2,
+          "seat": 1,
+          "hex": {
+            "q": 7,
+            "r": -1
+          }
+        },
+        {
+          "id": 4,
+          "seat": 2,
+          "hex": {
+            "q": 0,
+            "r": -2
+          }
+        },
+        {
+          "id": 6,
+          "seat": 3,
+          "hex": {
+            "q": 4,
+            "r": 3
+          }
+        },
+        {
+          "id": 7,
+          "seat": 3,
+          "hex": {
+            "q": 6,
+            "r": -8
+          }
+        },
+        {
+          "id": 5,
+          "seat": 2,
+          "hex": {
+            "q": 7,
+            "r": -3
+          }
+        },
+        {
+          "id": 3,
+          "seat": 1,
+          "hex": {
+            "q": 2,
+            "r": 3
+          }
+        },
+        {
+          "id": 1,
+          "seat": 0,
+          "hex": {
+            "q": 9,
+            "r": -2
+          }
+        }
+      ],
+      "seeds": {
+        "6,-5": {
+          "letter": "H",
+          "seat": 0
+        },
+        "5,-5": {
+          "letter": "A",
+          "seat": 1
+        },
+        "1,0": {
+          "letter": "X",
+          "seat": 2
+        },
+        "1,-1": {
+          "letter": "E",
+          "seat": 3
+        },
+        "7,-6": {
+          "letter": "A",
+          "seat": 0
+        },
+        "2,-1": {
+          "letter": "D",
+          "seat": 1
+        },
+        "6,-6": {
+          "letter": "F",
+          "seat": 2
+        },
+        "3,-2": {
+          "letter": "E",
+          "seat": 3
+        },
+        "8,-7": {
+          "letter": "W",
+          "seat": 0
+        },
+        "7,-5": {
+          "letter": "O",
+          "seat": 1
+        },
+        "4,-4": {
+          "letter": "M",
+          "seat": 2
+        },
+        "2,-4": {
+          "letter": "Y",
+          "seat": 3
+        },
+        "7,-2": {
+          "letter": "R",
+          "seat": 0
+        },
+        "0,-1": {
+          "letter": "W",
+          "seat": 1
+        },
+        "5,-4": {
+          "letter": "N",
+          "seat": 2
+        },
+        "3,-1": {
+          "letter": "H",
+          "seat": 3
+        },
+        "6,-4": {
+          "letter": "T",
+          "seat": 0
+        },
+        "8,-5": {
+          "letter": "I",
+          "seat": 1
+        },
+        "4,-3": {
+          "letter": "E",
+          "seat": 2
+        },
+        "3,-3": {
+          "letter": "N",
+          "seat": 3
+        },
+        "6,-2": {
+          "letter": "O",
+          "seat": 0
+        },
+        "0,0": {
+          "letter": "E",
+          "seat": 1
+        },
+        "2,-5": {
+          "letter": "O",
+          "seat": 2
+        },
+        "3,0": {
+          "letter": "E",
+          "seat": 3
+        },
+        "6,-1": {
+          "letter": "E",
+          "seat": 0
+        },
+        "9,-8": {
+          "letter": "E",
+          "seat": 1
+        },
+        "1,-4": {
+          "letter": "A",
+          "seat": 2
+        },
+        "4,0": {
+          "letter": "N",
+          "seat": 3
+        },
+        "5,-1": {
+          "letter": "D",
+          "seat": 0
+        },
+        "3,1": {
+          "letter": "T",
+          "seat": 1
+        },
+        "1,-2": {
+          "letter": "L",
+          "seat": 2
+        },
+        "5,-6": {
+          "letter": "Y",
+          "seat": 3
+        },
+        "7,-7": {
+          "letter": "T",
+          "seat": 0
+        },
+        "2,-2": {
+          "letter": "I",
+          "seat": 1
+        },
+        "2,-3": {
+          "letter": "L",
+          "seat": 2
+        },
+        "3,-5": {
+          "letter": "E",
+          "seat": 3
+        },
+        "6,-3": {
+          "letter": "O",
+          "seat": 0
+        },
+        "2,0": {
+          "letter": "B",
+          "seat": 1
+        },
+        "1,-3": {
+          "letter": "W",
+          "seat": 2
+        },
+        "4,1": {
+          "letter": "E",
+          "seat": 3
+        },
+        "8,-3": {
+          "letter": "E",
+          "seat": 0
+        },
+        "9,-3": {
+          "letter": "T",
+          "seat": 1
+        },
+        "7,-4": {
+          "letter": "I",
+          "seat": 2
+        },
+        "4,-1": {
+          "letter": "I",
+          "seat": 3
+        },
+        "5,-2": {
+          "letter": "I",
+          "seat": 0
+        },
+        "2,1": {
+          "letter": "I",
+          "seat": 1
+        },
+        "8,-4": {
+          "letter": "C",
+          "seat": 2
+        }
+      },
+      "hands": [
+        [
+          "B",
+          "P",
+          "O",
+          "R",
+          "S",
+          "I",
+          "H",
+          "S"
+        ],
+        [
+          "D",
+          "K",
+          "F",
+          "G",
+          "K",
+          "Q",
+          "O",
+          "T"
+        ],
+        [
+          "J",
+          "C",
+          "Z",
+          "T",
+          "N",
+          "L",
+          "A",
+          "N"
+        ],
+        [
+          "T",
+          "I",
+          "S",
+          "E",
+          "Y",
+          "U",
+          "T",
+          "O"
+        ]
+      ],
+      "bag": [
+        "P",
+        "V",
+        "A",
+        "E",
+        "U",
+        "A",
+        "N",
+        "E",
+        "R",
+        "S",
+        "U",
+        "S",
+        "L",
+        "H",
+        "U",
+        "A",
+        "E",
+        "U",
+        "A",
+        "S",
+        "A",
+        "T",
+        "G",
+        "N",
+        "D",
+        "M",
+        "S",
+        "I",
+        "E",
+        "O",
+        "R",
+        "C",
+        "R",
+        "H",
+        "L",
+        "O",
+        "T",
+        "M",
+        "F",
+        "H",
+        "R"
+      ],
+      "magic": [
+        69,
+        63,
+        60,
+        52
+      ],
+      "tangled": [
+        4,
+        5
+      ],
+      "lastTurn": {
+        "seat": 2,
+        "glyphlingId": 5,
+        "from": {
+          "q": 8,
+          "r": -4
+        },
+        "to": {
+          "q": 7,
+          "r": -3
+        },
+        "letter": "C",
+        "target": {
+          "q": 8,
+          "r": -4
+        },
+        "words": [
+          {
+            "word": "ICE",
+            "hexes": [
+              {
+                "q": 8,
+                "r": -5
+              },
+              {
+                "q": 8,
+                "r": -4
+              },
+              {
+                "q": 8,
+                "r": -3
+              }
+            ],
+            "magic": 4
+          },
+          {
+            "word": "TIC",
+            "hexes": [
+              {
+                "q": 6,
+                "r": -4
+              },
+              {
+                "q": 7,
+                "r": -4
+              },
+              {
+                "q": 8,
+                "r": -4
+              }
+            ],
+            "magic": 5
+          }
+        ],
+        "magic": 9,
+        "drew": 1
+      },
+      "tangleMagic": [
+        12,
+        3,
+        0,
+        0
+      ],
+      "winners": [
+        0
+      ],
+      "turnCount": 47,
+      "rng": 48788599,
+      "log": {
+        "turns": [
+          {
+            "turnNo": 1,
+            "round": 1,
+            "seat": 0,
+            "glyphlingId": 1,
+            "from": {
+              "q": 2,
+              "r": 2
+            },
+            "to": {
+              "q": 6,
+              "r": 2
+            },
+            "letter": "H",
+            "target": {
+              "q": 6,
+              "r": -5
+            },
+            "words": [],
+            "magic": 0,
+            "refreshed": 4,
+            "refresh": true,
+            "totalsAfter": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 2,
+            "round": 1,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 5,
+              "r": -2
+            },
+            "to": {
+              "q": 5,
+              "r": 1
+            },
+            "letter": "A",
+            "target": {
+              "q": 5,
+              "r": -5
+            },
+            "words": [
+              {
+                "word": "AH",
+                "letters": [
+                  "A",
+                  "H"
+                ],
+                "owners": [
+                  1,
+                  0
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              0,
+              3,
+              0,
+              0
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 3,
+            "round": 1,
+            "seat": 2,
+            "glyphlingId": 5,
+            "from": {
+              "q": 2,
+              "r": 0
+            },
+            "to": {
+              "q": 3,
+              "r": 0
+            },
+            "letter": "X",
+            "target": {
+              "q": 1,
+              "r": 0
+            },
+            "words": [],
+            "magic": 0,
+            "refreshed": 1,
+            "refresh": true,
+            "totalsAfter": [
+              0,
+              3,
+              0,
+              0
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 4,
+            "round": 1,
+            "seat": 3,
+            "glyphlingId": 6,
+            "from": {
+              "q": 7,
+              "r": 0
+            },
+            "to": {
+              "q": 7,
+              "r": -1
+            },
+            "letter": "E",
+            "target": {
+              "q": 1,
+              "r": -1
+            },
+            "words": [
+              {
+                "word": "EX",
+                "letters": [
+                  "E",
+                  "X"
+                ],
+                "owners": [
+                  3,
+                  2
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              0,
+              3,
+              0,
+              3
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 5,
+            "round": 2,
+            "seat": 0,
+            "glyphlingId": 0,
+            "from": {
+              "q": 10,
+              "r": -8
+            },
+            "to": {
+              "q": 10,
+              "r": -9
+            },
+            "letter": "A",
+            "target": {
+              "q": 7,
+              "r": -6
+            },
+            "words": [
+              {
+                "word": "HA",
+                "letters": [
+                  "H",
+                  "A"
+                ],
+                "owners": [
+                  0,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              4,
+              3,
+              0,
+              3
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 6,
+            "round": 2,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 5,
+              "r": 1
+            },
+            "to": {
+              "q": 5,
+              "r": -1
+            },
+            "letter": "D",
+            "target": {
+              "q": 2,
+              "r": -1
+            },
+            "words": [
+              {
+                "word": "ED",
+                "letters": [
+                  "E",
+                  "D"
+                ],
+                "owners": [
+                  3,
+                  1
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              4,
+              6,
+              0,
+              3
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 7,
+            "round": 2,
+            "seat": 2,
+            "glyphlingId": 4,
+            "from": {
+              "q": 4,
+              "r": 0
+            },
+            "to": {
+              "q": 4,
+              "r": -6
+            },
+            "letter": "F",
+            "target": {
+              "q": 6,
+              "r": -6
+            },
+            "words": [
+              {
+                "word": "FA",
+                "letters": [
+                  "F",
+                  "A"
+                ],
+                "owners": [
+                  2,
+                  0
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              4,
+              6,
+              3,
+              3
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 8,
+            "round": 2,
+            "seat": 3,
+            "glyphlingId": 7,
+            "from": {
+              "q": 3,
+              "r": -3
+            },
+            "to": {
+              "q": 3,
+              "r": -4
+            },
+            "letter": "E",
+            "target": {
+              "q": 3,
+              "r": -2
+            },
+            "words": [
+              {
+                "word": "DE",
+                "letters": [
+                  "D",
+                  "E"
+                ],
+                "owners": [
+                  1,
+                  3
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              4,
+              6,
+              3,
+              6
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 9,
+            "round": 3,
+            "seat": 0,
+            "glyphlingId": 0,
+            "from": {
+              "q": 10,
+              "r": -9
+            },
+            "to": {
+              "q": 10,
+              "r": -7
+            },
+            "letter": "W",
+            "target": {
+              "q": 8,
+              "r": -7
+            },
+            "words": [
+              {
+                "word": "HAW",
+                "letters": [
+                  "H",
+                  "A",
+                  "W"
+                ],
+                "owners": [
+                  0,
+                  0,
+                  0
+                ],
+                "magic": 6,
+                "ownMagic": 3
+              }
+            ],
+            "magic": 6,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              10,
+              6,
+              3,
+              6
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 10,
+            "round": 3,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 5,
+              "r": -1
+            },
+            "to": {
+              "q": 3,
+              "r": -1
+            },
+            "letter": "O",
+            "target": {
+              "q": 7,
+              "r": -5
+            },
+            "words": [
+              {
+                "word": "AO",
+                "letters": [
+                  "A",
+                  "O"
+                ],
+                "owners": [
+                  0,
+                  1
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              },
+              {
+                "word": "HO",
+                "letters": [
+                  "H",
+                  "O"
+                ],
+                "owners": [
+                  0,
+                  1
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 6,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              10,
+              12,
+              3,
+              6
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 11,
+            "round": 3,
+            "seat": 2,
+            "glyphlingId": 4,
+            "from": {
+              "q": 4,
+              "r": -6
+            },
+            "to": {
+              "q": 4,
+              "r": -3
+            },
+            "letter": "M",
+            "target": {
+              "q": 4,
+              "r": -4
+            },
+            "words": [
+              {
+                "word": "MA",
+                "letters": [
+                  "M",
+                  "A"
+                ],
+                "owners": [
+                  2,
+                  1
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              10,
+              12,
+              6,
+              6
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 12,
+            "round": 3,
+            "seat": 3,
+            "glyphlingId": 7,
+            "from": {
+              "q": 3,
+              "r": -4
+            },
+            "to": {
+              "q": 1,
+              "r": -4
+            },
+            "letter": "Y",
+            "target": {
+              "q": 2,
+              "r": -4
+            },
+            "words": [],
+            "magic": 0,
+            "refreshed": 2,
+            "refresh": true,
+            "totalsAfter": [
+              10,
+              12,
+              6,
+              6
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 13,
+            "round": 4,
+            "seat": 0,
+            "glyphlingId": 0,
+            "from": {
+              "q": 10,
+              "r": -7
+            },
+            "to": {
+              "q": 10,
+              "r": -5
+            },
+            "letter": "R",
+            "target": {
+              "q": 7,
+              "r": -2
+            },
+            "words": [],
+            "magic": 0,
+            "refreshed": 3,
+            "refresh": true,
+            "totalsAfter": [
+              10,
+              12,
+              6,
+              6
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 14,
+            "round": 4,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 3,
+              "r": -1
+            },
+            "to": {
+              "q": 0,
+              "r": 2
+            },
+            "letter": "W",
+            "target": {
+              "q": 0,
+              "r": -1
+            },
+            "words": [
+              {
+                "word": "WED",
+                "letters": [
+                  "W",
+                  "E",
+                  "D"
+                ],
+                "owners": [
+                  1,
+                  3,
+                  1
+                ],
+                "magic": 5,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 5,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              10,
+              17,
+              6,
+              6
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 15,
+            "round": 4,
+            "seat": 2,
+            "glyphlingId": 5,
+            "from": {
+              "q": 3,
+              "r": 0
+            },
+            "to": {
+              "q": 7,
+              "r": -4
+            },
+            "letter": "N",
+            "target": {
+              "q": 5,
+              "r": -4
+            },
+            "words": [
+              {
+                "word": "AN",
+                "letters": [
+                  "A",
+                  "N"
+                ],
+                "owners": [
+                  1,
+                  2
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              10,
+              17,
+              9,
+              6
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 16,
+            "round": 4,
+            "seat": 3,
+            "glyphlingId": 6,
+            "from": {
+              "q": 7,
+              "r": -1
+            },
+            "to": {
+              "q": 4,
+              "r": -1
+            },
+            "letter": "H",
+            "target": {
+              "q": 3,
+              "r": -1
+            },
+            "words": [
+              {
+                "word": "EH",
+                "letters": [
+                  "E",
+                  "H"
+                ],
+                "owners": [
+                  3,
+                  3
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              10,
+              17,
+              9,
+              10
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 17,
+            "round": 5,
+            "seat": 0,
+            "glyphlingId": 1,
+            "from": {
+              "q": 6,
+              "r": 2
+            },
+            "to": {
+              "q": 6,
+              "r": -3
+            },
+            "letter": "T",
+            "target": {
+              "q": 6,
+              "r": -4
+            },
+            "words": [
+              {
+                "word": "TO",
+                "letters": [
+                  "T",
+                  "O"
+                ],
+                "owners": [
+                  0,
+                  1
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              13,
+              17,
+              9,
+              10
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 18,
+            "round": 5,
+            "seat": 1,
+            "glyphlingId": 2,
+            "from": {
+              "q": 10,
+              "r": -2
+            },
+            "to": {
+              "q": 8,
+              "r": 0
+            },
+            "letter": "I",
+            "target": {
+              "q": 8,
+              "r": -5
+            },
+            "words": [
+              {
+                "word": "OI",
+                "letters": [
+                  "O",
+                  "I"
+                ],
+                "owners": [
+                  1,
+                  1
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              13,
+              21,
+              9,
+              10
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 19,
+            "round": 5,
+            "seat": 2,
+            "glyphlingId": 4,
+            "from": {
+              "q": 4,
+              "r": -3
+            },
+            "to": {
+              "q": 1,
+              "r": -3
+            },
+            "letter": "E",
+            "target": {
+              "q": 4,
+              "r": -3
+            },
+            "words": [
+              {
+                "word": "ME",
+                "letters": [
+                  "M",
+                  "E"
+                ],
+                "owners": [
+                  2,
+                  2
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "EN",
+                "letters": [
+                  "E",
+                  "N"
+                ],
+                "owners": [
+                  2,
+                  2
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 8,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              13,
+              21,
+              17,
+              10
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 20,
+            "round": 5,
+            "seat": 3,
+            "glyphlingId": 7,
+            "from": {
+              "q": 1,
+              "r": -4
+            },
+            "to": {
+              "q": 3,
+              "r": -6
+            },
+            "letter": "N",
+            "target": {
+              "q": 3,
+              "r": -3
+            },
+            "words": [
+              {
+                "word": "NE",
+                "letters": [
+                  "N",
+                  "E"
+                ],
+                "owners": [
+                  3,
+                  3
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "NE",
+                "letters": [
+                  "N",
+                  "E"
+                ],
+                "owners": [
+                  3,
+                  2
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 7,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              13,
+              21,
+              17,
+              17
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 21,
+            "round": 6,
+            "seat": 0,
+            "glyphlingId": 0,
+            "from": {
+              "q": 10,
+              "r": -5
+            },
+            "to": {
+              "q": 10,
+              "r": -6
+            },
+            "letter": "O",
+            "target": {
+              "q": 6,
+              "r": -2
+            },
+            "words": [
+              {
+                "word": "OR",
+                "letters": [
+                  "O",
+                  "R"
+                ],
+                "owners": [
+                  0,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              17,
+              21,
+              17,
+              17
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 22,
+            "round": 6,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 0,
+              "r": 2
+            },
+            "to": {
+              "q": 0,
+              "r": 1
+            },
+            "letter": "E",
+            "target": {
+              "q": 0,
+              "r": 0
+            },
+            "words": [
+              {
+                "word": "WE",
+                "letters": [
+                  "W",
+                  "E"
+                ],
+                "owners": [
+                  1,
+                  1
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "EX",
+                "letters": [
+                  "E",
+                  "X"
+                ],
+                "owners": [
+                  1,
+                  2
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 7,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              17,
+              28,
+              17,
+              17
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 23,
+            "round": 6,
+            "seat": 2,
+            "glyphlingId": 4,
+            "from": {
+              "q": 1,
+              "r": -3
+            },
+            "to": {
+              "q": 1,
+              "r": -4
+            },
+            "letter": "O",
+            "target": {
+              "q": 2,
+              "r": -5
+            },
+            "words": [
+              {
+                "word": "OY",
+                "letters": [
+                  "O",
+                  "Y"
+                ],
+                "owners": [
+                  2,
+                  3
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              17,
+              28,
+              20,
+              17
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 24,
+            "round": 6,
+            "seat": 3,
+            "glyphlingId": 7,
+            "from": {
+              "q": 3,
+              "r": -6
+            },
+            "to": {
+              "q": 3,
+              "r": -4
+            },
+            "letter": "E",
+            "target": {
+              "q": 3,
+              "r": 0
+            },
+            "words": [
+              {
+                "word": "HE",
+                "letters": [
+                  "H",
+                  "E"
+                ],
+                "owners": [
+                  3,
+                  3
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              17,
+              28,
+              20,
+              21
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 25,
+            "round": 7,
+            "seat": 0,
+            "glyphlingId": 1,
+            "from": {
+              "q": 6,
+              "r": -3
+            },
+            "to": {
+              "q": 8,
+              "r": -3
+            },
+            "letter": "E",
+            "target": {
+              "q": 6,
+              "r": -1
+            },
+            "words": [
+              {
+                "word": "OE",
+                "letters": [
+                  "O",
+                  "E"
+                ],
+                "owners": [
+                  0,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "ER",
+                "letters": [
+                  "E",
+                  "R"
+                ],
+                "owners": [
+                  0,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 8,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              25,
+              28,
+              20,
+              21
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 26,
+            "round": 7,
+            "seat": 1,
+            "glyphlingId": 2,
+            "from": {
+              "q": 8,
+              "r": 0
+            },
+            "to": {
+              "q": 9,
+              "r": -1
+            },
+            "letter": "E",
+            "target": {
+              "q": 9,
+              "r": -8
+            },
+            "words": [
+              {
+                "word": "AWE",
+                "letters": [
+                  "A",
+                  "W",
+                  "E"
+                ],
+                "owners": [
+                  0,
+                  0,
+                  1
+                ],
+                "magic": 4,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              25,
+              32,
+              20,
+              21
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 27,
+            "round": 7,
+            "seat": 2,
+            "glyphlingId": 4,
+            "from": {
+              "q": 1,
+              "r": -4
+            },
+            "to": {
+              "q": 1,
+              "r": -3
+            },
+            "letter": "A",
+            "target": {
+              "q": 1,
+              "r": -4
+            },
+            "words": [
+              {
+                "word": "AY",
+                "letters": [
+                  "A",
+                  "Y"
+                ],
+                "owners": [
+                  2,
+                  3
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              },
+              {
+                "word": "AO",
+                "letters": [
+                  "A",
+                  "O"
+                ],
+                "owners": [
+                  2,
+                  2
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 7,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              25,
+              32,
+              27,
+              21
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 28,
+            "round": 7,
+            "seat": 3,
+            "glyphlingId": 6,
+            "from": {
+              "q": 4,
+              "r": -1
+            },
+            "to": {
+              "q": 4,
+              "r": 1
+            },
+            "letter": "N",
+            "target": {
+              "q": 4,
+              "r": 0
+            },
+            "words": [
+              {
+                "word": "EN",
+                "letters": [
+                  "E",
+                  "N"
+                ],
+                "owners": [
+                  3,
+                  3
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              25,
+              32,
+              27,
+              25
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 29,
+            "round": 8,
+            "seat": 0,
+            "glyphlingId": 0,
+            "from": {
+              "q": 10,
+              "r": -6
+            },
+            "to": {
+              "q": 9,
+              "r": -5
+            },
+            "letter": "D",
+            "target": {
+              "q": 5,
+              "r": -1
+            },
+            "words": [
+              {
+                "word": "DE",
+                "letters": [
+                  "D",
+                  "E"
+                ],
+                "owners": [
+                  0,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "DO",
+                "letters": [
+                  "D",
+                  "O"
+                ],
+                "owners": [
+                  0,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 8,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              33,
+              32,
+              27,
+              25
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 30,
+            "round": 8,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 0,
+              "r": 1
+            },
+            "to": {
+              "q": 2,
+              "r": 1
+            },
+            "letter": "T",
+            "target": {
+              "q": 3,
+              "r": 1
+            },
+            "words": [
+              {
+                "word": "ET",
+                "letters": [
+                  "E",
+                  "T"
+                ],
+                "owners": [
+                  3,
+                  1
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              33,
+              35,
+              27,
+              25
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 31,
+            "round": 8,
+            "seat": 2,
+            "glyphlingId": 4,
+            "from": {
+              "q": 1,
+              "r": -3
+            },
+            "to": {
+              "q": 0,
+              "r": -2
+            },
+            "letter": "L",
+            "target": {
+              "q": 1,
+              "r": -2
+            },
+            "words": [
+              {
+                "word": "LEX",
+                "letters": [
+                  "L",
+                  "E",
+                  "X"
+                ],
+                "owners": [
+                  2,
+                  3,
+                  2
+                ],
+                "magic": 5,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 5,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              33,
+              35,
+              32,
+              25
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 32,
+            "round": 8,
+            "seat": 3,
+            "glyphlingId": 7,
+            "from": {
+              "q": 3,
+              "r": -4
+            },
+            "to": {
+              "q": 7,
+              "r": -8
+            },
+            "letter": "Y",
+            "target": {
+              "q": 5,
+              "r": -6
+            },
+            "words": [
+              {
+                "word": "YA",
+                "letters": [
+                  "Y",
+                  "A"
+                ],
+                "owners": [
+                  3,
+                  1
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              33,
+              35,
+              32,
+              28
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 33,
+            "round": 9,
+            "seat": 0,
+            "glyphlingId": 0,
+            "from": {
+              "q": 9,
+              "r": -5
+            },
+            "to": {
+              "q": 9,
+              "r": -7
+            },
+            "letter": "T",
+            "target": {
+              "q": 7,
+              "r": -7
+            },
+            "words": [
+              {
+                "word": "TA",
+                "letters": [
+                  "T",
+                  "A"
+                ],
+                "owners": [
+                  0,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "AFT",
+                "letters": [
+                  "A",
+                  "F",
+                  "T"
+                ],
+                "owners": [
+                  1,
+                  2,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 8,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              41,
+              35,
+              32,
+              28
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 34,
+            "round": 9,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 2,
+              "r": 1
+            },
+            "to": {
+              "q": 2,
+              "r": 3
+            },
+            "letter": "I",
+            "target": {
+              "q": 2,
+              "r": -2
+            },
+            "words": [
+              {
+                "word": "ID",
+                "letters": [
+                  "I",
+                  "D"
+                ],
+                "owners": [
+                  1,
+                  1
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "LIE",
+                "letters": [
+                  "L",
+                  "I",
+                  "E"
+                ],
+                "owners": [
+                  2,
+                  1,
+                  3
+                ],
+                "magic": 4,
+                "ownMagic": 1
+              },
+              {
+                "word": "IN",
+                "letters": [
+                  "I",
+                  "N"
+                ],
+                "owners": [
+                  1,
+                  3
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 11,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              41,
+              46,
+              32,
+              28
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 35,
+            "round": 9,
+            "seat": 2,
+            "glyphlingId": 4,
+            "from": {
+              "q": 0,
+              "r": -2
+            },
+            "to": {
+              "q": 1,
+              "r": -3
+            },
+            "letter": "L",
+            "target": {
+              "q": 2,
+              "r": -3
+            },
+            "words": [
+              {
+                "word": "LID",
+                "letters": [
+                  "L",
+                  "I",
+                  "D"
+                ],
+                "owners": [
+                  2,
+                  1,
+                  1
+                ],
+                "magic": 4,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              41,
+              46,
+              36,
+              28
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 36,
+            "round": 9,
+            "seat": 3,
+            "glyphlingId": 7,
+            "from": {
+              "q": 7,
+              "r": -8
+            },
+            "to": {
+              "q": 6,
+              "r": -8
+            },
+            "letter": "E",
+            "target": {
+              "q": 3,
+              "r": -5
+            },
+            "words": [
+              {
+                "word": "OE",
+                "letters": [
+                  "O",
+                  "E"
+                ],
+                "owners": [
+                  2,
+                  3
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              },
+              {
+                "word": "YE",
+                "letters": [
+                  "Y",
+                  "E"
+                ],
+                "owners": [
+                  3,
+                  3
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 7,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              41,
+              46,
+              36,
+              35
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 37,
+            "round": 10,
+            "seat": 0,
+            "glyphlingId": 1,
+            "from": {
+              "q": 8,
+              "r": -3
+            },
+            "to": {
+              "q": 10,
+              "r": -3
+            },
+            "letter": "O",
+            "target": {
+              "q": 6,
+              "r": -3
+            },
+            "words": [
+              {
+                "word": "TOO",
+                "letters": [
+                  "T",
+                  "O",
+                  "O"
+                ],
+                "owners": [
+                  0,
+                  0,
+                  0
+                ],
+                "magic": 6,
+                "ownMagic": 3
+              }
+            ],
+            "magic": 6,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              47,
+              46,
+              36,
+              35
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 38,
+            "round": 10,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 2,
+              "r": 3
+            },
+            "to": {
+              "q": 2,
+              "r": 1
+            },
+            "letter": "B",
+            "target": {
+              "q": 2,
+              "r": 0
+            },
+            "words": [
+              {
+                "word": "BE",
+                "letters": [
+                  "B",
+                  "E"
+                ],
+                "owners": [
+                  1,
+                  3
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              47,
+              49,
+              36,
+              35
+            ],
+            "tangledAfter": [],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 39,
+            "round": 10,
+            "seat": 2,
+            "glyphlingId": 4,
+            "from": {
+              "q": 1,
+              "r": -3
+            },
+            "to": {
+              "q": 0,
+              "r": -2
+            },
+            "letter": "W",
+            "target": {
+              "q": 1,
+              "r": -3
+            },
+            "words": [
+              {
+                "word": "AWL",
+                "letters": [
+                  "A",
+                  "W",
+                  "L"
+                ],
+                "owners": [
+                  2,
+                  2,
+                  2
+                ],
+                "magic": 6,
+                "ownMagic": 3
+              }
+            ],
+            "magic": 6,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              47,
+              49,
+              42,
+              35
+            ],
+            "tangledAfter": [
+              4
+            ],
+            "newlyTangled": [
+              4
+            ],
+            "freed": []
+          },
+          {
+            "turnNo": 40,
+            "round": 10,
+            "seat": 3,
+            "glyphlingId": 6,
+            "from": {
+              "q": 4,
+              "r": 1
+            },
+            "to": {
+              "q": 2,
+              "r": 3
+            },
+            "letter": "E",
+            "target": {
+              "q": 4,
+              "r": 1
+            },
+            "words": [
+              {
+                "word": "NE",
+                "letters": [
+                  "N",
+                  "E"
+                ],
+                "owners": [
+                  3,
+                  3
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "TE",
+                "letters": [
+                  "T",
+                  "E"
+                ],
+                "owners": [
+                  1,
+                  3
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 7,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              47,
+              49,
+              42,
+              42
+            ],
+            "tangledAfter": [
+              4
+            ],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 41,
+            "round": 11,
+            "seat": 0,
+            "glyphlingId": 0,
+            "from": {
+              "q": 9,
+              "r": -7
+            },
+            "to": {
+              "q": 12,
+              "r": -7
+            },
+            "letter": "E",
+            "target": {
+              "q": 8,
+              "r": -3
+            },
+            "words": [
+              {
+                "word": "ERE",
+                "letters": [
+                  "E",
+                  "R",
+                  "E"
+                ],
+                "owners": [
+                  0,
+                  0,
+                  0
+                ],
+                "magic": 6,
+                "ownMagic": 3
+              }
+            ],
+            "magic": 6,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              53,
+              49,
+              42,
+              42
+            ],
+            "tangledAfter": [
+              4
+            ],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 42,
+            "round": 11,
+            "seat": 1,
+            "glyphlingId": 2,
+            "from": {
+              "q": 9,
+              "r": -1
+            },
+            "to": {
+              "q": 7,
+              "r": -1
+            },
+            "letter": "T",
+            "target": {
+              "q": 9,
+              "r": -3
+            },
+            "words": [
+              {
+                "word": "ET",
+                "letters": [
+                  "E",
+                  "T"
+                ],
+                "owners": [
+                  0,
+                  1
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 3,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              53,
+              52,
+              42,
+              42
+            ],
+            "tangledAfter": [
+              4
+            ],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 43,
+            "round": 11,
+            "seat": 2,
+            "glyphlingId": 5,
+            "from": {
+              "q": 7,
+              "r": -4
+            },
+            "to": {
+              "q": 8,
+              "r": -4
+            },
+            "letter": "I",
+            "target": {
+              "q": 7,
+              "r": -4
+            },
+            "words": [
+              {
+                "word": "OI",
+                "letters": [
+                  "O",
+                  "I"
+                ],
+                "owners": [
+                  1,
+                  2
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              },
+              {
+                "word": "TI",
+                "letters": [
+                  "T",
+                  "I"
+                ],
+                "owners": [
+                  0,
+                  2
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              },
+              {
+                "word": "OI",
+                "letters": [
+                  "O",
+                  "I"
+                ],
+                "owners": [
+                  0,
+                  2
+                ],
+                "magic": 3,
+                "ownMagic": 1
+              }
+            ],
+            "magic": 9,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              53,
+              52,
+              51,
+              42
+            ],
+            "tangledAfter": [
+              4
+            ],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 44,
+            "round": 11,
+            "seat": 3,
+            "glyphlingId": 6,
+            "from": {
+              "q": 2,
+              "r": 3
+            },
+            "to": {
+              "q": 4,
+              "r": 3
+            },
+            "letter": "I",
+            "target": {
+              "q": 4,
+              "r": -1
+            },
+            "words": [
+              {
+                "word": "IN",
+                "letters": [
+                  "I",
+                  "N"
+                ],
+                "owners": [
+                  3,
+                  3
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "HIDE",
+                "letters": [
+                  "H",
+                  "I",
+                  "D",
+                  "E"
+                ],
+                "owners": [
+                  3,
+                  3,
+                  0,
+                  0
+                ],
+                "magic": 6,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 10,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              53,
+              52,
+              51,
+              52
+            ],
+            "tangledAfter": [
+              4
+            ],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 45,
+            "round": 12,
+            "seat": 0,
+            "glyphlingId": 1,
+            "from": {
+              "q": 10,
+              "r": -3
+            },
+            "to": {
+              "q": 9,
+              "r": -2
+            },
+            "letter": "I",
+            "target": {
+              "q": 5,
+              "r": -2
+            },
+            "words": [
+              {
+                "word": "ID",
+                "letters": [
+                  "I",
+                  "D"
+                ],
+                "owners": [
+                  0,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 4,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              57,
+              52,
+              51,
+              52
+            ],
+            "tangledAfter": [
+              4
+            ],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 46,
+            "round": 12,
+            "seat": 1,
+            "glyphlingId": 3,
+            "from": {
+              "q": 2,
+              "r": 1
+            },
+            "to": {
+              "q": 2,
+              "r": 3
+            },
+            "letter": "I",
+            "target": {
+              "q": 2,
+              "r": 1
+            },
+            "words": [
+              {
+                "word": "BI",
+                "letters": [
+                  "B",
+                  "I"
+                ],
+                "owners": [
+                  1,
+                  1
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              },
+              {
+                "word": "IT",
+                "letters": [
+                  "I",
+                  "T"
+                ],
+                "owners": [
+                  1,
+                  1
+                ],
+                "magic": 4,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 8,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              57,
+              60,
+              51,
+              52
+            ],
+            "tangledAfter": [
+              4
+            ],
+            "newlyTangled": [],
+            "freed": []
+          },
+          {
+            "turnNo": 47,
+            "round": 12,
+            "seat": 2,
+            "glyphlingId": 5,
+            "from": {
+              "q": 8,
+              "r": -4
+            },
+            "to": {
+              "q": 7,
+              "r": -3
+            },
+            "letter": "C",
+            "target": {
+              "q": 8,
+              "r": -4
+            },
+            "words": [
+              {
+                "word": "ICE",
+                "letters": [
+                  "I",
+                  "C",
+                  "E"
+                ],
+                "owners": [
+                  1,
+                  2,
+                  0
+                ],
+                "magic": 4,
+                "ownMagic": 1
+              },
+              {
+                "word": "TIC",
+                "letters": [
+                  "T",
+                  "I",
+                  "C"
+                ],
+                "owners": [
+                  0,
+                  2,
+                  2
+                ],
+                "magic": 5,
+                "ownMagic": 2
+              }
+            ],
+            "magic": 9,
+            "refreshed": 0,
+            "refresh": false,
+            "totalsAfter": [
+              57,
+              60,
+              60,
+              52
+            ],
+            "tangledAfter": [
+              4,
+              5
+            ],
+            "newlyTangled": [
+              5
+            ],
+            "freed": []
+          }
+        ],
+        "end": {
+          "endedOnTurn": 47,
+          "endedBy": 2,
+          "selfTangle": true,
+          "tangles": [
+            {
+              "glyphling": 4,
+              "owner": 2,
+              "pieces": [
+                0,
+                1,
+                0,
+                0
+              ],
+              "bonus": [
+                0,
+                3,
+                0,
+                0
+              ]
+            },
+            {
+              "glyphling": 5,
+              "owner": 2,
+              "pieces": [
+                4,
+                0,
+                0,
+                0
+              ],
+              "bonus": [
+                12,
+                0,
+                0,
+                0
+              ]
+            }
+          ],
+          "tangleMagic": [
+            12,
+            3,
+            0,
+            0
+          ],
+          "totals": [
+            69,
+            63,
+            60,
+            52
+          ]
+        }
+      }
+    },
+    "trayOrder": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    ]
+  }
+}

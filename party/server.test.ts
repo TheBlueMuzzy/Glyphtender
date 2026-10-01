@@ -75,6 +75,9 @@ function expectNoSecrets(view: GameView) {
   expect(game.lastTurn?.magic ?? 0).toBe(0)
   expect(game.lastTurn?.words.every((w) => w.magic === 0) ?? true).toBe(true)
   expect(view.results).toBeNull()
+  // the game log holds every turn's Magic and the running totals: sent empty until the end (D47)
+  expect(game.log ?? { turns: [], end: null }).toEqual({ turns: [], end: null })
+  expect(JSON.stringify(view)).not.toMatch(/totalsAfter|ownMagic|"tangles"/)
 }
 
 /** Every player plays random legal moves from their OWN view until the game ends. */
@@ -106,6 +109,9 @@ describe('online server — secrets stay secret', () => {
         expect(last.game).toEqual(server.game!.game)
         expect(last.results?.stats).toEqual(server.game!.stats)
         expect(last.game.winners.length).toBeGreaterThan(0)
+        // …and the whole game log, for the end screen
+        expect(last.game.log!.turns).toHaveLength(server.game!.game.turnCount)
+        expect(last.game.log!.end?.totals).toEqual(server.game!.game.magic)
       }
       // Some Magic really was made (so the zeroing above was hiding something real)
       expect(server.game!.game.magic.some((m) => m > 0)).toBe(true)

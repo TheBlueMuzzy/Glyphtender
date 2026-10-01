@@ -24,7 +24,9 @@
     "e2e:update": "node e2e/sw-update.mjs",
     "e2e:portrait": "node e2e/portrait-layout.mjs",
     "e2e:spotlight": "node e2e/word-spotlight.mjs",
-    "e2e:previews": "node e2e/previews.mjs"
+    "e2e:previews": "node e2e/previews.mjs",
+    "e2e:end": "node e2e/end-screen-shots.mjs",
+    "fixtures:end": "node scripts/end-fixtures.mjs"
   },
   "dependencies": {
     "partyserver": "^0.5.10",

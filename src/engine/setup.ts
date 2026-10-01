@@ -1,6 +1,7 @@
 // Starting a new game: the shuffled bag and the snake draft order.
 import bagJson from '../../content/data/bag.json'
 import { defaultBoardFor, defaultRules, getBoard } from './boards'
+import { emptyLog } from './log'
 import { shuffle } from './rng'
 import type { GameConfig, GameState, RuleNumbers } from './types'
 
@@ -53,5 +54,6 @@ export function newGame(options: NewGameOptions): GameState {
     winners: [],
     turnCount: 0,
     rng: shuffled.rng,
+    log: emptyLog(),
   }
 }

@@ -219,18 +219,19 @@ try {
     const table = page.getByRole('dialog', { name: /Grand Glyphtender/ })
     await table.waitFor({ timeout: 10000 })
     await shot('9-end-table', 700)
-    check(`the end table lists ${COUNT} players`, (await table.locator('.kit-listrow').count()) === COUNT)
-    check('the end table shows the stats', (await table.getByText(/Best turn/).count()) === COUNT)
-    check('a winner is starred', (await table.getByRole('img', { name: 'Winner' }).count()) >= 1)
-    // 4 players don't all fit on a phone: the list scrolls — the last player can be scrolled into the dialog
-    const last = table.locator('.kit-listrow').last()
-    await last.scrollIntoViewIfNeeded()
-    const reachable = await last.evaluate((row) => {
-      const r = row.getBoundingClientRect(), d = row.closest('[role="dialog"]').getBoundingClientRect()
-      return r.top >= d.top - 0.5 && r.bottom <= d.bottom + 0.5 && r.bottom <= innerHeight + 0.5
+    // The end screen (F26): everyone on the first page — every glyphling on screen without scrolling, the winner big
+    check(`the end screen shows ${COUNT} players`, (await table.locator('.game-end-player').count()) === COUNT)
+    check('a winner is shown big', (await table.locator('.game-end-player[data-winner]').count()) >= 1)
+    const allInView = await page.evaluate(() => {
+      const box = document.querySelector('.game-end .kit-scroll').getBoundingClientRect()
+      return [...document.querySelectorAll('.game-end-art')].every((a) => { const r = a.getBoundingClientRect(); return r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5 })
     })
-    check(`the last player on the end table can be scrolled into view`, reachable)
-    if (COUNT === 4) await page.screenshot({ path: `${OUT}/${TAG}-${size.name}-9b-end-table-scrolled.png` })
+    check('every player is on the first page without scrolling', allInView)
+    // the breakdown is one tab away
+    await tap(table.getByRole('tab', { name: 'Scorecard' }))
+    check('the scorecard has a column per player', (await table.locator('.game-scorecard th[scope="col"]').count()) === COUNT)
+    if (COUNT === 4) await shot('9b-end-scorecard', 500)
+    await tap(table.getByRole('tab', { name: 'Results' }))
 
     // ---- New game (no Play again any more): the new-game screen, remembering the player count ----
     check('no Play again on the end table', (await table.getByRole('button', { name: 'Play again' }).count()) === 0)

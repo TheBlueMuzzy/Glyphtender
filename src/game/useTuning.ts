@@ -5,6 +5,7 @@ import { liveTuning, onTuning } from '../devkit/tuning/liveTuning'
 import layoutFile from '../../content/tuning/layout.json'
 import gardenFile from '../../content/tuning/garden.json'
 import animFile from '../../content/tuning/anim.json'
+import endscreenFile from '../../content/tuning/endscreen.json'
 
 export type LayoutTuning = typeof layoutFile
 export type GardenTuning = typeof gardenFile
@@ -19,3 +20,4 @@ function useTuningState<T>(file: string, initial: T): T {
 export const useLayoutTuning = () => useTuningState('layout', layoutFile)
 export const useGardenTuning = () => useTuningState('garden', gardenFile)
 export const useAnimTuning = () => useTuningState('anim', animFile)
+export const useEndTuning = () => useTuningState('endscreen', endscreenFile)

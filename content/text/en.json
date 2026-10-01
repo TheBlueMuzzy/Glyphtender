@@ -70,16 +70,130 @@
       "howToPlay": "Rules"
     },
     "gameOver": {
-      "title": "The garden is tangled",
-      "message": "Most Magic wins — ties share the win.",
+      "label": "The end of the game",
+      "tabs": {
+        "results": "Results",
+        "story": "Story",
+        "scorecard": "Scorecard"
+      },
+      "tabsLabel": "End of game pages",
+      "sharedWin": "Shared win!",
       "points": "{n} Magic",
       "winner": "Winner",
-      "tangleMagic": "Tangles +{n}",
-      "bestTurn": "Best turn +{n}",
-      "longestWord": "Longest {word}",
-      "noWord": "no words yet",
-      "wordsMade": "{n} words",
+      "you": "You",
+      "place": "{place}",
+      "tiedPlace": "={place}",
+      "split": "Words {words} · Tangles {tangles}",
+      "splitLabel": "{words} Magic from words, {tangles} from tangles",
+      "highlights": "Highlights",
+      "noLog": "This game was saved before the game log existed, so there's no story to tell.",
+      "awards": {
+        "photoFinish": {
+          "title": "Photo finish",
+          "reason": "Won by just {n} Magic"
+        },
+        "deciding": {
+          "title": "The deciding turn",
+          "reason": "Took the lead for good in round {round}: {words}, +{n}",
+          "reasonTangles": "The tangles decided it: +{n} at the very end"
+        },
+        "biggestTurn": {
+          "title": "Biggest turn",
+          "reason": "+{n} Magic in one cast: {words}"
+        },
+        "twoBirds": {
+          "title": "Two birds",
+          "reason": "{n} words from one seed: {words}"
+        },
+        "longestWord": {
+          "title": "Longest word",
+          "reason": "{word}, {n} letters"
+        },
+        "borrowedBloom": {
+          "title": "Borrowed bloom",
+          "reason": "{word} grew mostly from rivals' seeds: +{magic}"
+        },
+        "soloGrower": {
+          "title": "Solo grower",
+          "reason": "+{n} Magic from words of only their own seeds"
+        },
+        "knotTier": {
+          "title": "Knot tier",
+          "reason": "Tangled {other}'s glyphling"
+        },
+        "braveKnot": {
+          "title": "Brave knot",
+          "reason": "Tangled their own glyphling to end it. Bold!",
+          "reasonWon": "Tangled their own glyphling to end it, and won!"
+        },
+        "tangleHarvest": {
+          "title": "Tangle harvest",
+          "reason": "+{n} Magic from tangles"
+        },
+        "secretLeader": {
+          "title": "Secret leader",
+          "reason": "Ahead after {n} of {rounds} rounds, and nobody knew"
+        },
+        "comeback": {
+          "title": "Comeback",
+          "reason": "Was {n} Magic behind, and still won"
+        },
+        "rareSeed": {
+          "title": "Rare seed",
+          "reason": "{word} with a rare letter: +{magic}"
+        },
+        "generousGardener": {
+          "title": "Generous gardener",
+          "reason": "{n} of their seeds grew into rivals' words"
+        },
+        "freshStart": {
+          "title": "Fresh start",
+          "reason": "+{n} Magic right after a refresh"
+        }
+      },
+      "chart": {
+        "label": "Everyone's Magic, round by round",
+        "start": "Start",
+        "round": "R{n}",
+        "tangles": "Tangles",
+        "hint": "Tap a mark on a line to see what happened.",
+        "turn": "Round {round} · {player} cast {letter}: {words}, +{n}",
+        "turnNoWords": "Round {round} · {player} cast {letter}, no words",
+        "moveOnly": "Round {round} · {player} moved",
+        "tangle": "Round {round} · {by} tangled {owner}'s glyphling",
+        "selfTangle": "Round {round} · {owner} tangled their own glyphling",
+        "tangleBonus": "Tangles: {list}",
+        "tangleBonusPart": "{player} +{n}",
+        "noTangleBonus": "Tangles: nobody got a bonus",
+        "lead": "Round {round} · {player} takes the lead",
+        "markerTangle": "{owner}'s glyphling tangled",
+        "markerAward": "{title}: {player}",
+        "markerLead": "{player} takes the lead"
+      },
+      "card": {
+        "label": "Scorecard",
+        "groups": {
+          "magic": "Magic",
+          "words": "Words",
+          "play": "Play"
+        },
+        "total": "Total",
+        "wordMagic": "From words",
+        "soloMagic": "Solo words",
+        "tangleMagic": "From tangles",
+        "letters": "{n}-letter",
+        "lettersPlus": "{n}+ letters",
+        "longestWord": "Longest",
+        "bestTurn": "Best turn",
+        "multiWord": "Multi-word turns",
+        "refreshed": "Seeds refreshed",
+        "tangledRivals": "Tangled a rival",
+        "gotTangled": "Got tangled",
+        "none": "–",
+        "best": "Best in this row"
+      },
       "separator": " · ",
+      "and": " + ",
       "newGame": "New game",
       "menu": "Menu"
     },

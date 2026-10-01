@@ -188,7 +188,8 @@ try {
     await p.page.getByRole('dialog').getByRole('button', { name: 'New game' }).waitFor()
     await shot(p, '7-end-table')
     const table = p.page.getByRole('dialog')
-    check(`${p.name}'s end table has 4 rows`, (await table.locator('.kit-listrow').count()) === 4)
+    check(`${p.name}'s end screen has 4 players`, (await table.locator('.game-end-player').count()) === 4)
+    check(`${p.name}'s end screen marks their own card "You"`, (await table.getByText('You', { exact: true }).count()) === 1)
     for (const name of ['Ada', 'Bo', 'Cy', 'Di']) check(`${p.name}'s end table has ${name}`, (await table.getByText(name, { exact: true }).count()) > 0)
   }
   // The host's New game takes everyone back to the lobby, 4 seats
