@@ -10,7 +10,7 @@
 // Every WebSocket frame each browser RECEIVES is recorded: the run FAILS if one ever
 // holds another player's seeds, the bag, the rng, the seed or any Magic before the game is over.
 // Also checks every screenshot (nothing past a screen edge, buttons ≥ 44 px) and a clean console.
-// Starts its OWN `partykit dev` (default port 1995 — never 1997, where `npm run party:dev` runs) and Vite
+// Starts its OWN `wrangler dev` (default port 1995 — never 1997, where `npm run party:dev` runs) and Vite
 // (default 5311) and stops only those. The page finds that server through VITE_PARTY_PORT (ui/online/session.ts).
 //   npm run e2e:online [outDir] [vitePort] [partyPort]
 import { spawn, execSync } from 'node:child_process'
@@ -36,7 +36,7 @@ const portFree = (port) => new Promise((ok) => {
   const probe = netServer().once('error', () => ok(false)).once('listening', () => probe.close(() => ok(true))).listen(port, '0.0.0.0')
 })
 if (!(await portFree(PARTY_PORT))) throw new Error(`Port ${PARTY_PORT} is busy — pass another: npm run e2e:online e2e-shots 5311 <port>`)
-const party = spawn(`npx partykit dev --port ${PARTY_PORT}`, { shell: true, cwd: process.cwd() })
+const party = spawn(`npx wrangler dev --port ${PARTY_PORT} --ip 127.0.0.1 --inspector-port 0`, { shell: true, cwd: process.cwd() })
 let partyLog = ''
 party.stdout.on('data', (d) => { partyLog += d })
 party.stderr.on('data', (d) => { partyLog += d })
@@ -44,7 +44,7 @@ const stopParty = () => {
   try { process.platform === 'win32' ? execSync(`taskkill /PID ${party.pid} /T /F`, { stdio: 'ignore' }) : party.kill() } catch { /* already gone */ }
 }
 for (let t = 0; t < 120 && !/Ready on/.test(partyLog); t++) await wait(500)
-if (!/Ready on/.test(partyLog)) { stopParty(); throw new Error(`partykit dev didn't start:\n${partyLog}`) }
+if (!/Ready on/.test(partyLog)) { stopParty(); throw new Error(`wrangler dev didn't start:\n${partyLog}`) }
 process.env.VITE_PARTY_PORT = String(PARTY_PORT) // the page talks to OUR server
 const vite = await createServer({ server: { port: VITE_PORT, strictPort: true, host: '127.0.0.1' }, logLevel: 'warn' })
 await vite.listen()

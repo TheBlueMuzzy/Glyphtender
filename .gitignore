@@ -32,7 +32,8 @@ lerna-debug.log*
 # Claude
 .claude/settings.local.json
 
-# PartyKit local state
+# Local server state (wrangler dev)
+.wrangler/
 .partykit/
 
 # Project

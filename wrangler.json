@@ -1,0 +1,11 @@
+{
+  "name": "glyphtender",
+  "main": "party/worker.ts",
+  "compatibility_date": "2026-09-01",
+  "build": { "command": "node scripts/server-words.mjs" },
+  "rules": [{ "type": "Text", "globs": ["**/*.txt"], "fallthrough": true }],
+  "durable_objects": { "bindings": [{ "name": "Main", "class_name": "Main" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Main"] }],
+  "observability": { "enabled": true },
+  "dev": { "port": 1997, "ip": "0.0.0.0" }
+}

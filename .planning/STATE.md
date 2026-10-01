@@ -1,9 +1,9 @@
 ## ▶ RESUME HERE
-Released v0.1.0 (alpha) 2026-09-30 — live at https://thebluemuzzy.github.io/glyphtender/ (pass-and-play; Pages deploys on push to main). **Online is NOT live:** `npx partykit deploy` fails — PartyKit's shared partykit.dev zone hit Cloudflare's 10,000 custom-domain limit (known issue since the Cloudflare acquisition; Roll Better only works because it got its address earlier). "Play online" + the Prototype link are hidden on live builds (shown in local dev). Next: F23 — move the server to Muzzy's own free Cloudflare account, then set VITE_PARTY_HOST in deploy.yml.
-Muzzy: create/log in to a free Cloudflare account, then run `! npx wrangler login` in the project → Claude does F23. · Open decisions (defaults built): word list B001 · online timer/away rules · Magic secrecy · desktop button size · merge framework dev/rooms · Roll Better persistentId leak.
+F23 built on branch `dev/online`: the online server now runs on Muzzy's own Cloudflare (PartyServer + wrangler, TDD D46) and is **live** at glyphtender.joebrogno.workers.dev — e2e:online passes against it (full game, 0 leaks). deploy.yml now sets VITE_PARTY_HOST, so **Play online appears on the live site once `/deliver` merges dev/online** (v0.1.1). Next: Muzzy tries online (phone + PC) → "approved" → `/deliver`.
+Open decisions (defaults built): word list B001 · online timer/away rules · Magic secrecy · desktop button size · merge framework dev/rooms · Roll Better persistentId leak.
 
 ## Where we are
-Stage: deliver · Milestone: alpha released · Sprint: — · Doing: friends testing · Branch: main · Version: 0.1.0.0 · Live: https://thebluemuzzy.github.io/glyphtender/ (alpha)
+Stage: develop · Milestone: v0.4 Play online · Sprint: — · Doing: F23 — built, waiting on Muzzy's try · Branch: dev/online · Version: 0.1.0.0 · Live: https://thebluemuzzy.github.io/glyphtender/ (alpha)
 
 ## Key facts
 **Remake.** Web remake of the Unity game. The original is read-only reference at `../glyphtender-original` (GitHub `TheBlueMuzzy/glyphtender-original`, renamed from `Glyphtender` 2026-09-30). Never copy it wholesale — pull ideas/assets across deliberately. Digest: `.planning/research/original-digest.md`.
@@ -11,13 +11,14 @@ Stage: deliver · Milestone: alpha released · Sprint: — · Doing: friends tes
 **Muzzy's direction (2026-09-30):** phone (portrait AND landscape) + desktop — do responsive properly · first release = strong pass-and-play (AI replaces a seat next; online = "P0.5", reuse Roll Better's rooms if cheap) · tutorial not yet · UI kit **Cozy** style · think critically vs industry standards, don't just port.
 **BMUZ stress test:** log BMUZ gaps in `~/.claude/config/bmuz/reviews/2026-09-30-glyphtender-remake/FINDINGS.md` as we go.
 **Default branch:** main (deploys to GitHub Pages on push). Next work branch: `dev/beta` (made by /develop).
-**Release:** GitHub Pages (recipe ~/.claude/config/bmuz/release/github-pages.md) + online server: NOT on PartyKit's shared zone (full) — F23 moves it to Muzzy's own Cloudflare. Live builds hide Play online unless VITE_PARTY_HOST is set in deploy.yml.
+**Release:** GitHub Pages (recipe ~/.claude/config/bmuz/release/github-pages.md) + online server on Muzzy's own Cloudflare: `npm run party:deploy` (wrangler; logged in on the PC) → glyphtender.joebrogno.workers.dev. Deploy the server BEFORE the site when party/ or the engine changes. Live builds hide Play online unless VITE_PARTY_HOST is set in deploy.yml (it is, from dev/online).
 **Sims:** `npm run sim` (research/sims.md): bag runs out in 0–1.6% of games; games 42–67 turns.
-**Online dev:** `npm run party:dev` (PartyKit on port 1997 — Roll Better uses 1999) + `npm run dev`; e2e: `e2e:game`, `e2e:pass`, `e2e:online` (each starts its own servers; run one at a time).
+**Online dev:** `npm run party:dev` (wrangler dev on port 1997 — Roll Better uses 1999) + `npm run dev`; e2e: `e2e:game`, `e2e:pass`, `e2e:online` (each starts its own servers; run one at a time).
 **Run:** `npx vite --host --port 5180` (dev port 5180) · tests `npm test` · sketch check `npm run e2e:sketch` (needs the dev server).
 **Don't re-break:** a score pop's LAST animation frame must be invisible (opacity 0) — the pops stay in the page until the next landing, held by fill (B007; e2e/leftover-pops.mjs) · before the move a tray seed can't be dragged at all, not even to reorder — it shakes (B008, Muzzy's call). · a targeted seed is never see-through — no opacity on it, only a plannedSeedLook filter (B010) · after Refresh N the handoff / next player waits until the tray's shrink → grow has played (B011).
 
 ## Log
+- 2026-09-30 — F23: online server moved to Muzzy's own Cloudflare (PartyServer); deployed + e2e green against live.
 - 2026-09-30 — Alpha release prep: live online host set, returning-player update check, credits; all checks green. Delivering v0.1.0.
 - 2026-09-30 — Sprint 06 Feel pass (autonomous): Muzzy's 11 playtest notes built + 7 bugs fixed by e2e and review; 197 tests.
 - 2026-09-30 — Bug sweep (autonomous): word-list failure now shows Retry (and End turn no longer waits for words), draft ignores illegal taps quietly, right-click no longer taps, snapshots keep end-table stats. 168 tests, all e2e green.

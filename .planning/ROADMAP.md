@@ -70,7 +70,7 @@ flowchart LR
   F03 --> F17[✅ F17 Bug capture]
 ```
 
-## v0.4 — Play online  🎛️ built — NOT live: PartyKit's shared partykit.dev zone is full (2026-09-30); server moves to Muzzy's own Cloudflare (F23)
+## v0.4 — Play online  🎛️ built · server live on Muzzy's Cloudflare (F23) — the live site shows Play online after /deliver
 Goal: 2–4 players on different devices join by room code and play a full game; seeds and Magic stay secret.
 - ✅ F18 🧱 Framework "rooms" module — harvested from Roll Better (create/join, identity, rejoin, host migration) — must:alpha · sprint 5
 - ✅ F19 🧱 Online server: same engine, per-player views (`design/online.md` first) — must:alpha · needs: F11, F18 · sprint 5
@@ -78,6 +78,7 @@ Goal: 2–4 players on different devices join by room code and play a full game;
   why: play with friends anywhere → Fellowship
 - 🎛️ F21 🎮 Rejoin, host leaves, idle players — must:alpha · needs: F20
 - 🎛️ F22 🎮 Rematch — must:alpha · needs: F20, ~F13
+- 🔨 F23 🧱 Online server on Muzzy's own Cloudflare (PartyServer + wrangler — TDD D46) — must:alpha · needs: F19
 ```mermaid
 flowchart LR
   F18[✅ F18 Rooms module] --> F19[✅ F19 Server]
@@ -87,6 +88,7 @@ flowchart LR
   F20 --> F21[🎛️ F21 Rejoin / idle]
   F20 --> F22[🎛️ F22 Rematch]
   F13[✅ F13 Reveal] --> F22
+  F19 --> F23[🔨 F23 Own Cloudflare]
 ```
 
 ## Later
