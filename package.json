@@ -22,7 +22,8 @@
     "e2e:online": "node e2e/online-shots.mjs",
     "e2e:online4": "node e2e/online-four.mjs",
     "e2e:update": "node e2e/sw-update.mjs",
-    "e2e:portrait": "node e2e/portrait-layout.mjs"
+    "e2e:portrait": "node e2e/portrait-layout.mjs",
+    "e2e:spotlight": "node e2e/word-spotlight.mjs"
   },
   "dependencies": {
     "partyserver": "^0.5.10",

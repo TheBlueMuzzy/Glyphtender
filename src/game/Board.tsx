@@ -8,7 +8,8 @@
 //              "not planted yet" look — garden.json plannedSeedLook, PlannedSeedLook.tsx)
 //   done     — plain piece
 //   drop here — while dragging, the legal hex under the piece: a brighter, filled option (dropTarget.ts)
-// WORDS (word indicators on): a white border behind the seeds — planned while aiming, then after they grow (WordBorders.tsx).
+// WORDS (word indicators on): a white border behind the seeds — planned while aiming, then after they grow, until play
+// moves on (WordBorders.tsx). 2+ words → the word spotlight: one word lit at a time, looping, with a "QUA +4" label (F25).
 // MOVES glide from hex to hex (useGlide.ts) — a planned move, Undo, and moves made anywhere else.
 // DANGER CUES (DangerCue.tsx): 1 move left = dashed thorny ring in the owner's colour · tangled = a vine wraps it
 // Colours: content/tuning/garden.json · timings: anim.json · margin: layout.json.
@@ -30,11 +31,15 @@ import { useGlide } from './useGlide'
 import { useTurnPulse } from './useTurnPulse'
 import { pulsingGlyphlings } from '../store/turnPulse'
 import { ScorePops } from './ScorePops'
-import { WordBorders } from './WordBorders'
-import { uniqueHexes } from '../store/wordMarks'
+import { WordBorders, WordLabels, type SpotWord } from './WordBorders'
+import { useWordSpotlight } from './useWordSpotlight'
+import { popTimeline, scorePops } from '../store/wordMarks'
+import { reduceMotion } from '../ui/kit'
 import { usePreview } from './usePreview'
 import { HEX, useThrow } from './useThrow'
 import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
+
+const NO_WORDS: SpotWord[] = []
 
 type Props = {
   /** Reports how wide one hex is on screen (pixels), so the tray can match it. */
@@ -53,6 +58,8 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   const revealAt = useGameStore((s) => s.revealAt)
   const seats = useGameStore((s) => s.seats)
   const waiting = useGameStore((s) => s.waiting)
+  const settingAside = useGameStore((s) => s.setAside.length > 0)
+  const refreshing = useGameStore((s) => s.refreshFx !== null)
   const indicators = useGameStore((s) => s.options?.wordIndicators ?? true)
   const finishCast = useGameStore((s) => s.finishCast)
   const colours = useGardenTuning()
@@ -97,7 +104,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
     () => (flying && move && cast ? { glyphling: move.glyphling, from: move.to, to: cast.target } : null),
     [flying, move, cast],
   )
-  useThrow({ svgRef, seedRef, flight, onLanded: finishCast, landed, timing, colours })
+  useThrow({ svgRef, seedRef, flight, onLanded: finishCast, landed, timing })
 
   // Where each glyphling is drawn (a planned move shows it on its new hex); a change of spot glides there
   const spots = useMemo(
@@ -124,12 +131,27 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   const lit = board.cells.filter((h) => highlight?.hexes.some((x) => hexKey(x) === hexKey(h)))
   const glow = highlight?.kind === 'cast' ? colours.castGlow : colours.moveGlow
   // Word indicators off: nothing shows which seeds make a word (players spot words themselves)
-  const outlined = indicators && !flying ? uniqueHexes(preview?.words.flatMap((w) => w.hexes) ?? []) : []
-  const grown = indicators && landed && game.lastTurn ? uniqueHexes(game.lastTurn.words.flatMap((w) => w.hexes)) : []
+  const planned: SpotWord[] = indicators && !flying ? preview?.words ?? NO_WORDS : NO_WORDS
   // The score pops belong to the seed that just landed (its turn grew words)
   const turn = game.lastTurn
   const pops = indicators && landed && turn?.target && hexKey(turn.target) === landed.key && turn.words.length > 0 ? turn : null
+  // The words it grew stay lit (one at a time) until play moves on: the next player picks something up or plans a move,
+  // a refresh, the next throw, the end-of-game reveal — or the next turn (a move-only turn has no landing of its own)
+  const movedOn = move || cast || selected || flying || settingAside || refreshing || revealAt !== null
+  const grown: SpotWord[] = pops && !movedOn ? pops.words : NO_WORDS
+  // The grown words' labels show once the score pops have flown into the total (reduce motion: there are no seed pops)
+  const labelWait = useMemo(() => (pops && !reduceMotion() ? popTimeline(scorePops(game, pops), timing).fly + timing.scoreFlyTime : 0),
+    [pops, game, timing])
+  useWordSpotlight(svgRef, 'planned', planned, 0, 1, timing, colours.spotlightLabel)
+  useWordSpotlight(svgRef, 'grown', grown, landed?.count ?? 0, colours.grownGlowStrength, timing, colours.spotlightLabel)
   const s = colours.pieceScale
+  // Where a word's label may go: off every piece (seeds, glyphlings where they're drawn, the aimed seed), inside the board's box
+  const taken = useMemo(() => [
+    ...Object.keys(game.seeds).map((k) => { const [q, r] = k.split(',').map(Number); return { q, r } }),
+    ...spots.map((p) => p.hex),
+    ...(cast ? [cast.target] : []),
+  ], [game.seeds, spots, cast])
+  const labelBox = useMemo(() => ({ minX: view.minX - shift.x, minY: view.minY - shift.y, w: view.w, h: view.h }), [view, shift])
   const at = (h: Hex) => hexToPixel(h, HEX)
 
   // A ring at the hex's own edge — outside the art's coloured frame, so it reads as a halo
@@ -155,7 +177,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
       })}
 
       {/* Made words: a white border under the seeds (so it frames the letters instead of covering them) */}
-      <WordBorders planned={outlined} grown={grown} grownKey={landed?.count ?? 0} colours={colours} />
+      <WordBorders planned={planned} grown={grown} grownKey={landed?.count ?? 0} colours={colours} />
 
       {moved && (
         <image data-hex={hexKey(moved.hex)} href={glyphlingArt(moved.seat)} x={at(moved.hex).x - s} y={at(moved.hex).y - s}
@@ -221,6 +243,10 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
           </g>
         )
       })}
+
+      {/* The lit word's label ("QUA +4") — above the pieces, on a spot that covers no letters */}
+      <WordLabels planned={planned} grown={grown} grownKey={landed?.count ?? 0} colours={colours} pxPerHex={pxPerHex}
+        taken={taken} view={labelBox} grownWait={labelWait} />
 
       {pops && <ScorePops key={`pops-${landed?.count}`} game={game} turn={pops} colours={colours} timing={timing} pxPerHex={pxPerHex} />}
 
