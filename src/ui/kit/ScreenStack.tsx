@@ -5,7 +5,8 @@
 // Each screen is a component that returns a <Screen>. A dialog is just <Screen dialog> pushed on top.
 // Everything under the top screen is inert: it can't be clicked, tapped or focused. Open screens under the top one
 // are also hidden (so a Pause panel never peeks out from behind the Rules opened from it): only the top screen shows,
-// over one dim; the one under it comes back when it closes. The game (children) stays visible under the dim.
+// over one dim (a screen opened over another always dims, dialog or not); the one under it comes back when it closes.
+// The game (children) stays visible under the dim.
 //
 // overlay: for a game whose own view isn't built from kit Screens (a letterboxed canvas, its own HUD
 // with z-indexes). Put <ScreenStack overlay screens={…} /> next to the game, with no children:
@@ -67,7 +68,7 @@ export function ScreenStack({ screens, children, overlay }: ScreenStackProps) {
   const open = stack.map((name, i) => {
     const Screen = screens[name]
     return (
-      // data-over: opened on top of another screen — its dim is there at once (the one under it was already dimming)
+      // data-over: opened on top of another screen — it carries the dim (the one under it is hidden), there at once
       <div key={`${i}-${name}`} className="kit-layer" data-over={i > 0 || undefined} ref={(el) => { layers.current[i + 1] = el }}>
         {Screen ? <Screen /> : null}
       </div>
