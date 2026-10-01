@@ -4,9 +4,10 @@ import text from '../../content/text/en.json'
 import { logOf } from '../engine/log'
 import type { GameState, LogTurn } from '../engine/types'
 import { fill } from '../ui/kit/blocks/words'
-import type { Award, ChartMarker } from './stats'
+import { LENGTHS, type Award, type ChartMarker, type Scorecard } from './stats'
 
 const w = text.game.gameOver
+const card = w.card
 type Name = (seat: number) => string
 
 /** "Biggest turn" + "+14 Magic in one cast: GARDEN + DEN". */
@@ -59,4 +60,45 @@ export function markerLabel(marker: ChartMarker, awards: Award[], name: Name): s
   if (marker.kind === 'lead') return fill(w.chart.markerLead, { player: name(marker.seat) })
   const award = awards.find((a) => a.id === marker.award)
   return fill(w.chart.markerAward, { title: award ? w.awards[award.id].title : '', player: name(marker.seat) })
+}
+
+// ─── The scorecard's rows ───
+
+export type ScoreRow = { label: string; values: number[]; shown?: (string | number)[]; tint: boolean }
+export type ScoreGroup = { name: string; rows: ScoreRow[] }
+
+/** The scorecard's rows for these players (columns in `seats` order). Pure, so it's tested. */
+export function scorecardRows(game: GameState, cards: Scorecard[], seats: number[]): ScoreGroup[] {
+  const col = (value: (c: Scorecard) => number) => seats.map((seat) => value(cards[seat]))
+  const lengths = LENGTHS.map((n, i) => ({
+    label: i === LENGTHS.length - 1 ? fill(card.lettersPlus, { n }) : fill(card.letters, { n }),
+    values: col((c) => c.byLength[i]),
+    tint: true,
+  })).filter((_, i) => LENGTHS[i] >= game.config.rules.minWordLength)
+  return [
+    { name: card.groups.magic, rows: [
+      { label: card.total, values: col((c) => c.total), tint: true },
+      { label: card.wordMagic, values: col((c) => c.wordMagic), tint: true },
+      { label: card.soloMagic, values: col((c) => c.soloMagic), tint: true },
+      { label: card.tangleMagic, values: col((c) => c.tangleMagic), tint: true },
+    ] },
+    { name: card.groups.words, rows: [
+      ...lengths,
+      { label: card.longestWord, values: col((c) => c.longestWord.length), tint: true },
+      { label: card.bestTurn, values: col((c) => c.bestTurn?.magic ?? 0), shown: col((c) => c.bestTurn?.magic ?? 0).map((n) => (n ? `+${n}` : card.none)), tint: true },
+    ] },
+    { name: card.groups.play, rows: [
+      { label: card.multiWord, values: col((c) => c.multiWordTurns), tint: true },
+      { label: card.refreshed, values: col((c) => c.seedsRefreshed), tint: false },
+      { label: card.tangledRivals, values: col((c) => c.tangledRivals), tint: true },
+      { label: card.gotTangled, values: col((c) => c.gotTangled), tint: false },
+    ] },
+  ]
+}
+
+/** Which cells to tint: the biggest number in the row, if it's above 0 and not everyone's. */
+export function bestCells(row: ScoreRow): boolean[] {
+  const top = Math.max(...row.values)
+  const all = row.values.every((v) => v === top)
+  return row.values.map((v) => row.tint && top > 0 && !all && v === top)
 }

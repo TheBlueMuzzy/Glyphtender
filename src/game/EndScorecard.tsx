@@ -6,51 +6,13 @@
 // Kit parts: Avatar, Text. The table is plain HTML laid out in game.css (style names only).
 import text from '../../content/text/en.json'
 import type { GameState } from '../engine/types'
-import { Avatar, Text, fill } from '../ui/kit'
+import { Avatar, Text } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
-import { LENGTHS, type Scorecard, type Standing } from './stats'
+import { bestCells, scorecardRows } from './endText'
+import type { Scorecard, Standing } from './stats'
 import type { GardenTuning } from './useTuning'
 
 const w = text.game.gameOver.card
-
-type Row = { label: string; values: number[]; shown?: (string | number)[]; tint: boolean }
-type Group = { name: string; rows: Row[] }
-
-/** The scorecard's rows for these players (columns in `seats` order). Pure, so it's tested. */
-export function scorecardRows(game: GameState, cards: Scorecard[], seats: number[]): Group[] {
-  const col = (value: (c: Scorecard) => number) => seats.map((seat) => value(cards[seat]))
-  const lengths = LENGTHS.map((n, i) => ({
-    label: i === LENGTHS.length - 1 ? fill(w.lettersPlus, { n }) : fill(w.letters, { n }),
-    values: col((c) => c.byLength[i]),
-    tint: true,
-  })).filter((_, i) => LENGTHS[i] >= game.config.rules.minWordLength)
-  return [
-    { name: w.groups.magic, rows: [
-      { label: w.total, values: col((c) => c.total), tint: true },
-      { label: w.wordMagic, values: col((c) => c.wordMagic), tint: true },
-      { label: w.soloMagic, values: col((c) => c.soloMagic), tint: true },
-      { label: w.tangleMagic, values: col((c) => c.tangleMagic), tint: true },
-    ] },
-    { name: w.groups.words, rows: [
-      ...lengths,
-      { label: w.longestWord, values: col((c) => c.longestWord.length), tint: true },
-      { label: w.bestTurn, values: col((c) => c.bestTurn?.magic ?? 0), shown: col((c) => c.bestTurn?.magic ?? 0).map((n) => (n ? `+${n}` : w.none)), tint: true },
-    ] },
-    { name: w.groups.play, rows: [
-      { label: w.multiWord, values: col((c) => c.multiWordTurns), tint: true },
-      { label: w.refreshed, values: col((c) => c.seedsRefreshed), tint: false },
-      { label: w.tangledRivals, values: col((c) => c.tangledRivals), tint: true },
-      { label: w.gotTangled, values: col((c) => c.gotTangled), tint: false },
-    ] },
-  ]
-}
-
-/** Which cells to tint: the biggest number in the row, if it's above 0 and not everyone's. */
-export function bestCells(row: Row): boolean[] {
-  const top = Math.max(...row.values)
-  const all = row.values.every((v) => v === top)
-  return row.values.map((v) => row.tint && top > 0 && !all && v === top)
-}
 
 export function EndScorecard({ game, cards, ranked, colours, name }: {
   game: GameState; cards: Scorecard[]; ranked: Standing[]; colours: GardenTuning; name: (seat: number) => string
