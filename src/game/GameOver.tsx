@@ -27,6 +27,13 @@ const SWIPE = 60 // px sideways (and more sideways than up/down) to turn the pag
 
 type Props = { onNewGame: () => void; onMenu: () => void }
 
+/** The Story chart's height: endscreen.json chartHeight at least; taller when the page has the room
+ *  (wide: the chart has the page's whole height, its caption sits beside it; tall: leave room under it for those). */
+function chartHeight(page: number, wide: boolean, base: number): number {
+  const room = wide ? page - 24 : page - 190
+  return Math.round(Math.min(base * (wide ? 2.5 : 1.8), Math.max(wide ? base * 0.7 : base, room)))
+}
+
 /** Does the window match this CSS media query (kept up to date as it changes)? */
 function useMedia(query: string): boolean {
   const [matches, setMatches] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(query).matches)
@@ -113,7 +120,7 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
               {page === 'story' && (
                 <div className="game-end-story" data-wide={wide || undefined}>
                   <StoryChart chart={end.chart} colours={colours} tuning={tuning} selected={selected} onSelect={setSelected}
-                    height={wide ? Math.min(tuning.chartHeight * 2.5, Math.max(tuning.chartHeight * 0.7, pageHeight - 24)) : tuning.chartHeight}
+                    height={chartHeight(pageHeight, wide, tuning.chartHeight)}
                     label={(m) => markerLabel(m, end.awards, name)} />
                   <div className="game-end-story-side">
                   <div className="game-end-caption" aria-live="polite">

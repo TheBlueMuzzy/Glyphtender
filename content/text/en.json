@@ -165,7 +165,7 @@
         "tangleBonus": "Tangles: {list}",
         "tangleBonusPart": "{player} +{n}",
         "noTangleBonus": "Tangles: nobody got a bonus",
-        "lead": "{player} takes the lead",
+        "lead": "Round {round} · {player} takes the lead",
         "markerTangle": "{owner}'s glyphling tangled",
         "markerAward": "{title}: {player}",
         "markerLead": "{player} takes the lead"

@@ -50,7 +50,7 @@ export function markerCaption(game: GameState, marker: ChartMarker, awards: Awar
       return `${title}: ${reason}`
     }
   }
-  if (marker.kind === 'lead' && turn) return `${turnCaption(turn, name)}${w.separator}${fill(w.chart.lead, { player: name(marker.seat) })}`
+  if (marker.kind === 'lead' && turn) return fill(w.chart.lead, { round: turn.round, player: name(marker.seat) })
   return turn ? turnCaption(turn, name) : tangleBonusCaption(game, name)
 }
 

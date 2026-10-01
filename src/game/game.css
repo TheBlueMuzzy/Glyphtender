@@ -135,7 +135,7 @@
   .game-end-key-shape { inline-size: 1rem; block-size: 1rem; flex: none; }
 
   /* Scorecard: label column + one narrow column per player; the best in each row softly tinted */
-  .game-scorecard { inline-size: 100%; border-collapse: separate; border-spacing: 0 0.125rem; table-layout: fixed; }
+  .game-scorecard { inline-size: 100%; max-inline-size: 42rem; margin-inline: auto; border-collapse: separate; border-spacing: 0 0.125rem; table-layout: fixed; }
   .game-scorecard-labels { inline-size: 42%; }
   .game-scorecard th[scope="row"] { text-align: start; padding-inline-end: var(--gap-xs); font-weight: inherit; }
   .game-scorecard th[scope="col"] { text-align: center; padding-block-end: var(--gap-xs); }
