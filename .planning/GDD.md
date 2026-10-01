@@ -50,6 +50,7 @@
 - **Muzzy's feel notes (2026-09-30, after playing the alpha build):**
   - **Score pops:** when a word grows, each seed shows its Magic above it (+1, or +2 for your own seed — HELP with H and P yours: +2 +1 +1 +2), then they fly together into one bigger total (+6) over the glyphling that cast the seed. (Only this turn's Magic — running totals stay secret.)
   - **Word indicators** (new-game option, on/off): on = a made word is highlighted **behind** its seeds, thick like a border, in **white** (neutral, never a player colour); off = nothing tells you a word was made (no outline, no "+N", no pops — you spot words yourself).
+  - **Hide seeds between turns** (new-game option, 2026-10-01 — Muzzy: "hide seeds should be off normally. players opt into that"): **off by default** — no handoff screen, everyone sees the tray; on = the "Pass to …" handoff hides each player's seeds. A player who saved it on keeps it.
   - **Word spotlight** (2026-10-01, Muzzy's idea): when a cast makes 2+ words, they light up **one at a time** — QUA → TAB → AY → round again — while aiming and after the seed lands, until play moves on, each with a small "QUA +4" label. One word just stays lit. So overlapping words never read as one blob.
   - **Cast ranges show right after the move** — don't wait for a seed to be picked.
   - **Drop target:** while dragging, the hex it would land on lights up (the zone reacts, not the piece).

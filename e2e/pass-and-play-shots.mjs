@@ -116,6 +116,11 @@ try {
     await page.goto(`http://127.0.0.1:${PORT}/`)
     await page.getByRole('button', { name: 'Play', exact: true }).click()
     for (let n = 2; n < COUNT; n++) await page.getByRole('button', { name: 'Next Players' }).click()
+    // Hide seeds is OFF by default (players opt in) — switch it on: this script is about the handoff
+    const hide = page.getByRole('switch', { name: 'Hide seeds between turns' })
+    check('Hide seeds starts off', (await hide.getAttribute('aria-checked')) === 'false')
+    await hide.click()
+    check('Hide seeds switched on', (await hide.getAttribute('aria-checked')) === 'true')
     check(`${COUNT} players picks the ${BOARD} garden`, (await page.locator('.kit-picker-value', { hasText: new RegExp(BOARD, 'i') }).count()) === 1)
     await shot('1-new-game')
     await page.getByRole('button', { name: 'Start' }).click()

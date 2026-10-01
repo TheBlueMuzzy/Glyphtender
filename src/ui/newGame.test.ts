@@ -12,8 +12,8 @@ describe('new game choices', () => {
     expect(boardNames()).toEqual(['small', 'large'])
   })
 
-  it('first time: 2 players on the Small garden, 2-letter words on, seeds hidden, word indicators on', () => {
-    expect(defaultChoices()).toEqual({ players: 2, boardName: 'small', twoLetterWords: true, hideSeeds: true, wordIndicators: true })
+  it('first time: 2 players on the Small garden, 2-letter words on, seeds NOT hidden (opt in), word indicators on', () => {
+    expect(defaultChoices()).toEqual({ players: 2, boardName: 'small', twoLetterWords: true, hideSeeds: false, wordIndicators: true })
     expect(loadChoices(memory())).toEqual(defaultChoices())
     expect(loadChoices(null)).toEqual(defaultChoices()) // no storage at all
   })
@@ -28,6 +28,15 @@ describe('new game choices', () => {
     const mine = { players: 3, boardName: 'small', twoLetterWords: false, hideSeeds: false, wordIndicators: false }
     saveChoices(mine, storage)
     expect(loadChoices(storage)).toEqual(mine)
+  })
+
+  it('a player who saved "hide seeds" on keeps it (the default is off)', () => {
+    const storage = memory()
+    saveChoices({ ...defaultChoices(), hideSeeds: true }, storage)
+    expect(loadChoices(storage).hideSeeds).toBe(true)
+    // an old save from before the option existed falls back to the default: off
+    const old = memory({ 'glyphtender:new-game': JSON.stringify({ players: 2, boardName: 'small' }) })
+    expect(loadChoices(old).hideSeeds).toBe(false)
   })
 
   it('odd or broken saved choices fall back to sensible ones', () => {

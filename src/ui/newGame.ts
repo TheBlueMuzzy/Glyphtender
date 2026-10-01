@@ -28,9 +28,9 @@ const MAX_PLAYERS = 4
 /** Every board in content/data/boards.json, e.g. ["small", "large"] (the server's options check uses it too). */
 export { boardNames }
 
-/** First time: 2 players on their default board, 2-letter words as rules.json says, seeds hidden, word indicators on. */
+/** First time: 2 players on their default board, 2-letter words as rules.json says, seeds NOT hidden (players opt in), word indicators on. */
 export const defaultChoices = (): NewGameChoices => ({
-  players: MIN_PLAYERS, boardName: defaultBoardFor(MIN_PLAYERS), twoLetterWords: rulesJson.minWordLength <= 2, hideSeeds: true, wordIndicators: true,
+  players: MIN_PLAYERS, boardName: defaultBoardFor(MIN_PLAYERS), twoLetterWords: rulesJson.minWordLength <= 2, hideSeeds: false, wordIndicators: true,
 })
 
 /** A new player count also picks that count's default board (boards.json → defaultForPlayers). */
