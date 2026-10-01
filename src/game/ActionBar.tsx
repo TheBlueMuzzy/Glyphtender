@@ -11,11 +11,48 @@ import { revealSteps } from '../store/revealPlan'
 import { Button, Row, fill, screens } from '../ui/kit'
 import { wordListUrl } from './art'
 import { usePreview } from './usePreview'
+import { Ghost } from './PromptLine'
 
 const w = text.game.buttons
 
-/** size: how tall the buttons are, in px — about a board hex (finger-sized, like a glyphling), never below 44. */
-export function ActionBar({ onNewGame, size }: { onNewGame: () => void; size: number }) {
+/** size: how tall the buttons are, in px — about a board hex (finger-sized, like a glyphling), never below 44.
+ *  fixed: hold the space for the tallest row of buttons the game can show (B013) — hidden copies of every row,
+ *  with the longest labels, are piled behind the real one. On a narrow phone "Cast · +3" can wrap the row onto
+ *  2 lines while "Keep all · Refresh" fits on 1; without this the board would jump each time. */
+export function ActionBar({ onNewGame, size, fixed }: { onNewGame: () => void; size: number; fixed: boolean }) {
+  const phase = useGameStore((s) => s.game!.phase)
+  if (phase === 'draft') return null
+  return (
+    <div className="game-actions-pile">
+      {fixed && (
+        <div className="game-actions-sizer" aria-hidden="true" inert>
+          <Row gap="s" justify="center">
+            <Button size={size} variant="ghost"><Ghost words={w.shuffle} /></Button>
+            <Button size={size} variant="secondary"><Ghost words={w.undo} /></Button>
+            <Button size={size}><Ghost words={fill(w.castMagic, { n: 88 })} /></Button>
+          </Row>
+          <Row gap="s" justify="center">
+            <Button size={size} variant="ghost"><Ghost words={w.shuffle} /></Button>
+            <Button size={size} variant="secondary"><Ghost words={w.undo} /></Button>
+            <Button size={size}><Ghost words={w.endTurn} /></Button>
+          </Row>
+          <Row gap="s" justify="center">
+            <Button size={size} variant="secondary"><Ghost words={w.keepAll} /></Button>
+            <Button size={size}><Ghost words={fill(w.refresh, { n: 8 })} /></Button>
+          </Row>
+          <Row gap="s" justify="center">
+            <Button size={size} variant="secondary"><Ghost words={w.results} /></Button>
+            <Button size={size}><Ghost words={w.newGame} /></Button>
+          </Row>
+        </div>
+      )}
+      <ActionRow onNewGame={onNewGame} size={size} />
+    </div>
+  )
+}
+
+/** The real buttons for this moment. */
+function ActionRow({ onNewGame, size }: { onNewGame: () => void; size: number }) {
   const s = useGameStore()
   const preview = usePreview()
   const game = s.game!

@@ -6,7 +6,9 @@
     "sidePanelShare": "In the side-by-side layout, how much of the width the tray panel takes (0.3 = 30%).",
     "boardMargin": "Empty space around the board, in hex sizes.",
     "dragLift": "When dragging with a finger, how far above your finger the piece floats (pixels), so your finger doesn't hide it.",
-    "dragStartDistance": "How far (pixels) you must move before a press becomes a drag instead of a tap."
+    "dragStartDistance": "How far (pixels) you must move before a press becomes a drag instead of a tap.",
+    "promptGap": "Tray below the board (phone portrait): empty space between the board and the instruction text, in pixels, so the board doesn't crowd the words.",
+    "bottomRoom": "Empty space kept clear under the tray and buttons, in pixels, ON TOP of the phone's own safe area (and the usual small gap), so dragging a seed up or tapping a bottom button doesn't start the phone's home/back gesture. 24 clears Android and iPhone gesture bars."
   },
   "_ranges": {
     "stackedAspect": [0.8, 2, 0.05],
@@ -15,7 +17,9 @@
     "sidePanelShare": [0.2, 0.45, 0.01],
     "boardMargin": [0, 1.5, 0.05],
     "dragLift": [0, 120, 4],
-    "dragStartDistance": [2, 24, 1]
+    "dragStartDistance": [2, 24, 1],
+    "promptGap": [0, 48, 2],
+    "bottomRoom": [0, 64, 2]
   },
   "stackedAspect": 1.15,
   "trayTileMin": 44,
@@ -23,5 +27,7 @@
   "sidePanelShare": 0.3,
   "boardMargin": 0.35,
   "dragLift": 56,
-  "dragStartDistance": 8
+  "dragStartDistance": 8,
+  "promptGap": 12,
+  "bottomRoom": 24
 }

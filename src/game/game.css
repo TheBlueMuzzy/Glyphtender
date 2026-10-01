@@ -16,28 +16,46 @@
   }
   /* Tall space: turn bar on top, board in the middle, tray + buttons below */
   .game[data-layout="stacked"] {
-    grid-template: "bar" auto "board" minmax(0, 1fr) "panel" auto / minmax(0, 1fr);
+    grid-template: "bar" auto "board" minmax(0, 1fr) "gap" auto "panel" auto "foot" auto / minmax(0, 1fr);
   }
   /* Wide space: board on the left; turn bar, tray and buttons in a column on the right
      (the column is as wide as the tray, which is sized from layout.json → sidePanelShare). The ruler, an empty
      SVG that wide, is the ONLY thing that sizes the column: the bar and panel are contained, so neither a long
      prompt nor the reveal's narrow chips can widen or shrink it — the words wrap inside instead. */
   .game[data-layout="side"] {
-    grid-template: "board bar" auto "board panel" minmax(0, 1fr) / minmax(0, 1fr) min-content;
+    grid-template: "board bar" auto "board panel" minmax(0, 1fr) "board foot" auto / minmax(0, 1fr) min-content;
   }
   .game[data-layout="side"] :is(.game-bar, .game-panel) { contain: inline-size; }
   /* Settings → Tray position "Flipped": the tray (with its prompt and buttons) on the other side of the board —
      above it when tall, on its left when wide (the column still takes the ruler's width) */
   .game[data-layout="stacked"][data-flipped] {
-    grid-template: "bar" auto "panel" auto "board" minmax(0, 1fr) / minmax(0, 1fr);
+    grid-template: "bar" auto "panel" auto "gap" auto "board" minmax(0, 1fr) "foot" auto / minmax(0, 1fr);
   }
   .game[data-layout="side"][data-flipped] {
-    grid-template: "bar board" auto "panel board" minmax(0, 1fr) / min-content minmax(0, 1fr);
+    grid-template: "bar board" auto "panel board" minmax(0, 1fr) "foot board" auto / min-content minmax(0, 1fr);
   }
+  /* Empty SVGs that only hold space open (their heights come from layout.json — TDD D13): room between the board
+     and the prompt (B012), and room under the tray and buttons, clear of the phone's home/back gesture zone (B014; beside the board it's
+     only under the column — the board keeps its full height) */
+  .game-prompt-gap { grid-area: gap; display: block; }
+  .game-foot { grid-area: foot; display: block; }
 
   .game-bar { grid-area: bar; min-inline-size: 0; }
-  /* The prompt: its own full-width line just above the tray */
-  .game-prompt { inline-size: 100%; min-inline-size: 0; }
+  /* The prompt: its own full-width line just above the tray. A fixed frame (B013): the hidden sizer — every line
+     the prompt can show, piled in one spot — sets its height, the real words sit in its middle */
+  .game-prompt { inline-size: 100%; min-inline-size: 0; display: grid; }
+  .game-prompt > * { grid-area: 1 / 1; min-inline-size: 0; }
+  .game-prompt > :not(.game-prompt-sizer) { align-self: center; }
+  .game-prompt-sizer { visibility: hidden; }
+  .game-prompt-pile { display: grid; }
+  .game-prompt-pile > * { grid-area: 1 / 1; }
+  .game-ghost-words::before { content: attr(data-words); }
+  /* The buttons, the same way (B013): hidden copies of every button row they can show, piled in one spot, hold the
+     space for the tallest (a row that wraps onto 2 lines on a narrow phone); the real row sits at the top of it */
+  .game-actions-pile { display: grid; inline-size: 100%; }
+  .game-actions-pile > *, .game-actions-sizer > * { grid-area: 1 / 1; min-inline-size: 0; }
+  .game-actions-pile > :not(.game-actions-sizer) { align-self: start; }
+  .game-actions-sizer { display: grid; visibility: hidden; }
 
   /* The board's box: the garden background and the board SVG on top of each other, filling it */
   .game-board { grid-area: board; display: grid; min-block-size: 0; min-inline-size: 0; }
