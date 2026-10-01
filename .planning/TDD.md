@@ -144,6 +144,10 @@ D46 · 2026-09-30 · The online server runs on Muzzy's own Cloudflare (PartyServ
   Chose: PartyServer — the rooms module only ever needed {id, getConnection}, so worker.ts is a 30-line adapter and
   RoomServer, the client and every test stayed the same. Dev uses `wrangler dev` too, so local = live. SQLite-backed
   Durable Object class "Main" (free plan) → /parties/main/<code>, PartySocket's default path. Roll Better stays on PartyKit.
+  Gotchas (pre-release review): PartyServer's connection list drops a reconnected phone's NEW socket when the old one
+  closes late (same id) → party/liveConnections.ts keeps the server's own list (guarded by liveConnections.test.ts);
+  onError is passed on. An empty in-memory Durable Object is evicted after ~1–2 min, so keepEmptyRoomMs (5 min) is an
+  upper bound, not a promise — same as PartyKit was.
 D45 · 2026-09-30 · The planned seed: keep the brightness gap, change the colour — "moonlit" (B010 reopened)
   Proposed by: Muzzy ("maybe there's a better way than to just push the values towards white? do some research")
   Research: research/ghost-pieces.md — a letter is read by its BRIGHTNESS gap to the tile; any even wash/fade shrinks it

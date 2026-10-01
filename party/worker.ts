@@ -8,16 +8,20 @@
 import { Server, routePartykitRequest } from 'partyserver'
 import type { Connection } from 'partyserver'
 import GlyphtenderServer from './server'
+import { LiveConnections } from './liveConnections'
 
 // The class name is the address: "Main" → /parties/main/… (PartySocket's default). Keep it in step with wrangler.json.
 export class Main extends Server {
   private room!: GlyphtenderServer
+  // Our own list of live sockets — PartyServer's forgets a reconnected phone's NEW socket when the old one closes late
+  private live = new LiveConnections<Connection>()
 
   onStart() {
-    this.room = new GlyphtenderServer({ id: this.name, getConnection: (id) => this.getConnection(id) })
+    this.room = new GlyphtenderServer({ id: this.name, getConnection: (id) => this.live.get(id) })
   }
 
   onConnect(connection: Connection) {
+    this.live.opened(connection)
     this.room.onConnect(connection)
   }
 
@@ -26,7 +30,13 @@ export class Main extends Server {
   }
 
   onClose(connection: Connection) {
+    this.live.closed(connection)
     this.room.onClose(connection)
+  }
+
+  onError(connection: Connection) {
+    this.live.closed(connection)
+    this.room.onError(connection)
   }
 }
 
