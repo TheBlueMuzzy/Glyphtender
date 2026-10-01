@@ -54,11 +54,13 @@ export function Carousel({ children, label, role, active, className = '' }: Prop
     return () => watch.disconnect()
   }, [measure, count])
 
-  // Keep the active item (the selected tab) in view
-  useLayoutEffect(() => {
-    if (active === undefined || active < 0) return
+  // Keep the active item (the selected tab) in view: when it (or the pages) change, turn to its page.
+  // (Done while drawing, React's "adjust state when a prop changes" pattern — not in an effect.)
+  const [shown, setShown] = useState<{ active?: number; pages?: CarouselPage[] }>({})
+  if (active !== undefined && active >= 0 && (shown.active !== active || shown.pages !== layout.pages)) {
+    setShown({ active, pages: layout.pages })
     setPage(pageOf(layout.pages, active))
-  }, [active, layout])
+  }
 
   // Tabbing onto an item on another page turns to it
   const onFocus = (e: FocusEvent) => {
