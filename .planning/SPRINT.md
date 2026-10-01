@@ -12,9 +12,9 @@ Check: unit tests + sims
 
 ## F28 🧪 4 players everywhere
 Done when: a full 4-player pass-and-play game and a full 4-player online game run in e2e on phone + desktop sizes, no clipping
-- [ ] 🤖 4. e2e: 4-player pass-and-play (and 3-player) through to the end table — e2e/
-- [ ] 🤖 5. e2e: 4-player online (4 browser contexts) incl. secrecy check — e2e/online-shots.mjs or a new script
-- [ ] 🤖 6. Fix whatever breaks (turn bar, handoff, end table, lobby with 4 seats)
+- [x] 🤖 4. e2e: 4-player pass-and-play (and 3-player) through to the end table — e2e/ (`npm run e2e:pass4`; e2e:pass stays 3 players)
+- [x] 🤖 5. e2e: 4-player online (4 browser contexts) incl. secrecy check — e2e/online-four.mjs (`npm run e2e:online4`)
+- [x] 🤖 6. Fix whatever breaks (turn bar, handoff, end table, lobby with 4 seats) — B016 fixed; B017 open (P3)
 
 ## F25 ✨ Word spotlight
 Done when: after a cast, words light up one at a time (QUA → TAB → AY → loop) until play moves on; one word = just that word; reduce motion respected; timings in content/
@@ -38,6 +38,7 @@ Done when: a Dev Kit tab lists the gated screens (end screen 2/3/4p, reveal, han
 - [ ] 🤖 17. e2e: open every preview, close, game unchanged; Dev Kit stays out of live builds
 
 Notes:
+- F28 (2026-10-01): 4 players mostly worked out of the box — pass-and-play (draft of 8, handoffs, Large garden, danger cue, reveal, end table, New game remembers 4) and online (4 seats, drop + rejoin of seat 2 with "Away" on the others' screens, 0 secret leaks in 4 × ~115 frames). One real bug, at every player count: B016 — in portrait the reveal put two Magic chips side by side and a chip never shrinks, so the winner star or a 2-digit tangle bonus ran it into its neighbour. Fixed: one-line chips, one per line, tangle Magic beside the name. e2e:pass/pass4 now fail on overlapping chips. For F26 (not fixed — the end screen redesign): with 4 players the end table scrolls on phones (portrait shows 3½ rows, landscape 2) — e2e checks the last row can be scrolled into view. B017 (P3 open): the online lobby at 844×390 shows 2 of 4 seats without scrolling. Shared online e2e helpers moved to e2e/online-kit.mjs.
 - Research (task 10): research/end-screen.md — 3 swipe pages Results · Story · Scorecard; winner big + centred ABOVE the others on phone (a 2-1-3-4 podium is hard to read at 390 px and with ties — podium only in landscape/desktop; weighs Muzzy's "winner in the middle"); awards never add points, ≤1 per player until all have one; chart = cumulative Magic per round + a final Tangles column, end-of-line labels, knot/star/tick markers. "2*" read as 2-letter words shown only when the table allows them — Ask Muzzy to confirm.
 - F24 (2026-10-01): the letter id is now 'Q' (not 'Qu' spelling "Q") — every seed is one capital that spells itself, nothing treats Q specially (TDD D47). Old Dev Kit snapshots with "Qu" load it as "Q" (glyphtenderAdapter); content/snapshots migrated. The art was already a plain Q; art.ts just stopped cutting "Qu" to its first letter. Online rooms are memory-only, so no stored server game holds "Qu" — still deploy the server before the site.
 - F24 sims (research/sims.md 2026-10-01): game length, bag run-out (0–0.6%) and scoring turns unchanged. Greedy players get a bit less out of the Q: in a scoring word ~4–11% of games (was ~6–17%), stuck in a hand at the end ~42–57% (was ~38–54%). New sim measure: Q cast / scored / refreshed / stuck. Knob if the Q feels dead in play: a sixth U in bag.json.
