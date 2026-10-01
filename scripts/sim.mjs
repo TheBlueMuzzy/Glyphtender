@@ -28,9 +28,11 @@ for (const player of players) {
         `${player.padEnd(6)} ${n}p ${board.padEnd(5)} games ${String(s.games).padStart(4)} · avg turns ${String(s.avgTurns).padStart(5)} (max ${s.maxTurns})` +
           ` · bag ran out ${String(s.bagRanOutPct).padStart(5)}% · self-tangle end ${String(s.selfTanglePct).padStart(5)}%` +
           ` · turns with a word ${String(s.scoringTurnPct).padStart(4)}% · seat wins ${s.seatWinPct.map((p) => p + '%').join(' / ')}` +
+          ` · Q cast ${s.qCastPct}% scored ${s.qScoredPct}% refreshed ${s.qRefreshedPct}% stuck ${s.qStuckPct}%` +
           `  (${((Date.now() - started) / 1000).toFixed(1)} s)`,
       )
     }
   }
 }
-console.log('\nSeat wins: ties count as a win for everyone tied. Self-tangle end: the last turn tangled one of the mover\'s own glyphlings.')
+console.log('\nQ (share of games): cast = planted on the board · scored = in a word that made Magic · refreshed = set aside in a refresh · stuck = still in a hand when the game ended.')
+console.log('Seat wins: ties count as a win for everyone tied. Self-tangle end: the last turn tangled one of the mover\'s own glyphlings.')
