@@ -98,6 +98,8 @@ flowchart LR
 - **Could:** async play · spectators · leaderboards/accounts · 3D figurine glyphlings
 
 ## Ideas
+- 2026-09-30 — Word spotlight: after a cast, light up each scored word ONE AT A TIME (quick timer) — e.g. QUA → TAB → AY → loop — until play moves on, instead of all words white at once; the all-white outline made QUA look like "QAO" (Muzzy, during the F23 online test)
+- 2026-09-30 — Q is plain Q, not Qu, from now on (Muzzy's call) — needs a GDD rule change + word check: only 10 listed words have a Q without a U (QADI QAID QAT QI QOPH SUQ…), so pair it with a bag tweak (e.g. one more U) or accept Q as a tough seed (Muzzy)
 - 2026-09-30 — Magic sparkles that pop against the night garden (Muzzy)
 - 2026-09-30 — Signature cast: seed arcs → buried → glyphling splashes magic water → topiary letter grows (from the original's HANDOFF §11.2)
 - 2026-09-30 — Harvest candidates for the framework once proven here: seed tray (tile rack), hex board viewport (fit/zoom), drag-to-slot
