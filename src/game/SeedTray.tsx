@@ -8,10 +8,13 @@
 // REFRESH (B011, store/refreshFx.ts): the set-aside seeds shrink away one after another, then the new seeds grow
 // into those slots (a small overshoot — feel.json refreshGrow); the store passes play on after. Web Animations
 // on each slot's [data-refresh-slot] group, never React state per frame. Reduce motion → the store skips it.
+// NO RE-SORT: a cast seed's place stays where it was — the drawn seed grows into it, or it stays empty (TRAY_GAP)
+// until a refresh fills it; the other seeds never shift (Muzzy 2026-10-01; refreshFx.refillInPlace).
 // Taps and drags are handled by usePieceInput (data-hand / data-tray-pos / data-draft).
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { hexCorners } from '../engine/hex'
 import { useGameStore } from '../store/gameStore'
+import { TRAY_GAP } from '../store/turnPlan'
 import { reduceMotion } from '../ui/kit'
 import { colourOf, glyphlingArt, seedArt } from './art'
 import { juiceFor } from './feel'
@@ -101,6 +104,7 @@ export function SeedTray({ layout, boxWidth }: Props) {
     tiles = Array.from({ length: slots }, (_, pos) => {
       const { x, y } = centre(pos)
       const index = order[pos]
+      if (index === TRAY_GAP) return <g key={`empty-${pos}`} data-tray-pos={pos}>{slot(x, y)}</g> // a cast seed's place (a seed can be dropped into it)
       if (index === undefined || index >= hand.length) return <g key={`empty-${pos}`}>{slot(x, y)}</g>
       const aimed = myTurn && cast?.seed === index // on the board, waiting for Cast
       if (aimed) return <g key={`hand-${index}`} data-hand={index} data-tray-pos={pos} opacity={0.8}>{slot(x, y)}{ring(x, y, true)}</g>

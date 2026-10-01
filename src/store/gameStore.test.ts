@@ -3,7 +3,7 @@ import { hexAt, position, wordsOf } from '../engine/testkit'
 import { hexKey } from '../engine/hex'
 import { legalDraftHexes } from '../engine/engine'
 import { useGameStore } from './gameStore'
-import { castOptions, dropKind, highlightFor, moveInOrder, reconcileOrder, shuffled } from './turnPlan'
+import { castOptions, dropKind, highlightFor, moveInOrder, shuffled, TRAY_GAP } from './turnPlan'
 
 const store = () => useGameStore.getState()
 const words = wordsOf('AT', 'TA')
@@ -208,7 +208,7 @@ describe('game store — Cast', () => {
     store().startCast()
     store().finishCast()
     expect(store().game?.phase).toBe('refresh')
-    expect(store().trayOrder[0]).toEqual([0, 1, 2, 3, 4, 5, 6]) // one seed cast, none drawn yet
+    expect(store().trayOrder[0]).toEqual([TRAY_GAP, 0, 1, 2, 3, 4, 5, 6]) // one seed cast, none drawn yet: its place stays empty
     store().tapSeed(1)
     store().tapSeed(3)
     store().tapSeed(1) // tap again: keep it after all
@@ -245,21 +245,71 @@ describe('game store — Cast', () => {
     store().tapSeed(0)
     store().tapHex(hexAt('C6-4'))
     store().startCast()
-    store().finishCast() // B cast: K is now hand index 6, still shown first
-    expect(store().trayOrder[0]).toEqual([6, 0, 1, 2, 3, 4, 5])
+    store().finishCast() // B cast: K is now hand index 6, still shown first; B's place stays empty
+    expect(store().trayOrder[0]).toEqual([6, TRAY_GAP, 0, 1, 2, 3, 4, 5])
     expect(store().game?.hands[0][store().trayOrder[0][0]]).toBe('K')
   })
 })
 
-describe('tray order helpers', () => {
-  it('reconcileOrder keeps survivors in place and adds new seeds at the end', () => {
-    expect(reconcileOrder([3, 0, 1, 2], [0], 4)).toEqual([2, 0, 1, 3])
-    expect(reconcileOrder([0, 1, 2, 3, 4], [1, 3], 5)).toEqual([0, 1, 2, 3, 4])
-    expect(reconcileOrder([4, 3, 2, 1, 0], [1, 3], 5)).toEqual([2, 1, 0, 3, 4])
+describe("the tray never re-sorts on a cast (Muzzy 2026-10-01: don't resort, it's confusing/jarring)", () => {
+  /** Yellow's hand B C A F G H J K; a Yellow T at C6-3, so A cast onto C6-4 makes AT (Magic → draw 1). */
+  function yellowCanMakeAT(bag = ['V', 'W']) {
+    store().loadState(position({
+      glyphlings: { 0: 'C6-7', 1: 'C1-4', 2: 'C11-1', 3: 'C11-4' },
+      seeds: [{ 'C6-3': 'T' }],
+      hands: [['B', 'C', 'A', 'F', 'G', 'H', 'J', 'K'], ['E']],
+      bag,
+    }))
+  }
+  const castFromTray = (handIndex: number) => {
+    store().tapGlyphling(0)
+    store().tapHex(hexAt('C6-6'))
+    store().tapSeed(handIndex)
+    store().tapHex(hexAt('C6-4'))
+    store().startCast()
+    store().finishCast()
+  }
+  const trayLetters = (seat = 0) => store().trayOrder[seat].map((i) => (i === TRAY_GAP ? '_' : store().game!.hands[seat][i]))
+
+  it("a cast that makes Magic: the drawn seed takes the cast seed's place, no other seed moves", () => {
+    yellowCanMakeAT()
+    castFromTray(2) // A, third in the tray
+    expect(store().game!.lastTurn?.drew).toBe(1)
+    expect(trayLetters()).toEqual(['B', 'C', 'V', 'F', 'G', 'H', 'J', 'K'])
   })
+
+  it("the player's own order is kept too: the new seed lands where the cast one was", () => {
+    yellowCanMakeAT()
+    store().moveTraySeed(7, 0) // K to the front: K B C A F G H J
+    castFromTray(2) // A, now fourth
+    expect(trayLetters()).toEqual(['K', 'B', 'C', 'V', 'F', 'G', 'H', 'J'])
+  })
+
+  it("no seed drawn (the bag is empty): the cast seed's place stays empty, nothing shifts", () => {
+    yellowCanMakeAT([])
+    castFromTray(2)
+    expect(trayLetters()).toEqual(['B', 'C', '_', 'F', 'G', 'H', 'J', 'K'])
+  })
+
+  it('no Magic: the gap waits for the refresh, which fills it in place', () => {
+    yellowToPlay()
+    store().tapGlyphling(0)
+    store().tapHex(hexAt('C6-6'))
+    store().tapSeed(3) // F — makes no word
+    store().tapHex(hexAt('C6-4'))
+    store().startCast()
+    store().finishCast()
+    expect(trayLetters()).toEqual(['B', 'C', 'D', '_', 'G', 'H', 'J', 'K'])
+    store().refresh(true) // Keep all: one new seed, into the empty place
+    expect(trayLetters()).toEqual(['B', 'C', 'D', 'V', 'G', 'H', 'J', 'K'])
+  })
+})
+
+describe('tray order helpers', () => {
 
   it('moveInOrder moves one seed; shuffled keeps every seed', () => {
     expect(moveInOrder([0, 1, 2, 3], 3, 1)).toEqual([0, 3, 1, 2])
+    expect(moveInOrder([0, TRAY_GAP, 1, 2], 3, 1)).toEqual([0, 2, 1, TRAY_GAP]) // into an empty place: nothing else moves
     expect([...shuffled([0, 1, 2, 3, 4, 5, 6, 7])].sort()).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
   })
 })

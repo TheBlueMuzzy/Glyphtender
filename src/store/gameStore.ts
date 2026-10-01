@@ -16,7 +16,7 @@ import { migrateGame } from '../engine/migrate'
 import { parseWordList } from '../engine/words'
 import type { Action, GameState, WordList } from '../engine/types'
 import {
-  castOptions, hexIn, highlightFor, inHandOrder, isCurrents, mayMoveOnly, moveInOrder, reconcileOrder,
+  castOptions, hexIn, highlightFor, inHandOrder, isCurrents, mayMoveOnly, moveInOrder,
   shuffled, turnAction, type PlannedCast, type PlannedMove, type Selection,
 } from './turnPlan'
 import { isLocalHuman, localSeats, needsHandoff, type Seat } from './seats'
@@ -354,7 +354,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
       if (!next) return set({ flying: false })
       const seat = game.current
       const order = [...trayOrder]
-      order[seat] = reconcileOrder(order[seat] ?? [], cast ? [cast.seed] : [], next.hands[seat].length)
+      order[seat] = refillInPlace(order[seat] ?? [], cast ? [cast.seed] : [], next.hands[seat].length) // the drawn seed takes the cast one's place
       const landed = cast ? { key: hexKey(cast.target), count: (get().landed?.count ?? 0) + 1 } : get().landed
       const played = next.lastTurn ? addTurn(stats, next.lastTurn) : stats
       set({ ...noPlan(), game: next, flying: false, trayOrder: order, landed, stats: played, handoff: handoffTo(seat, next, cast !== null) })
@@ -392,7 +392,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
       const passOn = () => set({ ...noPlan(), game: next, trayOrder: order, handoff: handoffTo(seat, next, false), refreshFx: null })
       if (shrinkMs === 0) return passOn()
       set({ refreshFx: { seat, slots, stage: 'out' }, selected: null })
-      const newSlots = newSeedSlots(order[seat], (trayOrder[seat]?.length ?? 0) - chosen.length)
+      const newSlots = newSeedSlots(order[seat], game.hands[seat].length - chosen.length)
       after(shrinkMs, () => growIn({ seat, slots, newSlots, stage: 'in', hand: next.hands[seat], order: order[seat] }, passOn))
     },
     refreshArrived: (newSlots) => {

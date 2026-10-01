@@ -5,6 +5,7 @@
 //   in   — the new seeds grow into those same slots, with a small overshoot (refreshGrowTime; feel.json refreshGrow)
 // Only then does play pass on (the handoff). Keep all, or reduce motion → no animation, it just happens.
 import type { AnimTuning } from '../game/useTuning'
+import { TRAY_GAP } from './turnPlan'
 
 export interface RefreshFx {
   /** Whose tray is refreshing. */
@@ -24,17 +25,20 @@ export function refreshSlots(order: number[], setAside: number[]): number[] {
   return order.flatMap((index, pos) => (setAside.includes(index) ? [pos] : []))
 }
 
-/** The tray order after a refresh: every new seed takes a set-aside seed's place (kept seeds stay where they were).
- *  The engine's new hand is [...kept, ...drawn], so kept seeds' indexes shift down past the removed ones.
- *  If the bag ran short, the places left over close up; any extra new seed goes on the end. */
+/** The tray order after seeds leave the hand — a cast (one seed) or a refresh (the set-aside ones) — and new ones come.
+ *  NOTHING SHIFTS: kept seeds stay where they were, and every new seed takes an empty place, left to right (a removed
+ *  seed's place, or an older gap); any extra new seed goes on the end. If there aren't enough new seeds, the places
+ *  left over stay empty (TRAY_GAP) — they never close up. The engine's new hand is [...kept, ...drawn], so kept
+ *  seeds' indexes shift down past the removed ones. */
 export function refillInPlace(order: number[], removed: number[], newLength: number): number[] {
-  let fresh = order.filter((i) => !removed.includes(i)).length // the first drawn seed's hand index
+  let fresh = order.filter((i) => i !== TRAY_GAP && !removed.includes(i)).length // the first drawn seed's hand index
   const next: number[] = []
   for (const i of order) {
-    if (!removed.includes(i)) next.push(i - removed.filter((r) => r < i).length)
-    else if (fresh < newLength) next.push(fresh++)
+    if (i !== TRAY_GAP && !removed.includes(i)) next.push(i - removed.filter((r) => r < i).length)
+    else next.push(fresh < newLength ? fresh++ : TRAY_GAP)
   }
   while (fresh < newLength) next.push(fresh++)
+  while (next.length > 0 && next[next.length - 1] === TRAY_GAP) next.pop() // an empty place at the end is just a free slot
   return next
 }
 

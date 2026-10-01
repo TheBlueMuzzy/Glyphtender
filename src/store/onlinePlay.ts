@@ -19,7 +19,7 @@ import { reduceMotion } from '../ui/kit/blocks/motion'
 import { useGameStore, type OnlineLink } from './gameStore'
 import type { Seat } from './seats'
 import { emptyStats } from './stats'
-import { inHandOrder, reconcileOrder } from './turnPlan'
+import { inHandOrder } from './turnPlan'
 import { trailOf } from './trail'
 import { newSeedSlots, refillInPlace } from './refreshFx'
 
@@ -123,7 +123,7 @@ function apply(view: GameView) {
     if (seat !== online.mySeat) return inHandOrder(hand.length)
     if (myRefresh) return refillInPlace(trayOrder[seat] ?? [], myRefresh, hand.length) // new seeds take the set-aside places
     const removed = !mine || sent?.type !== 'turn' || sent.seed === null ? [] : [sent.seed]
-    return reconcileOrder(trayOrder[seat] ?? [], removed, hand.length)
+    return refillInPlace(trayOrder[seat] ?? [], removed, hand.length) // a cast: the drawn seed takes its place
   })
   const turn = view.game.lastTurn
   const sprout = turn?.target && isNewTurn(old.lastTurn, turn) ? { key: hexKey(turn.target), count: (landed?.count ?? 0) + 1 } : landed
@@ -138,7 +138,7 @@ function apply(view: GameView) {
     stats: view.results?.stats ?? store().stats,
   })
   // the new seeds grow into the emptied places (hand indexes from the kept count on are the new ones)
-  if (myRefresh) store().refreshArrived(newSeedSlots(order[online.mySeat], (trayOrder[online.mySeat]?.length ?? 0) - myRefresh.length))
+  if (myRefresh) store().refreshArrived(newSeedSlots(order[online.mySeat], old.hands[online.mySeat].length - myRefresh.length))
 }
 
 const isNewTurn = (before: TurnSummary | null, turn: TurnSummary) =>

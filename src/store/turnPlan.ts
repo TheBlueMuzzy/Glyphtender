@@ -91,22 +91,18 @@ export function turnAction(move: PlannedMove, cast: PlannedCast | null): Action 
 export const hexIn = (list: Hex[], hex: Hex) => list.some((h) => sameHex(h, hex))
 
 /**
- * Keeps a player's own tray order after their hand changes.
- * `order` lists hand indexes in the order the tray shows them. The engine removes seeds (keeping the
- * rest in order) and adds new ones at the end — so survivors keep their place and new seeds go last.
+ * An empty place in a tray order: a seed was cast or set aside and nothing new has come for it yet. The tray never
+ * closes up round it (Muzzy 2026-10-01: "don't resort. it's confusing/jarring") — refreshFx.refillInPlace fills it.
  */
-export function reconcileOrder(order: number[], removed: number[], newLength: number): number[] {
-  const kept = order
-    .filter((i) => !removed.includes(i))
-    .map((i) => i - removed.filter((r) => r < i).length) // indexes shift down past each removed seed
-  const next = [...kept]
-  for (let i = kept.length; i < newLength; i++) next.push(i)
-  return next
-}
+export const TRAY_GAP = -1
 
-/** A tray order with the seed at position `from` moved to position `to`. */
+/** A tray order with the seed at position `from` moved to position `to` (dropped into an empty place: it just moves there). */
 export function moveInOrder(order: number[], from: number, to: number): number[] {
   const next = [...order]
+  if (next[to] === TRAY_GAP) {
+    ;[next[from], next[to]] = [TRAY_GAP, next[from]]
+    return next
+  }
   const [picked] = next.splice(from, 1)
   next.splice(to, 0, picked)
   return next

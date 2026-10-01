@@ -227,10 +227,10 @@ try {
       await tune(garden)
       console.log(`ok   ${size.name} B010 planned seed looks · solid (filter, no opacity) · ${garden.plannedSeedLook} drawn · shots b010-*`)
     }
-    // B011: Refresh 2 (tray places 0 and 2 set aside) plays out on the tray — they shrink away, the new seeds grow into
+    // B011: Refresh 2 (the 1st and 3rd seeds in the tray set aside) plays out on the tray — they shrink away, the new seeds grow into
     // their places — and only THEN does play pass on (the handoff). Slowed right down (sent as the Dev Kit would) so
     // each stage can be caught and pictured; the file's own timings come back at the end.
-    const refreshPlaysOut = async () => {
+    const refreshPlaysOut = async (twoSeeds) => {
       const tuneAnim = (data) => page.evaluate((data) => window.dispatchEvent(new CustomEvent('devkit:tuning', { detail: { file: 'anim', data } })), data)
       await tuneAnim({ ...anim, refreshShrinkTime: 1.2, refreshGrowTime: 1.2, refreshStagger: 0.2, refreshPause: 0.3 })
       const moment = () => page.evaluate(() => {
@@ -244,15 +244,16 @@ try {
       const seat = await store((s) => s.game.current)
       await tap(page.getByRole('button', { name: 'Refresh 2' }))
       const out = await moment()
-      if (out.fx?.stage !== 'out' || out.fx.slots.join() !== '0,2') fail(`${size.name}: B011: Refresh 2 did not start shrinking tray places 0 and 2 (${JSON.stringify(out.fx)})`)
-      if (out.animated.join() !== '0,2') fail(`${size.name}: B011: shrinking animations on tray places [${out.animated}], expected [0,2]`)
-      await tap(page.locator('[data-tray-pos="1"]')) // locked while it plays: this sets nothing aside
+      const places = twoSeeds.join()
+      if (out.fx?.stage !== 'out' || out.fx.slots.join() !== places) fail(`${size.name}: B011: Refresh 2 did not start shrinking tray places ${places} (${JSON.stringify(out.fx)})`)
+      if (out.animated.join() !== places) fail(`${size.name}: B011: shrinking animations on tray places [${out.animated}], expected [${places}]`)
+      await tap(page.locator('[data-tray-pos][data-hand]').first()) // locked while it plays: this sets nothing aside
       if ((await store((s) => s.setAside.length)) !== 2) fail(`${size.name}: B011: a tray tap got through during the refresh`)
       await page.waitForTimeout(700)
       await page.screenshot({ path: `${OUT}/${size.name}-10b-refresh-shrinking.png` })
       await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx?.stage === 'in', null, { timeout: 5000 })
       const grow = await moment()
-      if (grow.animated.join() !== grow.fx.newSlots.join() || !grow.fx.newSlots.includes(0) || !grow.fx.newSlots.includes(2)) {
+      if (grow.animated.join() !== grow.fx.newSlots.join() || !twoSeeds.every((p) => grow.fx.newSlots.includes(p))) {
         fail(`${size.name}: B011: growing animations on tray places [${grow.animated}], new seeds in [${grow.fx.newSlots}]`)
       }
       await page.waitForTimeout(600)
@@ -422,6 +423,8 @@ try {
           turn-- // play this turn again
           continue
         }
+        // The tray never re-sorts on a cast: note every seed's place now, check them after the landing
+        const trayBefore = await store((s) => ({ seat: s.game.current, letters: s.trayOrder[s.game.current].map((i) => s.game.hands[s.game.current][i] ?? '_') }))
         await tap(castButton())
         if (wantMagic && magic > 0) {
           await page.waitForTimeout(120)
@@ -432,15 +435,20 @@ try {
           await scorePopShots()
           grewWords = true
         }
+        await waitLanded()
+        const trayAfter = await store(`(s) => s.trayOrder[${trayBefore.seat}].map((i) => s.game.hands[${trayBefore.seat}][i] ?? '_')`)
+        const moved = trayBefore.letters.flatMap((l, p) => (p !== pos && trayAfter[p] !== l ? [p] : []))
+        if (moved.length) fail(`${size.name} turn ${turn}: the tray re-sorted on the cast: ${trayBefore.letters.join('')} → ${trayAfter.join('')}`)
+        else if (turn <= 2) console.log(`ok   ${size.name} turn ${turn}: tray kept its order on the cast · ${trayBefore.letters.join('')} → ${trayAfter.join('')}`)
       } else {
         await tap(castButton()) // End turn
       }
       await waitLanded()
       if (await store((s) => s.game.phase === 'refresh')) {
-        await tap(page.locator('[data-tray-pos="0"]'))
-        await tap(page.locator('[data-tray-pos="2"]'))
+        const twoSeeds = await store((s) => s.trayOrder[s.game.current].flatMap((i, p) => (i >= 0 ? [p] : [])).filter((_, n) => n === 0 || n === 2))
+        for (const p of twoSeeds) await tap(page.locator(`[data-tray-pos="${p}"][data-hand]`))
         if (!refreshed) await shot('10-refresh')
-        if (!refreshed) await refreshPlaysOut()
+        if (!refreshed) await refreshPlaysOut(twoSeeds)
         else await tap(page.getByRole('button', { name: 'Refresh 2' }))
         await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx === null, null, { timeout: 8000 })
         if (!(await store((s) => s.game.phase !== 'refresh'))) fail(`${size.name}: refresh did not happen`)
@@ -452,7 +460,7 @@ try {
       // Between turns: shuffle the tray
       if (turn === 2) {
         await tap(page.getByRole('button', { name: 'Shuffle' }))
-        const shuffledOk = await store((s) => [...s.trayOrder[s.game.current]].sort().join() === [...s.game.hands[s.game.current].keys()].join())
+        const shuffledOk = await store((s) => s.trayOrder[s.game.current].filter((i) => i >= 0).sort().join() === [...s.game.hands[s.game.current].keys()].join())
         if (!shuffledOk) fail(`${size.name}: shuffle lost a seed`)
       }
     }

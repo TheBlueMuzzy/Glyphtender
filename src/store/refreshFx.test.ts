@@ -4,6 +4,7 @@ import anim from '../../content/tuning/anim.json'
 import { hexAt, position, wordsOf } from '../engine/testkit'
 import { useGameStore } from './gameStore'
 import { newSeedSlots, refillInPlace, refreshSlots, refreshTimes } from './refreshFx'
+import { TRAY_GAP } from './turnPlan'
 
 const store = () => useGameStore.getState()
 
@@ -19,10 +20,17 @@ describe('refresh maths', () => {
     expect(refillInPlace([0, 1, 2, 3, 4, 5, 6, 7], [0, 2], 8)).toEqual([6, 0, 7, 1, 2, 3, 4, 5])
     // a reordered tray
     expect(refillInPlace([3, 0, 2, 1], [1, 3], 4)).toEqual([2, 0, 1, 3])
-    // the bag ran short: one new seed for two places — the second place closes up
-    expect(refillInPlace([0, 1, 2, 3], [0, 2], 3)).toEqual([2, 0, 1])
-    // a short hand (one seed cast) refilled: the extra new seed goes on the end
+    // the bag ran short: one new seed for two places — the second place stays empty (nothing shifts)
+    expect(refillInPlace([0, 1, 2, 3], [0, 2], 3)).toEqual([2, 0, TRAY_GAP, 1])
+    // a short hand (an old 3-seed tray) refilled: the extra new seed goes on the end
     expect(refillInPlace([0, 1, 2], [1], 4)).toEqual([0, 2, 1, 3])
+    // an empty place (a cast seed's, nothing drawn) is filled before the end; nothing new = it stays
+    expect(refillInPlace([0, TRAY_GAP, 1, 2], [], 4)).toEqual([0, 3, 1, 2])
+    expect(refillInPlace([0, TRAY_GAP, 1, 2], [], 3)).toEqual([0, TRAY_GAP, 1, 2])
+    // a cast (one seed gone, one drawn): the drawn seed takes its place
+    expect(refillInPlace([3, 0, 1, 2], [1], 4)).toEqual([2, 0, 3, 1])
+    // an empty place at the end is just a free slot (the tray always shows a full hand's slots)
+    expect(refillInPlace([0, 1, 2], [2], 2)).toEqual([0, 1])
   })
 
   it('the new seeds go where: every tray position holding a drawn seed', () => {
@@ -68,11 +76,12 @@ describe('the refresh plays out before play passes on (pass-and-play)', () => {
 
   it('shrink → grow → THEN the next player (and the handoff)', () => {
     yellowRefreshing()
-    store().tapSeed(0) // B, tray place 0
-    store().tapSeed(2) // D, tray place 2
+    // (K was cast from tray place 0 — that place stays empty, nothing shifted: _ B C D F G H J)
+    store().tapSeed(0) // B, tray place 1
+    store().tapSeed(2) // D, tray place 3
     store().refresh()
     // 1. the set-aside seeds shrink; the game hasn't moved on
-    expect(store().refreshFx).toMatchObject({ seat: 0, slots: [0, 2], stage: 'out' })
+    expect(store().refreshFx).toMatchObject({ seat: 0, slots: [1, 3], stage: 'out' })
     expect(store().game?.phase).toBe('refresh')
     expect(store().handoff).toBeNull()
     vi.advanceTimersByTime(shrinkMs - 1)
@@ -81,8 +90,8 @@ describe('the refresh plays out before play passes on (pass-and-play)', () => {
     vi.advanceTimersByTime(1)
     const fx = store().refreshFx!
     expect(fx.stage).toBe('in')
-    expect(fx.newSlots).toEqual([0, 2, 7]) // the set-aside places + the cast seed's empty place
-    expect(fx.order!.map((i) => fx.hand![i])).toEqual(['V', 'C', 'W', 'F', 'G', 'H', 'J', 'X'])
+    expect(fx.newSlots).toEqual([0, 1, 3]) // the cast seed's empty place + the set-aside places, left to right
+    expect(fx.order!.map((i) => fx.hand![i])).toEqual(['V', 'W', 'C', 'X', 'F', 'G', 'H', 'J'])
     expect(store().game?.current).toBe(0)
     expect(store().handoff).toBeNull()
     // 3. only now does play pass on
@@ -93,7 +102,7 @@ describe('the refresh plays out before play passes on (pass-and-play)', () => {
     expect(store().game?.phase).toBe('play')
     expect(store().game?.current).toBe(1)
     expect(store().handoff).toEqual({ seat: 1, afterGrow: false })
-    expect(store().trayOrder[0].map((i) => store().game!.hands[0][i])).toEqual(['V', 'C', 'W', 'F', 'G', 'H', 'J', 'X'])
+    expect(store().trayOrder[0].map((i) => store().game!.hands[0][i])).toEqual(['V', 'W', 'C', 'X', 'F', 'G', 'H', 'J'])
   })
 
   it('nothing can be touched while it plays', () => {

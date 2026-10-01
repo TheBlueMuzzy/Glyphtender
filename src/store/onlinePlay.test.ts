@@ -16,7 +16,7 @@ import animJson from '../../content/tuning/anim.json'
 import { glideSeconds } from '../game/glide'
 import { useGameStore } from './gameStore'
 import { actionRefused, connectOnline, receiveView, stopOnline } from './onlinePlay'
-import { boardHighlight, castOptions, dropKind } from './turnPlan'
+import { boardHighlight, castOptions, dropKind, TRAY_GAP } from './turnPlan'
 import { boardTrail } from './trail'
 
 let words: WordList
@@ -148,6 +148,8 @@ describe('online store — starting and the draft', () => {
 describe('online store — turns', () => {
   it('my Cast: the action leaves at once, the view waits for the seed to land, then it sprouts', () => {
     finishDraft()
+    const before = [...store().trayOrder[0]]
+    const beforeLetters = before.map((i) => store().game!.hands[0][i])
     yellowPlansAndCasts()
     expect(store().flying).toBe(true)
     expect(sent.at(-1)).toMatchObject({ kind: 'play', action: { type: 'turn' } })
@@ -158,7 +160,12 @@ describe('online store — turns', () => {
     expect(store().online!.version).toBe(5)
     expect(store().flying).toBe(false)
     expect(store().landed!.count).toBe(landedBefore + 1)
-    expect(store().trayOrder[0]).toHaveLength(store().game!.hands[0].length)
+    expect(store().trayOrder[0].filter((i) => i !== TRAY_GAP)).toHaveLength(store().game!.hands[0].length)
+    // the tray never re-sorts on a cast: every other seed is where it was (the cast seed's place is refilled or empty)
+    const cast = before.indexOf(0)
+    store().trayOrder[0].forEach((i, pos) => {
+      if (pos !== cast) expect(store().game!.hands[0][i]).toBe(beforeLetters[pos])
+    })
   })
 
   it('my seed lands before the answer: it waits, asks again after 3 s, and shows it when it comes', () => {

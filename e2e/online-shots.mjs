@@ -55,10 +55,12 @@ async function playTurn(p) {
   } else if (phase === 'refresh' && !refreshSeen) {
     // B011, once: Refresh 1 plays out on MY tray (shrink, then the server's new seed grows in), then play passes on
     refreshSeen = true
-    await p.tap(page.locator('[data-tray-pos="1"]'))
+    // (the cast seed's place stays empty — the tray never re-sorts — so pick the second seed actually there)
+    const place = await p.store((s) => s.trayOrder[s.online.mySeat].flatMap((i, pos) => (i >= 0 ? [pos] : []))[1])
+    await p.tap(page.locator(`[data-tray-pos="${place}"]`))
     await p.tap(page.getByRole('button', { name: 'Refresh 1' }))
     const fx = await p.store((s) => s.refreshFx)
-    check(`${p.name}: B011 my refresh shrinks tray place 1 (${JSON.stringify(fx)})`, fx?.stage === 'out' && fx.slots.join() === '1')
+    check(`${p.name}: B011 my refresh shrinks tray place ${place} (${JSON.stringify(fx)})`, fx?.stage === 'out' && fx.slots.join() === String(place))
     await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx?.stage === 'in', null, { timeout: 5000 })
       .catch(() => fail(`${p.name}: B011 the new seeds never grew in`))
     await page.waitForFunction(() => window.__glyphtender.store.getState().refreshFx === null, null, { timeout: 5000 })
