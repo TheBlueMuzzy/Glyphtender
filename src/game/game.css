@@ -6,34 +6,67 @@
     display: grid;
     gap: var(--gap-s);
     overflow: hidden;
-    padding: max(var(--gap-s), env(safe-area-inset-top)) max(var(--gap-s), env(safe-area-inset-right))
-             max(var(--gap-s), env(safe-area-inset-bottom)) max(var(--gap-s), env(safe-area-inset-left));
+    /* only the phone's safe area here: the margins round the edge are the .game-edge rulers (layout.json edgeMargin) */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     /* the game handles every touch itself: no page scrolling, zooming, text selecting or long-press menus */
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
+  /* Every layout has a margin all round: empty rulers in the edge rows/columns (top, bottom, left, right — their
+     sizes from layout.json edgeMargin, in code: margins.ts), each next to one grid gap. */
   /* Tall space: turn bar on top, board in the middle, tray + buttons below */
   .game[data-layout="stacked"] {
-    grid-template: "bar" auto "board" minmax(0, 1fr) "gap" auto "panel" auto "foot" auto / minmax(0, 1fr);
+    grid-template:
+      "top top top" auto
+      "left bar right" auto
+      "left board right" minmax(0, 1fr)
+      "left gap right" auto
+      "left panel right" auto
+      "left foot right" auto
+      "bottom bottom bottom" auto / auto minmax(0, 1fr) auto;
   }
   /* Wide space: board on the left; turn bar, tray and buttons in a column on the right
      (the column is as wide as the tray, which is sized from layout.json → sidePanelShare). The ruler, an empty
      SVG that wide, is the ONLY thing that sizes the column: the bar and panel are contained, so neither a long
-     prompt nor the reveal's narrow chips can widen or shrink it — the words wrap inside instead. */
+     prompt nor the reveal's narrow chips can widen or shrink it — the words wrap inside instead.
+     The "middle" ruler and the edge rulers share the spare width so edge | board | column | edge look even. */
   .game[data-layout="side"] {
-    grid-template: "board bar" auto "board panel" minmax(0, 1fr) "board foot" auto / minmax(0, 1fr) min-content;
+    grid-template:
+      "top top top top top" auto
+      "left board middle bar right" auto
+      "left board middle panel right" minmax(0, 1fr)
+      "left board middle foot right" auto
+      "bottom bottom bottom bottom bottom" auto / auto minmax(0, 1fr) auto min-content auto;
   }
   .game[data-layout="side"] :is(.game-bar, .game-panel) { contain: inline-size; }
   /* Settings → Tray position "Flipped": the tray (with its prompt and buttons) on the other side of the board —
      above it when tall, on its left when wide (the column still takes the ruler's width) */
   .game[data-layout="stacked"][data-flipped] {
-    grid-template: "bar" auto "panel" auto "gap" auto "board" minmax(0, 1fr) "foot" auto / minmax(0, 1fr);
+    grid-template:
+      "top top top" auto
+      "left bar right" auto
+      "left panel right" auto
+      "left gap right" auto
+      "left board right" minmax(0, 1fr)
+      "left foot right" auto
+      "bottom bottom bottom" auto / auto minmax(0, 1fr) auto;
   }
   .game[data-layout="side"][data-flipped] {
-    grid-template: "bar board" auto "panel board" minmax(0, 1fr) "foot board" auto / min-content minmax(0, 1fr);
+    grid-template:
+      "top top top top top" auto
+      "left bar middle board right" auto
+      "left panel middle board right" minmax(0, 1fr)
+      "left foot middle board right" auto
+      "bottom bottom bottom bottom bottom" auto / auto min-content auto minmax(0, 1fr) auto;
   }
+  .game-edge { display: block; pointer-events: none; }
+  .game-edge[data-edge="top"] { grid-area: top; }
+  .game-edge[data-edge="bottom"] { grid-area: bottom; }
+  .game-edge[data-edge="left"] { grid-area: left; }
+  .game-edge[data-edge="right"] { grid-area: right; }
+  .game-edge[data-edge="middle"] { grid-area: middle; }
   /* Empty SVGs that only hold space open (their heights come from layout.json — TDD D13): room between the board
      and the prompt (B012), and room under the tray and buttons, clear of the phone's home/back gesture zone (B014; beside the board it's
      only under the column — the board keeps its full height) */
@@ -41,6 +74,11 @@
   .game-foot { grid-area: foot; display: block; }
 
   .game-bar { grid-area: bar; min-inline-size: 0; }
+  /* Beside the board the turn bar is as wide as the tray (its ruler), centred over it: the portrait above the tray's
+     left edge, ☰ above its right edge — not out at the column's corners */
+  .game[data-layout="side"] .game-bar { display: grid; grid-template-columns: min-content; justify-content: center; }
+  .game-bar > * { grid-area: 1 / 1; }
+  .game-bar-ruler { display: block; }
   /* The prompt: its own full-width line just above the tray. A fixed frame (B013): the hidden sizer — every line
      the prompt can show, piled in one spot — sets its height, the real words sit in its middle */
   .game-prompt { inline-size: 100%; min-inline-size: 0; display: grid; }
@@ -88,16 +126,34 @@
   .game[data-phase="over"] .game-panel { justify-content: center; }
 
   /* After the reveal (data-ended): the finished garden, the chips, and the end bar along the whole bottom
-     (EndBar.tsx) — in the same spot as on the end screen: the same side padding as the end screen, and the bar is the
-     last row of both, so its buttons land on exactly the same rectangles. No turn bar (its ☰ is in the end bar) and
-     no foot (the end bar keeps the gesture-edge room under itself). */
-  .game[data-ended] :is(.game-bar, .game-foot) { display: none; }
-  .game[data-ended] { padding-inline: max(var(--gap-m), env(safe-area-inset-left)) max(var(--gap-m), env(safe-area-inset-right)); }
-  .game[data-ended][data-layout="stacked"] { grid-template: "board" minmax(0, 1fr) "gap" auto "panel" auto "dock" auto / minmax(0, 1fr); }
-  .game[data-ended][data-layout="stacked"][data-flipped] { grid-template: "panel" auto "gap" auto "board" minmax(0, 1fr) "dock" auto / minmax(0, 1fr); }
-  .game[data-ended][data-layout="side"] { grid-template: "board panel" minmax(0, 1fr) "dock dock" auto / minmax(0, 1fr) min-content; }
-  .game[data-ended][data-layout="side"][data-flipped] { grid-template: "panel board" minmax(0, 1fr) "dock dock" auto / min-content minmax(0, 1fr); }
-  .game > .game-end-dock { grid-area: dock; }
+     (EndBar.tsx) — in the same spot as on the end screen. The layouts keep their edge margins (top, left, right,
+     middle rulers), but the end bar replaces the bottom margin as the last row, spanning every column, with the same
+     side room and bottom room as on the end screen — so its buttons land on exactly the same rectangles.
+     No turn bar (its ☰ is in the end bar) and no foot (the end bar keeps the gesture-edge room under itself). */
+  .game[data-ended] :is(.game-bar, .game-foot, .game-edge[data-edge="bottom"]) { display: none; }
+  .game[data-ended] { padding-block-end: max(var(--gap-s), env(safe-area-inset-bottom)); }
+  .game[data-ended][data-layout="stacked"] {
+    grid-template: "top top top" auto "left board right" minmax(0, 1fr) "left gap right" auto "left panel right" auto
+                   "dock dock dock" auto / auto minmax(0, 1fr) auto;
+  }
+  .game[data-ended][data-layout="stacked"][data-flipped] {
+    grid-template: "top top top" auto "left panel right" auto "left gap right" auto "left board right" minmax(0, 1fr)
+                   "dock dock dock" auto / auto minmax(0, 1fr) auto;
+  }
+  .game[data-ended][data-layout="side"] {
+    grid-template: "top top top top top" auto "left board middle panel right" minmax(0, 1fr)
+                   "dock dock dock dock dock" auto / auto minmax(0, 1fr) auto min-content auto;
+  }
+  .game[data-ended][data-layout="side"][data-flipped] {
+    grid-template: "top top top top top" auto "left panel middle board right" minmax(0, 1fr)
+                   "dock dock dock dock dock" auto / auto min-content auto minmax(0, 1fr) auto;
+  }
+  /* (the game's own padding is only the safe area: add the end screen's side room on top of it) */
+  .game > .game-end-dock {
+    grid-area: dock;
+    padding-inline: calc(max(var(--gap-m), env(safe-area-inset-left)) - env(safe-area-inset-left))
+                    calc(max(var(--gap-m), env(safe-area-inset-right)) - env(safe-area-inset-right));
+  }
 
   /* THE END BAR (EndBar.tsx): ☰ · See board / See results · New game — the bottom row of the end screen AND of the
      finished garden, so it never moves. The two wide buttons share the width equally (not by their words), so

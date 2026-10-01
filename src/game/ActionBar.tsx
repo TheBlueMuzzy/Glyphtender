@@ -20,7 +20,9 @@ const w = text.game.buttons
 /** size: how tall the buttons are, in px — about a board hex (finger-sized, like a glyphling), never below 44.
  *  fixed: hold the space for the tallest row of buttons the game can show (B013) — hidden copies of every row,
  *  with the longest labels, are piled behind the real one. On a narrow phone "Cast · +3" can wrap the row onto
- *  2 lines while "Keep all · Refresh" fits on 1; without this the board would jump each time. */
+ *  2 lines while "Keep all · Refresh" fits on 1; without this the board would jump each time.
+ *  In portrait the buttons are also compact (kit: less room each side of the label), so the longest row,
+ *  "Shuffle · Undo · Cast · +88", fits ONE line on a 360-wide phone — no second row of space held under them. */
 export function ActionBar({ size, fixed }: { size: number; fixed: boolean }) {
   const phase = useGameStore((s) => s.game!.phase)
   if (phase === 'draft') return null
@@ -29,28 +31,28 @@ export function ActionBar({ size, fixed }: { size: number; fixed: boolean }) {
       {fixed && (
         <div className="game-actions-sizer" aria-hidden="true" inert>
           <Row gap="s" justify="center">
-            <Button size={size} variant="ghost"><Ghost words={w.shuffle} /></Button>
-            <Button size={size} variant="secondary"><Ghost words={w.undo} /></Button>
-            <Button size={size}><Ghost words={fill(w.castMagic, { n: 88 })} /></Button>
+            <Button size={size} compact={fixed} variant="ghost"><Ghost words={w.shuffle} /></Button>
+            <Button size={size} compact={fixed} variant="secondary"><Ghost words={w.undo} /></Button>
+            <Button size={size} compact={fixed}><Ghost words={fill(w.castMagic, { n: 88 })} /></Button>
           </Row>
           <Row gap="s" justify="center">
-            <Button size={size} variant="ghost"><Ghost words={w.shuffle} /></Button>
-            <Button size={size} variant="secondary"><Ghost words={w.undo} /></Button>
-            <Button size={size}><Ghost words={w.endTurn} /></Button>
+            <Button size={size} compact={fixed} variant="ghost"><Ghost words={w.shuffle} /></Button>
+            <Button size={size} compact={fixed} variant="secondary"><Ghost words={w.undo} /></Button>
+            <Button size={size} compact={fixed}><Ghost words={w.endTurn} /></Button>
           </Row>
           <Row gap="s" justify="center">
-            <Button size={size} variant="secondary"><Ghost words={w.keepAll} /></Button>
-            <Button size={size}><Ghost words={fill(w.refresh, { n: 8 })} /></Button>
+            <Button size={size} compact={fixed} variant="secondary"><Ghost words={w.keepAll} /></Button>
+            <Button size={size} compact={fixed}><Ghost words={fill(w.refresh, { n: 8 })} /></Button>
           </Row>
         </div>
       )}
-      <ActionRow size={size} />
+      <ActionRow size={size} fixed={fixed} />
     </div>
   )
 }
 
 /** The real buttons for this moment. */
-function ActionRow({ size }: { size: number }) {
+function ActionRow({ size, fixed }: { size: number; fixed: boolean }) {
   const s = useGameStore()
   const preview = usePreview()
   const game = s.game!
@@ -62,8 +64,8 @@ function ActionRow({ size }: { size: number }) {
     const refreshing = notNow || s.refreshFx !== null // (the refresh playing out on the tray)
     return (
       <Row gap="s" justify="center" className="game-actions">
-        <Button size={size} variant="secondary" disabled={refreshing} onClick={() => s.refresh(true)}>{w.keepAll}</Button>
-        <Button size={size} disabled={refreshing || s.setAside.length === 0} onClick={() => s.refresh()}>{fill(w.refresh, { n: s.setAside.length })}</Button>
+        <Button size={size} compact={fixed} variant="secondary" disabled={refreshing} onClick={() => s.refresh(true)}>{w.keepAll}</Button>
+        <Button size={size} compact={fixed} disabled={refreshing || s.setAside.length === 0} onClick={() => s.refresh()}>{fill(w.refresh, { n: s.setAside.length })}</Button>
       </Row>
     )
   }
@@ -84,9 +86,9 @@ function ActionRow({ size }: { size: number }) {
   if (!moveOnly && s.wordsStatus === 'failed') {
     return (
       <Row gap="s" justify="center" className="game-actions">
-        <Button size={size} variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
-        <Button size={size} variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
-        <Button size={size} onClick={() => s.loadWords(wordListUrl())}>{w.retryWords}</Button>
+        <Button size={size} compact={fixed} variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
+        <Button size={size} compact={fixed} variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
+        <Button size={size} compact={fixed} onClick={() => s.loadWords(wordListUrl())}>{w.retryWords}</Button>
       </Row>
     )
   }
@@ -94,9 +96,9 @@ function ActionRow({ size }: { size: number }) {
   const castLabel = moveOnly ? w.endTurn : showMagic ? fill(w.castMagic, { n: preview.magic }) : w.cast
   return (
     <Row gap="s" justify="center" className="game-actions">
-      <Button size={size} variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
-      <Button size={size} variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
-      <Button size={size} disabled={busy || !(s.cast || moveOnly) || (s.cast !== null && !preview)} onClick={s.startCast}>{castLabel}</Button>
+      <Button size={size} compact={fixed} variant="ghost" disabled={busy} onClick={s.shuffleTray}>{w.shuffle}</Button>
+      <Button size={size} compact={fixed} variant="secondary" disabled={busy || (!s.move && !s.cast)} onClick={s.undo}>{w.undo}</Button>
+      <Button size={size} compact={fixed} disabled={busy || !(s.cast || moveOnly) || (s.cast !== null && !preview)} onClick={s.startCast}>{castLabel}</Button>
     </Row>
   )
 }

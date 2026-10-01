@@ -22,7 +22,7 @@ import { boardHighlight } from '../store/turnPlan'
 import { dangers } from '../store/danger'
 import { revealSteps } from '../store/revealPlan'
 import { colourOf, glyphlingArt, seedArt } from './art'
-import { boardShift, type TraySide } from './boardPlace'
+import { boardShift, boardView, type TraySide } from './boardPlace'
 import { DangerCue } from './DangerCue'
 import { PLANNED_FILTER_ID } from './plannedLook'
 import { PlannedSeedFilter } from './PlannedSeedLook'
@@ -71,13 +71,7 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   const seedRef = useRef<SVGGElement>(null)
 
   // The board's own area, plus a margin, as the SVG viewBox
-  const view = useMemo(() => {
-    const points = board.cells.map((h) => hexToPixel(h, HEX))
-    const xs = points.map((p) => p.x), ys = points.map((p) => p.y)
-    const pad = boardMargin + 1
-    const minX = Math.min(...xs) - pad, minY = Math.min(...ys) - pad
-    return { minX, minY, w: Math.max(...xs) + pad - minX, h: Math.max(...ys) + pad - minY }
-  }, [board, boardMargin])
+  const view = useMemo(() => boardView(board.cells, boardMargin), [board, boardMargin])
 
   // Measure the on-screen hex width whenever the board's box changes size, and move the board toward the tray
   // (the viewBox slides the other way; the box's spare room shows the board there)
