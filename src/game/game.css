@@ -72,37 +72,100 @@
   .game-tray { display: block; flex: none; overflow: visible; }
   .game-refresh-slot { transform-box: fill-box; transform-origin: center; } /* a refreshed seed shrinks/grows in its slot */
   .game-column-ruler { grid-area: panel; align-self: start; display: block; pointer-events: none; }
-  .game-reveal { inline-size: 100%; } /* the players' Magic chips, in the tray's place at the end */
 
   /* The dragged piece floats in this layer, over everything, never catching taps itself */
   .game-drag-layer { grid-area: 1 / 1 / -1 / -1; inline-size: 100%; block-size: 100%; pointer-events: none; overflow: visible; z-index: 1; contain: size; }
 
-  /* The end table's buttons: side by side, sharing the width; if they ever don't fit, the last one (the main
-     button) wraps onto its own line ON TOP (wrap-reverse) */
-  .game-end-buttons { display: flex; flex-wrap: wrap-reverse; gap: var(--gap-s); flex: none; }
-  .game-end-buttons > * { flex: 1 1 auto; }
-  .game-end-buttons > [data-icon] { flex: none; } /* Menu (☰) stays square */
+  /* ══ THE END OF THE GAME ══
+     Muzzy (2026-10-01): every rule here is for EVERY screen size — one layout that scales, never a different
+     arrangement for wide screens (the last pass put things side by side on desktop and it felt "small and cramped"). */
 
-  /* ── THE END SCREEN (GameOver.tsx): the WHOLE screen — tabs, the page, the buttons, room for the gesture edge.
+  /* The Magic reveal (Reveal.tsx): the players' Magic chips in the tray's place — one tidy centred column, every chip
+     as wide as the widest. One per line, never side by side: a chip never shrinks, so two in a row ran into each
+     other (B016). Skip under them is a normal-size button (ActionBar.tsx). */
+  .game-reveal { display: grid; grid-template-columns: max-content; justify-content: center; gap: var(--gap-xs); max-inline-size: 100%; }
+  .game-reveal > .kit-player-chip { inline-size: auto; }
+  .game[data-phase="over"] .game-panel { justify-content: center; }
+
+  /* After the reveal (data-ended): the finished garden, the chips, and the end bar along the whole bottom
+     (EndBar.tsx) — in the same spot as on the end screen: the same side padding as the end screen, and the bar is the
+     last row of both, so its buttons land on exactly the same rectangles. No turn bar (its ☰ is in the end bar) and
+     no foot (the end bar keeps the gesture-edge room under itself). */
+  .game[data-ended] :is(.game-bar, .game-foot) { display: none; }
+  .game[data-ended] { padding-inline: max(var(--gap-m), env(safe-area-inset-left)) max(var(--gap-m), env(safe-area-inset-right)); }
+  .game[data-ended][data-layout="stacked"] { grid-template: "board" minmax(0, 1fr) "gap" auto "panel" auto "dock" auto / minmax(0, 1fr); }
+  .game[data-ended][data-layout="stacked"][data-flipped] { grid-template: "panel" auto "gap" auto "board" minmax(0, 1fr) "dock" auto / minmax(0, 1fr); }
+  .game[data-ended][data-layout="side"] { grid-template: "board panel" minmax(0, 1fr) "dock dock" auto / minmax(0, 1fr) min-content; }
+  .game[data-ended][data-layout="side"][data-flipped] { grid-template: "panel board" minmax(0, 1fr) "dock dock" auto / min-content minmax(0, 1fr); }
+  .game > .game-end-dock { grid-area: dock; }
+
+  /* THE END BAR (EndBar.tsx): ☰ · See board / See results · New game — the bottom row of the end screen AND of the
+     finished garden, so it never moves. The two wide buttons share the width equally (not by their words), so
+     "See board" and "See results" are exactly the same size (e2e:end checks the rectangles match). */
+  .game-end-dock { display: flex; flex-direction: column; align-items: center; flex: none; font-size: var(--text-body); }
+  .game-end-buttons { display: flex; gap: var(--gap-s); inline-size: 100%; max-inline-size: 32rem; }
+  .game-end-buttons > * { flex: 1 1 0; min-inline-size: 0; padding-inline: var(--gap-s); white-space: nowrap; }
+  .game-end-buttons > [data-icon] { flex: none; } /* Menu (☰) stays square */
+  .game-end-foot { display: block; flex: none; }
+  /* a big screen: the bar (and the end screen's tabs) a size up too, to match the bigger page */
+  @media (min-width: 56rem) and (min-height: 44rem) {
+    :is(.game-end-dock, .game-end-tabs) { --target-min: 3.25rem; font-size: calc(var(--text-body) * 1.2); }
+    .game-end-buttons { max-inline-size: 38rem; }
+  }
+  @media (min-width: 100rem) and (min-height: 60rem) {
+    :is(.game-end-dock, .game-end-tabs) { --target-min: 3.75rem; font-size: calc(var(--text-body) * 1.4); }
+    .game-end-buttons { max-inline-size: 44rem; }
+  }
+  /* A phone on its side / a short window: the bar sits at the bottom RIGHT (a fixed width), so on the end screen the
+     tabs can share its row on the left and the page keeps the height (the garden's bar is in the same spot) */
+  @media (max-height: 32rem) and (min-aspect-ratio: 1/1) {
+    .game-end-dock { align-items: flex-end; }
+    .game-end-buttons { inline-size: 26rem; max-inline-size: 100%; }
+  }
+
+  /* ── THE END SCREEN (GameOver.tsx): the WHOLE screen — tabs, the page, the end bar's room.
      The kit's Screen keeps its slots clear of the edges (its padding, then a row gap above and below the centre),
      so the end screen reaches back over exactly that much to touch every edge, and keeps its own content clear of
      the notch / rounded corners with the same safe-area sums. (KIT GAP for the framework: Screen has no "full"
-     option.) e2e:end checks it covers the window exactly. A fixed size, so switching pages never makes it jump. ── */
+     option.) e2e:end checks it covers the window exactly. A fixed size, so switching pages never makes it jump.
+     Every size on the page is in em (the page's word size), so it all grows together with the words.
+     --end-zoom: on a big screen the page's words, glyphlings and bars all go up a size (1.25×, then 1.5× on a very
+     big one), so it fills the screen instead of floating small in the middle (Muzzy: "the information is small and
+     doesn't fill the screen… it looks good on phone though"). The tabs and the end bar stay their normal size. ── */
   .game-end {
     inline-size: 100vw; block-size: 100dvh; max-inline-size: none; max-block-size: none;
     margin: calc(-1 * (max(var(--gap-m), env(safe-area-inset-top)) + var(--gap-m))) calc(-1 * max(var(--gap-m), env(safe-area-inset-right)))
             calc(-1 * (max(var(--gap-m), env(safe-area-inset-bottom)) + var(--gap-m))) calc(-1 * max(var(--gap-m), env(safe-area-inset-left)));
-    padding: max(var(--gap-s), env(safe-area-inset-top)) max(var(--gap-m), env(safe-area-inset-right))
+    padding: max(0.75rem, env(safe-area-inset-top)) max(var(--gap-m), env(safe-area-inset-right))
              max(var(--gap-s), env(safe-area-inset-bottom)) max(var(--gap-m), env(safe-area-inset-left));
     background: var(--surface) var(--panel-texture); color: var(--on-surface);
+    --end-zoom: 1;
+    /* the kit's word sizes, kept under other names so the page can scale them (a name can't refer to itself) */
+    --end-body: var(--text-body); --end-heading: var(--text-heading); --end-title: var(--text-title); --end-display: var(--text-display);
   }
-  .game-end-foot { display: block; flex: none; }
-  /* a big screen: the tabs, page and buttons keep a readable width in the middle */
-  .game-end > :is(.game-end-tabs, .game-end-page, .game-end-buttons) { inline-size: 100%; max-inline-size: 64rem; margin-inline: auto; }
+  @media (min-width: 56rem) and (min-height: 44rem) { .game-end { --end-zoom: 1.25; } }
+  @media (min-width: 100rem) and (min-height: 60rem) { .game-end { --end-zoom: 1.5; } }
+  .game-end-page {
+    --text-body: calc(var(--end-body) * var(--end-zoom)); --text-heading: calc(var(--end-heading) * var(--end-zoom));
+    --text-title: calc(var(--end-title) * var(--end-zoom)); --text-display: calc(var(--end-display) * var(--end-zoom));
+    font-size: var(--text-body);
+  }
+  /* a big screen: the tabs and page keep a readable width in the middle (wider as the words grow) */
+  .game-end > :is(.game-end-tabs, .game-end-page) { inline-size: 100%; max-inline-size: 53.33em; margin-inline: auto; }
+  .game-end-tabs { max-inline-size: 40rem; }
   .game-end > :not(.game-end-page) { flex: none; }
   .game-end-page { flex: 1 1 auto; min-block-size: 0; display: flex; flex-direction: column; touch-action: pan-y; }
-  /* a page shorter than the room sits in the middle of it (desktop); the last row clears the buttons */
-  .game-end-tabpanel { display: flex; flex-direction: column; justify-content: safe center; min-block-size: 100%; gap: var(--gap-m); padding-block-end: var(--gap-s); }
+  /* each page fills the page box; a page shorter than the room sits in its middle */
+  .game-end-tabpanel { display: flex; flex-direction: column; justify-content: safe center; min-block-size: 100%; padding-block: var(--gap-xs); }
+  /* a big screen: a comfortable margin at the sides too, so the grown page never runs to the edges */
+  @media (min-width: 56rem) { .game-end-tabpanel { padding-inline: var(--gap-xl); } }
+  /* a not-so-tall phone (360×780): highlight rows and scorecard rows a little tighter, so the pages still fit */
+  @media (max-height: 50rem) {
+    .game-end-awards .kit-listrow { padding-block: var(--gap-xs); }
+    .game-end-page .game-end-art[data-size="m"] { inline-size: 2.89em; block-size: 2.89em; }
+    .game-end-page .game-scorecard { border-spacing: 0; }
+    .game-end-page .game-scorecard-group th { padding-block-start: var(--gap-xs); }
+  }
   /* More to scroll to: the bottom edge fades out (GameOver.tsx sets data-more until it's scrolled to the end).
      KIT GAP (for the framework): the kit's ScrollArea has no "more below" cue. (A mask only reads opacity: black = shown.) */
   .game-end-page .kit-scroll[data-more] { mask-image: linear-gradient(to bottom, black calc(100% - 3rem), transparent); }
@@ -110,69 +173,73 @@
      keeps its wide side padding. Here the tabs share one line and give up padding first. */
   .game-end-tabs .kit-tabs { flex-wrap: nowrap; }
   .game-end-tabs .kit-tab { flex: 1 1 0; min-inline-size: 0; padding-inline: var(--gap-xs); }
-  /* A phone on its side: tabs and buttons share the top row, so the page keeps the height */
+  /* A phone on its side / a short window: the tabs move down beside the end bar (bottom left), the page above */
   @media (max-height: 32rem) and (min-aspect-ratio: 1/1) {
-    .game-end { display: grid; grid-template: "tabs buttons" auto "page page" minmax(0, 1fr) / minmax(0, 1fr) auto; }
-    .game-end-foot { display: none; } /* (no buttons down there to keep clear of the gesture edge) */
-    .game-end-tabs { grid-area: tabs; }
+    .game-end { display: grid; grid-template: "page page" minmax(0, 1fr) "tabs dock" auto / minmax(0, 1fr) auto;
+      padding-block-start: max(1.25rem, env(safe-area-inset-top)); } /* (the page's scroll box reaches 0.5rem past its edge) */
     .game-end-page { grid-area: page; }
-    .game-end-buttons { grid-area: buttons; flex-wrap: nowrap; }
+    .game-end-tabs { grid-area: tabs; align-self: start; margin: 0; }
+    .game-end > .game-end-dock { grid-area: dock; }
   }
 
-  /* Results: the winner(s) big and centred, everyone else smaller underneath (wide: podium + highlights beside) */
-  .game-end-results { display: flex; flex-direction: column; gap: var(--gap-m); }
-  .game-end-results[data-wide] { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
-  .game-end-standings { align-items: stretch; text-align: center; }
-  .game-end-winners, .game-end-podium { display: flex; justify-content: center; gap: var(--gap-m); }
-  .game-end-winners > * { flex: 0 1 16rem; }
+  /* Results: the title, the winner(s) big, everyone else smaller underneath (wide: one podium row), then the
+     highlights UNDER them — at every size */
+  .game-end-results { display: flex; flex-direction: column; gap: 1em; }
+  .game-end-standings { align-items: stretch; text-align: center; gap: 0.5em; }
+  .game-end-winners, .game-end-podium { display: flex; justify-content: center; gap: 1em; }
+  .game-end-winners > * { flex: 0 1 14.22em; }
   .game-end-podium { align-items: end; }
-  .game-end-podium > * { flex: 1 1 0; }
+  .game-end-podium > * { flex: 0 1 12.44em; }
   .game-end-others { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap-s); }
-  .game-end-others[data-count="1"] { grid-template-columns: minmax(0, 16rem); justify-content: center; }
+  .game-end-others[data-count="1"] { grid-template-columns: minmax(0, 16em); justify-content: center; }
   .game-end-others[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-end-player, .game-end-player-text { display: flex; flex-direction: column; align-items: center; gap: var(--gap-xs); min-inline-size: 0; text-align: center; overflow-wrap: anywhere; }
   .game-end-player-text { align-self: stretch; }
   /* Tall screens, one winner: the glyphling beside the name / Magic / bar (half the height, still the biggest) */
-  .game-end-results:not([data-wide]) .game-end-winners[data-count="1"] > * { flex-basis: 22rem; }
-  .game-end-results:not([data-wide]) .game-end-winners[data-count="1"] .game-end-player { flex-direction: row; justify-content: center; gap: var(--gap-m); }
-  .game-end-results:not([data-wide]) .game-end-winners[data-count="1"] .game-end-player-text { flex: 0 1 auto; align-self: center; }
-  .game-end-art { display: block; inline-size: 2.75rem; block-size: 2.75rem; object-fit: contain; }
-  .game-end-art[data-size="xs"] { inline-size: 2rem; block-size: 2rem; }
-  .game-end-art[data-size="m"] { inline-size: 4rem; block-size: 4rem; }
-  .game-end-art[data-size="l"] { inline-size: 5rem; block-size: 5rem; }
+  .game-end-winners[data-count="1"] > * { flex-basis: 19.56em; }
+  .game-end-winners[data-count="1"] .game-end-player { flex-direction: row; justify-content: center; gap: var(--gap-m); }
+  .game-end-winners[data-count="1"] .game-end-player-text { flex: 0 1 auto; align-self: center; }
+  .game-end-art { display: block; inline-size: 2.44em; block-size: 2.44em; object-fit: contain; }
+  .game-end-art[data-size="xs"] { inline-size: 1.78em; block-size: 1.78em; }
+  .game-end-art[data-size="m"] { inline-size: 3.56em; block-size: 3.56em; }
+  .game-end-art[data-size="l"] { inline-size: 4.44em; block-size: 4.44em; }
   @media (max-height: 32rem) { .game-end-art:not([data-size="xs"]) { inline-size: 2.75rem; block-size: 2.75rem; } }
-  @media (min-height: 40rem) and (min-aspect-ratio: 1/1) { /* desktop: room for bigger glyphlings */
-    .game-end-art { inline-size: 3.5rem; block-size: 3.5rem; }
-    .game-end-art[data-size="m"] { inline-size: 5.5rem; block-size: 5.5rem; }
-    .game-end-art[data-size="l"] { inline-size: 7rem; block-size: 7rem; }
-  }
   .game-end-name { min-inline-size: 0; max-inline-size: 100%; }
-  .game-end-split { display: block; inline-size: 100%; max-inline-size: 12rem; block-size: 0.5rem; }
-  .game-end-highlights { min-inline-size: 0; }
-  /* one compact row per award: the glyphling(s), then the title over the reason */
+  .game-end-split { display: block; inline-size: 100%; max-inline-size: 10.67em; block-size: 0.44em; }
+  /* the highlights: one compact row per award (the glyphling(s), then the title and reason); two to a line on a wide screen */
+  .game-end-highlights { min-inline-size: 0; inline-size: 100%; max-inline-size: 40.89em; margin-inline: auto; }
+  .game-end-awards { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--gap-l); }
+  .game-end-highlights[data-wide] .game-end-awards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .game-end-highlights[data-wide] .game-end-awards > :nth-child(2) { border-block-start: none; } /* (2 to a line: the dividers go between lines only) */
+  /* A phone on its side: each player's glyphling beside their words (half the height) */
+  @media (max-height: 32rem) {
+    .game-end-podium .game-end-player { flex-direction: row; justify-content: center; gap: var(--gap-s); }
+    .game-end-podium .game-end-player-text { align-self: center; }
+  }
   .game-end-award { align-items: center; }
   .game-end-award-art { display: flex; flex: none; }
   .game-end-award-text { min-inline-size: 0; text-align: start; }
 
-  /* Story: the chart fills the page's width, its key right under it, then the caption (2 lines of room, so nothing jumps) */
-  .game-end-story, .game-end-graph { display: flex; flex-direction: column; gap: var(--gap-s); }
-  /* wide: the graph (chart + key) on the left, as tall as the page; what happened on the right */
-  .game-end-story[data-wide] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(10rem, 16rem); align-items: center; gap: var(--gap-m); }
+  /* Story: the chart (it takes the page's height — GameOver.tsx chartHeight), its key right under it, then the
+     caption under the key (2 lines of room, so nothing jumps) — at every size */
+  .game-end-story { display: flex; flex-direction: column; gap: var(--gap-s); }
   .game-end-chart { inline-size: 100%; min-inline-size: 0; }
   .game-end-chart-svg { display: block; font-family: var(--font-body); }
   .game-end-chart-svg text { font-family: var(--font-numbers); }
   .game-end-chart-hit { cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
   .game-end-chart-hit:focus-visible circle:first-child { stroke: var(--focus); stroke-width: 0.15rem; }
   .game-end-caption { min-block-size: 3.2em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-  .game-end-key-shape { inline-size: 1rem; block-size: 1rem; flex: none; }
+  .game-end-key-shape { inline-size: 1em; block-size: 1em; flex: none; }
+  @media (max-height: 32rem) { .game-end-caption { min-block-size: 2.8em; } } /* (a phone on its side: every line counts) */
 
   /* Scorecard: label column + one narrow column per player; the best in each row softly tinted. Rows kept
      tight so 4 players' 15 rows fit a 390×844 phone without scrolling (the fade stays for smaller screens) */
-  .game-scorecard { inline-size: 100%; max-inline-size: 42rem; margin-inline: auto; border-collapse: separate; border-spacing: 0 0.125rem; table-layout: fixed; }
-  .game-scorecard-labels { inline-size: 42%; }
+  .game-scorecard { inline-size: 100%; max-inline-size: 37.33em; margin-inline: auto; border-collapse: separate; border-spacing: 0 0.125rem; table-layout: fixed; }
+  .game-scorecard-labels { inline-size: 46%; }
   .game-scorecard th[scope="row"] { text-align: start; padding-inline-end: var(--gap-xs); font-weight: inherit; }
   .game-scorecard th[scope="col"] { text-align: center; padding-block-end: var(--gap-xs); }
   .game-scorecard-group th { text-align: start; padding-block-start: var(--gap-s); }
   .game-scorecard td { text-align: center; font-family: var(--font-numbers); font-weight: 700; padding: calc(var(--gap-xs) / 2) 0; border-radius: var(--radius-control); }
   .game-scorecard td[data-best] { background: color-mix(in srgb, var(--on-surface) 15%, transparent); }
+  .game-scorecard th[scope="col"] .kit-avatar { inline-size: 2.45em; block-size: 2.45em; }
 }

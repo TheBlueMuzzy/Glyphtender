@@ -7,11 +7,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
-import { toast } from '../ui/kit'
+import { revealSteps } from '../store/revealPlan'
+import { toast, useScreens } from '../ui/kit'
 import { useGameSettings } from '../ui/gameSettings'
+import { leaveToMenu } from '../ui/newGame'
 import { ActionBar } from './ActionBar'
 import { wordListUrl } from './art'
 import { Board } from './Board'
+import { EndBar } from './EndBar'
 import { Handoff } from './Handoff'
 import { RevealPanel } from './Reveal'
 import { PromptLine } from './PromptLine'
@@ -77,8 +80,13 @@ export function GameScreen({ onNewGame }: { onNewGame: () => void }) {
   const input = usePieceInput({ layer: dragLayer, image: dragImage }, layout, Math.max(tray.tile, hexPx) * 1.2)
   useNopeShake() // a tapped piece that can't be touched shakes "no"
 
-  // When the garden tangles, the Magic reveal takes the tray's place (Reveal.tsx) and then opens the end table
+  // When the garden tangles, the Magic reveal takes the tray's place (Reveal.tsx) and then opens the end table.
+  // Once it's done, the finished garden (behind the end screen, or after See board) has the end bar at the bottom
+  // instead of the buttons: ☰ · See results · New game, in the SAME spot as the end screen's (EndBar.tsx).
   const over = game.phase === 'over'
+  const revealAt = useGameStore((s) => s.revealAt)
+  const ended = over && revealAt !== null && revealAt >= revealSteps(game).length
+  const showingResults = useScreens().includes('gameOver') // (the end screen has its own end bar)
 
   const flipped = useGameSettings((s) => s.trayFlipped)
   const traySide = stacked ? (flipped ? 'top' : 'bottom') : flipped ? 'left' : 'right'
@@ -87,17 +95,19 @@ export function GameScreen({ onNewGame }: { onNewGame: () => void }) {
 
   return (
     <>
-    <div ref={rootRef} className="game" data-layout={stacked ? 'stacked' : 'side'} data-flipped={flipped || undefined} data-phase={game.phase} {...input}>
+    <div ref={rootRef} className="game" data-layout={stacked ? 'stacked' : 'side'} data-flipped={flipped || undefined} data-phase={game.phase} data-ended={ended || undefined} {...input}>
       <header className="game-bar"><TurnBar /></header>
       <div className="game-board">
         <svg className="game-garden-back" aria-hidden="true"><rect width="100%" height="100%" fill={colours.background} /></svg>
         <Board onHexSize={onHexSize} traySide={traySide} />
       </div>
       <section className="game-panel" aria-label="Seeds and actions">
-        <PromptLine big={hexPx >= BIG_HEX} fixed={stacked} />
-        {over ? <RevealPanel compact={!stacked} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : column} />}
-        <ActionBar onNewGame={onNewGame} size={buttonPx} fixed={stacked} />
+        <PromptLine big={hexPx >= BIG_HEX} fixed={stacked && !ended} />
+        {over ? <RevealPanel compact={!stacked && hexPx < BIG_HEX} big={hexPx >= BIG_HEX} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : column} />}
+        {!ended && <ActionBar size={buttonPx} fixed={stacked} />}
       </section>
+      {/* The game is over: the end bar along the bottom (EndBar.tsx — the same spot as the end screen's) */}
+      {ended && !showingResults && <EndBar view="board" onMenu={leaveToMenu} onNewGame={onNewGame} />}
       {/* Tray below/above the board: room between the board and the prompt (B012 — layout.json promptGap) */}
       {stacked && <svg className="game-prompt-gap" width={0} height={layout.promptGap} aria-hidden="true" />}
       {/* Room under the whole game, clear of the phone's home/back gesture zone (B014 — layout.json bottomRoom) */}
