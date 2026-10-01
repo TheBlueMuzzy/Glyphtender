@@ -3,7 +3,7 @@
 //            (word indicators off: plain "Cast" — the +N would tell you a word is there)
 //            (Retry instead of Cast if the word list couldn't be loaded — End turn never needs it)
 //   refresh: Keep all · Refresh N
-//   over:    Skip (while the Magic reveal plays) → then Results · New game
+//   over:    Skip (while the Magic reveal plays) → then See results (reopens the end screen, which See board closed) · New game
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { mayMoveOnly } from '../store/turnPlan'
@@ -71,7 +71,7 @@ function ActionRow({ onNewGame, size }: { onNewGame: () => void; size: number })
   }
 
   if (game.phase === 'over') {
-    // While the Magic reveal plays: only Skip. After it: Results (the end table) + New game.
+    // While the Magic reveal plays: only Skip. After it: See results (the end screen) + New game.
     if (s.revealAt === null || s.revealAt < revealSteps(game).length) {
       return <Row gap="s" justify="center" className="game-actions"><Button size={size} variant="secondary" onClick={s.skipReveal}>{w.skip}</Button></Row>
     }

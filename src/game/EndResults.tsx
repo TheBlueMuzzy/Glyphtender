@@ -1,15 +1,19 @@
 // END SCREEN, PAGE 1: RESULTS — what everyone sees first (research/end-screen.md §2).
 // The winner big and centred (glyphling, name, Magic in the biggest words on the screen, and a thin bar split into
-// Magic from Words and from Tangles); everyone else smaller underneath, in place order ("=2nd" for ties).
+// Magic from Words and from Tangles — on a tall phone the glyphling sits BESIDE those, so the page fits without
+// scrolling); everyone else smaller underneath, in place order ("=2nd" for ties).
 // A shared win puts the winners side by side at the same size under "Shared win!".
-// Wide screens (phone on its side, desktop): a podium — 2nd · 1st · 3rd · 4th, the winner raised — with the
+// Wide screens (phone on its side, desktop): everyone in one row — a podium 2nd · 1st · 3rd · 4th, the winner raised
+// (2 players: 1st · 2nd; a shared win: the winners first) — with the
 // highlights beside it (Muzzy's "the thing you're trying to do is in the middle").
-// Highlights: the awards (stats.ts pickAwards); tapping one opens the Story chart at that moment.
-// Kit parts: Stack, Row, Text, Badge, Avatar, ListRow. The art and the split bar are game graphics (like the board).
+// Highlights: the awards (stats.ts pickAwards), straight under the players — one compact row each (glyphling, title,
+// reason); tapping one opens the Story chart at that moment. Tall phones (390×844): the whole page fits, no scrolling
+// (Muzzy: "move highlights under the Grand Glyphtender: Color main results section, no scrolling").
+// Kit parts: Stack, Row, Text, Badge, ListRow. The art and the split bar are game graphics (like the board).
 import text from '../../content/text/en.json'
 import { logIsComplete } from '../engine/log'
 import type { GameState } from '../engine/types'
-import { Avatar, Badge, ListRow, Row, Stack, Text, fill, ordinal } from '../ui/kit'
+import { Badge, ListRow, Row, Stack, Text, fill, ordinal } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
 import { awardText } from './endText'
 import type { Award, Scorecard, Standing } from './stats'
@@ -41,19 +45,27 @@ export function EndResults({ title, game, ranked, cards, awards, colours, wide, 
   const player = (s: Standing, size: 'l' | 'm' | 's') => (
     <PlayerResult key={s.seat} standing={s} card={cards[s.seat]} size={size} colours={colours} name={name(s.seat)} me={me === s.seat} />
   )
-  // Wide + one winner + 3 or more players: the podium order 2 · 1 · 3 · 4, everyone in one row
-  const podium = wide && !shared && ranked.length >= 3
-  const order = podium ? [others[0], winners[0], ...others.slice(1)] : null
+  // Wide: everyone in one row (a phone on its side has no height to spare) — one winner + 3 or more players: the
+  // podium order 2 · 1 · 3 · 4; 2 players: winner · other; a shared win: the winners first, at the same size
+  const order = !wide ? null
+    : shared ? ranked
+    : ranked.length >= 3 ? [others[0], winners[0], ...others.slice(1)] : [winners[0], ...others]
   const highlights = awards.length > 0 && (
     <Stack gap="xs" className="game-end-highlights">
       <Text kind="heading">{w.highlights}</Text>
       {awards.map((a) => {
         const { title, reason } = awardText(a, name)
         return (
-          <ListRow key={a.id} onClick={() => onAward(a)} detail={reason} label={
-            <Row gap="s" className="kit-nowrap">
-              {a.seats.slice(0, 2).map((seat) => <Avatar key={seat} name={name(seat)} src={glyphlingArt(seat)} color={colours[colourOf(seat)]} />)}
-              <Text kind="label">{title}</Text>
+          <ListRow key={a.id} onClick={() => onAward(a)} label={
+            <Row gap="s" className="kit-nowrap game-end-award">
+              <span className="game-end-award-art">
+                {a.seats.slice(0, 2).map((seat) => <img key={seat} className="game-end-art" data-size="xs" src={glyphlingArt(seat)} alt={name(seat)} />)}
+              </span>
+              {/* title and reason flow as one line of text (wrapping onto a 2nd only when long) */}
+              <span className="game-end-award-text">
+                <Text kind="label">{title}</Text>
+                <Text kind="caption">{' · '}{reason}</Text>
+              </span>
             </Row>
           } />
         )
@@ -62,10 +74,10 @@ export function EndResults({ title, game, ranked, cards, awards, colours, wide, 
   )
   return (
     <div className="game-end-results" data-wide={wide || undefined}>
-      <Stack gap="m" className="game-end-standings">
-        <Text kind={compact ? 'heading' : 'title'}>{title}</Text>
+      <Stack gap="s" className="game-end-standings">
+        <Text kind={wide && !compact ? 'title' : 'heading'}>{title}</Text>
         {order ? (
-          <div className="game-end-podium">{order.map((s) => player(s, s.place === 1 ? big : 's'))}</div>
+          <div className="game-end-podium">{order.map((s) => player(s, s.place === 1 ? (shared ? 'm' : big) : 's'))}</div>
         ) : (
           <>
             <div className="game-end-winners" data-count={winners.length}>{winners.map((s) => player(s, winners.length > 1 ? 'm' : big))}</div>
@@ -88,15 +100,17 @@ function PlayerResult({ standing, card, size, colours, name, me }: {
   return (
     <div className="game-end-player" data-size={size} data-winner={winner || undefined} data-seat={standing.seat}>
       <img className="game-end-art" src={glyphlingArt(standing.seat)} alt="" data-size={size} />
-      {!winner && <Text kind="label">{place}</Text>}
-      <Row gap="xs" justify="center" className="game-end-name">
-        <Text kind={size === 'l' ? 'heading' : 'label'}>{name}</Text>
-        {me && <Badge>{w.you}</Badge>}
-      </Row>
-      {/* the winner's "69 Magic" is the biggest thing on the screen; the others just their number */}
-      <Text kind={size === 's' ? 'heading' : size === 'm' ? 'title' : 'display'}>{size === 's' ? standing.magic : fill(w.points, { n: standing.magic })}</Text>
-      <SplitBar words={card.wordMagic} tangles={card.tangleMagic} colour={colours[colourOf(standing.seat)]} tangleColour={colours.vine} />
-      <Text kind="caption">{fill(w.split, { words: card.wordMagic, tangles: card.tangleMagic })}</Text>
+      <div className="game-end-player-text">
+        <Row gap="xs" justify="center" className="game-end-name">
+          {!winner && <Text kind="label">{place}</Text>}
+          <Text kind={size === 'l' ? 'heading' : 'label'}>{name}</Text>
+          {me && <Badge>{w.you}</Badge>}
+        </Row>
+        {/* the winner's "69 Magic" is the biggest thing on the screen; the others just their number */}
+        <Text kind={size === 's' ? 'heading' : size === 'm' ? 'title' : 'display'}>{size === 's' ? standing.magic : fill(w.points, { n: standing.magic })}</Text>
+        <SplitBar words={card.wordMagic} tangles={card.tangleMagic} colour={colours[colourOf(standing.seat)]} tangleColour={colours.vine} />
+        <Text kind="caption">{fill(w.split, { words: card.wordMagic, tangles: card.tangleMagic })}</Text>
+      </div>
     </div>
   )
 }

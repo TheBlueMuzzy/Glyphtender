@@ -1,10 +1,12 @@
 // THE END SCREEN, EVERY PAGE — 2, 3, 4 players and a shared win (the finished games in e2e/fixtures/end-*.json,
 // made by scripts/end-fixtures.mjs) at phone-tall 390×844, phone-wide 844×390 and desktop 1440×900.
 // Each: jump to the finished game (dev hook) → Skip the reveal → Results (shot) → Story, tap a mark (shot) →
-// Scorecard (shot) → swipe back to Results (phones). Checks: the winner is on screen at once, nothing past a screen
-// edge or sideways out of its page, buttons ≥ 44 px, the scorecard tints at least one best, every chart mark is a
-// ≥ 44 px target, the 2-letter row only when 2-letter words count, no console errors; and with reduce motion on
-// the chart is drawn at once (no animations running).
+// Scorecard (shot) → swipe back to Results (phones) → See board (shot: the results gone, the garden there) → See
+// results (back). Checks: the end screen covers the whole window, the winner is on screen at once, NO page scrolls
+// on a 390×844 phone (Results, Story, Scorecard — Muzzy's "no scrolling"), nothing past a screen edge or sideways
+// out of its page, buttons ≥ 44 px, the scorecard tints at least one best, every chart mark is a ≥ 44 px target,
+// the 2-letter row only when 2-letter words count, the chart's key sits right under the chart, no console errors;
+// and with reduce motion on the chart is drawn at once (no animations running).
 // Starts its OWN dev server (default port 5196 — never Muzzy's 5180) and closes only that one at the end.
 //   npm run e2e:end [outDir] [port]
 import { mkdirSync, readFileSync } from 'node:fs'
@@ -14,7 +16,7 @@ import { chromium } from 'playwright-core'
 const OUT = process.argv[2] ?? 'e2e-shots'
 const PORT = Number(process.argv[3] ?? 5196)
 const SIZES = [
-  { name: 'phone-tall', width: 390, height: 844, mobile: true },
+  { name: 'phone-tall', width: 390, height: 844, mobile: true, noScroll: true },
   { name: 'phone-wide', width: 844, height: 390, mobile: true },
   { name: 'desktop', width: 1440, height: 900, mobile: false },
 ]
@@ -34,6 +36,12 @@ function problems() {
   const page = document.querySelector('.game-end .kit-scroll')
   if (page && page.scrollWidth > page.clientWidth + 1) out.push(`the page scrolls sideways (${page.scrollWidth} > ${page.clientWidth})`)
   const box = page?.getBoundingClientRect()
+  // The page stays in its own space: on screen, and clear of the tabs and the buttons
+  if (box && (box.top < -0.5 || box.bottom > innerHeight + 0.5)) out.push(`the page runs off the screen (${Math.round(box.top)}–${Math.round(box.bottom)})`)
+  for (const sel of ['.game-end-tabs', '.game-end-buttons']) {
+    const r = document.querySelector(sel)?.getBoundingClientRect()
+    if (box && r && r.left < box.right && r.right > box.left && r.top < box.bottom - 0.5 && r.bottom > box.top + 0.5) out.push(`the page runs under ${sel}`)
+  }
   for (const el of document.querySelectorAll('.game-end .kit-scroll .kit-text, .game-end .kit-scroll img, .game-end .kit-scroll svg')) {
     const r = el.getBoundingClientRect()
     if (r.width && (r.left < box.left - 1 || r.right > box.right + 1)) out.push(`sticks out of the page: ${(el.textContent || el.tagName).trim().slice(0, 30)}`)
@@ -65,6 +73,12 @@ try {
         out.forEach((p) => fail(`${tag} ${name}: ${p}`))
         console.log(`${out.length ? 'FAIL' : 'ok  '} ${tag} ${name}`)
       }
+      // A tall phone: the page fits — nothing to scroll
+      const fits = async (name) => {
+        if (!size.noScroll) return
+        const over = await page.locator('.game-end-page .kit-scroll').evaluate((el) => el.scrollHeight - el.clientHeight)
+        check(`${name} fits without scrolling (${over} px too tall)`, over <= 1)
+      }
       await page.goto(`http://127.0.0.1:${PORT}/`)
       await page.waitForFunction(() => window.__glyphtender?.store, null, { timeout: 15000 })
       await page.evaluate((g) => window.__glyphtender.store.getState().loadState(g), game)
@@ -72,6 +86,9 @@ try {
       const dialog = page.getByRole('dialog', { name: /Grand Glyphtender/ })
       await dialog.waitFor({ timeout: 5000 })
       await page.waitForTimeout(700) // the panel's entrance
+      const box = await page.locator('.game-end').boundingBox()
+      check(`the end screen fills the window (${[box.x, box.y, box.width, box.height].map(Math.round)})`,
+        Math.abs(box.x) < 1 && Math.abs(box.y) < 1 && Math.abs(box.width - size.width) < 1 && Math.abs(box.height - size.height) < 1)
 
       // ---- Results: the winner on screen at once ----
       const winnerVisible = await page.evaluate(() => {
@@ -85,6 +102,7 @@ try {
       check('a hero per winner', (await page.locator('.game-end-player[data-winner]').count()) === game.winners.length)
       if (game.winners.length > 1) check('says Shared win!', await page.getByText('Shared win!').isVisible())
       check('everyone is on the results', (await page.locator('.game-end-player').count()) === game.config.players)
+      await fits('Results')
       await shot('1-results')
 
       // ---- Story: the chart, then tap a mark → its caption ----
@@ -104,6 +122,12 @@ try {
         const caption = await page.locator('.game-end-caption').innerText()
         check(`tapping a mark tells what happened (“${caption}”)`, !/Tap a mark/.test(caption) && caption.length > 5)
       }
+      // The key right under the chart, then the caption
+      const [chartBox, keyBox, captionBox] = await Promise.all(['.game-end-chart', '.game-end-key', '.game-end-caption'].map((s) => page.locator(s).boundingBox()))
+      check('the key sits right under the chart', keyBox.y >= chartBox.y + chartBox.height - 1 && keyBox.y - (chartBox.y + chartBox.height) < 30)
+      const wideLayout = size.width > size.height // (wide: the caption sits beside the graph)
+      check('the caption sits under the key (beside the graph when wide)', wideLayout ? captionBox.x >= chartBox.x + chartBox.width - 1 : captionBox.y >= keyBox.y + keyBox.height - 1)
+      await fits('Story')
       await shot('2-story')
 
       // ---- Scorecard ----
@@ -112,6 +136,7 @@ try {
       check('the best in a row is tinted', (await page.locator('.game-scorecard td[data-best]').count()) > 0)
       const twoLetterRow = await page.getByRole('rowheader', { name: '2-letter' }).count()
       check('the 2-letter row only when 2-letter words count', twoLetterRow === (game.config.rules.minWordLength <= 2 ? 1 : 0))
+      await fits('Scorecard')
       await shot('3-scorecard')
       // Taller than the page: the bottom edge fades (more to see); scrolled to the end, the last row clears the buttons
       const scroller = page.locator('.game-end-page .kit-scroll')
@@ -139,6 +164,20 @@ try {
         check('a swipe turns the page', (await page.getByRole('tab', { name: 'Story', selected: true }).count()) === 1)
       }
       check('Menu and New game are there', (await dialog.getByRole('button', { name: 'New game' }).count()) === 1 && (await dialog.getByRole('button', { name: 'Menu' }).count()) === 1)
+
+      // ---- See board → the results step aside, the finished garden is all there; See results brings them back ----
+      await tap(dialog.getByRole('button', { name: 'See board' }))
+      await dialog.waitFor({ state: 'detached', timeout: 3000 }).catch(() => {})
+      check('See board hides the results', (await page.locator('.game-end').count()) === 0)
+      const garden = await page.locator('.game-board').boundingBox()
+      check('the board is there to look at', garden !== null && garden.width > 100 && garden.height > 100)
+      const seeResults = page.getByRole('button', { name: 'See results' })
+      check('a See results button', await seeResults.isVisible())
+      await page.waitForTimeout(300)
+      await page.screenshot({ path: `${OUT}/end-${tag}-4-board.png` })
+      await tap(seeResults)
+      await dialog.waitFor({ timeout: 3000 })
+      check('See results brings the results back', (await page.getByRole('tab', { name: 'Results', selected: true }).count()) === 1)
       if (errors.length) fail(`${tag} console errors: ${errors.join(' | ')}`)
       await page.close()
     }
