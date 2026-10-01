@@ -7,6 +7,7 @@
 // Highlights: the awards (stats.ts pickAwards); tapping one opens the Story chart at that moment.
 // Kit parts: Stack, Row, Text, Badge, Avatar, ListRow. The art and the split bar are game graphics (like the board).
 import text from '../../content/text/en.json'
+import { logIsComplete } from '../engine/log'
 import type { GameState } from '../engine/types'
 import { Avatar, Badge, ListRow, Row, Stack, Text, fill, ordinal } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
@@ -73,7 +74,7 @@ export function EndResults({ title, game, ranked, cards, awards, colours, wide, 
         )}
       </Stack>
       {highlights}
-      {game.log === undefined && <Text kind="caption">{w.noLog}</Text>}
+      {!logIsComplete(game) && <Text kind="caption">{w.noLog}</Text>}
     </div>
   )
 }

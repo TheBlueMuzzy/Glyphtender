@@ -4,7 +4,7 @@
 //   pickAwards(game, t)    the highlights (research/end-screen.md §3): fun titles, never Magic, never "worst at"
 //   storyChart(game, …)    Magic over the rounds, one line per player, plus a Tangles step and moment markers
 // The words for all of it live in content/text/en.json → game.end; the knobs in content/tuning/endscreen.json.
-import { logOf } from '../engine/log'
+import { logIsComplete, logOf } from '../engine/log'
 import type { GameState, LogTurn, LogWord } from '../engine/types'
 import endscreenFile from '../../content/tuning/endscreen.json'
 
@@ -92,7 +92,7 @@ export function scorecards(game: GameState): Scorecard[] {
     return {
       seat,
       total,
-      wordMagic: mine.reduce((sum, t) => sum + t.magic, 0),
+      wordMagic: total - (game.tangleMagic[seat] ?? 0), // (not summed from the log: an old save's log can be partial)
       soloMagic: words.filter((w) => isSolo(w, seat)).reduce((sum, w) => sum + w.magic, 0),
       tangleMagic: game.tangleMagic[seat] ?? 0,
       byLength,
@@ -333,6 +333,10 @@ export interface StoryChart {
 }
 
 export function storyChart(game: GameState, awards: Award[], maxMarkers: number): StoryChart {
+  // A log that doesn't cover every turn (an old save) can't tell the story: just the start and the end, no marks
+  if (!logIsComplete(game)) {
+    return { rounds: 0, series: game.magic.map((final, seat) => ({ seat, points: [0, final] })), markers: [], max: Math.max(1, ...game.magic) }
+  }
   const turns = logOf(game).turns
   const ends = roundEnds(turns)
   const rounds = ends.length

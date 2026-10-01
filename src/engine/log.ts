@@ -12,6 +12,10 @@ export const emptyLog = (): GameLog => ({ turns: [], end: null })
 /** The game's log; an empty one for games saved before the log existed. */
 export const logOf = (state: GameState): GameLog => state.log ?? emptyLog()
 
+/** Every completed turn is in the log. False for a game saved before the log existed — even one played on to
+ *  the end, whose log only starts partway through (its early turns were never written down). */
+export const logIsComplete = (state: GameState): boolean => (state.log?.turns.length ?? -1) >= state.turnCount
+
 /** The words of the last turn, with each seed's letter and owner (read from the board they were made on). */
 export function logWords(state: GameState): LogWord[] {
   const turn = state.lastTurn

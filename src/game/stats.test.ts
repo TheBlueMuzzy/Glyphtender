@@ -5,6 +5,7 @@ import { newGame } from '../engine/setup'
 import { winnersOf } from '../engine/tangle'
 import type { GameState, LogTurn } from '../engine/types'
 import endscreen from '../../content/tuning/endscreen.json'
+import { logIsComplete } from '../engine/log'
 import { awardCandidates, pickAwards, scorecards, standings, storyChart } from './stats'
 
 // ─── Hand-built logs ───
@@ -262,4 +263,27 @@ describe('real games (the engine’s random player)', () => {
       }
     })
   }
+})
+
+describe('a game saved before the log existed, played to the end (a partial log)', () => {
+  // Two turns were played before the log existed (12 Magic for seat 0, 5 for seat 1); the log has only the last two
+  const whole = finished(2, [[0, ['CAT:000']], [1, ['TO:01']]], { tangleMagic: [2, 0] })
+  const partial: GameState = { ...whole, magic: [whole.magic[0] + 12, whole.magic[1] + 5], turnCount: whole.turnCount + 2 }
+
+  it('knows the log is partial', () => {
+    expect(logIsComplete(whole)).toBe(true)
+    expect(logIsComplete(partial)).toBe(false)
+    expect(logIsComplete({ ...whole, log: undefined })).toBe(false)
+  })
+  it('Magic from words = total − tangle bonus, so the split always adds up', () => {
+    const cards = scorecards(partial)
+    expect(cards.map((c) => c.wordMagic + c.tangleMagic)).toEqual(partial.magic)
+    expect(cards[0].wordMagic).toBe(partial.magic[0] - 2)
+  })
+  it('draws no misleading story: just the start and the end, no markers', () => {
+    const chart = storyChart(partial, pickAwards(partial, endscreen), endscreen.maxMarkers)
+    expect(chart.rounds).toBe(0)
+    expect(chart.series.map((s) => s.points)).toEqual([[0, partial.magic[0]], [0, partial.magic[1]]])
+    expect(chart.markers).toEqual([])
+  })
 })
