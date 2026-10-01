@@ -1,9 +1,9 @@
 ## ▶ RESUME HERE
-Released v0.2.0 (alpha + online) 2026-10-01 — live at https://thebluemuzzy.github.io/glyphtender/ with Play online (server: glyphtender.joebrogno.workers.dev on Muzzy's Cloudflare). Next: Muzzy plays the new phone layout + online with friends (open look questions below) → then the two queued changes (ROADMAP Ideas): Q is plain Q + one more U, and the word spotlight (words light up one at a time) → `/sprint`.
+Sprint 07 running AUTONOMOUSLY (Muzzy asleep, 2026-10-01) on branch dev/polish — F24 plain Q · F28 4 players · F25 word spotlight · F26 end screen overhaul · F27 Dev Kit screen previews. SPRINT.md is the status board. Nothing gets delivered until Muzzy reviews (live = v0.2.0).
 Muzzy hasn't checked yet: ~60px spare room under the buttons on 390-wide phones (reserved so "Cast · +88" never jumps the board) · prompt says "Ada is playing…" while a bot plays her seat · the board shifts once when the draft ends. Open decisions (defaults built): word list B001 · online timer/away rules · Magic secrecy · desktop button size · merge framework dev/rooms · Roll Better persistentId leak.
 
 ## Where we are
-Stage: deliver · Milestone: v0.4 Play online ✅ · Sprint: — · Doing: friends testing online · Branch: main · Version: 0.2.0.0 · Live: https://thebluemuzzy.github.io/glyphtender/ (alpha, online)
+Stage: develop · Milestone: v0.5 Polish · Sprint: 07 · Doing: autonomous sprint · Branch: dev/polish · Version: 0.2.0.0 · Live: https://thebluemuzzy.github.io/glyphtender/ (alpha, online)
 
 ## Key facts
 **Remake.** Web remake of the Unity game. The original is read-only reference at `../glyphtender-original` (GitHub `TheBlueMuzzy/glyphtender-original`, renamed from `Glyphtender` 2026-09-30). Never copy it wholesale — pull ideas/assets across deliberately. Digest: `.planning/research/original-digest.md`.
