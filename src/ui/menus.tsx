@@ -1,11 +1,13 @@
 // MENUS — the home page and the screens it opens, all built from the UI kit.
 // Words: content/text/en.json · settings rows: content/ui/settings.json · look: content/ui/style.json
-import { Credits, HowToPlay, MainMenu, Pause, Settings, screens } from './kit'
+import { Credits, HowToPlay, MainMenu, Pause, Settings, fill, screens } from './kit'
 import { GameOverScreen } from '../game/GameOver'
 import { leaveToMenu, newGameFromEnd, openNewGame } from './newGame'
 import { settingsChanged } from './gameSettings'
 import { LobbyScreen } from './online/LobbyScreen'
 import { OnlineStartScreen } from './online/OnlineStartScreen'
+import { useOnline } from './online/session'
+import { useGameStore } from '../store/gameStore'
 import text from '../../content/text/en.json'
 import settings from '../../content/ui/settings.json'
 import credits from '../../content/credits.json'
@@ -55,7 +57,10 @@ export function CreditsScreen() {
 
 // PAUSE — the Menu button in the game: back to the garden, the Rules, Settings, or leave (asks first).
 export function PauseScreen() {
-  const w = text.game.pause
+  // Online: the title carries the room code ("Paused · Room BAKU"), so it's always one tap away
+  const code = useOnline((s) => s.code)
+  const online = useGameStore((s) => s.online !== null)
+  const w = online && code ? { ...text.game.pause, title: fill(text.online.pauseTitle, { code }) } : text.game.pause
   return <Pause words={w} onHowToPlay={() => screens.push('rules')} onSettings={() => screens.push('settings')} onQuit={leaveToMenu} />
 }
 

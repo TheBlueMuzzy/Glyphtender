@@ -208,6 +208,8 @@
       "message": "Connection lost — getting you back into the garden.",
       "quit": "Leave"
     },
+    "roomLabel": "Room: {code}",
+    "pauseTitle": "Paused · Room {code}",
     "seats": {
       "bot": "{name}: a bot is playing for them",
       "away": "Away",

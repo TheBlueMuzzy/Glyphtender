@@ -255,6 +255,19 @@ try {
   check('the other player’s turn popped its Magic on the watcher’s screen', feel.popsSeen)
   await ada.shot('3-mid-game')
   await bo.shot('3-mid-game')
+  // The room code stays in sight all game ("Room: BAKU" by the Menu button) and in the Menu's title
+  for (const p of [ada, bo]) {
+    const label = await p.page.locator('.game-turn-bar [data-room-label]').textContent().catch(() => null)
+    check(`${p.name} sees the room code by the Menu button (${label})`, label === `Room: ${code}`)
+  }
+  await bo.page.setViewportSize({ width: 844, height: 390 })
+  await bo.shot('3b-room-label')
+  await bo.page.setViewportSize({ width: 1440, height: 900 })
+  await bo.tap(bo.page.getByRole('button', { name: 'Menu' }))
+  const pauseTitle = await bo.page.getByRole('dialog').getByText(`Paused · Room ${code}`).count()
+  check(`the Menu says the room code (Paused · Room ${code})`, pauseTitle > 0)
+  await bo.shot('3c-menu-room-code')
+  await bo.tap(bo.page.getByRole('button', { name: 'Back to the garden' }))
 
   // ---- Bo reloads mid-game: straight back into his seat ----
   const boBefore = await bo.store((s) => ({ seat: s.online.mySeat, version: s.online.version }))
