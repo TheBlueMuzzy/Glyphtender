@@ -140,19 +140,21 @@ flowchart LR
 
 ## 8. Decisions log
 ```
-D51 · 2026-10-01 · Templates in the player's colour; turn trails show other players' turns, then stay faint (Muzzy's idea)
+D51 · 2026-10-01 · Templates in the player's colour; turn trails show other players' turns (Muzzy's idea; trimmed after his playtest)
   Why: Muzzy — "the color of the movement/casting template should match the color of the player… if we could see the paths
   when other players take their turns, it might help us understand the current state of the game (who is playing, where did
   they move from, where did they shoot from)… slow down the replay slightly". Fixed teal/gold clashed with the blue and
   yellow players, and online the other turns were just a glide + throw.
-  Chose: colour = whose turn, SHAPE = move vs cast (filled hex + dot / dashed ring + hollow dot). One pure rule picks the
-  trail (trail.ts boardTrail: live replay → my plan → the last turn, faint, while nobody is doing anything); one component
-  draws it under the pieces (TurnTrail.tsx, rings at the hex edge, dark casing so it reads over a same-colour highlight).
-  Online replay = trail (store field `trail`, set by onlinePlay.startReplay) → trailLead + trailHold → glide → throw; the
-  same element fades live → faint (Web Animations; reduce motion = no draw-on, no fade, the hold stays). The cast arc is
-  the throw's curve (trailShape.throwHandle, used by useThrow too). Pass-and-play needs no replay: the next player sees the
-  previous turn faint after the handoff. +0.85 s per replayed turn by default. Proof: trail.test / trailShape.test /
-  onlinePlay.test, npm run e2e:trails (4 sizes × Yellow + Blue, purple / pink shots), e2e:game 5a, e2e:pass, e2e:online 4a/4c.
+  Chose: colour = whose turn; move vs cast = the SAME template (filled hex + dot) in two shades — move = the player's colour,
+  cast = a lighter shade (castShade.ts, garden.json castShade 0.4; darker read the same as a move on the night board).
+  One pure rule picks the trail (trail.ts boardTrail: live replay → my plan → nothing); one component draws it under the
+  pieces (TurnTrail.tsx: dotted move path + rings at the hex edge, dark casing so it reads over a same-colour highlight).
+  Online replay = trail (store field `trail`, set by onlinePlay.startReplay) → trailLead + trailHold → glide → throw → gone
+  with the landing (reduce motion = no draw-on, the hold stays). +0.85 s per replayed turn by default.
+  Playtest trim (same day, Muzzy): NO cast arc ("they are 'straight line shots'" — an arc reads as jumping things; the
+  thrown seed's flight curve, trailShape.throwHandle, is untouched), NO faint last-turn trail ("shouldn't [stick around]
+  post cast"), NO dashed cast rings ("very distracting"). Proof: trail.test / trailShape.test / castShade.test /
+  onlinePlay.test, npm run e2e:trails (4 sizes × Yellow + Blue, purple / pink plan-cast), e2e:game 5a, e2e:pass, e2e:online 4a/4c.
 D50 · 2026-10-01 · Word spotlight: 2+ words light one at a time, looping; grown words stay until play moves on (F25)
   Why: all words outlined at once read as one blob (Muzzy saw Q-A-O lit and read "QAO" — it was QUA + TAB + AY). His idea.
   Chose: each word = its own SVG group; one Web Animation per group over the whole loop with non-overlapping slots
