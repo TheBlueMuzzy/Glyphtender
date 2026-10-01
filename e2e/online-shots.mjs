@@ -14,12 +14,9 @@
 // Starts its OWN `wrangler dev` (default port 1995 — never 1997, where `npm run party:dev` runs) and Vite
 // (default 5311) and stops only those. The page finds that server through VITE_PARTY_PORT (ui/online/session.ts).
 //   npm run e2e:online [outDir] [vitePort] [partyPort]
-import { spawn, execSync } from 'node:child_process'
 import { mkdirSync, readFileSync } from 'node:fs'
-import { createServer as netServer } from 'node:net'
-import { createServer } from 'vite'
-import { chromium } from 'playwright-core'
 import { leftoverPops } from './leftover-pops.mjs'
+import { makePlayer, secretsIn, startServers } from './online-kit.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
 const VITE_PORT = Number(process.argv[3] ?? 5311)
@@ -32,84 +29,9 @@ const fail = (why) => { failures++; console.log(`  FAIL ${why}`) }
 const check = (what, ok) => { if (!ok) fail(what) }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
-// ---- our own servers (never anyone else's) ----
-const portFree = (port) => new Promise((ok) => {
-  const probe = netServer().once('error', () => ok(false)).once('listening', () => probe.close(() => ok(true))).listen(port, '0.0.0.0')
-})
-if (!(await portFree(PARTY_PORT))) throw new Error(`Port ${PARTY_PORT} is busy — pass another: npm run e2e:online e2e-shots 5311 <port>`)
-const party = spawn(`npx wrangler dev --port ${PARTY_PORT} --ip 127.0.0.1 --inspector-port 0`, { shell: true, cwd: process.cwd() })
-let partyLog = ''
-party.stdout.on('data', (d) => { partyLog += d })
-party.stderr.on('data', (d) => { partyLog += d })
-const stopParty = () => {
-  try { process.platform === 'win32' ? execSync(`taskkill /PID ${party.pid} /T /F`, { stdio: 'ignore' }) : party.kill() } catch { /* already gone */ }
-}
-for (let t = 0; t < 120 && !/Ready on/.test(partyLog); t++) await wait(500)
-if (!/Ready on/.test(partyLog)) { stopParty(); throw new Error(`wrangler dev didn't start:\n${partyLog}`) }
-process.env.VITE_PARTY_PORT = String(PARTY_PORT) // the page talks to OUR server
-const vite = await createServer({ server: { port: VITE_PORT, strictPort: true, host: '127.0.0.1' }, logLevel: 'warn' })
-await vite.listen()
-const browser = await chromium.launch()
-
-// Everything visible must be inside the screen, and buttons big enough for a finger (as e2e:pass)
-function problems() {
-  const out = []
-  for (const el of document.querySelectorAll('.game button, .game-tray, .game-garden, .kit-screen button, .kit-text')) {
-    const r = el.getBoundingClientRect()
-    if (!r.width || !r.height || el.closest('.kit-scroll, [data-scroll]')) continue
-    const name = (el.textContent || el.getAttribute('class') || '').trim().slice(0, 30)
-    if (r.left < -0.5 || r.top < -0.5 || r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5) out.push(`clipped: ${name}`)
-    if (el.tagName === 'BUTTON' && (r.height < 43.5 || r.width < 43.5)) out.push(`small button: ${name} ${Math.round(r.width)}×${Math.round(r.height)}`)
-  }
-  return out
-}
-
-// ---- the secrecy check: every frame a browser received, before the results ----
-const HIDDEN = '?'
-function secretsIn(frame) {
-  let message
-  try { message = JSON.parse(frame) } catch { return [] }
-  const out = []
-  if (/persistent/i.test(frame)) out.push('a persistentId')
-  if (message.type !== 'view' || !message.view) return out
-  const { game, mySeat, results } = message.view
-  if (game.phase === 'over') return out // the reveal: the whole truth, on purpose
-  game.hands.forEach((hand, seat) => { if (seat !== mySeat && hand.some((s) => s !== HIDDEN)) out.push(`seat ${seat}'s seeds`) })
-  if (game.bag.some((s) => s !== HIDDEN)) out.push('the bag')
-  if (game.rng !== 0 || game.config.seed !== 0) out.push('the rng / seed')
-  if ([...game.magic, ...game.tangleMagic].some((m) => m !== 0) || game.winners.length) out.push('Magic totals')
-  if (game.lastTurn && (game.lastTurn.magic !== 0 || game.lastTurn.words.some((w) => w.magic !== 0))) out.push("last turn's Magic")
-  if (results) out.push('results')
-  return out
-}
-
-// ---- a player = a browser context (own storage) + its page ----
-function player(name, context, size) {
-  const me = { name, context, size, page: null, frames: [], errors: [] }
-  me.open = async () => {
-    const page = await context.newPage()
-    page.on('console', (m) => m.type() === 'error' && me.errors.push(m.text()))
-    page.on('pageerror', (e) => me.errors.push(e.message))
-    page.on('websocket', (ws) => ws.on('framereceived', (f) => me.frames.push(String(f.payload))))
-    await page.goto(`http://127.0.0.1:${VITE_PORT}/`)
-    me.page = page
-  }
-  me.tap = (loc) => (size.mobile ? loc.tap() : loc.click())
-  // A glyphling whose turn it is pulses (it never holds still), so Playwright's "wait until stable" would wait forever
-  me.tapGlyph = (loc) => (size.mobile ? loc.tap({ force: true }) : loc.click({ force: true }))
-  me.store = (fn) => me.page.evaluate(`(${fn})(window.__glyphtender.store.getState())`)
-  me.room = (fn) => me.page.evaluate(`(${fn})(window.__glyphtender.online.getState())`)
-  me.shot = async (label, settle = 400) => {
-    await me.page.waitForFunction(() => [...document.querySelectorAll('[data-glide]')].every((g) => g.getAnimations().length === 0), null, { timeout: 4000 }).catch(() => {})
-    await me.page.waitForTimeout(settle)
-    const tag = `${me.page.viewportSize().width}x${me.page.viewportSize().height}`
-    await me.page.screenshot({ path: `${OUT}/online-${tag}-${label}.png` })
-    const out = await me.page.evaluate(problems)
-    out.forEach((p) => fail(`${name} ${label}: ${p}`))
-    console.log(`${out.length ? 'FAIL' : 'ok  '} ${name} ${tag} ${label}`)
-  }
-  return me
-}
+// ---- our own servers (never anyone else's) — the shared helpers are in online-kit.mjs ----
+const { browser, stop } = await startServers(VITE_PORT, PARTY_PORT, 'npm run e2e:online e2e-shots <vitePort> <partyPort>')
+const player = (name, context, size) => makePlayer(name, context, size, { vitePort: VITE_PORT, out: OUT, fail })
 
 const ada = player('Ada', await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), { mobile: true })
 const bo = player('Bo', await browser.newContext({ viewport: { width: 1440, height: 900 } }), { mobile: false })
@@ -370,9 +292,7 @@ try {
 } catch (error) {
   fail(error.stack ?? String(error))
 } finally {
-  await browser.close()
-  await vite.close()
-  stopParty()
+  await stop()
 }
 console.log(failures ? `\n${failures} problem(s)` : '\nall good')
 process.exit(failures ? 1 : 0)

@@ -20,6 +20,7 @@
     "party:dev": "wrangler dev",
     "party:deploy": "wrangler deploy",
     "e2e:online": "node e2e/online-shots.mjs",
+    "e2e:online4": "node e2e/online-four.mjs",
     "e2e:update": "node e2e/sw-update.mjs",
     "e2e:portrait": "node e2e/portrait-layout.mjs"
   },
