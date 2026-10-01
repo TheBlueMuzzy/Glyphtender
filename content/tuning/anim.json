@@ -33,7 +33,10 @@
     "refreshShrinkTime": "Refresh: how long each set-aside seed takes to shrink away, in seconds.",
     "refreshGrowTime": "Refresh: how long each new seed takes to grow into its slot (swelling a little past full size, then settling), in seconds. How much it swells: feel.json → refreshGrow.",
     "refreshStagger": "Refresh: seconds between one slot starting and the next (they go one after another, left to right).",
-    "refreshPause": "Refresh: the pause between the last seed shrinking away and the new ones growing in, in seconds. Play passes to the next player only after they've grown."
+    "refreshPause": "Refresh: the pause between the last seed shrinking away and the new ones growing in, in seconds. Play passes to the next player only after they've grown.",
+    "trailLead": "Turn trails: when another player's turn is replayed online, how long their trail takes to draw on (from ring → dotted path → to ring → cast arc → target ring) before their glyphling glides, in seconds. Reduce motion = it just appears.",
+    "trailHold": "Turn trails: how long the drawn trail holds before the glide and throw play, in seconds. trailLead + trailHold is how much slower each replayed turn is.",
+    "trailFade": "Turn trails: how long a trail takes to fade down to its faint last-turn look (garden.json trailFaint) once the turn has landed, in seconds."
   },
   "_ranges": {
     "flightBase": [
@@ -205,6 +208,21 @@
       0,
       0.6,
       0.05
+    ],
+    "trailLead": [
+      0,
+      1.5,
+      0.05
+    ],
+    "trailHold": [
+      0,
+      1.5,
+      0.05
+    ],
+    "trailFade": [
+      0,
+      1.5,
+      0.05
     ]
   },
   "flightBase": 0.3,
@@ -240,5 +258,8 @@
   "refreshShrinkTime": 0.25,
   "refreshGrowTime": 0.35,
   "refreshStagger": 0.07,
-  "refreshPause": 0.1
+  "refreshPause": 0.1,
+  "trailLead": 0.5,
+  "trailHold": 0.35,
+  "trailFade": 0.5
 }

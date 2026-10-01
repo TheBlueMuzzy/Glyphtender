@@ -24,6 +24,7 @@ import { addTurn, emptyStats, type PlayerStats } from './stats'
 import { revealSteps } from './revealPlan'
 import { nopeFor, type NopeTarget, type Tap } from './nope'
 import { newSeedSlots, refillInPlace, refreshSlots, refreshTimes, type RefreshFx } from './refreshFx'
+import type { Trail } from './trail'
 
 /** Short messages for taps that can't do anything (their words live in content/text/en.json → game.notes). */
 export type Note = 'moveFirst' | 'notYours' | 'tangled' | 'wordsLoading' | 'wordsFailed' | 'problem'
@@ -91,6 +92,8 @@ export interface GameStore {
   waiting: boolean
   /** A refresh playing out on the tray (refreshFx.ts) — nothing can be touched, and play passes on after it. */
   refreshFx: RefreshFx | null
+  /** Online: another player's turn being replayed — its trail draws on in their colour before the glide (trail.ts). */
+  trail: Trail | null
   /** The last piece that said "no" to a tap (it shakes); the count changes every time, so the same piece can shake again. */
   nope: (NopeTarget & { count: number }) | null
 
@@ -214,6 +217,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
     online: null,
     waiting: false,
     refreshFx: null,
+    trail: null,
     nope: null,
 
     startGame: ({ players, seed, boardName, minWordLength, hideSeeds, wordIndicators }) => {
@@ -224,14 +228,14 @@ export const useGameStore = create<GameStore>()((set, get) => {
       }
       stopRefreshFx()
       set({
-        ...noPlan(), game, options, flying: false, landed: null, handoff: null, revealAt: null, refreshFx: null,
+        ...noPlan(), game, options, flying: false, landed: null, handoff: null, revealAt: null, refreshFx: null, trail: null,
         seats: localSeats(players, text.game.players), stats: emptyStats(players),
         trayOrder: game.hands.map((h) => inHandOrder(h.length)),
       })
     },
     leaveGame: () => {
       stopRefreshFx()
-      set({ ...noPlan(), game: null, flying: false, landed: null, handoff: null, revealAt: null, online: null, waiting: false, refreshFx: null })
+      set({ ...noPlan(), game: null, flying: false, landed: null, handoff: null, revealAt: null, online: null, waiting: false, refreshFx: null, trail: null })
     },
     showSeeds: () => set({ handoff: null }),
     setRevealAt: (step) => set({ revealAt: step }),
@@ -421,7 +425,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
       const game = migrateGame(saved) // an older save brought up to date (the old "Qu" seed → "Q")
       stopRefreshFx()
       set({
-        ...noPlan(), game, flying: false, handoff: null, revealAt: null, refreshFx: null,
+        ...noPlan(), game, flying: false, handoff: null, revealAt: null, refreshFx: null, trail: null,
         seats: get().seats.length === game.config.players ? get().seats : localSeats(game.config.players, text.game.players),
         stats: stats ?? (get().stats.length === game.config.players ? get().stats : emptyStats(game.config.players)),
         trayOrder: game.hands.map((h) => inHandOrder(h.length)),

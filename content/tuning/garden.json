@@ -4,12 +4,10 @@
     "hexFill": "Colour of an empty garden hex.",
     "hexLine": "Outline colour of each hex.",
     "hexLineWidth": "Outline thickness, in hex sizes.",
-    "moveGlow": "Highlight on hexes a glyphling can move to.",
-    "castGlow": "Highlight on hexes a seed can be cast to.",
-    "glowStrength": "How strong the highlights are. 0 = invisible, 1 = solid.",
+    "glowStrength": "How strong the move highlights are (soft filled hexes in the current player's colour). 0 = invisible, 1 = solid.",
     "pieceScale": "Size of seeds and glyphlings inside their hex. 1 = fills the hex.",
     "ghostOpacity": "How visible the faded glyphling left where it started (tap it to send the glyphling back).",
-    "yellow": "Yellow player's colour — used for their 'held' and 'planned' rings and their thrown seed.",
+    "yellow": "Yellow player's colour — their move / cast highlights, turn trails, 'held' and 'planned' rings and their thrown seed.",
     "blue": "Blue player's colour — same uses as yellow.",
     "plannedSeedLook": "How a targeted (not yet thrown) seed looks — always solid, nothing shows through it: moonlit (default) = colourless moonlight-silver, a ghost of the seed, letter bright · stencil = a flat pale cut-out of the letter and border · misty = under a pale wash (letter hard to read) · greyed = grey and darker · dimmed = faded over a patch of hex colour.",
     "plannedMoonLight": "\"moonlit\" look: the colour the BRIGHT parts (the letter, the border) turn.",
@@ -42,7 +40,12 @@
     "scorePopSize": "Size of each seed's \"+1\" / \"+2\", in hex sizes.",
     "scoreTotalSize": "Size of the turn's total (\"+6\") over the glyphling that cast, in hex sizes.",
     "dropStrength": "While dragging a piece: how strong the \"drop here\" highlight is on the legal hex under it (brighter than the other options). 1 = solid.",
-    "scorePopMinPx": "The smallest a seed's \"+1\" / \"+2\" may be on screen, in pixels (small boards on phones would make it tiny). The total is drawn this much bigger too, relative to scoreTotalSize ÷ scorePopSize."
+    "scorePopMinPx": "The smallest a seed's \"+1\" / \"+2\" may be on screen, in pixels (small boards on phones would make it tiny). The total is drawn this much bigger too, relative to scoreTotalSize ÷ scorePopSize.",
+    "castRing": "Cast highlights: how strong the dashed ring round each hex a seed can be cast to (in the current player's colour — move vs cast is told apart by shape, not colour). 1 = solid.",
+    "castFill": "Cast highlights: how strong the faint wash inside each cast ring is. 0 = rings only.",
+    "trailWidth": "Turn trails (the dotted move path and dashed cast arc, in the player's colour): line thickness, in hex sizes.",
+    "trailStrength": "Turn trails: how strong a trail is while you plan your turn and while another player's turn is replayed. 1 = solid.",
+    "trailFaint": "Turn trails: how strong the LAST turn's trail stays on the board until the next action (a pick-up, a plan, a refresh, the next replay). 0 = it goes away. It's drawn under the seeds and glyphlings, so it never covers a letter."
   },
   "_ranges": {
     "hexLineWidth": [
@@ -154,14 +157,37 @@
       8,
       32,
       1
+    ],
+    "castRing": [
+      0.2,
+      1,
+      0.05
+    ],
+    "castFill": [
+      0,
+      0.6,
+      0.02
+    ],
+    "trailWidth": [
+      0.02,
+      0.2,
+      0.01
+    ],
+    "trailStrength": [
+      0.2,
+      1,
+      0.05
+    ],
+    "trailFaint": [
+      0,
+      1,
+      0.05
     ]
   },
   "background": "#10162a",
   "hexFill": "#1c2742",
   "hexLine": "#33456f",
   "hexLineWidth": 0.06,
-  "moveGlow": "#5fd4c4",
-  "castGlow": "#f2c14e",
   "glowStrength": 0.45,
   "dropStrength": 0.9,
   "pieceScale": 0.96,
@@ -198,5 +224,10 @@
   "scorePop": "#fff3c4",
   "scorePopSize": 0.7,
   "scoreTotalSize": 1.2,
-  "scorePopMinPx": 16
+  "scorePopMinPx": 16,
+  "castRing": 0.85,
+  "castFill": 0.2,
+  "trailWidth": 0.08,
+  "trailStrength": 0.9,
+  "trailFaint": 0.55
 }

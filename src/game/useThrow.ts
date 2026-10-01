@@ -5,6 +5,7 @@
 import { useEffect, type RefObject } from 'react'
 import { hexToPixel, type Hex } from '../engine/hex'
 import { reduceMotion } from '../ui/kit'
+import { throwHandle } from './trailShape'
 import type { AnimTuning } from './useTuning'
 
 export const HEX = 1 // hexes are drawn at size 1; the SVG viewBox scales them to fit
@@ -35,7 +36,7 @@ export function useThrow({ svgRef, seedRef, flight, onLanded, landed, timing }: 
     const a = hexToPixel(flight.from, HEX), b = hexToPixel(flight.to, HEX)
     const distance = Math.hypot(b.x - a.x, b.y - a.y)
     const ms = 1000 * (timing.flightBase + (timing.flightPerHex * distance) / Math.sqrt(3))
-    const handle = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 - distance * timing.arcHeight * 2 } // bezier handle above the middle
+    const handle = throwHandle(a, b, timing.arcHeight) // bezier handle above the middle (the trail's arc is the same curve)
     const start = performance.now()
     let frame = 0
     const step = (now: number) => {

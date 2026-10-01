@@ -17,6 +17,7 @@ import { glideSeconds } from '../game/glide'
 import { useGameStore } from './gameStore'
 import { actionRefused, connectOnline, receiveView, stopOnline } from './onlinePlay'
 import { boardHighlight, castOptions, dropKind } from './turnPlan'
+import { boardTrail } from './trail'
 
 let words: WordList
 beforeAll(() => { words = parseWordList(readFileSync('public/words/words.csv', 'utf8')) })
@@ -174,7 +175,7 @@ describe('online store — turns', () => {
     expect(store().online!.version).toBeGreaterThan(4)
   })
 
-  it("Blue's turn is replayed on the old view: glide, then the throw, then the new view", () => {
+  it("Blue's turn is replayed on the old view: their trail, then the glide, the throw, the new view — and the trail stays, faint", () => {
     finishDraft()
     yellowPlansAndCasts()
     deliver()
@@ -186,8 +187,17 @@ describe('online store — turns', () => {
     deliver()
     const turn = blueView().game.lastTurn!
     expect(store().game!.glyphlings).toEqual(before.glyphlings) // still the old view…
-    expect(store().move).toEqual({ glyphling: turn.glyphlingId, to: turn.to }) // …with Blue's glyphling gliding
-    expect(boardHighlight({ ...store(), game: store().game! })).toBeNull() // no gold on my screen for Blue's move
+    // …first Blue's trail draws on in Blue's colour (from → to → where the seed goes) and holds; nothing moves yet
+    const trail = { seat: 1, glyphlingId: turn.glyphlingId, from: turn.from, to: turn.to, target: turn.target }
+    expect(store().trail).toEqual(trail)
+    expect(boardTrail(store())).toEqual({ mode: 'live', trail })
+    expect(store().move).toBeNull()
+    vi.advanceTimersByTime((animJson.trailLead + animJson.trailHold) * 1000 - 1)
+    expect(store().move).toBeNull()
+    vi.advanceTimersByTime(1)
+    expect(store().move).toEqual({ glyphling: turn.glyphlingId, to: turn.to }) // …then Blue's glyphling glides
+    expect(boardTrail(store())?.mode).toBe('live') // the trail stays on through the glide and the throw
+    expect(boardHighlight({ ...store(), game: store().game! })).toBeNull() // no cast rings on my screen for Blue's move
     vi.advanceTimersByTime(glideSeconds(turn.from, turn.to, animJson) * 1000)
     if (turn.letter) {
       expect(store().flying).toBe(true)
@@ -197,6 +207,8 @@ describe('online store — turns', () => {
     expect(store().online!.version).toBe(blueView().version)
     expect(store().game!.hands[1].every((s) => s === HIDDEN)).toBe(true)
     expect(store().move).toBeNull()
+    expect(store().trail).toBeNull()
+    if (store().game!.phase === 'play') expect(boardTrail(store())).toEqual({ mode: 'faint', trail }) // until my next action
   })
 
   it('a sync answered with the same version means my action was lost: the plan comes back to play again', () => {
@@ -231,7 +243,7 @@ describe('online store — turns', () => {
       if (store().flying) store().finishCast()
       else if (game.phase === 'refresh' && game.current === 1) bluePlays(i + 1)
       else if (game.current === 0 && !store().waiting) yellowPlansAndCasts(i + 1)
-      else if (game.current === 1 && !store().move) bluePlays(i + 1)
+      else if (game.current === 1 && !store().move && !store().trail) bluePlays(i + 1)
       deliver()
       vi.advanceTimersByTime(1000)
     }
@@ -262,7 +274,7 @@ describe('online store — turns', () => {
       if (store().flying) store().finishCast()
       else if (game.current === 0 && game.phase === 'refresh') store().refresh(true)
       else if (game.current === 0 && !store().waiting) yellowPlansAndCasts(i + 1)
-      else if (game.current === 1 && !store().move) bluePlays(i + 1)
+      else if (game.current === 1 && !store().move && !store().trail) bluePlays(i + 1)
       deliver()
       vi.advanceTimersByTime(1000)
     }
