@@ -1,6 +1,7 @@
 // FINISHED-GAME SNAPSHOTS for the end screen — 2, 3 and 4 players and a shared win, played by the engine's greedy
-// sim player with the official word list, saved as Dev Kit snapshots in content/snapshots/ (` → Snapshots → Restore:
-// the Magic reveal plays, then the end screen opens). The e2e end-screen shots and the Dev Kit screen previews use them.
+// sim player with the official word list, saved in e2e/fixtures/ for the e2e end-screen shots (npm run e2e:end).
+// Not in content/snapshots/: everything there is bundled into the Dev Kit, which ships in live builds — these ~300 KB
+// would download on every page load. (Same snapshot shape, so one can still be pasted into the Dev Kit by hand.)
 //   node scripts/end-fixtures.mjs
 // Uses Vite to load the TypeScript engine (no build needed). Picks the first seed whose game shows the full set of
 // highlights and at least one tangle mark on the chart, so the pictures have something to show.
@@ -31,7 +32,7 @@ try {
   const save = (file, name, game) => {
     const winners = game.winners.map((s) => colour[s]).join(' + ')
     const snapshot = {
-      _help: 'A Dev Kit snapshot: press ` → Snapshots → Restore to jump here. A finished game (greedy sim players, official words) — the Magic reveal plays, then the end screen. Made by scripts/end-fixtures.mjs.',
+      _help: 'A finished game for npm run e2e:end, in the Dev Kit snapshot shape (greedy sim players, official words) — the Magic reveal plays, then the end screen. Made by scripts/end-fixtures.mjs.',
       name,
       savedAt: new Date().toISOString(),
       game: 'Glyphtender',
@@ -39,7 +40,7 @@ try {
       summary: `turn ${game.turnCount} · over · winner ${winners} · ${game.magic.join(' / ')} Magic`,
       state: { game, trayOrder: game.hands.map((h) => h.map((_, i) => i)) },
     }
-    writeFileSync(`content/snapshots/${file}.json`, JSON.stringify(snapshot, null, 2) + '\n')
+    writeFileSync(`e2e/fixtures/${file}.json`, JSON.stringify(snapshot, null, 2) + '\n')
     console.log(`${file}: seed ${game.config.seed}, ${game.turnCount} turns, Magic ${game.magic.join('/')}, awards ${pickAwards(game).map((a) => a.id).join(', ')}`)
   }
 

@@ -1,7 +1,7 @@
 {
-  "_help": "A Dev Kit snapshot: press ` → Snapshots → Restore to jump here. A finished game (greedy sim players, official words) — the Magic reveal plays, then the end screen. Made by scripts/end-fixtures.mjs.",
+  "_help": "A finished game for npm run e2e:end, in the Dev Kit snapshot shape (greedy sim players, official words) — the Magic reveal plays, then the end screen. Made by scripts/end-fixtures.mjs.",
   "name": "End screen: 2 players",
-  "savedAt": "2026-10-01T05:15:50.749Z",
+  "savedAt": "2026-10-01T06:09:27.363Z",
   "game": "Glyphtender",
   "version": "0.2.0.0",
   "summary": "turn 66 · over · winner Yellow · 209 / 206 Magic",

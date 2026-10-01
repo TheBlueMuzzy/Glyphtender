@@ -1,4 +1,4 @@
-// THE END SCREEN, EVERY PAGE — 2, 3, 4 players and a shared win (the finished games in content/snapshots/end-*.json,
+// THE END SCREEN, EVERY PAGE — 2, 3, 4 players and a shared win (the finished games in e2e/fixtures/end-*.json,
 // made by scripts/end-fixtures.mjs) at phone-tall 390×844, phone-wide 844×390 and desktop 1440×900.
 // Each: jump to the finished game (dev hook) → Skip the reveal → Results (shot) → Story, tap a mark (shot) →
 // Scorecard (shot) → swipe back to Results (phones). Checks: the winner is on screen at once, nothing past a screen
@@ -50,7 +50,7 @@ const fail = (why) => { failures++; console.log(`  FAIL ${why}`) }
 try {
   for (const size of SIZES) {
     for (const file of GAMES) {
-      const game = JSON.parse(readFileSync(`content/snapshots/${file}.json`, 'utf8')).state.game
+      const game = JSON.parse(readFileSync(`e2e/fixtures/${file}.json`, 'utf8')).state.game
       const tag = `${file.replace('end-', '')}-${size.name}`
       const page = await browser.newPage({ viewport: { width: size.width, height: size.height }, isMobile: size.mobile, hasTouch: size.mobile })
       const errors = []
@@ -134,7 +134,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
   await page.goto(`http://127.0.0.1:${PORT}/`)
   await page.waitForFunction(() => window.__glyphtender?.store, null, { timeout: 15000 })
-  const game = JSON.parse(readFileSync('content/snapshots/end-3p.json', 'utf8')).state.game
+  const game = JSON.parse(readFileSync('e2e/fixtures/end-3p.json', 'utf8')).state.game
   await page.evaluate((g) => window.__glyphtender.store.getState().loadState(g), game)
   await page.getByRole('dialog', { name: /Grand Glyphtender/ }).waitFor({ timeout: 5000 }) // reduce motion: the reveal starts at its end
   await page.getByRole('tab', { name: 'Story' }).click()
