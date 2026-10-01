@@ -34,5 +34,5 @@ export function applyRefresh(state: GameState, setAside: number[]): GameState {
   }
   const hands = state.hands.map((h, s) => (s === seat ? [...kept, ...drawn] : h))
   const lastTurn = state.lastTurn ? { ...state.lastTurn, drew: drawn.length } : null
-  return endTurn({ ...state, hands, bag, rng, lastTurn })
+  return endTurn({ ...state, hands, bag, rng, lastTurn }, setAside.length)
 }

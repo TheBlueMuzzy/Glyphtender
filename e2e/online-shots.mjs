@@ -80,6 +80,7 @@ function secretsIn(frame) {
   if ([...game.magic, ...game.tangleMagic].some((m) => m !== 0) || game.winners.length) out.push('Magic totals')
   if (game.lastTurn && (game.lastTurn.magic !== 0 || game.lastTurn.words.some((w) => w.magic !== 0))) out.push("last turn's Magic")
   if (results) out.push('results')
+  if (game.log && (game.log.turns.length || game.log.end) || /totalsAfter|ownMagic/.test(frame)) out.push('the game log')
   return out
 }
 

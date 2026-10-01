@@ -64,6 +64,77 @@ export interface TurnSummary {
 
 export type Phase = 'draft' | 'play' | 'refresh' | 'over'
 
+// ─── THE GAME LOG (log.ts) — what happened, turn by turn, for the end screen (stats, awards, the chart). ───
+// Kept by the engine as it plays, so every copy of the game (pass-and-play, the server, sims, snapshots) has it.
+// It holds the secret running totals: the online server never sends it before the game is over (party/views.ts).
+
+/** One word in the log: its seeds' letters and who owned each one. */
+export interface LogWord {
+  word: string
+  /** Each seed's letter, in reading order ("Qu" is one seed). */
+  letters: string[]
+  /** The seat that owned each seed, in reading order. */
+  owners: number[]
+  magic: number
+  /** The part of `magic` that came from the caster's own seeds (ownershipBonus each). */
+  ownMagic: number
+}
+
+/** One completed turn (draft placements aren't turns). */
+export interface LogTurn {
+  /** 1, 2, 3… — the same as the game's turnCount after this turn. */
+  turnNo: number
+  /** 1, 2, 3… — a new round starts each time play comes back round to an earlier seat. */
+  round: number
+  seat: number
+  glyphlingId: number
+  from: Hex
+  to: Hex
+  /** The seed cast, or null for a move-only turn. */
+  letter: string | null
+  target: Hex | null
+  words: LogWord[]
+  magic: number
+  /** How many seeds were set aside on a refresh (0 when there was no refresh, or Keep all). */
+  refreshed: number
+  /** True when this turn ended with a refresh (even Keep all). */
+  refresh: boolean
+  /** Every seat's Magic after this turn (before any end-of-game tangle bonus). */
+  totalsAfter: number[]
+  /** Glyphlings tangled after this turn; which of them just got tangled; which came free. */
+  tangledAfter: number[]
+  newlyTangled: number[]
+  freed: number[]
+}
+
+/** One tangled glyphling at the end, and the bonus it gave each seat. */
+export interface LogTangle {
+  glyphling: number
+  owner: number
+  /** Magic each seat got from it (tangleBonus × its pieces next to it; always 0 for the owner). */
+  bonus: number[]
+  /** How many of each seat's pieces (seeds + glyphlings) were next to it. */
+  pieces: number[]
+}
+
+/** How the game ended. */
+export interface LogEnd {
+  endedOnTurn: number
+  /** The seat whose turn ended the game. */
+  endedBy: number
+  /** Did that turn tangle one of the ender's own glyphlings? */
+  selfTangle: boolean
+  tangles: LogTangle[]
+  tangleMagic: number[]
+  /** Final Magic, tangle bonus included. */
+  totals: number[]
+}
+
+export interface GameLog {
+  turns: LogTurn[]
+  end: LogEnd | null
+}
+
 export interface GameState {
   config: GameConfig
   phase: Phase
@@ -92,6 +163,8 @@ export interface GameState {
   turnCount: number
   /** The random number generator's position, so the engine stays pure. */
   rng: number
+  /** What happened each turn (log.ts). Missing in games saved before the log existed = an empty log. */
+  log?: GameLog
 }
 
 /** Everything a seat can do. */

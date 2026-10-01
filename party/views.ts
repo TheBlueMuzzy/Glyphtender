@@ -1,7 +1,9 @@
 // WHAT EACH PLAYER MAY SEE (design/online.md §2). The server keeps the whole game; every player is sent
 // a copy with the secrets taken OUT of the data (TDD D06) — a modified browser can't show what it never got.
 // Until the game is over: other players' seeds and the bag become '?' (you may know how many, never which),
-// and the rng, the random seed and every Magic number are zeroed. At game over everyone gets the whole truth.
+// and the rng, the random seed and every Magic number are zeroed, and the game log (every turn's words, Magic and
+// running totals — src/engine/log.ts) is sent EMPTY. At game over everyone gets the whole truth, log and all.
+import { emptyLog } from '../src/engine/log'
 import type { GameState } from '../src/engine/types'
 import { HIDDEN, type GameView, type Results } from './protocol'
 import type { ServerGame } from './serverGame'
@@ -19,6 +21,7 @@ export function hideSecrets(game: GameState, seat: number): GameState {
     magic: zeros,
     tangleMagic: zeros,
     winners: [],
+    log: emptyLog(), // the running totals + every word's Magic: never before the end (D47)
     lastTurn: game.lastTurn && {
       ...game.lastTurn,
       magic: 0,
