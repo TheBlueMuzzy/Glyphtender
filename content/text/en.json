@@ -45,6 +45,7 @@
       "problem": "That can't be done — try again"
     },
     "scorePop": "+{n}",
+    "spotlightLabel": "{word} +{n}",
     "buttons": {
       "undo": "Undo",
       "cast": "Cast",

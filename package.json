@@ -15,12 +15,15 @@
     "e2e:menu": "node e2e/menu-shots.mjs",
     "e2e:game": "node e2e/game-shots.mjs",
     "e2e:pass": "node e2e/pass-and-play-shots.mjs",
+    "e2e:pass4": "node e2e/pass-and-play-shots.mjs e2e-shots 5194 4",
     "sim": "node scripts/sim.mjs",
     "party:dev": "wrangler dev",
     "party:deploy": "wrangler deploy",
     "e2e:online": "node e2e/online-shots.mjs",
+    "e2e:online4": "node e2e/online-four.mjs",
     "e2e:update": "node e2e/sw-update.mjs",
-    "e2e:portrait": "node e2e/portrait-layout.mjs"
+    "e2e:portrait": "node e2e/portrait-layout.mjs",
+    "e2e:spotlight": "node e2e/word-spotlight.mjs"
   },
   "dependencies": {
     "partyserver": "^0.5.10",

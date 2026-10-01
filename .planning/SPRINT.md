@@ -12,15 +12,15 @@ Check: unit tests + sims
 
 ## F28 🧪 4 players everywhere
 Done when: a full 4-player pass-and-play game and a full 4-player online game run in e2e on phone + desktop sizes, no clipping
-- [ ] 🤖 4. e2e: 4-player pass-and-play (and 3-player) through to the end table — e2e/
-- [ ] 🤖 5. e2e: 4-player online (4 browser contexts) incl. secrecy check — e2e/online-shots.mjs or a new script
-- [ ] 🤖 6. Fix whatever breaks (turn bar, handoff, end table, lobby with 4 seats)
+- [x] 🤖 4. e2e: 4-player pass-and-play (and 3-player) through to the end table — e2e/ (`npm run e2e:pass4`; e2e:pass stays 3 players)
+- [x] 🤖 5. e2e: 4-player online (4 browser contexts) incl. secrecy check — e2e/online-four.mjs (`npm run e2e:online4`)
+- [x] 🤖 6. Fix whatever breaks (turn bar, handoff, end table, lobby with 4 seats) — B016 fixed; B017 open (P3)
 
 ## F25 ✨ Word spotlight
 Done when: after a cast, words light up one at a time (QUA → TAB → AY → loop) until play moves on; one word = just that word; reduce motion respected; timings in content/
-- [ ] 🤖 7. Spotlight cycle in WordBorders (+ the "Cast · +N" preview while planning?) — src/game/WordBorders.tsx, content/tuning
-- [ ] 🤖 8. Show the word itself (e.g. a small label "QUA +4") as each lights? — try it behind a toggle, default on if it reads well
-- [ ] 🤖 9. e2e shots: two/three-word cast cycles; online other players' turns too
+- [x] 🤖 7. Spotlight cycle in WordBorders (+ the "Cast · +N" preview while planning?) — src/game/WordBorders.tsx, content/tuning
+- [x] 🤖 8. Show the word itself (e.g. a small label "QUA +4") as each lights? — try it behind a toggle, default on if it reads well
+- [x] 🤖 9. e2e shots: two/three-word cast cycles; online other players' turns too
 
 ## F26 🎮 Game log + end screen overhaul
 Done when: the end screen leads with big scores (winner obvious), then per-player breakdowns and a score-over-time chart with moment dots; works 2/3/4 players on phone portrait, landscape, desktop; online-safe (log hidden until the game is over)
@@ -38,6 +38,10 @@ Done when: a Dev Kit tab lists the gated screens (end screen 2/3/4p, reveal, han
 - [ ] 🤖 17. e2e: open every preview, close, game unchanged; Dev Kit stays out of live builds
 
 Notes:
+- F28 (2026-10-01): 4 players mostly worked out of the box — pass-and-play (draft of 8, handoffs, Large garden, danger cue, reveal, end table, New game remembers 4) and online (4 seats, drop + rejoin of seat 2 with "Away" on the others' screens, 0 secret leaks in 4 × ~115 frames). One real bug, at every player count: B016 — in portrait the reveal put two Magic chips side by side and a chip never shrinks, so the winner star or a 2-digit tangle bonus ran it into its neighbour. Fixed: one-line chips, one per line, tangle Magic beside the name. e2e:pass/pass4 now fail on overlapping chips. For F26 (not fixed — the end screen redesign): with 4 players the end table scrolls on phones (portrait shows 3½ rows, landscape 2) — e2e checks the last row can be scrolled into view. B017 (P3 open): the online lobby at 844×390 shows 2 of 4 seats without scrolling. Shared online e2e helpers moved to e2e/online-kit.mjs.
 - Research (task 10): research/end-screen.md — 3 swipe pages Results · Story · Scorecard; winner big + centred ABOVE the others on phone (a 2-1-3-4 podium is hard to read at 390 px and with ties — podium only in landscape/desktop; weighs Muzzy's "winner in the middle"); awards never add points, ≤1 per player until all have one; chart = cumulative Magic per round + a final Tangles column, end-of-line labels, knot/star/tick markers. "2*" read as 2-letter words shown only when the table allows them — Ask Muzzy to confirm.
 - F24 (2026-10-01): the letter id is now 'Q' (not 'Qu' spelling "Q") — every seed is one capital that spells itself, nothing treats Q specially (TDD D47). Old Dev Kit snapshots with "Qu" load it as "Q" (glyphtenderAdapter); content/snapshots migrated. The art was already a plain Q; art.ts just stopped cutting "Qu" to its first letter. Online rooms are memory-only, so no stored server game holds "Qu" — still deploy the server before the site.
 - F24 sims (research/sims.md 2026-10-01): game length, bag run-out (0–0.6%) and scoring turns unchanged. Greedy players get a bit less out of the Q: in a scoring word ~4–11% of games (was ~6–17%), stuck in a hand at the end ~42–57% (was ~38–54%). New sim measure: Q cast / scored / refreshed / stuck. Knob if the Q feels dead in play: a sixth U in bag.json.
+- F25 (tasks 7–9, word spotlight): 2+ words light ONE at a time (fade in · hold · fade out, slots never overlap), looping; one word stays lit. Calls: (a) it also runs while aiming (the "Cast · +N" preview) — that's when players read words; (b) the grown words now stay lit until play moves on = the next player picks up a piece / plans a move, a refresh, the next throw, the reveal, or a newer turn — this replaces the old 1.4 s fade-out (single words stay too, for one rule); (c) it keeps running under the dimmed "Pass to …" box, so the next player can read what was just made; (d) reduce motion = the same steps with no fades (showing all at once would bring the blob back); (e) online it's the same Board path, so other players' turns cycle too (their replay lands like a local one) — not separately e2e'd. Knobs: anim.json spotlightHold 0.8 s, spotlightFade 0.12 s; garden.json grownGlowStrength (as before).
+- F25 label (task 8): "QUA +4" (en.json game.spotlightLabel) in a small dark pill with a white edge, on the nearest spot clear of the word's own letters (and off other pieces when it can), preferring just above the word; it lights and fades with its word. After a landing the labels wait until the score pops have flown (they sat in the same spot). Read well at 390 and 1440 in the shots → **default ON** (garden.json spotlightLabel; spotlightLabelSize 0.5 hex, spotlightLabelMinPx 13). Proof: `npm run e2e:spotlight` (2- and 3-word casts, both sizes; asserts one word lit at a time, all lit in order, labels clear of letters). TDD D50.
+- Ask Muzzy: the spotlight speed — 0.8 s per word felt right in the shots ("pretty quick"); spotlightHold in the Dev Kit if not. And: keep the label when the cast made only one word (it repeats the "+N" total)?

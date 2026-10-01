@@ -165,10 +165,10 @@ try {
         const totalAt = timings(document.querySelector('[data-score-total]'))[0].delay
         return { popped: fly - 60, flying: fly + flyTime * 0.5, total: totalAt + 450 }
       })
-      // (the grown words' border fades on the same clock — frozen with them, so each picture is one true moment)
-      await frozenShot('9b-score-pops', '[data-score-pops] text, [data-grown]', times.popped)
-      await frozenShot('9c-pops-flying', '[data-score-pops] text, [data-grown]', times.flying)
-      await frozenShot('9d-score-total', '[data-score-pops] text, [data-grown]', times.total)
+      // (the grown words' spotlight loop runs on the same clock — frozen with them, so each picture is one true moment)
+      await frozenShot('9b-score-pops', '[data-score-pops] text, [data-spot-of="grown"]', times.popped)
+      await frozenShot('9c-pops-flying', '[data-score-pops] text, [data-spot-of="grown"]', times.flying)
+      await frozenShot('9d-score-total', '[data-score-pops] text, [data-spot-of="grown"]', times.total)
       console.log(`${pops === turn.seeds ? 'ok  ' : 'FAIL'} ${size.name} 9b-9d score pops · ${pops} pops → ${total}`)
     }
     // Word indicators off: plan a word-making cast (trying each glyphling and move) — plain "Cast", no border, no pops
@@ -417,7 +417,7 @@ try {
           await page.waitForTimeout(120)
           await page.screenshot({ path: `${OUT}/${size.name}-8-throw.png` })
           await waitLanded()
-          await page.waitForTimeout(350) // the runeblossom has sprouted; the words keep their border for a moment
+          await page.waitForTimeout(350) // the runeblossom has sprouted; its words stay outlined (one at a time) until play moves on
           await page.screenshot({ path: `${OUT}/${size.name}-9-grown.png` })
           await scorePopShots()
           grewWords = true

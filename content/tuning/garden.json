@@ -26,7 +26,10 @@
     "pink": "Pink player colour — same uses as yellow.",
     "wordBorder": "Colour of the border round a made word — neutral (never a player colour).",
     "wordBorderWidth": "Thickness of the white border round a made word (planned while aiming, and just after it grows), in hex sizes. It sits BEHIND the seeds, so only the part outside the letters shows. Word indicators on only.",
-    "grownGlowStrength": "How strong the word border is right after the words grow, before it fades (1 = as strong as while aiming). 0 = none.",
+    "grownGlowStrength": "How strong the word border is on the words that just grew (1 = as strong as while aiming). They stay outlined, one word at a time, until play moves on. 0 = none.",
+    "spotlightLabel": "Word spotlight: show the lit word and its Magic as a small label (\"QUA +4\") next to it, on a free spot that covers no letters. Off = just the white border.",
+    "spotlightLabelSize": "Size of the word spotlight label text, in hex sizes.",
+    "spotlightLabelMinPx": "The smallest the word spotlight label may be on screen, in pixels (small boards on phones would make it tiny).",
     "seedShine": "The little highlight on a seed flying through the air.",
     "warningWidth": "Thickness of the dashed \"thorny\" ring round a glyphling with only ONE move left, in hex sizes. Drawn in its owner's colour.",
     "warningDash": "Length of each dash in that ring, in hex sizes (the gaps are a little shorter).",
@@ -96,6 +99,16 @@
       0,
       1,
       0.05
+    ],
+    "spotlightLabelSize": [
+      0.2,
+      1,
+      0.02
+    ],
+    "spotlightLabelMinPx": [
+      8,
+      24,
+      1
     ],
     "warningWidth": [
       0.02,
@@ -171,6 +184,9 @@
   "wordBorder": "#ffffff",
   "wordBorderWidth": 0.2,
   "grownGlowStrength": 1,
+  "spotlightLabel": true,
+  "spotlightLabelSize": 0.5,
+  "spotlightLabelMinPx": 13,
   "seedShine": "#ffffff",
   "warningWidth": 0.08,
   "warningDash": 0.16,
