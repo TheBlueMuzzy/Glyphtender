@@ -56,7 +56,7 @@ export function findWords(state: GameState, at: Hex, words: WordList): FoundWord
     const run = runThrough(state, at, dir)
     const letters = run.map((h) => spell(state.seeds[hexKey(h)].letter))
     const newSeed = run.findIndex((h) => hexKey(h) === hexKey(at))
-    // Every stretch that includes the new seed and is long enough (Qu counts as one seed).
+    // Every stretch that includes the new seed and is long enough.
     const candidates: Span[] = []
     for (let start = 0; start <= newSeed; start++) {
       for (let end = Math.max(newSeed, start + minLength - 1); end < run.length; end++) {

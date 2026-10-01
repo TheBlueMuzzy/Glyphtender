@@ -15,7 +15,7 @@ export function parseWordList(text: string): Map<string, number> {
   return words
 }
 
-/** How a seed spells: "Qu" is one seed that spells "QU"; every other seed is its letter. */
+/** How a seed spells: its letter, in capitals. (Q is a plain Q since 2026-10-01 — QUIT needs a U seed too.) */
 export const spell = (letter: string) => letter.toUpperCase()
 
 /** Is this spelling a word in the list? */

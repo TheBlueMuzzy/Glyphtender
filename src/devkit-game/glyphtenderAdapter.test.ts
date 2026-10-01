@@ -64,6 +64,22 @@ describe('glyphtenderAdapter', () => {
     expect(store().stats).toHaveLength(2)
   })
 
+  it('F24: a snapshot saved with the old "Qu" seed loads it as a plain "Q" (hand, bag, board, last turn)', () => {
+    const game = position({
+      glyphlings: { 0: 'C6-7', 1: 'C1-4', 2: 'C11-1', 3: 'C11-4' },
+      hands: [['Qu', 'A'], ['E']],
+      bag: ['Qu', 'W'],
+      seeds: [{ 'C6-2': 'Qu' }],
+    })
+    const lastTurn = { seat: 1, glyphlingId: 2, from: hexAt('C11-2'), to: hexAt('C11-1'), letter: 'Qu', target: hexAt('C6-2'), words: [], magic: 0, drew: 0 }
+    glyphtenderAdapter.setState({ game: { ...game, lastTurn }, trayOrder: [] })
+    const loaded = store().game!
+    expect(loaded.hands[0]).toEqual(['Q', 'A'])
+    expect(loaded.bag).toEqual(['Q', 'W'])
+    expect(Object.values(loaded.seeds).map((s) => s.letter)).toEqual(['Q'])
+    expect(loaded.lastTurn?.letter).toBe('Q')
+  })
+
   it('restoring the main menu leaves the game; junk is refused with a plain reason', () => {
     store().loadState(yellowToPlay())
     glyphtenderAdapter.setState({ game: null, trayOrder: [] })
