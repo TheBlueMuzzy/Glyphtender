@@ -51,9 +51,13 @@ describe('parseWordList copes with other file shapes', () => {
   })
 })
 
-describe('Qu (GDD §4.3)', () => {
-  it('is one seed that spells QU', () => {
-    expect(spell('Qu')).toBe('QU')
+describe('Q (GDD §4.3 — plain Q since 2026-10-01)', () => {
+  it('a Q seed spells just Q, like every other seed spells its letter', () => {
+    expect(spell('Q')).toBe('Q')
     expect(spell('A')).toBe('A')
+  })
+
+  it('the list has the Q-without-U words a plain Q opens up (QI, QAT) and QUA for Q + U + A', () => {
+    for (const w of ['QI', 'QAT', 'QUA', 'SUQ']) expect(words.has(w)).toBe(true)
   })
 })

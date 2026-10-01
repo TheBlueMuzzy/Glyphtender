@@ -49,3 +49,6 @@ party/words.gen.txt
 
 # Vite's dependency cache
 .vite/
+
+# Helpers' git worktrees (Claude Code)
+.claude/worktrees/

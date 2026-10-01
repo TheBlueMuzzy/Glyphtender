@@ -32,7 +32,7 @@ export interface Glyphling {
   hex: Hex
 }
 
-/** A planted runeblossom seed. `letter` is "A".."Z" or "Qu". */
+/** A planted runeblossom seed. `letter` is "A".."Z". */
 export interface PlantedSeed {
   letter: string
   seat: number
@@ -40,7 +40,7 @@ export interface PlantedSeed {
 
 /** One word made this turn, and the Magic it made. */
 export interface MadeWord {
-  /** How it's spelled, e.g. "QUIT" (a Qu seed spells "QU"). */
+  /** How it's spelled, e.g. "QUIT". */
   word: string
   /** The seeds it's made of, in reading order. */
   hexes: Hex[]

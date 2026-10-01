@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -40,6 +41,10 @@ export default defineConfig({
         moveCast: resolve(import.meta.dirname, 'sketches/move-cast/index.html'),
       },
     },
+  },
+  test: {
+    // Helpers' git worktrees live in .claude/worktrees — never run their copies of the tests
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'],
   },
   server: {
     host: true, // expose on local network for phone testing

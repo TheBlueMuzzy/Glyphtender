@@ -1,4 +1,4 @@
 {
-  "_help": "The seed bag: how many of each letter. Muzzy's intended 120-seed bag (transcript 2025-12-15). 'Qu' is one seed that counts as one letter.",
-  "seeds": { "A": 9, "B": 2, "C": 3, "D": 4, "E": 16, "F": 3, "G": 2, "H": 6, "I": 9, "J": 1, "K": 2, "L": 5, "M": 3, "N": 7, "O": 9, "P": 2, "Qu": 1, "R": 6, "S": 7, "T": 10, "U": 4, "V": 1, "W": 3, "X": 1, "Y": 3, "Z": 1 }
+  "_help": "The seed bag: how many of each letter. Muzzy's 120-seed bag (transcript 2025-12-15; 2026-10-01: Q is a plain Q, so one E became a fifth U).",
+  "seeds": { "A": 9, "B": 2, "C": 3, "D": 4, "E": 15, "F": 3, "G": 2, "H": 6, "I": 9, "J": 1, "K": 2, "L": 5, "M": 3, "N": 7, "O": 9, "P": 2, "Q": 1, "R": 6, "S": 7, "T": 10, "U": 5, "V": 1, "W": 3, "X": 1, "Y": 3, "Z": 1 }
 }

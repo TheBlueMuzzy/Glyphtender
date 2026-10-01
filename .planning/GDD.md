@@ -32,7 +32,7 @@
 - **Rules** (numbers live in `content/`, not code):
   1. **Board** — flat-top hex garden with 3 **leylines** (N–S, NE–SW, NW–SE; no horizontal). Small 85 hexes, Large 117. Default: Small for 2 players, Large for 3–4 (❓ sims may change it).
   2. **Setup** — each player has 2 glyphlings (Yellow, Blue, Purple, Pink). **Snake draft** (1-2-2-1 · 1-2-3-3-2-1 · 1-2-3-4-4-3-2-1): place on a non-edge hex not next to another glyphling. Then everyone draws 8 seeds from the bag.
-  3. **Bag** — 120 seeds: A9 B2 C3 D4 E16 F3 G2 H6 I9 J1 K2 L5 M3 N7 O9 P2 **Qu1** R6 S7 T10 U4 V1 W3 X1 Y3 Z1. **Qu** is one seed, counts as one letter.
+  3. **Bag** — 120 seeds: A9 B2 C3 D4 **E15** F3 G2 H6 I9 J1 K2 L5 M3 N7 O9 P2 **Q1** R6 S7 T10 **U5** V1 W3 X1 Y3 Z1. **Q is a plain Q** (Muzzy's call 2026-10-01 — it used to be one "Qu" seed): QI / QAT score, QUIT needs its own U seed, so one E became a fifth U. Only ~10 listed words have a Q without a U after it (QI, QAT, QAID, QADI, QANAT, QOPH, SUQ…) — accepted.
   4. **Move** — one of your glyphlings, ≥1 hex along a leyline. Can't pass through or land on anything.
   5. **Cast** — from where it landed, plant one seed along any leyline, any distance, on an empty hex. It may fly over your own seeds and glyphlings, not other players'.
   6. **Grow** — (words = the **official Glyphtender word list**, 63,657 words with Zipf scores, carried over unchanged — TDD §2b) every word through the new seed, on every leyline, makes Magic = **letters + 1 per seed you own in it**. Shared letters count in each word. On one leyline, a word hidden inside the other words made this turn doesn't count (GARDENING, not DEN; SEAL + LEAP, not ALE). Words read top-to-bottom / left-to-right. Min length 2 (table option: 3).

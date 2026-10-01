@@ -5,7 +5,7 @@ import { emptyLog } from './log'
 import { shuffle } from './rng'
 import type { GameConfig, GameState, RuleNumbers } from './types'
 
-/** Every seed in the bag (content/data/bag.json), unshuffled, e.g. ["A","A",…,"Qu",…]. */
+/** Every seed in the bag (content/data/bag.json), unshuffled, e.g. ["A","A",…,"Q",…]. */
 export function fullBag(): string[] {
   const seeds: string[] = []
   for (const [letter, count] of Object.entries(bagJson.seeds)) {

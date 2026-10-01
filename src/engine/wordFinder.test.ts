@@ -88,17 +88,21 @@ describe('reading direction (GDD §4.6: top-to-bottom / left-to-right)', () => {
   })
 })
 
-describe('Qu and minimum length', () => {
-  it('Qu is one seed that spells QU (QUIT is 3 seeds)', () => {
-    const found = wordsMade('C6-2', S, ['Qu', 'I', 'T'], 0, wordsOf('QUIT'))
-    expect(found).toEqual(['QUIT'])
-    const { plan, hexes } = line('C6-2', S, ['Qu', 'I', 'T'])
+describe('plain Q and minimum length', () => {
+  it('Q is one seed that spells Q: QI is 2 seeds, QUA is 3 (the U is its own seed)', () => {
+    expect(wordsMade('C6-2', S, ['Q', 'I'], 0, wordsOf('QI'))).toEqual(['QI'])
+    expect(wordsMade('C6-2', S, ['Q', 'U', 'A'], 0, wordsOf('QUA'))).toEqual(['QUA'])
+    const { plan, hexes } = line('C6-2', S, ['Q', 'U', 'A'])
     const s = position({ glyphlings: { 0: 'C1-1', 1: 'C1-4', 2: 'C11-1', 3: 'C11-4' }, seeds: [plan] })
-    expect(findWords(s, hexes[2], wordsOf('QUIT'))[0].hexes).toHaveLength(3)
+    expect(findWords(s, hexes[2], wordsOf('QUA'))[0].hexes).toHaveLength(3)
   })
 
-  it('min length counts seeds: QUIT is too short when words need 4 seeds', () => {
-    expect(wordsMade('C6-2', S, ['Qu', 'I', 'T'], 0, wordsOf('QUIT'), { minWordLength: 4 })).toEqual([])
+  it('a Q and an A without a U between them do not spell QUA', () => {
+    expect(wordsMade('C6-2', S, ['Q', 'A'], 0, wordsOf('QUA'))).toEqual([])
+  })
+
+  it('min length counts seeds: QUA is too short when words need 4 seeds', () => {
+    expect(wordsMade('C6-2', S, ['Q', 'U', 'A'], 0, wordsOf('QUA'), { minWordLength: 4 })).toEqual([])
   })
 
   it('min length 2 by default; the "3" table option drops 2-seed words', () => {
