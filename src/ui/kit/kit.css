@@ -190,12 +190,15 @@
 
   /* Appearing: panels and cards play the style's entrance once (fade, float, pop, blink, flicker) */
   .kit-panel, .kit-card { animation: var(--enter) var(--motion-normal) var(--ease) backwards; }
-  /* A dialog dims what's under it, fading the dim in (its panel plays the entrance above) */
-  .kit-screen[data-dialog] { background: color-mix(in srgb, var(--bg) 70%, transparent); transition: background-color var(--motion-normal) var(--ease); }
+  /* A dialog dims what's under it, fading the dim in (its panel plays the entrance above).
+     A screen opened over another screen dims too, dialog or not: the screen under it is hidden (ScreenStack data-covered),
+     so the top one carries the one dim over the game — e.g. Rules (not a dialog) opened from Pause (a dialog) */
+  .kit-screen[data-dialog], .kit-layer[data-over] > .kit-screen {
+    background: color-mix(in srgb, var(--bg) 70%, transparent); transition: background-color var(--motion-normal) var(--ease); }
   @starting-style {
     .kit-screen[data-dialog] { background-color: transparent; }
     /* opened over another screen: the dim was already there (the screen under it hides at once), so no fade-in flash */
-    .kit-layer[data-over] .kit-screen[data-dialog] { background-color: color-mix(in srgb, var(--bg) 70%, transparent); }
+    .kit-layer[data-over] > .kit-screen { background-color: color-mix(in srgb, var(--bg) 70%, transparent); }
   }
 
   /* Pressing: things shrink and/or sink (the style decides how much and how fast).

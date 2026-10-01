@@ -171,12 +171,15 @@ try {
       const stack = await frame.evaluate(() => {
         const open = [...document.querySelectorAll('.kit-layer')].slice(1)
         const shown = (layer) => [...layer.querySelectorAll('.kit-screen')].some((el) => getComputedStyle(el).visibility === 'visible')
-        return { open: open.length, shown: open.map(shown) }
+        const top = open.at(-1)?.querySelector('.kit-screen')
+        return { open: open.length, shown: open.map(shown), topDim: top ? getComputedStyle(top).backgroundColor : '' }
       })
       if (stack.open > 1 && !(stack.shown.slice(0, -1).every((v) => !v) && stack.shown.at(-1))) {
         fail(`${name}: ${stack.open} screens open and not only the top one shows (${JSON.stringify(stack.shown)})`)
       }
       if (item.id === 'rules' && stack.open !== 2) fail(`${name}: expected Pause + Rules open (got ${stack.open})`)
+      // …and the top one carries the dim over the game (the dim of the one under it is hidden with it)
+      if (stack.open > 1 && /^(transparent|rgba\(0, 0, 0, 0\))$/.test(stack.topDim)) fail(`${name}: the top screen doesn't dim the game`)
       await page.screenshot({ path: `${OUT}/${size.name}-${String(n + 1).padStart(2, '0')}-${name}.png` })
       shots++
       ;(await page.evaluate(sidewaysProblems)).forEach((p) => fail(`${name} preview bar: ${p}`))
