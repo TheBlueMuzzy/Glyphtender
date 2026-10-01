@@ -1,6 +1,10 @@
 # Glyphtender — Bugs
-Open: 6 (P0 0 · P1 0 · P2 3 · P3 3)
+Open: 7 (P0 0 · P1 0 · P2 4 · P3 3)
 ## Open
+### B015 · P2 · open · found 2026-09-30 in F23 online test · v0.1.0 (dev/online) · online, 2 devices · feature F21
+Nobody is told when a player has left and a bot has taken their seat
+Steps: 1. Online game, 2 devices 2. One player leaves mid-game and stays away past botTakesOverAfterMs (content/rooms.json) 3. Watch the other device · Expected: a clear notice ("Bo left — a bot is playing for them") and the seat marked as a bot (design/online.md seat_status here · away · auto) · Actual: play just carries on; nothing says a bot is playing · How often: every time
+Note: the server already tracks it (RoomServer seatChanged 'dropped' / 'bot'); the gap is on the screen — check whether "away" shows either
 ### B014 · P2 · open · found 2026-09-30 in F23 online test · v0.1.0 (dev/online) · Muzzy's phone, portrait
 Bottom buttons sit at the screen edge — dragging up or pressing them fires the phone's edge gestures
 Steps: 1. Phone, portrait 2. Drag a seed up from the tray, or tap a bottom button · Expected: the game gets the touch · Actual: the phone's home/back gesture can trigger instead · How often: often, near the bottom edge
