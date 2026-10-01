@@ -5,9 +5,9 @@ Muzzy's words (2026-10-01): "overhaul how the winning screen looks… it was con
 
 ## F24 🎮 Plain Q (+1 U, −1 E)
 Done when: a Q seed spells "Q"; QI/QAT score, QUA needs a U seed; bag 120 with U5 E15; sims still healthy
-- [ ] 🤖 1. Engine: spell Q as "Q"; bag U5 E15 — src/engine/words.ts, setup.ts, tests; GDD §bag + rule; server words unchanged
-- [ ] 🤖 2. Art/labels: the Q seed shows "Q" (no "u" anywhere) — art.ts / tray / tile art check
-- [ ] 🤖 3. `npm run sim` before/after → research/sims.md (bag run-out, game length, Q dead-seed rate)
+- [x] 🤖 1. Engine: spell Q as "Q"; bag U5 E15 — src/engine/words.ts, setup.ts, tests; GDD §bag + rule; server words unchanged
+- [x] 🤖 2. Art/labels: the Q seed shows "Q" (no "u" anywhere) — art.ts / tray / tile art check
+- [x] 🤖 3. `npm run sim` before/after → research/sims.md (bag run-out, game length, Q dead-seed rate)
 Check: unit tests + sims
 
 ## F28 🧪 4 players everywhere
@@ -38,3 +38,5 @@ Done when: a Dev Kit tab lists the gated screens (end screen 2/3/4p, reveal, han
 - [ ] 🤖 17. e2e: open every preview, close, game unchanged; Dev Kit stays out of live builds
 
 Notes:
+- F24 (2026-10-01): the letter id is now 'Q' (not 'Qu' spelling "Q") — every seed is one capital that spells itself, nothing treats Q specially (TDD D47). Old Dev Kit snapshots with "Qu" load it as "Q" (glyphtenderAdapter); content/snapshots migrated. The art was already a plain Q; art.ts just stopped cutting "Qu" to its first letter. Online rooms are memory-only, so no stored server game holds "Qu" — still deploy the server before the site.
+- F24 sims (research/sims.md 2026-10-01): game length, bag run-out (0–0.6%) and scoring turns unchanged. Greedy players get a bit less out of the Q: in a scoring word ~4–11% of games (was ~6–17%), stuck in a hand at the end ~42–57% (was ~38–54%). New sim measure: Q cast / scored / refreshed / stuck. Knob if the Q feels dead in play: a sixth U in bag.json.
