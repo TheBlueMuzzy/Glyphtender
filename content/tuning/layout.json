@@ -8,7 +8,9 @@
     "dragLift": "When dragging with a finger, how far above your finger the piece floats (pixels), so your finger doesn't hide it.",
     "dragStartDistance": "How far (pixels) you must move before a press becomes a drag instead of a tap.",
     "promptGap": "Tray below the board (phone portrait): empty space between the board and the instruction text, in pixels, so the board doesn't crowd the words.",
-    "bottomRoom": "Empty space kept clear under the tray and buttons, in pixels, ON TOP of the phone's own safe area (and the usual small gap), so dragging a seed up or tapping a bottom button doesn't start the phone's home/back gesture. 24 clears Android and iPhone gesture bars."
+    "bottomRoom": "Empty space kept clear under the tray and buttons, in pixels, ON TOP of the phone's own safe area (and the usual small gap), so dragging a seed up or tapping a bottom button doesn't start the phone's home/back gesture. 24 clears Android and iPhone gesture bars.",
+    "edgeMargin": "Empty space kept round the edges of the game screen (top, sides and bottom), in pixels, on top of the phone's safe area — so the portrait, the Menu button, the board and the tray never crowd the edge. Big screens use edgeMarginShare when that is more.",
+    "edgeMarginShare": "On a big screen the edge margin grows with it: this share of the screen's SHORTER side (0.035 = 3.5%: about 32 px on a 900-tall desktop), whenever that is more than edgeMargin. With the tray BESIDE the board, the width left over is shared out evenly: edge | board | tray | edge."
   },
   "_ranges": {
     "stackedAspect": [0.8, 2, 0.05],
@@ -19,7 +21,9 @@
     "dragLift": [0, 120, 4],
     "dragStartDistance": [2, 24, 1],
     "promptGap": [0, 48, 2],
-    "bottomRoom": [0, 64, 2]
+    "bottomRoom": [0, 64, 2],
+    "edgeMargin": [0, 48, 2],
+    "edgeMarginShare": [0, 0.08, 0.005]
   },
   "stackedAspect": 1.15,
   "trayTileMin": 44,
@@ -29,5 +33,7 @@
   "dragLift": 56,
   "dragStartDistance": 8,
   "promptGap": 12,
-  "bottomRoom": 24
+  "bottomRoom": 24,
+  "edgeMargin": 16,
+  "edgeMarginShare": 0.035
 }

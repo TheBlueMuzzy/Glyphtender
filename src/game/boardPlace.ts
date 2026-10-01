@@ -16,3 +16,15 @@ export function boardShift(side: TraySide, spareX: number, spareY: number): { x:
   if (side === 'right') return { x: (spareX * 3) / 8, y: 0 }
   return { x: (-spareX * 3) / 8, y: 0 }
 }
+
+/**
+ * The board's own area plus its margin (layout.json boardMargin, in hex sizes), in board units — the SVG viewBox.
+ * Hexes are drawn at size 1 (useThrow HEX); a flat-top hex reaches 1 to each side of its centre.
+ */
+export function boardView(cells: { q: number; r: number }[], margin: number): { minX: number; minY: number; w: number; h: number } {
+  const points = cells.map((h) => ({ x: 1.5 * h.q, y: Math.sqrt(3) * (h.r + h.q / 2) })) // hexToPixel at size 1
+  const xs = points.map((p) => p.x), ys = points.map((p) => p.y)
+  const pad = margin + 1
+  const minX = Math.min(...xs) - pad, minY = Math.min(...ys) - pad
+  return { minX, minY, w: Math.max(...xs) + pad - minX, h: Math.max(...ys) + pad - minY }
+}
