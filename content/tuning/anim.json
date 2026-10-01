@@ -37,187 +37,137 @@
     "trailLead": "Turn trails: when another player's turn is replayed online, how long their trail takes to draw on (from ring → dotted path → to ring → target ring) before their glyphling glides, in seconds. Reduce motion = it just appears.",
     "trailHold": "Turn trails: how long the drawn trail holds before the glide and throw play, in seconds. trailLead + trailHold is how much slower each replayed turn is."
   },
-  "_ranges": {
-    "flightBase": [
-      0.1,
-      1,
-      0.05
+  "_labels": {
+    "pulseTime": "Planned piece: halo pulse time",
+    "flightBase": "Throw: time in the air (every throw)",
+    "flightPerHex": "Throw: extra air time per hex",
+    "arcHeight": "Throw: arc height",
+    "seedSize": "Flying seed: size",
+    "hopHeight": "Throw: glyphling hop height",
+    "hopTime": "Throw: glyphling hop time",
+    "growTime": "Grow: runeblossom grow time",
+    "growFrom": "Grow: starting size of the sprout",
+    "moveBase": "Move: glide time (every move)",
+    "movePerHex": "Move: extra glide time per hex",
+    "moveSettle": "Move: overshoot before settling",
+    "wordGlowTime": "Words: clear time after a landing",
+    "spotlightHold": "Spotlight: time per word",
+    "spotlightFade": "Spotlight: fade in / out time",
+    "scorePopDelay": "Score pops: wait after landing",
+    "scorePopGap": "Score pops: time between seeds",
+    "scoreWordGap": "Score pops: extra time between words",
+    "scorePopTime": "Score pops: pop-in time",
+    "scorePopHold": "Score pops: hold over the seeds",
+    "scoreFlyTime": "Score pops: fly to the total",
+    "scoreTotalHold": "Score pops: total hold time",
+    "scoreTotalFade": "Score pops: total fade time",
+    "trailLead": "Trail: draw-on time (online replays)",
+    "trailHold": "Trail: hold before the glide (online replays)",
+    "turnPulseTime": "Whose turn: pulse time",
+    "noShakeTime": "\"No\" shake: time",
+    "refreshShrinkTime": "Refresh: shrink-away time",
+    "refreshGrowTime": "Refresh: grow-in time",
+    "refreshStagger": "Refresh: time between slots",
+    "refreshPause": "Refresh: pause between shrink and grow",
+    "revealTangles": "Reveal: tangle pulse time",
+    "revealBonus": "Reveal: time per \"+3\" bonus",
+    "revealCount": "Reveal: Magic count-up per player",
+    "revealWinner": "Reveal: winner banner time",
+    "revealPopTime": "Reveal: \"+3\" pop-in time"
+  },
+  "_sections": {
+    "Planned seed look": [
+      "pulseTime"
     ],
-    "flightPerHex": [
-      0,
-      0.15,
-      0.01
+    "Seed throw & grow": [
+      "flightBase",
+      "flightPerHex",
+      "arcHeight",
+      "seedSize",
+      "hopHeight",
+      "hopTime",
+      "growTime",
+      "growFrom"
     ],
-    "arcHeight": [
-      0,
-      0.8,
-      0.05
+    "Glyphling moves": [
+      "moveBase",
+      "movePerHex",
+      "moveSettle"
     ],
-    "seedSize": [
-      0.1,
-      0.6,
-      0.02
+    "Words & spotlight": [
+      "wordGlowTime",
+      "spotlightHold",
+      "spotlightFade"
     ],
-    "hopHeight": [
-      0,
-      0.6,
-      0.02
+    "Score pops": [
+      "scorePopDelay",
+      "scorePopGap",
+      "scoreWordGap",
+      "scorePopTime",
+      "scorePopHold",
+      "scoreFlyTime",
+      "scoreTotalHold",
+      "scoreTotalFade"
     ],
-    "hopTime": [
-      0.05,
-      0.5,
-      0.01
+    "Turn trails": [
+      "trailLead",
+      "trailHold"
     ],
-    "growTime": [
-      0.1,
-      1.2,
-      0.05
+    "Turn pulse & \"no\" shake": [
+      "turnPulseTime",
+      "noShakeTime"
     ],
-    "growFrom": [
-      0,
-      1,
-      0.05
+    "Refresh animation": [
+      "refreshShrinkTime",
+      "refreshGrowTime",
+      "refreshStagger",
+      "refreshPause"
     ],
-    "pulseTime": [
-      0.4,
-      3,
-      0.1
-    ],
-    "wordGlowTime": [
-      0,
-      3,
-      0.1
-    ],
-    "spotlightHold": [
-      0.3,
-      3,
-      0.05
-    ],
-    "spotlightFade": [
-      0,
-      0.5,
-      0.01
-    ],
-    "revealTangles": [
-      0,
-      3,
-      0.1
-    ],
-    "revealBonus": [
-      0.1,
-      1.5,
-      0.05
-    ],
-    "revealCount": [
-      0.5,
-      3,
-      0.1
-    ],
-    "revealWinner": [
-      0.5,
-      5,
-      0.1
-    ],
-    "revealPopTime": [
-      0.1,
-      1,
-      0.05
-    ],
-    "moveBase": [
-      0,
-      0.6,
-      0.01
-    ],
-    "movePerHex": [
-      0,
-      0.15,
-      0.01
-    ],
-    "moveSettle": [
-      0,
-      0.3,
-      0.01
-    ],
-    "scorePopDelay": [
-      0,
-      1,
-      0.05
-    ],
-    "scorePopGap": [
-      0,
-      0.3,
-      0.01
-    ],
-    "scoreWordGap": [
-      0,
-      0.6,
-      0.05
-    ],
-    "scorePopTime": [
-      0.1,
-      1,
-      0.05
-    ],
-    "scorePopHold": [
-      0,
-      1.5,
-      0.05
-    ],
-    "scoreFlyTime": [
-      0.1,
-      1.2,
-      0.05
-    ],
-    "scoreTotalHold": [
-      0.2,
-      3,
-      0.1
-    ],
-    "scoreTotalFade": [
-      0.1,
-      1.5,
-      0.05
-    ],
-    "turnPulseTime": [
-      0.6,
-      4,
-      0.1
-    ],
-    "noShakeTime": [
-      0.1,
-      1,
-      0.05
-    ],
-    "refreshShrinkTime": [
-      0.05,
-      1,
-      0.05
-    ],
-    "refreshGrowTime": [
-      0.05,
-      1,
-      0.05
-    ],
-    "refreshStagger": [
-      0,
-      0.3,
-      0.01
-    ],
-    "refreshPause": [
-      0,
-      0.6,
-      0.05
-    ],
-    "trailLead": [
-      0,
-      1.5,
-      0.05
-    ],
-    "trailHold": [
-      0,
-      1.5,
-      0.05
+    "End-of-game reveal": [
+      "revealTangles",
+      "revealBonus",
+      "revealCount",
+      "revealWinner",
+      "revealPopTime"
     ]
+  },
+  "_ranges": {
+    "flightBase": [0.1, 1, 0.05],
+    "flightPerHex": [0, 0.15, 0.01],
+    "arcHeight": [0, 0.8, 0.05],
+    "seedSize": [0.1, 0.6, 0.02],
+    "hopHeight": [0, 0.6, 0.02],
+    "hopTime": [0.05, 0.5, 0.01],
+    "growTime": [0.1, 1.2, 0.05],
+    "growFrom": [0, 1, 0.05],
+    "pulseTime": [0.4, 3, 0.1],
+    "wordGlowTime": [0, 3, 0.1],
+    "spotlightHold": [0.3, 3, 0.05],
+    "spotlightFade": [0, 0.5, 0.01],
+    "revealTangles": [0, 3, 0.1],
+    "revealBonus": [0.1, 1.5, 0.05],
+    "revealCount": [0.5, 3, 0.1],
+    "revealWinner": [0.5, 5, 0.1],
+    "revealPopTime": [0.1, 1, 0.05],
+    "moveBase": [0, 0.6, 0.01],
+    "movePerHex": [0, 0.15, 0.01],
+    "moveSettle": [0, 0.3, 0.01],
+    "scorePopDelay": [0, 1, 0.05],
+    "scorePopGap": [0, 0.3, 0.01],
+    "scoreWordGap": [0, 0.6, 0.05],
+    "scorePopTime": [0.1, 1, 0.05],
+    "scorePopHold": [0, 1.5, 0.05],
+    "scoreFlyTime": [0.1, 1.2, 0.05],
+    "scoreTotalHold": [0.2, 3, 0.1],
+    "scoreTotalFade": [0.1, 1.5, 0.05],
+    "turnPulseTime": [0.6, 4, 0.1],
+    "noShakeTime": [0.1, 1, 0.05],
+    "refreshShrinkTime": [0.05, 1, 0.05],
+    "refreshGrowTime": [0.05, 1, 0.05],
+    "refreshStagger": [0, 0.3, 0.01],
+    "refreshPause": [0, 0.6, 0.05],
+    "trailLead": [0, 1.5, 0.05],
+    "trailHold": [0, 1.5, 0.05]
   },
   "flightBase": 0.3,
   "flightPerHex": 0.05,

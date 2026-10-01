@@ -1,0 +1,105 @@
+/* Dev Kit search + collapsible sections. Plain developer-tool styling (see devkit.css). */
+
+/* The search box, pinned under the tabs row */
+.dk-search { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.dk-search-box { position: relative; flex: 1; min-width: 0; }
+.dk-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0f1015;
+  border: 1px solid #3a3c4a;
+  border-radius: 6px;
+  padding: 6px 34px 6px 30px;
+  font-size: 16px !important; /* 16 px or more: phones don't zoom in when it's tapped */
+}
+.dk-search-input:focus { outline: 2px solid #2f6fed; outline-offset: -1px; }
+.dk-search-input::-webkit-search-cancel-button { display: none; } /* our own ✕ instead */
+.dk-search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: #9a9bab; pointer-events: none; }
+.dk-search-clear {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #c9cad6;
+}
+.dk-search-clear:hover { background: #2c2e3a; }
+.dk-search-count { flex: none; font-size: 12px; color: #9a9bab; white-space: nowrap; }
+
+/* Results: one heading per tab, then that tab's matching sections */
+.dk-results-tab {
+  margin: 0;
+  padding: 8px 10px 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9a9bab;
+}
+.dk-results-none { margin: 0; padding: 14px 10px; color: #9a9bab; }
+
+/* A section: its title bar opens/closes it */
+.dk-section { border-bottom: 1px solid #2a2b35; }
+.dk-section-head { margin: 0; font-size: 13px; }
+.dk-section-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 2px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-weight: 700 !important;
+  cursor: pointer;
+}
+.dk-section-btn:hover { background: #1f2029; }
+.dk-section-arrow { flex: none; width: 12px; color: #9a9bab; }
+.dk-section-title { min-width: 0; overflow-wrap: anywhere; }
+.dk-section-count {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: #2c2e3a;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c9cad6;
+}
+.dk-section-go { margin-left: auto; flex: none; font-size: 11px; font-weight: 400; color: #8fb3ff; }
+.dk-section-body { padding: 0 0 8px; }
+.dk-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffb020;
+}
+
+/* The searched-for letters */
+.dk-hit { background: #6b5310; color: #fff3c4; border-radius: 2px; padding: 0; }
+
+/* The section chips at the top of a tab, and Expand all / Collapse all */
+.dk-index { margin: 2px 0 6px; }
+.dk-index-chips { min-width: 0; }
+.dk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #1f2029;
+  border: 1px solid #3a3c4a;
+  border-radius: 14px;
+  font-size: 12px !important;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dk-chip:hover { background: #2c2e3a; }
+.dk-index-all { display: flex; gap: 12px; margin-top: 4px; }
+.dk-link { background: none; border: none; padding: 2px 0; color: #8fb3ff; font-size: 12px !important; cursor: pointer; }
+.dk-link:hover { text-decoration: underline; }

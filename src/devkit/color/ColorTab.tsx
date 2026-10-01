@@ -1,22 +1,32 @@
 // COLOR TOOL — the colour-blind preview, and every UI kit colour with a picker each.
 //   UI colours come from content/ui/style.json: the preset's colours, with "tweaks" on top.
 // ↺ on a colour = back to the preset. A dot next to a name = changed, not saved yet.
+// The Dev Kit's search box filters the colours (DevKitSearch); the colour-blind preview hides while searching.
 // A game's own colours (e.g. a 3D table) go in a game tab: src/devkit-game/ (ColourRow is free to use there).
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
+import { Highlight, Section } from '../search/Section'
+import { DevKitSearch } from '../search/searchContext'
+import { searchTerms } from '../search/searchLogic'
 import { CAN_SAVE, copyText, saveContentFile } from '../saveContent'
 import { ColourBlindPreview } from './ColourBlindPreview'
 import { ColourRow } from './ColourRow'
-import { UI_COLOURS, copyForClaudeText, listChanges, sameColour, tweaksToSave, uiChanged, uiColoursFrom, uiLabel } from './colorLogic'
+import { UI_COLOUR_SECTION, copyForClaudeText, searchUiColours, listChanges, sameColour, tweaksToSave, uiChanged, uiColoursFrom, uiLabel } from './colorLogic'
 import { styleFile, uiKit } from './uiKit'
 import './color.css'
 
 export function ColorTab() {
+  const { query } = useContext(DevKitSearch) // the Dev Kit's search box ('' = show everything)
+  const searching = searchTerms(query).length > 0
   return (
     <div className="ct">
-      <p className="ct-legend">
-        <span className="ct-dot" /> = changed, not saved yet · tap a swatch to pick a colour, or type a hex
-      </p>
-      <ColourBlindPreview />
+      {!searching && (
+        <>
+          <p className="ct-legend">
+            <span className="ct-dot" /> = changed, not saved yet · tap a swatch to pick a colour, or type a hex
+          </p>
+          <ColourBlindPreview />
+        </>
+      )}
       {uiKit && styleFile ? (
         <UiColoursEditor />
       ) : (
@@ -27,6 +37,7 @@ export function ColorTab() {
 }
 
 function UiColoursEditor() {
+  const { query, goTo } = useContext(DevKitSearch)
   // Only shown when both exist (see ColorTab)
   const kit = uiKit!
   const file = styleFile!
@@ -43,6 +54,8 @@ function UiColoursEditor() {
   const [copyFallback, setCopyFallback] = useState<string | null>(null) // shown if the clipboard is blocked
 
   const dirty = uiChanged(colours, saved)
+  const terms = searchTerms(query)
+  const found = terms.length > 0 ? searchUiColours(query) : [{ ...UI_COLOUR_SECTION, titleHit: false }]
 
   // Live preview: the UI restyles through the kit's style engine
   useEffect(() => {
@@ -76,17 +89,31 @@ function UiColoursEditor() {
 
   return (
     <>
-      <h3 className="ct-group">UI colours <small>content/ui/style.json · ↺ = back to the {presetTitle} preset</small></h3>
-      {UI_COLOURS.map(({ token }) => (
-        <ColourRow
-          key={token}
-          label={uiLabel(token)}
-          value={colours[token]}
-          changed={!sameColour(colours[token], saved[token])}
-          resetTo={String(preset[token])}
-          resetHint={`Back to the ${presetTitle} preset`}
-          onChange={(v) => setColours((c) => ({ ...c, [token]: v }))}
-        />
+      {found.map((section) => (
+        <Section
+          key={section.id}
+          id={section.id}
+          title={section.title}
+          count={section.items.length}
+          terms={terms}
+          defaultOpen
+          changed={dirty}
+          onGoTo={() => goTo(section.id)}
+        >
+          <p className="ct-legend">content/ui/style.json · ↺ = back to the {presetTitle} preset</p>
+          {section.items.map(({ token, name }) => (
+            <ColourRow
+              key={token}
+              label={uiLabel(token)}
+              display={<Highlight text={`${name} (${token})`} terms={terms} />}
+              value={colours[token]}
+              changed={!sameColour(colours[token], saved[token])}
+              resetTo={String(preset[token])}
+              resetHint={`Back to the ${presetTitle} preset`}
+              onChange={(v) => setColours((c) => ({ ...c, [token]: v }))}
+            />
+          ))}
+        </Section>
       ))}
 
       <footer className="devkit-footer">

@@ -1,5 +1,6 @@
 // The Color tool's thinking, kept apart from its looks so it can be tested (colorLogic.test.ts, in the framework).
 // Nothing here touches the page or the files. normalizeHex / sameColour are handy for game tabs too.
+import { filterSections, type Section } from '../search/searchLogic'
 
 /** The 15 UI kit colours, in the order the panel lists them, with names Muzzy would use. */
 export const UI_COLOURS = [
@@ -100,3 +101,10 @@ export function copyForClaudeText(
   const lines = changes.map((c) => `- ${c.name}: ${c.from} → ${c.to}`)
   return [`${what} changes from the Dev Kit (${game}) — ${status}:`, ...lines].join('\n')
 }
+
+/** The Color tab's one section, for the Dev Kit search: every UI colour, found by its name or token. */
+export const UI_COLOUR_SECTION: Section<(typeof UI_COLOURS)[number]> = { id: 'color:UI colours', title: 'UI colours', items: [...UI_COLOURS] }
+
+/** The UI colours matching a search (by name, token, or "style.json"). */
+export const searchUiColours = (query: string) =>
+  filterSections([UI_COLOUR_SECTION], query, (c: (typeof UI_COLOURS)[number]) => [c.token, c.name, 'style.json'])

@@ -69,7 +69,8 @@
   border-bottom: 1px solid #34353f;
 }
 
-.devkit-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+/* One scrolling area holds every tab's panel (search results from several tabs scroll together) */
+.devkit-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .devkit-body[hidden] { display: none; }
 
 /* ---- shared bits every tool can use ---- */

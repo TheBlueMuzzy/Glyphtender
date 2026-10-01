@@ -1,4 +1,26 @@
 {
-  "_help": "Dev Kit (the ` panel) in RELEASE builds. true = friends testing the live link can open it (prototype/alpha/beta). /deliver sets this to false at the 1.0 full release — then the live game has no Dev Kit at all. Local dev always has it.",
-  "inReleaseBuilds": true
+  "_help": "Dev Kit (the ` panel) in RELEASE builds. true = friends testing the live link can open it (prototype/alpha/beta). /deliver sets this to false at the 1.0 full release — then the live game has no Dev Kit at all. Local dev always has it. sectionOrder = the order of the Tuning tab's sections (titles from each content/tuning file's _sections; any not listed follow).",
+  "inReleaseBuilds": true,
+  "sectionOrder": [
+    "Board look",
+    "Player colours",
+    "Move & cast highlights",
+    "Planned seed look",
+    "Seed throw & grow",
+    "Glyphling moves",
+    "Words & spotlight",
+    "Score pops",
+    "Turn trails",
+    "Turn pulse & \"no\" shake",
+    "Juice sizes",
+    "Seed tray",
+    "Refresh animation",
+    "Danger & tangles",
+    "End-of-game reveal",
+    "End screen: awards",
+    "End screen: story chart & size",
+    "Layout & margins",
+    "Dragging",
+    "Rules"
+  ]
 }

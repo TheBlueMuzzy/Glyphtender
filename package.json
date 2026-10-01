@@ -28,7 +28,8 @@
     "e2e:end": "node e2e/end-screen-shots.mjs",
     "e2e:margins": "node e2e/layout-margins.mjs",
     "e2e:trails": "node e2e/trail-shots.mjs",
-    "fixtures:end": "node scripts/end-fixtures.mjs"
+    "fixtures:end": "node scripts/end-fixtures.mjs",
+    "e2e:devkit-search": "node e2e/devkit-search.mjs"
   },
   "dependencies": {
     "partyserver": "^0.5.10",

@@ -1,10 +1,26 @@
 {
   "_help": {
-    "handSize": "How many seeds each player holds. Hands are refilled up to this.",
-    "minWordLength": "Shortest word that makes Magic, in seeds. 2 = normal, 3 = the \"2-letter words off\" table option.",
-    "ownershipBonus": "Extra Magic for each of YOUR seeds inside a word you make. A word = its seeds + this per seed you own.",
-    "tangleBonus": "At the end, for each tangled glyphling, every OTHER player gets this much Magic per seed or glyphling of theirs next to it.",
-    "tanglesToEnd": "The game ends when a turn finishes with this many glyphlings tangled (or more)."
+    "handSize": "How many seeds each player holds. Hands are refilled up to this. Takes effect from the next new game (Save, then refresh).",
+    "minWordLength": "Shortest word that makes Magic, in seeds. 2 = normal, 3 = the \"2-letter words off\" table option. Takes effect from the next new game (Save, then refresh).",
+    "ownershipBonus": "Extra Magic for each of YOUR seeds inside a word you make. A word = its seeds + this per seed you own. Takes effect from the next new game (Save, then refresh).",
+    "tangleBonus": "At the end, for each tangled glyphling, every OTHER player gets this much Magic per seed or glyphling of theirs next to it. Takes effect from the next new game (Save, then refresh).",
+    "tanglesToEnd": "The game ends when a turn finishes with this many glyphlings tangled (or more). Takes effect from the next new game (Save, then refresh)."
+  },
+  "_labels": {
+    "handSize": "Seeds in hand",
+    "minWordLength": "Shortest word (letters)",
+    "ownershipBonus": "Bonus Magic per own seed in a word",
+    "tangleBonus": "Tangle bonus Magic (end of game)",
+    "tanglesToEnd": "Tangled glyphlings that end the game"
+  },
+  "_sections": {
+    "Rules": [
+      "handSize",
+      "minWordLength",
+      "ownershipBonus",
+      "tangleBonus",
+      "tanglesToEnd"
+    ]
   },
   "_ranges": {
     "handSize": [4, 12, 1],

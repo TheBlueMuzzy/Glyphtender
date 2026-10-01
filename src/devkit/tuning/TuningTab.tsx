@@ -1,14 +1,23 @@
 // TUNING TOOL — every number in the game's content/tuning/*.json files, as a slider + a number box.
-//   Groups inside a file (nested keys) become headings; true/false values get a checkbox; text is shown, not edited.
+//   Settings sit in titled sections that open and close (search/Section.tsx) — the file's "_sections", else one per
+//   file — with readable names from "_labels" and a help line from "_help" (how: tuningSections.ts). Chips at the top
+//   jump to a section. The Dev Kit's search box (DevKit.tsx) filters them (DevKitSearch).
+//   true/false values get a checkbox; colours ("#rrggbb") a colour picker; other text is shown, not edited.
 //   Slider ranges: the file's optional "_ranges" { "key.path": [min, max, step] }, else a guess (tuningLogic.ts).
 // Live: each change is sent to the game as it happens (liveTuning.ts) — the game shows it if it reads its tuning
 // through liveTuning / useLiveTuning. ↺ on a row = back to the saved value. A dot = changed, not saved yet.
-import { useState } from 'react'
+import { useContext, useState, type ReactNode } from 'react'
 import { CAN_SAVE, copyText, saveContentFile } from '../saveContent'
-import { copyForClaudeText } from '../color/colorLogic'
+import { copyForClaudeText, normalizeHex } from '../color/colorLogic'
+import { ColourRow } from '../color/ColourRow'
+import { Highlight, Section, SectionIndex } from '../search/Section'
+import { DevKitSearch } from '../search/searchContext'
+import { searchTerms } from '../search/searchLogic'
 import { sendTuning } from './liveTuning'
-import { tuningFiles, type TuningFile } from './tuningFiles'
-import { groupOf, listFields, listTuningChanges, nameOf, sliderRange, tuningChanged, valueAt, withValue, type Field, type TuningData } from './tuningLogic'
+import { sectionOrder, tuningFiles, type TuningFile } from './tuningFiles'
+import { groupOf, listTuningChanges, sliderRange, tuningChanged, valueAt, withValue, type TuningData } from './tuningLogic'
+import { searchTuning, tuningSections, type TuningItem } from './tuningSections'
+import '../color/color.css'
 import './tuning.css'
 
 type Files = Record<string, TuningData> // file name → its data
@@ -16,8 +25,17 @@ type Files = Record<string, TuningData> // file name → its data
 const byName = (files: TuningFile[]): Files => Object.fromEntries(files.map((f) => [f.name, f.data]))
 const pathOf = (name: string) => `content/tuning/${name}.json`
 
-export function TuningTab({ files = tuningFiles }: { files?: TuningFile[] }) {
+type Props = {
+  files?: TuningFile[]
+  order?: string[] // section titles in the order to list them (content/devkit.json "sectionOrder")
+  query?: string // the search text — normally from the Dev Kit's search box (DevKitSearch); '' = show everything
+}
+
+export function TuningTab({ files = tuningFiles, order = sectionOrder, query: ownQuery }: Props) {
+  const search = useContext(DevKitSearch)
+  const query = ownQuery ?? search.query
   const [loaded] = useState(() => byName(files)) // as the page loaded — ranges and Copy for Claude start from this
+  const [sections] = useState(() => tuningSections(files, order)) // names and sections never change while it runs
   const [values, setValues] = useState(loaded) // what the game uses right now
   const [saved, setSaved] = useState(loaded) // what's in the files
   const [status, setStatus] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null)
@@ -61,20 +79,52 @@ export function TuningTab({ files = tuningFiles }: { files?: TuningFile[] }) {
     }
   }
 
+  const terms = searchTerms(query)
+  const searching = terms.length > 0
+  const shown = searching ? searchTuning(sections, query) : sections
+  const isChanged = (item: TuningItem) => valueAt(values[item.file], item.path) !== valueAt(saved[item.file], item.path)
+
   return (
     <div className="tt">
-      <p className="tt-legend">
-        <span className="tt-dot" /> = changed, not saved yet · ↺ = back to the saved value · changes show in the game live
-      </p>
-      {names.map((name) => (
-        <FileSection
-          key={name}
-          name={name}
-          data={values[name]}
-          loaded={loaded[name]}
-          saved={saved[name]}
-          onChange={(path, value) => change(name, path, value)}
-        />
+      {!searching && (
+        <>
+          <p className="tt-legend">
+            <span className="tt-dot" /> = changed, not saved yet · ↺ = back to the saved value · changes show in the game live
+          </p>
+          <SectionIndex label="Tuning" sections={sections.map((s) => ({ id: s.id, title: s.title, count: s.items.length }))} />
+        </>
+      )}
+      {shown.map((section) => (
+        <Section
+          key={section.id}
+          id={section.id}
+          title={section.title}
+          count={section.items.length}
+          terms={terms}
+          defaultOpen={sections.length === 1}
+          changed={section.items.some(isChanged)}
+          onGoTo={() => search.goTo(section.id)}
+        >
+          {section.note && <p className="tt-help"><Highlight text={section.note} terms={terms} /></p>}
+          {section.items.map((item, i) => {
+            const group = section.grouped ? groupOf(item.path) : ''
+            const newGroup = group && group !== groupOf(section.items[i - 1]?.path ?? '')
+            return (
+              <div key={`${item.file}:${item.path}`}>
+                {newGroup && <h4 className="tt-group">{group}</h4>}
+                <FieldRow
+                  item={item}
+                  value={valueAt(values[item.file], item.path)}
+                  savedValue={valueAt(saved[item.file], item.path)}
+                  loadedValue={valueAt(loaded[item.file], item.path)}
+                  ranges={values[item.file]._ranges}
+                  terms={terms}
+                  onChange={(value) => change(item.file, item.path, value)}
+                />
+              </div>
+            )
+          })}
+        </Section>
       ))}
 
       <footer className="devkit-footer">
@@ -97,75 +147,55 @@ export function TuningTab({ files = tuningFiles }: { files?: TuningFile[] }) {
   )
 }
 
-type SectionProps = {
-  name: string
-  data: TuningData
-  loaded: TuningData
-  saved: TuningData
-  onChange: (path: string, value: unknown) => void
-}
-
-// One file: its name, its _help note, then its values under their group headings.
-// "_help" is either one note for the whole file, or one per value: { "dragHeight": "how high a die lifts" }
-function FileSection({ name, data, loaded, saved, onChange }: SectionProps) {
-  const fields = listFields(data)
-  const help = typeof data._help === 'string' ? data._help : null
-  const helpPerValue = data._help && typeof data._help === 'object' ? (data._help as Record<string, unknown>) : {}
-  return (
-    <section className="tt-file">
-      <h3 className="tt-file-name">{name}.json <small>{pathOf(name)}</small></h3>
-      {help && <p className="tt-help">{help}</p>}
-      {fields.map((field, i) => {
-        const group = groupOf(field.path)
-        const newGroup = group && group !== groupOf(fields[i - 1]?.path ?? '')
-        return (
-          <div key={field.path}>
-            {newGroup && <h4 className="tt-group">{group}</h4>}
-            <FieldRow
-              field={field}
-              savedValue={valueAt(saved, field.path)}
-              loadedValue={valueAt(loaded, field.path)}
-              ranges={data._ranges}
-              help={typeof helpPerValue[field.path] === 'string' ? (helpPerValue[field.path] as string) : undefined}
-              onChange={(value) => onChange(field.path, value)}
-            />
-          </div>
-        )
-      })}
-    </section>
-  )
-}
-
 type RowProps = {
-  field: Field
+  item: TuningItem
+  value: unknown
   savedValue: unknown
   loadedValue: unknown
   ranges: unknown
-  help?: string // this value's own line from _help, if the file has one per value
+  terms: string[] // search words to highlight
   onChange: (value: unknown) => void
 }
 
-// One value: [● name] then [slider] [number] [↺] — or a checkbox, or plain text
-function FieldRow({ field, savedValue, loadedValue, ranges, help, onChange }: RowProps) {
-  const { path, kind, value } = field
-  const label = nameOf(path)
+// One setting: [● readable name · file · key] then [slider] [number] [↺] — or a checkbox, a colour, or plain
+// text — and its help line under it.
+function FieldRow({ item, value, savedValue, loadedValue, ranges, terms, onChange }: RowProps) {
+  const { path, kind, label } = item
   const changed = value !== savedValue
-  const name = (
-    <span className="tt-name">
-      {changed && <span className="tt-dot" title="Changed, not saved yet" />}
-      {label}
-    </span>
+  const dot = changed && <span className="tt-dot" title="Changed, not saved yet" />
+  const names: ReactNode = (
+    <>
+      <span className="tt-label"><Highlight text={label} terms={terms} /></span>
+      <code className="tt-key" title={`content/tuning/${item.file}.json → ${path}`}>
+        <Highlight text={`${item.file} · ${path}`} terms={terms} />
+      </code>
+    </>
   )
-  const helpLine = help && <p className="tt-row-help">{help}</p>
+  const helpLine = item.help && <p className="tt-row-help"><Highlight text={item.help} terms={terms} /></p>
+
+  // A colour as it's saved ("#rrggbb"): a picker, like the Color tab
+  if (kind === 'text' && /^#[0-9a-f]{6}$/i.test(String(savedValue)) && normalizeHex(String(value))) {
+    return (
+      <div className="tt-row tt-row-colour">
+        <ColourRow
+          label={label}
+          display={names}
+          value={String(value)}
+          changed={changed}
+          resetTo={String(savedValue)}
+          resetHint="Back to the saved value"
+          onChange={onChange}
+        />
+        {helpLine}
+      </div>
+    )
+  }
 
   if (kind === 'text') {
     return (
       <div className="tt-row tt-row-text">
-        {name}
-        <span className="tt-text" title="Text — edit it in the file">
-          {/^#[0-9a-f]{3,8}$/i.test(String(value)) && <span className="tt-swatch" style={{ background: String(value) }} />}
-          {String(value)}
-        </span>
+        <span className="tt-name">{dot}{names}</span>
+        <span className="tt-text" title="Text — edit it in the file">{String(value)}</span>
         {helpLine}
       </div>
     )
@@ -188,8 +218,8 @@ function FieldRow({ field, savedValue, loadedValue, ranges, help, onChange }: Ro
       <div className="tt-row tt-row-bool">
         <label className="tt-name">
           <input type="checkbox" checked={value as boolean} onChange={(e) => onChange(e.target.checked)} />
-          {changed && <span className="tt-dot" title="Changed, not saved yet" />}
-          {label}
+          {dot}
+          {names}
         </label>
         {reset}
         {helpLine}
@@ -201,7 +231,7 @@ function FieldRow({ field, savedValue, loadedValue, ranges, help, onChange }: Ro
   const { min, max, step } = sliderRange(typeof loadedValue === 'number' ? loadedValue : (value as number), path, ranges)
   return (
     <div className="tt-row">
-      {name}
+      <span className="tt-name">{dot}{names}</span>
       <input
         className="tt-slider"
         type="range"

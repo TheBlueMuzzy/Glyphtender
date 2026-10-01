@@ -12,6 +12,38 @@
     "edgeMargin": "Empty space kept round the edges of the game screen (top, sides and bottom), in pixels, on top of the phone's safe area — so the portrait, the Menu button, the board and the tray never crowd the edge. Big screens use edgeMarginShare when that is more.",
     "edgeMarginShare": "On a big screen the edge margin grows with it: this share of the screen's SHORTER side (0.035 = 3.5%: about 32 px on a 900-tall desktop), whenever that is more than edgeMargin. With the tray BESIDE the board, the width left over is shared out evenly: edge | board | tray | edge."
   },
+  "_labels": {
+    "stackedAspect": "Tray below vs beside: screen shape that switches",
+    "sidePanelShare": "Tray beside the board: its share of the width",
+    "boardMargin": "Space around the board",
+    "promptGap": "Phone portrait: gap between board and instructions (px)",
+    "edgeMargin": "Edge margin (px)",
+    "edgeMarginShare": "Edge margin on big screens (share of screen)",
+    "bottomRoom": "Room under the tray for the phone gesture bar (px)",
+    "trayTileMin": "Tray seed: smallest size (px)",
+    "trayGap": "Tray: space between seeds (px)",
+    "dragLift": "Drag: how far the piece floats above your finger (px)",
+    "dragStartDistance": "Drag: how far to move before a press becomes a drag (px)"
+  },
+  "_sections": {
+    "Layout & margins": [
+      "stackedAspect",
+      "sidePanelShare",
+      "boardMargin",
+      "promptGap",
+      "edgeMargin",
+      "edgeMarginShare",
+      "bottomRoom"
+    ],
+    "Seed tray": [
+      "trayTileMin",
+      "trayGap"
+    ],
+    "Dragging": [
+      "dragLift",
+      "dragStartDistance"
+    ]
+  },
   "_ranges": {
     "stackedAspect": [0.8, 2, 0.05],
     "trayTileMin": [32, 64, 2],

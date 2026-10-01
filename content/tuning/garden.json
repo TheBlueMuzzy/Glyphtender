@@ -46,137 +46,149 @@
     "trailStrength": "Turn trails: how strong a trail is while you plan your turn and while another player's turn is replayed (it's gone once the seed lands). 1 = solid.",
     "castShade": "Cast highlights: how much lighter (+) or darker (−) than the player's colour the cast options are, so a cast reads apart from a move at a glance. +0.5 = halfway to white · 0 = the same colour as a move · −0.5 = halfway to the night sky."
   },
-  "_ranges": {
-    "hexLineWidth": [
-      0,
-      0.2,
-      0.01
+  "_labels": {
+    "background": "Night sky colour (behind everything)",
+    "hexFill": "Empty hex colour",
+    "hexLine": "Hex outline colour",
+    "hexLineWidth": "Hex outline thickness",
+    "pieceScale": "Piece size inside its hex",
+    "yellow": "Yellow player colour",
+    "blue": "Blue player colour",
+    "purple": "Purple player colour",
+    "pink": "Pink player colour",
+    "glowStrength": "Move highlight strength",
+    "castFill": "Cast highlight strength",
+    "castShade": "Cast highlight: lighter / darker than a move",
+    "dropStrength": "Drag: \"drop here\" highlight strength",
+    "plannedSeedLook": "Planned seed: which look",
+    "plannedMoonLight": "Moonlit look: letter colour",
+    "plannedMoonShadow": "Moonlit look: tile (shadow) colour",
+    "plannedMoonBrightness": "Moonlit look: letter brightness",
+    "plannedStencilLetter": "Stencil look: letter colour",
+    "plannedStencilTile": "Stencil look: tile colour",
+    "plannedStencilCut": "Stencil look: how much counts as letter",
+    "plannedStencilSoftness": "Stencil look: letter edge softness",
+    "plannedMist": "Misty look: wash colour",
+    "plannedMistStrength": "Misty look: wash thickness",
+    "plannedSeedOpacity": "Dimmed look: seed strength",
+    "seedShine": "Flying seed: shine colour",
+    "ghostOpacity": "Ghost glyphling (where it started): visibility",
+    "wordBorder": "Word border colour",
+    "wordBorderWidth": "Word border thickness",
+    "grownGlowStrength": "Word border strength after the words grow",
+    "spotlightLabel": "Spotlight: show the word label (\"QUA +4\")",
+    "spotlightLabelSize": "Spotlight label: text size",
+    "spotlightLabelMinPx": "Spotlight label: smallest size on screen (px)",
+    "scorePop": "Score pop colour",
+    "scorePopSize": "Score pop: \"+1\" size",
+    "scoreTotalSize": "Score pop: turn total (\"+6\") size",
+    "scorePopMinPx": "Score pop: smallest size on screen (px)",
+    "trailWidth": "Trail: line thickness",
+    "trailStrength": "Trail: strength",
+    "warningWidth": "One-move-left ring: thickness",
+    "warningDash": "One-move-left ring: dash length",
+    "vine": "Tangle vine colour",
+    "vineWidth": "Tangle vine thickness",
+    "tangledDim": "Tangled glyphling: how faded",
+    "revealPop": "Tangle bonus (\"+3\") colour",
+    "revealPopSize": "Tangle bonus (\"+3\") size"
+  },
+  "_sections": {
+    "Board look": [
+      "background",
+      "hexFill",
+      "hexLine",
+      "hexLineWidth",
+      "pieceScale"
     ],
-    "glowStrength": [
-      0,
-      1,
-      0.05
+    "Player colours": [
+      "yellow",
+      "blue",
+      "purple",
+      "pink"
     ],
-    "pieceScale": [
-      0.6,
-      1.1,
-      0.01
+    "Move & cast highlights": [
+      "glowStrength",
+      "castFill",
+      "castShade",
+      "dropStrength"
     ],
-    "ghostOpacity": [
-      0,
-      0.8,
-      0.05
+    "Planned seed look": [
+      "plannedSeedLook",
+      "plannedMoonLight",
+      "plannedMoonShadow",
+      "plannedMoonBrightness",
+      "plannedStencilLetter",
+      "plannedStencilTile",
+      "plannedStencilCut",
+      "plannedStencilSoftness",
+      "plannedMist",
+      "plannedMistStrength",
+      "plannedSeedOpacity"
     ],
-    "plannedMistStrength": [
-      0.1,
-      0.9,
-      0.05
+    "Seed throw & grow": [
+      "seedShine"
     ],
-    "plannedMoonBrightness": [
-      0.8,
-      2.5,
-      0.05
+    "Glyphling moves": [
+      "ghostOpacity"
     ],
-    "plannedStencilCut": [
-      0.05,
-      0.6,
-      0.01
+    "Words & spotlight": [
+      "wordBorder",
+      "wordBorderWidth",
+      "grownGlowStrength",
+      "spotlightLabel",
+      "spotlightLabelSize",
+      "spotlightLabelMinPx"
     ],
-    "plannedStencilSoftness": [
-      0.02,
-      0.4,
-      0.01
+    "Score pops": [
+      "scorePop",
+      "scorePopSize",
+      "scoreTotalSize",
+      "scorePopMinPx"
     ],
-    "plannedSeedOpacity": [
-      0.1,
-      1,
-      0.05
+    "Turn trails": [
+      "trailWidth",
+      "trailStrength"
     ],
-    "wordBorderWidth": [
-      0.04,
-      0.4,
-      0.01
+    "Danger & tangles": [
+      "warningWidth",
+      "warningDash",
+      "vine",
+      "vineWidth",
+      "tangledDim"
     ],
-    "grownGlowStrength": [
-      0,
-      1,
-      0.05
-    ],
-    "spotlightLabelSize": [
-      0.2,
-      1,
-      0.02
-    ],
-    "spotlightLabelMinPx": [
-      8,
-      24,
-      1
-    ],
-    "warningWidth": [
-      0.02,
-      0.2,
-      0.01
-    ],
-    "warningDash": [
-      0.05,
-      0.5,
-      0.01
-    ],
-    "vineWidth": [
-      0.02,
-      0.2,
-      0.01
-    ],
-    "tangledDim": [
-      0.2,
-      1,
-      0.05
-    ],
-    "revealPopSize": [
-      0.3,
-      1,
-      0.05
-    ],
-    "scorePopSize": [
-      0.3,
-      1,
-      0.05
-    ],
-    "scoreTotalSize": [
-      0.5,
-      1.6,
-      0.05
-    ],
-    "dropStrength": [
-      0.3,
-      1,
-      0.05
-    ],
-    "scorePopMinPx": [
-      8,
-      32,
-      1
-    ],
-    "castFill": [
-      0.1,
-      1,
-      0.05
-    ],
-    "trailWidth": [
-      0.02,
-      0.2,
-      0.01
-    ],
-    "trailStrength": [
-      0.2,
-      1,
-      0.05
-    ],
-    "castShade": [
-      -0.9,
-      0.9,
-      0.05
+    "End-of-game reveal": [
+      "revealPop",
+      "revealPopSize"
     ]
+  },
+  "_ranges": {
+    "hexLineWidth": [0, 0.2, 0.01],
+    "glowStrength": [0, 1, 0.05],
+    "pieceScale": [0.6, 1.1, 0.01],
+    "ghostOpacity": [0, 0.8, 0.05],
+    "plannedMistStrength": [0.1, 0.9, 0.05],
+    "plannedMoonBrightness": [0.8, 2.5, 0.05],
+    "plannedStencilCut": [0.05, 0.6, 0.01],
+    "plannedStencilSoftness": [0.02, 0.4, 0.01],
+    "plannedSeedOpacity": [0.1, 1, 0.05],
+    "wordBorderWidth": [0.04, 0.4, 0.01],
+    "grownGlowStrength": [0, 1, 0.05],
+    "spotlightLabelSize": [0.2, 1, 0.02],
+    "spotlightLabelMinPx": [8, 24, 1],
+    "warningWidth": [0.02, 0.2, 0.01],
+    "warningDash": [0.05, 0.5, 0.01],
+    "vineWidth": [0.02, 0.2, 0.01],
+    "tangledDim": [0.2, 1, 0.05],
+    "revealPopSize": [0.3, 1, 0.05],
+    "scorePopSize": [0.3, 1, 0.05],
+    "scoreTotalSize": [0.5, 1.6, 0.05],
+    "dropStrength": [0.3, 1, 0.05],
+    "scorePopMinPx": [8, 32, 1],
+    "castFill": [0.1, 1, 0.05],
+    "trailWidth": [0.02, 0.2, 0.01],
+    "trailStrength": [0.2, 1, 0.05],
+    "castShade": [-0.9, 0.9, 0.05]
   },
   "background": "#10162a",
   "hexFill": "#1c2742",

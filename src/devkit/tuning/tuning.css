@@ -30,8 +30,7 @@
 .tt-row .tt-name { grid-column: 1 / -1; }
 .tt-row-bool { grid-template-columns: 1fr 30px; }
 .tt-row-bool .tt-name { grid-column: auto; cursor: pointer; }
-.tt-row-text { grid-template-columns: auto 1fr; }
-.tt-row-text .tt-name { grid-column: auto; }
+.tt-row-text { grid-template-columns: 1fr; } /* name on its line, the text under it */
 
 .tt-name { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
 .tt-dot {
@@ -53,7 +52,7 @@
   font-family: ui-monospace, Consolas, monospace !important;
   font-size: 12px !important;
 }
-.tt-text { color: #9a9bab; font-family: ui-monospace, Consolas, monospace; font-size: 12px; text-align: right; overflow-wrap: anywhere; }
+.tt-text { color: #c9cad6; font-family: ui-monospace, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
 .tt-row-help { grid-column: 1 / -1; margin: 0; font-size: 11px; line-height: 1.35; color: #9a9bab; }
 .tt-swatch { display: inline-block; width: 12px; height: 12px; margin-right: 5px; vertical-align: -2px; border: 1px solid #5a5c6e; border-radius: 3px; }
 .tt-reset {
@@ -65,3 +64,12 @@
   cursor: pointer;
 }
 .tt-reset:disabled { opacity: 0.3; cursor: default; }
+
+/* Readable name, then the file · key it lives under (small, so Claude and Obsidian can find it) */
+.tt-name { flex-wrap: wrap; column-gap: 8px; row-gap: 0; }
+.tt-label { font-weight: 600; }
+.tt-key { font: 11px ui-monospace, Consolas, monospace; color: #7d7f92; overflow-wrap: anywhere; }
+.tt-row-colour { display: block; }
+.tt-row-colour .ct-row { border-bottom: none; padding: 0; }
+.tt-row-colour .ct-label { flex-wrap: wrap; column-gap: 8px; }
+.tt .dk-section-body > div:last-child .tt-row { border-bottom: none; }

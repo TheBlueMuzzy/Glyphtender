@@ -1,39 +1,53 @@
 {
   "_help": {
-    "tiers": "How big each kind of juice is. grow = how far a piece swells past full size (0.3 = 30%); shake = how far a \"no\" shake moves sideways, as a share of the piece's width. Reduce motion (Settings) turns the pulse, the shake and the refresh animation off, and shows only the score total.",
-    "events": "Which tier each moment uses: small, medium or big. turnPulse = your glyphlings breathing at the start of your turn · noShake = tapping something you can't move · seedPop = each seed's \"+1\" · totalPop = the turn's total over the glyphling · refreshGrow = a new seed growing into the tray after a Refresh."
+    "tiers.small.grow": "Small juice: how far a piece swells past full size (0.07 = 7%). Used by the moments set to \"small\".",
+    "tiers.small.shake": "Small juice: how far a \"no\" shake moves sideways, as a share of the piece's width. (Only the \"no\" shake uses shake.)",
+    "tiers.medium.grow": "Medium juice: how far a piece swells past full size (0.3 = 30%).",
+    "tiers.medium.shake": "Medium juice: how far a \"no\" shake moves sideways, as a share of the piece's width — only matters if the \"no\" shake is set to medium.",
+    "tiers.big.grow": "Big juice: how far a piece swells past full size (0.5 = 50%).",
+    "tiers.big.shake": "Big juice: how far a \"no\" shake moves sideways — only matters if the \"no\" shake is set to big.",
+    "events.seedPop": "Which juice size each seed's \"+1\" pops with: small, medium or big (Juice sizes). Text — edit it in the file.",
+    "events.totalPop": "Which juice size the turn's total (\"+6\") pops with: small, medium or big.",
+    "events.turnPulse": "Which juice size your glyphlings breathe with at the start of your turn: small, medium or big.",
+    "events.noShake": "Which juice size the \"no\" shake uses (tapping something you can't move): small, medium or big.",
+    "events.refreshGrow": "Which juice size a new seed swells with as it grows into the tray after a Refresh: small, medium or big."
+  },
+  "_labels": {
+    "tiers.small.grow": "Small juice: grow",
+    "tiers.small.shake": "Small juice: shake",
+    "tiers.medium.grow": "Medium juice: grow",
+    "tiers.medium.shake": "Medium juice: shake",
+    "tiers.big.grow": "Big juice: grow",
+    "tiers.big.shake": "Big juice: shake",
+    "events.seedPop": "Score pop \"+1\": juice tier",
+    "events.totalPop": "Score pop total: juice tier",
+    "events.turnPulse": "Whose turn pulse: juice tier",
+    "events.noShake": "\"No\" shake: juice tier",
+    "events.refreshGrow": "Refresh grow-in: juice tier"
+  },
+  "_sections": {
+    "Juice sizes": [
+      "tiers"
+    ],
+    "Score pops": [
+      "events.seedPop",
+      "events.totalPop"
+    ],
+    "Turn pulse & \"no\" shake": [
+      "events.turnPulse",
+      "events.noShake"
+    ],
+    "Refresh animation": [
+      "events.refreshGrow"
+    ]
   },
   "_ranges": {
-    "tiers.small.grow": [
-      0,
-      0.3,
-      0.01
-    ],
-    "tiers.medium.grow": [
-      0,
-      0.6,
-      0.01
-    ],
-    "tiers.big.grow": [
-      0,
-      1,
-      0.01
-    ],
-    "tiers.small.shake": [
-      0,
-      0.3,
-      0.01
-    ],
-    "tiers.medium.shake": [
-      0,
-      0.3,
-      0.01
-    ],
-    "tiers.big.shake": [
-      0,
-      0.3,
-      0.01
-    ]
+    "tiers.small.grow": [0, 0.3, 0.01],
+    "tiers.medium.grow": [0, 0.6, 0.01],
+    "tiers.big.grow": [0, 1, 0.01],
+    "tiers.small.shake": [0, 0.3, 0.01],
+    "tiers.medium.shake": [0, 0.3, 0.01],
+    "tiers.big.shake": [0, 0.3, 0.01]
   },
   "tiers": {
     "small": {

@@ -1,10 +1,11 @@
 // One colour row: [● name] [swatch = colour picker] [#hex] [↺] — used by the Color tab, and free for game tabs:
 //   import { ColourRow } from '../devkit/color/ColourRow'   (looks: color.css, imported by the Color tab)
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { normalizeHex, sameColour } from './colorLogic'
 
 type RowProps = {
-  label: string
+  label: string // the name, also read out by screen readers
+  display?: ReactNode // what to show instead of the plain label (e.g. with search highlights)
   value: string
   changed: boolean // shows the "changed, not saved yet" dot
   resetTo: string // what ↺ puts back
@@ -12,13 +13,13 @@ type RowProps = {
   onChange: (value: string) => void
 }
 
-export function ColourRow({ label, value, changed, resetTo, resetHint, onChange }: RowProps) {
+export function ColourRow({ label, display, value, changed, resetTo, resetHint, onChange }: RowProps) {
   const hex = normalizeHex(value) // null for values like "transparent" — the picker can't show those
   return (
     <div className="ct-row">
       <span className="ct-label">
         {changed && <span className="ct-dot" title="Changed, not saved yet" />}
-        {label}
+        {display ?? label}
       </span>
       <input
         className="ct-swatch"
