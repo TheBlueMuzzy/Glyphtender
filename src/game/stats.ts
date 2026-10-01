@@ -132,11 +132,10 @@ interface Candidate { id: AwardId; holders: number[]; tableWide?: boolean; make:
 /** Never shown together: the first one picked wins the slot. */
 const EXCLUSIVE: AwardId[][] = [['photoFinish', 'deciding'], ['knotTier', 'braveKnot']]
 
-/** Best value first; equal values keep the earlier moment first. Returns holders with the best value. */
-function bestOf<T>(items: T[], value: (x: T) => number, seat: (x: T) => number): { top: T[]; value: number } {
+/** Everything with the best value (above 0), earliest first. */
+function bestOf<T>(items: T[], value: (x: T) => number): T[] {
   const best = Math.max(0, ...items.map(value))
-  return { top: best > 0 ? items.filter((x) => value(x) === best) : [], value: best }
-  void seat
+  return best > 0 ? items.filter((x) => value(x) === best) : []
 }
 const uniqueSeats = (seats: number[]) => [...new Set(seats)]
 
@@ -150,7 +149,7 @@ export function awardCandidates(game: GameState, tuning: EndTuning): Candidate[]
   const soleWinner = winners.length === 1 ? winners[0] : null
   const out: Candidate[] = []
   const turnAward = (id: AwardId, list: LogTurn[], value: (t: LogTurn) => number, values: (t: LogTurn) => Award['values']) => {
-    const { top } = bestOf(list, value, (t) => t.seat)
+    const top = bestOf(list, value)
     if (!top.length) return
     out.push({
       id, holders: uniqueSeats(top.map((t) => t.seat)),
@@ -186,7 +185,7 @@ export function awardCandidates(game: GameState, tuning: EndTuning): Candidate[]
       const t = turns[from]
       out.push({
         id: 'deciding', holders: [soleWinner],
-        make: () => (t
+        make: (): Award => (t
           ? { id: 'deciding', holder: soleWinner, seats: [soleWinner], moment: t.turnNo, values: { round: t.round, n: t.magic, words: wordsOf(t).join(' + '), tangles: false } }
           : { id: 'deciding', holder: soleWinner, seats: [soleWinner], moment: 'tangles', values: { n: game.tangleMagic[soleWinner], tangles: true } }),
       })
@@ -199,7 +198,7 @@ export function awardCandidates(game: GameState, tuning: EndTuning): Candidate[]
   // Word awards: the best word of a kind, with the turn it was grown on
   const allWords = turns.flatMap((t) => t.words.map((w) => ({ t, w })))
   const wordAward = (id: AwardId, list: typeof allWords, value: (x: (typeof allWords)[number]) => number) => {
-    const { top } = bestOf(list, value, (x) => x.t.seat)
+    const top = bestOf(list, value)
     if (!top.length) return
     out.push({
       id, holders: uniqueSeats(top.map((x) => x.t.seat)),
@@ -347,7 +346,7 @@ export function storyChart(game: GameState, awards: Award[], maxMarkers: number)
     if (!turn || owner === undefined) return []
     return [{ kind: 'tangle' as const, seat: owner, x: turn.round, turnNo: turn.turnNo, by: tangledBy.get(id), glyphling: id }]
   })
-  const awardMarks: ChartMarker[] = awards.flatMap((a) => {
+  const awardMarks: ChartMarker[] = awards.flatMap((a): ChartMarker[] => {
     const seat = a.holder ?? a.seats[0]
     if (a.moment === null || seat === undefined) return []
     if (a.moment === 'tangles') return [{ kind: 'award' as const, seat, x: rounds + 1, turnNo: null, award: a.id }]
