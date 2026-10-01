@@ -1,4 +1,4 @@
-// A 3-PLAYER PASS-AND-PLAY GAME THROUGH THE REAL SCREEN — at phone-tall 390×844, phone-wide 844×390, desktop 1440×900:
+// A 3-PLAYER (or 2/4: the third argument) PASS-AND-PLAY GAME THROUGH THE REAL SCREEN — at phone-tall 390×844, phone-wide 844×390, desktop 1440×900:
 // menu → Play → New game (3 players → the Large garden) → Start → draft 6 → "Pass to Yellow" → a few turns, passing the
 // device each time (the tray stays hidden until "Show my seeds") → a glyphling with 1 move left shows its warning ring
 // (the dev hook fast-forwards to one) → fast-forward to the end → the Magic reveal plays by itself (mid + end shots)
@@ -9,7 +9,8 @@
 // Side-by-side layouts (phone-wide, desktop): the right-hand column keeps one width from a normal turn through the
 // reveal, even with a very long player name in the prompt (it used to shrink to the reveal's chips — F13 bug).
 // Starts its OWN dev server (default port 5193 — never Muzzy's 5180) and closes only that one at the end.
-//   npm run e2e:pass [outDir] [port]
+//   npm run e2e:pass [outDir] [port] [players]     (players 2–4, default 3; npm run e2e:pass4 = 4 players)
+// Shots are named pass-… for 3 players and pass4-… / pass2-… for the others.
 import { mkdirSync } from 'node:fs'
 import { createServer } from 'vite'
 import { chromium } from 'playwright-core'
@@ -17,12 +18,16 @@ import { leftoverPops } from './leftover-pops.mjs'
 
 const OUT = process.argv[2] ?? 'e2e-shots'
 const PORT = Number(process.argv[3] ?? 5193)
+const COUNT = Number(process.argv[4] ?? 3)
+if (![2, 3, 4].includes(COUNT)) throw new Error(`Players must be 2–4, got ${process.argv[4]}`)
+const TAG = COUNT === 3 ? 'pass' : `pass${COUNT}`
 const SIZES = [
   { name: 'phone-tall', width: 390, height: 844, mobile: true },
   { name: 'phone-wide', width: 844, height: 390, mobile: true },
   { name: 'desktop', width: 1440, height: 900, mobile: false },
 ]
-const PLAYERS = ['Yellow', 'Blue', 'Purple']
+const PLAYERS = ['Yellow', 'Blue', 'Purple', 'Pink'].slice(0, COUNT)
+const BOARD = COUNT === 2 ? 'small' : 'large' // content/data/boards.json → defaultForPlayers
 mkdirSync(OUT, { recursive: true })
 
 // Everything visible must be inside the screen, and buttons big enough for a finger
@@ -42,6 +47,15 @@ function problems() {
       if (lines.size > 1) out.push(`button words wrapped: ${name}`)
     }
   }
+  // B016: the reveal's Magic chips never run into each other or past their panel (a chip never shrinks)
+  const panel = document.querySelector('.game-reveal')?.getBoundingClientRect()
+  const chips = [...document.querySelectorAll('.game-reveal .kit-player-chip')].map((c) => [c.getAttribute('aria-label'), c.getBoundingClientRect()])
+  chips.forEach(([name, a], i) => {
+    if (a.right > panel.right + 0.5 || a.left < panel.left - 0.5) out.push(`reveal chip past its panel: ${name}`)
+    for (const [other, b] of chips.slice(i + 1)) {
+      if (a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5) out.push(`reveal chips overlap: ${name} / ${other}`)
+    }
+  })
   // the prompt's words wrap inside their box (layout sizes, so a pop animation's scale doesn't count)
   const box = document.querySelector('.game-prompt')
   for (const words of document.querySelectorAll('.game-prompt .kit-text')) {
@@ -72,7 +86,7 @@ try {
       await page.waitForFunction(
         () => [...document.querySelectorAll('[data-glide]')].every((g) => g.getAnimations().length === 0), null, { timeout: 3000 })
       await page.waitForTimeout(settle)
-      await page.screenshot({ path: `${OUT}/pass-${size.name}-${name}.png` })
+      await page.screenshot({ path: `${OUT}/${TAG}-${size.name}-${name}.png` })
       const out = await page.evaluate(problems)
       out.forEach((p) => fail(`${size.name} ${name}: ${p}`))
       console.log(`${out.length ? 'FAIL' : 'ok  '} ${size.name} ${name}`)
@@ -98,27 +112,28 @@ try {
       check('Show my seeds shows the seeds', (await traySeeds()) > 0)
     }
 
-    // ---- menu → Play → New game: 3 players, the Large garden ----
+    // ---- menu → Play → New game: COUNT players (3 and 4 → the Large garden) ----
     await page.goto(`http://127.0.0.1:${PORT}/`)
     await page.getByRole('button', { name: 'Play', exact: true }).click()
-    await page.getByRole('button', { name: 'Next Players' }).click()
-    check('3 players picks the Large garden', (await page.locator('.kit-picker-value', { hasText: 'Large' }).count()) === 1)
+    for (let n = 2; n < COUNT; n++) await page.getByRole('button', { name: 'Next Players' }).click()
+    check(`${COUNT} players picks the ${BOARD} garden`, (await page.locator('.kit-picker-value', { hasText: new RegExp(BOARD, 'i') }).count()) === 1)
     await shot('1-new-game')
     await page.getByRole('button', { name: 'Start' }).click()
     await page.waitForFunction(() => window.__glyphtender?.store.getState().wordsStatus === 'ready', null, { timeout: 15000 })
-    check('a 3-player game on the Large garden', await store((s) => s.game.config.players === 3 && s.game.config.boardName === 'large'))
+    check(`a ${COUNT}-player game on the ${BOARD} garden`, await store(`(s) => s.game.config.players === ${COUNT} && s.game.config.boardName === '${BOARD}'`))
 
-    // ---- the snake draft: 6 glyphlings ----
-    for (let i = 0; i < 6; i++) {
-      if (i === 3) await shot('2-draft')
-      await tap(option('move', Math.floor(((await optionCount('move')) * (i + 1)) / 8)))
+    // ---- the snake draft: 2 glyphlings each ----
+    const glyphlings = COUNT * 2
+    for (let i = 0; i < glyphlings; i++) {
+      if (i === COUNT) await shot('2-draft')
+      await tap(option('move', Math.floor(((await optionCount('move')) * (i + 1)) / (glyphlings + 2))))
     }
-    check('6 glyphlings placed', await store((s) => s.game.phase === 'play' && s.game.glyphlings.length === 6))
+    check(`${glyphlings} glyphlings placed`, await store(`(s) => s.game.phase === 'play' && s.game.glyphlings.length === ${glyphlings}`))
     await handoff('3-handoff-first')
 
     // ---- a few turns, passing the device each time ----
     let popShot = false
-    for (let turn = 1; turn <= 4; turn++) {
+    for (let turn = 1; turn <= Math.max(4, COUNT + 1); turn++) {
       const mine = await store((s) => s.game.glyphlings.filter((g) => g.seat === s.game.current && !s.game.tangled.includes(g.id)).map((g) => g.id))
       await tapGlyph(page.locator(`[data-glyph="${mine[0]}"]`))
       await tap(option('move', Math.floor((await optionCount('move')) / 2)))
@@ -139,7 +154,7 @@ try {
           check('the handoff box still waits while the pops play', !(await page.getByRole('button', { name: 'Show my seeds' }).isVisible()))
           if (!popShot) {
             popShot = true
-            await page.screenshot({ path: `${OUT}/pass-${size.name}-4a-pops-before-handoff.png` })
+            await page.screenshot({ path: `${OUT}/${TAG}-${size.name}-4a-pops-before-handoff.png` })
           }
         }
       }
@@ -165,7 +180,7 @@ try {
     // ---- the end: the Magic reveal plays by itself ----
     check('the game ended', await page.evaluate(() => window.__glyphtender.playRest(9)))
     await page.waitForFunction(() => window.__glyphtender.store.getState().revealAt !== null, null, { timeout: 5000 })
-    check('Magic is secret as the reveal starts', (await page.getByText('Magic ?').count()) === 3)
+    check('Magic is secret as the reveal starts', (await page.getByText('Magic ?').count()) === COUNT)
     check('a Skip button while it plays', await page.getByRole('button', { name: 'Skip' }).isVisible())
     const steps = await page.evaluate(() => document.querySelectorAll('[data-reveal]').length)
     check('the reveal is drawn on the board', steps === 1)
@@ -181,7 +196,7 @@ try {
         store.setState({ seats: store.getState().seats.map((seat) => ({ ...seat, name: 'Bartholomew the Greatest Gardener of the Tangled Glade' })) })
       })
       await page.waitForTimeout(400)
-      await page.screenshot({ path: `${OUT}/pass-${size.name}-7b-reveal-long-name.png` })
+      await page.screenshot({ path: `${OUT}/${TAG}-${size.name}-7b-reveal-long-name.png` })
       check('the side column keeps its width with a long name', (await columnWidth()) === turnColumn)
       // only the prompt is checked here: the Magic chips don't shorten names (a kit PlayerChip matter)
       // (layout sizes, not the on-screen box: the prompt's pop animation scales it up for a moment)
@@ -204,18 +219,27 @@ try {
     const table = page.getByRole('dialog', { name: /Grand Glyphtender/ })
     await table.waitFor({ timeout: 10000 })
     await shot('9-end-table', 700)
-    check('the end table lists 3 players', (await table.locator('.kit-listrow').count()) === 3)
-    check('the end table shows the stats', (await table.getByText(/Best turn/).count()) === 3)
+    check(`the end table lists ${COUNT} players`, (await table.locator('.kit-listrow').count()) === COUNT)
+    check('the end table shows the stats', (await table.getByText(/Best turn/).count()) === COUNT)
     check('a winner is starred', (await table.getByRole('img', { name: 'Winner' }).count()) >= 1)
+    // 4 players don't all fit on a phone: the list scrolls — the last player can be scrolled into the dialog
+    const last = table.locator('.kit-listrow').last()
+    await last.scrollIntoViewIfNeeded()
+    const reachable = await last.evaluate((row) => {
+      const r = row.getBoundingClientRect(), d = row.closest('[role="dialog"]').getBoundingClientRect()
+      return r.top >= d.top - 0.5 && r.bottom <= d.bottom + 0.5 && r.bottom <= innerHeight + 0.5
+    })
+    check(`the last player on the end table can be scrolled into view`, reachable)
+    if (COUNT === 4) await page.screenshot({ path: `${OUT}/${TAG}-${size.name}-9b-end-table-scrolled.png` })
 
-    // ---- New game (no Play again any more): the new-game screen, remembering 3 players ----
+    // ---- New game (no Play again any more): the new-game screen, remembering the player count ----
     check('no Play again on the end table', (await table.getByRole('button', { name: 'Play again' }).count()) === 0)
     await tap(table.getByRole('button', { name: 'New game' }))
     await page.getByRole('button', { name: 'Start' }).waitFor({ timeout: 3000 })
-    check('the new-game screen remembers 3 players', (await page.locator('.kit-picker-value', { hasText: '3' }).count()) === 1)
+    check(`the new-game screen remembers ${COUNT} players`, (await page.locator('.kit-picker-value', { hasText: String(COUNT) }).count()) === 1)
     await page.getByRole('button', { name: 'Start' }).click()
-    check('New game → Start: 3 players on the Large garden',
-      await store((s) => s.game.phase === 'draft' && s.game.config.players === 3 && s.game.config.boardName === 'large'))
+    check(`New game → Start: ${COUNT} players on the ${BOARD} garden`,
+      await store(`(s) => s.game.phase === 'draft' && s.game.config.players === ${COUNT} && s.game.config.boardName === '${BOARD}'`))
 
     // ---- Menu → Rules → back → Leave → the main menu ----
     await tap(page.getByRole('button', { name: 'Menu' }))
@@ -234,5 +258,5 @@ try {
   await browser.close()
   await server.close()
 }
-console.log(failures ? `\n✗ ${failures} problem(s)` : '\n✓ pass-and-play e2e passed')
+console.log(failures ? `\n✗ ${failures} problem(s)` : `\n✓ pass-and-play e2e passed (${COUNT} players)`)
 process.exit(failures ? 1 : 0)
