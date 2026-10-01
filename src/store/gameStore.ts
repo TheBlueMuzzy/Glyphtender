@@ -12,6 +12,7 @@ import { liveTuning } from '../devkit/tuning/liveTuning'
 import { reduceMotion } from '../ui/kit/blocks/motion'
 import { applyAction, checkAction, legalDraftHexes, newGame } from '../engine/engine'
 import { hexKey, sameHex, type Hex } from '../engine/hex'
+import { migrateGame } from '../engine/migrate'
 import { parseWordList } from '../engine/words'
 import type { Action, GameState, WordList } from '../engine/types'
 import {
@@ -416,7 +417,8 @@ export const useGameStore = create<GameStore>()((set, get) => {
       return target !== null
     },
 
-    loadState: (game, stats) => {
+    loadState: (saved, stats) => {
+      const game = migrateGame(saved) // an older save brought up to date (the old "Qu" seed → "Q")
       stopRefreshFx()
       set({
         ...noPlan(), game, flying: false, handoff: null, revealAt: null, refreshFx: null,

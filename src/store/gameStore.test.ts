@@ -263,3 +263,28 @@ describe('tray order helpers', () => {
     expect([...shuffled([0, 1, 2, 3, 4, 5, 6, 7])].sort()).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
   })
 })
+
+describe('game store — loading an older game', () => {
+  it('F24: every load (Dev Kit snapshot, e2e fixture, preview) turns the old "Qu" seed into a plain "Q"', () => {
+    const game = position({
+      glyphlings: { 0: 'C6-7', 1: 'C1-4', 2: 'C11-1', 3: 'C11-4' },
+      hands: [['Qu', 'A'], ['E']],
+      bag: ['Qu', 'W'],
+      seeds: [{ 'C6-2': 'Qu' }],
+    })
+    const lastTurn = { seat: 1, glyphlingId: 2, from: hexAt('C11-2'), to: hexAt('C11-1'), letter: 'Qu', target: hexAt('C6-2'), words: [], magic: 0, drew: 0 }
+    const logged = {
+      turnNo: 1, round: 1, seat: 1, glyphlingId: 2, from: hexAt('C11-2'), to: hexAt('C11-1'), letter: 'Qu', target: hexAt('C6-2'),
+      words: [{ word: 'QUA', letters: ['Qu', 'A'], owners: [1, 0], magic: 3, ownMagic: 1 }],
+      magic: 3, refreshed: 0, refresh: false, totalsAfter: [0, 3], tangledAfter: [], newlyTangled: [], freed: [],
+    }
+    store().loadState({ ...game, lastTurn, log: { turns: [logged], end: null } })
+    const loaded = store().game!
+    expect(loaded.hands[0]).toEqual(['Q', 'A'])
+    expect(loaded.bag).toEqual(['Q', 'W'])
+    expect(Object.values(loaded.seeds).map((s) => s.letter)).toEqual(['Q'])
+    expect(loaded.lastTurn?.letter).toBe('Q')
+    expect(loaded.log?.turns[0].letter).toBe('Q')
+    expect(loaded.log?.turns[0].words[0].letters).toEqual(['Q', 'A'])
+  })
+})
