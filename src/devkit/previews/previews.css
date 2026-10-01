@@ -1,0 +1,85 @@
+/* Screens tab — the list of previews, and the overlay that shows one */
+.pv { padding: 8px 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.pv-intro { margin: 0; color: #9a9bab; font-size: 12px; }
+.pv-section { display: flex; flex-direction: column; gap: 6px; }
+.pv-heading { margin: 6px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: #9a9bab; }
+.pv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pv-row { padding: 8px; border: 1px solid #34353f; border-radius: 8px; background: #1d1e26; }
+.pv-info { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.pv-name { font-weight: 600; }
+.pv-hint { margin-left: 6px; padding: 0 6px; border-radius: 999px; background: #2c2e3a; color: #9a9bab; font-size: 11px; font-weight: 400; }
+.pv-note { color: #9a9bab; }
+.pv-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.pv-buttons .devkit-btn { padding: 4px 10px; }
+
+/* The overlay: the whole window, over the game (a modal dialog — the top layer) */
+.devkit-preview {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: #0b0c10;
+  color: #e8e8ee;
+  font: 13px/1.35 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+.devkit-preview[open] { display: flex; flex-direction: column; }
+.devkit-preview::backdrop { background: rgb(0 0 0 / 0.6); }
+.devkit-preview button { font: inherit; color: inherit; }
+
+.dp-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 8px;
+  padding-top: max(4px, env(safe-area-inset-top));
+  background: #1d1e26;
+  border-bottom: 2px solid #f2a33a;
+  white-space: nowrap;
+}
+.dp-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f2a33a;
+  color: #16171d;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dp-name { overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
+.dp-scroll { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+.dp-group { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: #16171d; }
+.dp-chip {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.dp-chip[aria-pressed='true'] { background: #2c2e3a; border-color: #4a4c5c; }
+.dp-chip:hover { background: #2c2e3a; }
+.dp-blocked { color: #9a9bab; font-size: 12px; }
+.dp-close {
+  flex: none;
+  background: #2c2e3a;
+  border: 1px solid #4a4c5c;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.dp-close:hover { background: #383a4a; }
+.dp-problem { margin: 0; padding: 4px 10px; background: #4a1f24; color: #ff9b9b; font-size: 12px; }
+
+.dp-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.dp-stage[data-size='fit'] { align-items: stretch; justify-content: stretch; }
+.dp-box { flex: none; overflow: hidden; }
+.dp-stage[data-size='fit'] .dp-box { flex: 1; }
+.dp-stage:not([data-size='fit']) .dp-box { outline: 1px solid #4a4c5c; }
+.dp-frame { display: block; border: none; }
