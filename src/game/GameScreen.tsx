@@ -94,10 +94,14 @@ export function GameScreen({ onNewGame }: { onNewGame: () => void }) {
         <Board onHexSize={onHexSize} traySide={traySide} />
       </div>
       <section className="game-panel" aria-label="Seeds and actions">
-        <PromptLine big={hexPx >= BIG_HEX} />
+        <PromptLine big={hexPx >= BIG_HEX} fixed={stacked} />
         {over ? <RevealPanel compact={!stacked} /> : <SeedTray layout={tray} boxWidth={stacked ? tray.width : column} />}
-        <ActionBar onNewGame={onNewGame} size={buttonPx} />
+        <ActionBar onNewGame={onNewGame} size={buttonPx} fixed={stacked} />
       </section>
+      {/* Tray below/above the board: room between the board and the prompt (B012 — layout.json promptGap) */}
+      {stacked && <svg className="game-prompt-gap" width={0} height={layout.promptGap} aria-hidden="true" />}
+      {/* Room under the whole game, clear of the phone's home/back gesture zone (B014 — layout.json bottomRoom) */}
+      <svg className="game-foot" width={0} height={layout.bottomRoom} aria-hidden="true" />
       {/* an empty SVG as wide as the side column (sizes are SVG attributes — TDD D13) */}
       {!stacked && <svg className="game-column-ruler" width={column} height={0} aria-hidden="true" />}
       <svg ref={dragLayer} className="game-drag-layer" aria-hidden="true">

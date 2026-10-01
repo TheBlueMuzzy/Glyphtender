@@ -7,7 +7,7 @@
 ## 1. At a glance
 - **Platforms:** web — phone browsers (portrait + landscape) and desktop. Installable PWA.
 - **Stack:** Vite + TypeScript + React, **2D SVG board (no Three.js)**, Zustand for screen state. Why: a flat hex board wants crisp, resizable, tappable shapes — SVG gives that for free, runs cool on phones, and every hex is a real element we can highlight and test.
-- **Where it runs online:** GitHub Pages (game) + PartyKit on Cloudflare (online rooms, from alpha's online milestone). Built in sprint 05 and run **locally only** so far: `npm run party:dev` (PartyKit dev server on **port 1997** — `partykit.json`; Roll Better uses 1999) + `npm run dev`; `partykit` (dev dependency) + `partysocket` (the client's reconnecting WebSocket). Going live (`npm run party:deploy`) is Muzzy's call (/deliver).
+- **Where it runs online:** GitHub Pages (game) + **Muzzy's own Cloudflare account** (online rooms): Cloudflare Workers + Durable Objects through **PartyServer** (PartyKit's open-source successor) — live at `glyphtender.joebrogno.workers.dev` (F23, D46). `party/worker.ts` is the front door, `party/server.ts` the room; config `wrangler.json`. Local: `npm run party:dev` (`wrangler dev` on **port 1997**; Roll Better uses 1999) + `npm run dev`. Deploy: `npm run party:deploy` (Muzzy's call — it's public). Client: `partysocket` (reconnecting WebSocket), unchanged.
 - **Framework modules:** Game UI kit 0.2.5 (Cozy, night colours; 0.2.5 = Button `size`) · Dev Kit · **rooms** 0.1.0 (online, `src/rooms/`; harvested from Roll Better during this game) · **ai** (beta; first AI module, built from the original's goal-selection model).
 - **Dev Kit tools used:** Console, Tuning, Color, **Snapshots** + **Bug capture** (kit 0.3.0, framework-first — F16/F17): the game plugs in through `src/devkit-game/glyphtenderAdapter.ts` (state = engine GameState + tray order; events = a line per placement/turn/refresh/phase/tangle/note); snapshots live in `content/snapshots/`, captures in `.planning/bugs/`. Later: Multiplayer (online milestone), AI (beta).
 
@@ -64,10 +64,10 @@ flowchart LR
 - **Glyphtender's messages** ride inside it (`party/protocol.ts`): player → `{ kind: 'play', action, version }` or `{ kind: 'sync' }`; server → a `GameView` `{ gameId, version, mySeat, names, change, by, game, turnEndsAt, results }`. `game` is GameState-shaped (the store, board, previews and danger cues work unchanged): other hands and the bag are '?' × count, rng + seed 0, every Magic zeroed until `phase: 'over'`; then `game` is the whole truth and `results.stats` the end table (gathered on the server).
 - **Server checks** (`glyphtenderRules.ts`): shape (the rooms checks helpers) → a seat in this game → its turn → `version` = the server's → the engine's `checkAction` → `applyAction`. Every refusal is a plain-English Error; the state is unchanged.
 - **The server's own turns** (`turnClock.ts`): a bot seat plays after `botTurnDelayMs`; the turn timer (host option, off by default) plays a turn on expiry and counts a missed turn. Both use the engine's greedy sim player and "keep all" on a refresh.
-- **Word list on the server**: bundled as text. esbuild has no .csv loader, so `scripts/server-words.mjs` copies `public/words/words.csv` → `party/words.gen.txt` (gitignored) before every build (`partykit.json` → `build.command`). Server bundle **915 KB minified / 293 KB gzipped** (Workers free limit: 3 MB gzipped).
-- **Device**: my seat plans exactly as pass-and-play; Cast posts at once and the throw flies; the view is applied when the seed lands (if it's late, it asks again every 3 s). Other seats' turns replay on the old view (glide → throw after `glideSeconds` → land → new view + sprout), queued in order. No handoff online. A reload goes straight back to the seat (room code in sessionStorage). Party host = `VITE_PARTY_HOST`, else the page's host + partykit.json's port.
+- **Word list on the server**: bundled as text. esbuild has no .csv loader, so `scripts/server-words.mjs` copies `public/words/words.csv` → `party/words.gen.txt` (gitignored) before every build (`wrangler.json` → `build.command`; `rules` reads .txt as Text). Server bundle **915 KB minified / 293 KB gzipped** (Workers free limit: 3 MB gzipped).
+- **Device**: my seat plans exactly as pass-and-play; Cast posts at once and the throw flies; the view is applied when the seed lands (if it's late, it asks again every 3 s). Other seats' turns replay on the old view (glide → throw after `glideSeconds` → land → new view + sprout), queued in order. No handoff online. A reload goes straight back to the seat (room code in sessionStorage). Party host = `VITE_PARTY_HOST`, else the page's host + wrangler.json's dev port.
 - **Screens**: main menu → Play online → name + Create / Join (kit Lobby) → lobby (kit Lobby + the host's options: Garden Auto/Small/Large, 2-letter words, Turn timer, Word indicators) → the game → end table (New game = the host takes everyone to the lobby, where the host starts again; a guest's New game says "Waiting for the host…" · Menu = leave). Sprint 06 removed Play again. Connection lost → the kit's Reconnecting box.
-- **Tests**: `party/server.test.ts` (fake PartyKit + the real rooms module: whole games with every view checked for secrets; refusals; timer + bots) · `src/store/onlinePlay.test.ts` (the store against a fake room, incl. a whole game) · `npm run e2e:online` (two browsers + its own partykit dev on 1997 + Vite on 5311; every received WebSocket frame checked for secrets; reload, host drop, rejoin, reveal + end table on both).
+- **Tests**: `party/server.test.ts` (fake PartyKit + the real rooms module: whole games with every view checked for secrets; refusals; timer + bots) · `src/store/onlinePlay.test.ts` (the store against a fake room, incl. a whole game) · `npm run e2e:online` (two browsers + its own wrangler dev on 1995 + Vite on 5311; every received WebSocket frame checked for secrets; reload, host drop, rejoin, reveal + end table on both).
 **Timers**
 | Timer | Length | Owned by | Starts when | On expiry |
 |---|---|---|---|---|
@@ -137,6 +137,17 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D46 · 2026-09-30 · The online server runs on Muzzy's own Cloudflare (PartyServer + wrangler), not PartyKit's shared zone (F23)
+  Why: `partykit deploy` fails — PartyKit's shared partykit.dev zone hit Cloudflare's 10,000 custom-domain limit.
+  Options: partykit deploy --domain (needs a domain Muzzy owns, ~$10/yr) / PartyServer on Workers + Durable Objects
+  (free plan, a *.workers.dev address) / another host (Fly, Render — new tooling, sleeps on free tiers).
+  Chose: PartyServer — the rooms module only ever needed {id, getConnection}, so worker.ts is a 30-line adapter and
+  RoomServer, the client and every test stayed the same. Dev uses `wrangler dev` too, so local = live. SQLite-backed
+  Durable Object class "Main" (free plan) → /parties/main/<code>, PartySocket's default path. Roll Better stays on PartyKit.
+  Gotchas (pre-release review): PartyServer's connection list drops a reconnected phone's NEW socket when the old one
+  closes late (same id) → party/liveConnections.ts keeps the server's own list (guarded by liveConnections.test.ts);
+  onError is passed on. An empty in-memory Durable Object is evicted after ~1–2 min, so keepEmptyRoomMs (5 min) is an
+  upper bound, not a promise — same as PartyKit was.
 D45 · 2026-09-30 · The planned seed: keep the brightness gap, change the colour — "moonlit" (B010 reopened)
   Proposed by: Muzzy ("maybe there's a better way than to just push the values towards white? do some research")
   Research: research/ghost-pieces.md — a letter is read by its BRIGHTNESS gap to the tile; any even wash/fade shrinks it
@@ -291,7 +302,8 @@ D01 · 2026-09-30 · One pure rules engine shared by client, server, AI and test
 |---|---|---|---|
 | Official word list (`words.txt`, built from TWL + Zipf scores) | dictionary + AI vocabulary | TWL is owned by NASPA / Hasbro; Zipf values look like the `wordfreq` library's (its data has its own licence — to check) | ⚠️ fine for a free build. Before 1.0 or any money: ❓ keep and seek permission, or **re-run Muzzy's pipeline on a public-domain base (e.g. ENABLE, very close to TWL)** keeping the Zipf column — the AI tiers depend on Zipf, not on the source list, so that work carries over |
 | UI kit fonts (Nunito) | UI | SIL OFL | ✅ |
-| React, Vite, Zustand, PartyKit | code | MIT | ✅ |
+| React, Vite, Zustand, PartySocket, PartyServer | code | MIT / ISC | ✅ |
+| Wrangler (Cloudflare's deploy tool) | dev tool | MIT / Apache-2.0 | ✅ |
 | Runeblossom + glyphling art | stand-in art | Muzzy's own | ✅ |
 
 ## 10. Risks & open questions

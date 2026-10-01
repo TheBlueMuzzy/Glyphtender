@@ -137,13 +137,13 @@ sequenceDiagram
 - **Dev Kit online**: tools that change play are offline-only — the adapter's `canRestore` is false when any seat is `online`, and the dev hook's `playRest` / `loadState` jumps do nothing online. Tuning, Colour, Console, Snapshot *capture* and Bug capture still work (they only ever hold your own view).
 
 ## 9. Deploy
-- `partykit.json`: `{ "name": "glyphtender", "main": "party/server.ts", "compatibilityDate": "2024-12-01", "port": 1997 }` (1997 so it never clashes with Roll Better's 1999 / its e2e 2999).
+- `wrangler.json` (was `partykit.json` until F23 / TDD D46): Worker `glyphtender`, `main: party/worker.ts`, Durable Object class `Main`, dev port 1997 (so it never clashes with Roll Better's 1999 / its e2e 2999).
 - `npm run party:dev` runs it on this PC. The game finds it through `VITE_PARTY_HOST`; when that's unset it uses *the same host the page came from* + port 1997, so a phone on Wi-Fi (`npx vite --host`) just works.
-- Live: `VITE_PARTY_HOST=glyphtender.<account>.partykit.dev` in the Pages workflow. **The server is deployed separately (`npm run party:deploy`) and ONLY by Muzzy's `/deliver`** — a front-end release does not update the server, and an engine change needs both (the versions must match: the server sends its build version in `welcome`; a mismatch shows "Please refresh").
+- Live: `VITE_PARTY_HOST=glyphtender.joebrogno.workers.dev` in the Pages workflow. **The server is deployed separately (`npm run party:deploy`) and ONLY by Muzzy's `/deliver`** — a front-end release does not update the server, and an engine change needs both (the versions must match: the server sends its build version in `welcome`; a mismatch shows "Please refresh").
 
 ## 10. Test plan
 - **Unit (vitest)**: `viewFor` never contains another hand's letters, the bag, the rng or any Magic before game over — checked over many simulated games (`simulateGame` + a view of every seat after every action). `onAction` rejects: wrong seat, stale version, bad shapes, illegal moves — and the state is unchanged. Timeout → a legal auto-turn; 2 in a row → `auto`.
-- **e2e (`npm run e2e:online`)**: its own `partykit dev` + Vite on free ports; two browser contexts create + join by code, ready, start, play a full game with taps (the dev hook's `findCast` is read-only and allowed) through to results + rematch. Every WebSocket frame each page receives is recorded, and the script **fails if any frame ever contains another seat's hand, a bag list, an rng or a Magic number before `results`**. Also: close one context mid-game and reopen it with the same persistentId → same seat, same view; the host leaves → host moves.
+- **e2e (`npm run e2e:online`)**: its own `wrangler dev` + Vite on free ports; two browser contexts create + join by code, ready, start, play a full game with taps (the dev hook's `findCast` is read-only and allowed) through to results + rematch. Every WebSocket frame each page receives is recorded, and the script **fails if any frame ever contains another seat's hand, a bag list, an rng or a Magic number before `results`**. Also: close one context mid-game and reopen it with the same persistentId → same seat, same view; the host leaves → host moves.
 - Screenshots of the lobby and an incoming turn mid-glide, both devices.
 
 ## Risks

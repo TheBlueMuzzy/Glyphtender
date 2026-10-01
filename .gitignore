@@ -32,7 +32,8 @@ lerna-debug.log*
 # Claude
 .claude/settings.local.json
 
-# PartyKit local state
+# Local server state (wrangler dev)
+.wrangler/
 .partykit/
 
 # Project
@@ -45,3 +46,6 @@ e2e-shots/
 
 # Online server: the word list copied for bundling (scripts/server-words.mjs)
 party/words.gen.txt
+
+# Vite's dependency cache
+.vite/

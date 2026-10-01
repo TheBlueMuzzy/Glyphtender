@@ -45,6 +45,26 @@ export function promptFor(s: PromptState): { text: string; detail: string } {
   return { text: w.prompts.move, detail: hint }
 }
 
+/**
+ * Every main line and every small line the prompt can show in this game, filled in with these players' names —
+ * the prompt's frame is as tall as the tallest of them at the screen's width, so the board never moves when the
+ * words change (B013). Long fill-ins on purpose: the longest name, the biggest numbers, every winner at once.
+ */
+export function promptSizers(names: string[]): { texts: string[]; detail: string[] } {
+  const player = names.reduce((a, b) => (b.length > a.length ? b : a), '')
+  const p = w.prompts, r = w.reveal
+  const turnPrompts = [p.move, p.moveHeld, p.cast, p.castHeld, p.ready, p.moveOnly, p.flying, p.refresh, p.loading, p.wordsFailed]
+  const withName = [p.draft, p.handoff, p.othersTurn, p.othersDraft, p.othersRefresh, r.bonus, r.counting]
+  return {
+    texts: [
+      ...turnPrompts, r.tangles,
+      ...withName.map((t) => fill(t, { player, n: 10, total: 2 })),
+      fill(r.winner, { names: player }), fill(r.winners, { names: names.join(r.and) }),
+    ],
+    detail: [...Object.values(w.notes), p.refreshDetail, fill(w.turnOf, { player })],
+  }
+}
+
 /** The turn bar during the Magic reveal: what's being revealed, then the winner(s). */
 function revealPrompt(game: GameState, at: number | null): string {
   const view = revealView(revealSteps(game), at)

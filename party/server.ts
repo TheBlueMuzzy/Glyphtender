@@ -1,8 +1,8 @@
-// THE ONLINE SERVER — PartyKit runs this file (partykit.json "main"). One room code = one copy of it.
+// THE ONLINE SERVER — party/worker.ts hands every room to this class (Cloudflare, via PartyServer). One room code = one copy of it.
 // The rooms module (src/rooms/server/) runs the room: seats, host, join, rejoin, idle players, bots.
 // Glyphtender's rules are in ./glyphtenderRules.ts; what each player may see is in ./views.ts.
 // Room knobs (seats, timings, turn timers) are in content/rooms.json.
-//   Local:  npm run party:dev   (port 1997)   ·   Live: npm run party:deploy (Muzzy's call — it's public)
+//   Local:  npm run party:dev   (port 1997)   ·   Live: npm run party:deploy (see worker.ts)
 // Server code only: no React, no Dev Kit, nothing that needs a browser.
 import { RoomServer } from '../src/rooms/server/roomServer'
 import type { PartyRoom } from '../src/rooms/server/roomServer'

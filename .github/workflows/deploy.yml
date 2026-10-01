@@ -43,8 +43,9 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-          # The live online server (party/, deployed with `npx partykit deploy`) — public, not a secret
-          # VITE_PARTY_HOST: <online server address> — off until the server has a home (PartyKit's shared partykit.dev zone is full, 2026-09-30; moving to Muzzy's own Cloudflare). Unset = 'Play online' hidden on the live site.
+          # The live online server (party/, deployed to Muzzy's Cloudflare with `npm run party:deploy`) — public, not a secret.
+          # Set = 'Play online' shows on the live site.
+          VITE_PARTY_HOST: glyphtender.joebrogno.workers.dev
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

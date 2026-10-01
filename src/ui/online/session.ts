@@ -3,7 +3,7 @@
 // Leaving ALWAYS goes through useRoom's leave() — a bare socket close would look like a dropped connection.
 import { create } from 'zustand'
 import text from '../../../content/text/en.json'
-import partykitJson from '../../../partykit.json'
+import wranglerJson from '../../../wrangler.json'
 import type { GameView, OnlineAction, OnlineOptions } from '../../../party/protocol'
 import type { OnlineRoom } from '../../rooms/useRoom'
 import type { CloseReason } from '../../rooms/protocol'
@@ -49,12 +49,12 @@ export const useOnline = create<Session>()(() => ({ code: roomBeforeReload(), cr
 
 /**
  * Where the online server is. Live builds: VITE_PARTY_HOST. Local: the computer that served this page, on
- * partykit.json's port (1997) — so a phone on the Wi-Fi reaches the PC's `npm run party:dev` too.
+ * wrangler.json's dev port (1997) — so a phone on the Wi-Fi reaches the PC's `npm run party:dev` too.
  * (VITE_PARTY_PORT overrides the port: e2e:online runs its own server on another one.)
  */
 export function partyHost(): string {
   const fromBuild = import.meta.env.VITE_PARTY_HOST as string | undefined
-  const port = (import.meta.env.VITE_PARTY_PORT as string | undefined) || partykitJson.port
+  const port = (import.meta.env.VITE_PARTY_PORT as string | undefined) || wranglerJson.dev.port
   return fromBuild || `${window.location.hostname}:${port}`
 }
 
