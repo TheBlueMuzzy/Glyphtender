@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { applyAction, previewTurn } from './engine'
 import { hexAt, position, wordsOf, type PositionPlan } from './testkit'
 
-const words = wordsOf('AT', 'CAT', 'TO', 'QUIT')
+const words = wordsOf('AT', 'CAT', 'TO', 'QUIT', 'QAT')
 const glyphlings = { 0: 'C6-7', 1: 'C1-4', 2: 'C11-1', 3: 'C11-4' }
 /** Yellow moves glyphling 0 up from C6-7 to C6-6 and casts its first seed up to C6-4. */
 const castAt = { type: 'turn' as const, glyphling: 0, to: hexAt('C6-6'), seed: 0, target: hexAt('C6-4') }
@@ -35,10 +35,17 @@ describe('Magic (GDD §4.6)', () => {
     expect(next.magic[0]).toBe(8)
   })
 
-  it('Qu counts as one seed: QUIT = 3 seeds (+3 own)', () => {
-    const s = game({ seeds: [{ 'C6-2': 'Qu', 'C6-3': 'I' }] })
+  it('Q is a plain Q: QAT = 3 seeds (+3 own)', () => {
+    const s = game({ seeds: [{ 'C6-2': 'Q', 'C6-3': 'A' }] })
     const next = applyAction(s, castAt, words)
-    expect(next.lastTurn?.words.map((w) => [w.word, w.magic])).toEqual([['QUIT', 6]])
+    expect(next.lastTurn?.words.map((w) => [w.word, w.magic])).toEqual([['QAT', 6]])
+  })
+
+  it('QUIT needs its own U seed: Q U I + T = 4 seeds (+4 own); without the U, Q I T is no word', () => {
+    const withU = game({ seeds: [{ 'C6-1': 'Q', 'C6-2': 'U', 'C6-3': 'I' }] })
+    expect(applyAction(withU, castAt, words).lastTurn?.words.map((w) => [w.word, w.magic])).toEqual([['QUIT', 8]])
+    const noU = game({ seeds: [{ 'C6-2': 'Q', 'C6-3': 'I' }] })
+    expect(applyAction(noU, castAt, words).lastTurn?.words).toEqual([])
   })
 })
 

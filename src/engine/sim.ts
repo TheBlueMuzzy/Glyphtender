@@ -31,7 +31,12 @@ export interface SimResult {
   selfTangle: boolean
   /** How many turns made at least one word. */
   scoringTurns: number
+  /** What happened to the Q seed: cast onto the board, part of a word that made Magic, set aside in a refresh, still in a hand at the end. */
+  q: { cast: boolean; scored: boolean; refreshed: boolean; stuck: boolean }
 }
+
+/** Is this the Q seed? */
+const isQ = (letter: string | null) => letter === 'Q'
 
 /** Picks one random legal action for whoever's turn it is. */
 export function randomAction(state: GameState, rng: number): { action: Action; rng: number } {
@@ -103,6 +108,7 @@ export function simulateGame(options: SimOptions): SimResult {
   let bagRanOut = false
   let selfTangle = false
   let scoringTurns = 0
+  const q = { cast: false, scored: false, refreshed: false, stuck: false }
   while (state.phase !== 'over') {
     if (state.turnCount > maxTurns) throw new Error(`Game did not end within ${maxTurns} turns (seed ${options.seed})`)
     const picked = options.player === 'greedy' ? greedyAction(state, rng, options.words) : randomAction(state, rng)
@@ -112,13 +118,17 @@ export function simulateGame(options: SimOptions): SimResult {
     checkInvariants(before, picked.action, state)
     if (state.phase !== 'draft' && state.bag.length === 0) bagRanOut = true
     if (picked.action.type === 'turn' && (state.lastTurn?.words.length ?? 0) > 0) scoringTurns++
+    if (picked.action.type === 'turn' && isQ(state.lastTurn?.letter ?? null)) q.cast = true
+    if (picked.action.type === 'turn' && state.lastTurn?.words.some((w) => w.hexes.some((h) => isQ(state.seeds[hexKey(h)]?.letter ?? null)))) q.scored = true
+    if (picked.action.type === 'refresh' && picked.action.setAside.some((i) => isQ(before.hands[before.current][i]))) q.refreshed = true
     if (state.phase === 'over') {
       // Self-tangle: a glyphling of the seat who just played became tangled on this turn.
       const newly = state.tangled.filter((id) => !before.tangled.includes(id))
       selfTangle = newly.some((id) => state.glyphlings.find((g) => g.id === id)?.seat === state.lastTurn?.seat)
     }
   }
-  return { turns: state.turnCount, winners: state.winners, magic: state.magic, bagRanOut, selfTangle, scoringTurns }
+  q.stuck = state.hands.some((hand) => hand.some(isQ))
+  return { turns: state.turnCount, winners: state.winners, magic: state.magic, bagRanOut, selfTangle, scoringTurns, q }
 }
 
 export interface SimSummary {
@@ -133,6 +143,11 @@ export interface SimSummary {
   scoringTurnPct: number
   /** Share of games each seat won (ties count as a win for everyone tied). */
   seatWinPct: number[]
+  /** Share of games where the Q seed was cast / was in a word that made Magic / was set aside in a refresh / was still in a hand at the end. */
+  qCastPct: number
+  qScoredPct: number
+  qRefreshedPct: number
+  qStuckPct: number
 }
 
 /** Plays `games` games and sums them up. */
@@ -143,6 +158,7 @@ export function simulateMany(players: number, boardName: string, games: number, 
   let self = 0
   let scoring = 0
   const wins: number[] = Array(players).fill(0)
+  const qCount = { cast: 0, scored: 0, refreshed: 0, stuck: 0 }
   for (let i = 0; i < games; i++) {
     const r = simulateGame({ players, boardName, seed: i + 1, words, player })
     turns += r.turns
@@ -151,6 +167,7 @@ export function simulateMany(players: number, boardName: string, games: number, 
     if (r.selfTangle) self++
     scoring += r.scoringTurns
     for (const w of r.winners) wins[w]++
+    for (const k of ['cast', 'scored', 'refreshed', 'stuck'] as const) if (r.q[k]) qCount[k]++
   }
   const pct = (n: number) => Math.round((1000 * n) / games) / 10
   return {
@@ -164,5 +181,9 @@ export function simulateMany(players: number, boardName: string, games: number, 
     selfTanglePct: pct(self),
     scoringTurnPct: Math.round((1000 * scoring) / Math.max(1, turns)) / 10,
     seatWinPct: wins.map(pct),
+    qCastPct: pct(qCount.cast),
+    qScoredPct: pct(qCount.scored),
+    qRefreshedPct: pct(qCount.refreshed),
+    qStuckPct: pct(qCount.stuck),
   }
 }

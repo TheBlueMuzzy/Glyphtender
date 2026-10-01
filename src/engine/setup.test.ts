@@ -33,12 +33,14 @@ describe('seeded random', () => {
 })
 
 describe('the bag (GDD §4.3)', () => {
-  it('holds 120 seeds, with Qu as a single seed', () => {
+  it('holds 120 seeds: one plain Q (no "Qu"), five U, fifteen E (Muzzy, 2026-10-01)', () => {
     const bag = fullBag()
     expect(bag).toHaveLength(120)
-    expect(bag.filter((s) => s === 'Qu')).toHaveLength(1)
-    expect(bag).not.toContain('Q')
-    expect(bag.filter((s) => s === 'E')).toHaveLength(16)
+    expect(bag.filter((s) => s === 'Q')).toHaveLength(1)
+    expect(bag).not.toContain('Qu')
+    expect(bag.filter((s) => s === 'U')).toHaveLength(5)
+    expect(bag.filter((s) => s === 'E')).toHaveLength(15)
+    expect(bag.every((s) => /^[A-Z]$/.test(s))).toBe(true)
   })
 
   it('is shuffled by the game seed — same seed, same bag', () => {

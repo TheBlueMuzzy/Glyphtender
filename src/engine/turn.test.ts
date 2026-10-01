@@ -120,13 +120,13 @@ describe('you must cast if you can (GDD §4.8)', () => {
 
 describe('after the cast', () => {
   it('moves the seed from hand to board and passes play to the next seat, leaving the old state alone', () => {
-    const s = position({ glyphlings: { 0: 'C6-5', 1: 'C1-1', 2: 'C11-1', 3: 'C11-4' }, hands: [['A', 'Qu'], ['B']] })
+    const s = position({ glyphlings: { 0: 'C6-5', 1: 'C1-1', 2: 'C11-1', 3: 'C11-4' }, hands: [['A', 'Q'], ['B']] })
     const copy = JSON.parse(JSON.stringify(s))
     const next = applyAction(s, { type: 'turn', glyphling: 0, to: hexAt('C6-4'), seed: 1, target: hexAt('C6-2') }, words)
     expect(s).toEqual(copy)
     expect(next.hands[0]).toEqual(['A'])
-    expect(next.seeds[hexKey(hexAt('C6-2'))]).toEqual({ letter: 'Qu', seat: 0 })
+    expect(next.seeds[hexKey(hexAt('C6-2'))]).toEqual({ letter: 'Q', seat: 0 })
     expect(next.current).toBe(1)
-    expect(next.lastTurn?.letter).toBe('Qu')
+    expect(next.lastTurn?.letter).toBe('Q')
   })
 })

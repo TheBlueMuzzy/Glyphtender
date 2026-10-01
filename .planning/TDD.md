@@ -89,7 +89,7 @@ flowchart LR
 | File | What's in it | Edited with |
 |---|---|---|
 | `content/data/boards.json` | board shapes (column heights), default board per player count | Obsidian |
-| `content/data/bag.json` | seed counts per letter (incl. `Qu`) | Obsidian / Dev Kit → Tuning |
+| `content/data/bag.json` | seed counts per letter (a plain `Q` since D47) | Obsidian / Dev Kit → Tuning |
 | `content/tuning/rules.json` | hand size 8, min word 2, tangle bonus 3, tangles to end 2, ownership bonus 1 | Dev Kit → Tuning |
 | `content/tuning/layout.json` | stacked/side threshold, tray seed minimum (44) + gap, side panel share, board margin, drag lift + drag start distance | Dev Kit → Tuning |
 | `content/tuning/anim.json` | move glide (moveBase, movePerHex, moveSettle), throw (flight, arc, hop), sprout, halo pulse, grown-word border fade (wordGlowTime 1.4); reveal timings (revealTangles, revealBonus, revealCount, revealWinner, revealPopTime); sprint 06: score pops (scorePopDelay, scorePopGap, scoreWordGap, scorePopTime, scorePopHold, scoreFlyTime, scoreTotalHold, scoreTotalFade), turnPulseTime, noShakeTime | Dev Kit → Tuning |
@@ -137,6 +137,12 @@ flowchart LR
 
 ## 8. Decisions log
 ```
+D47 · 2026-10-01 · The Q seed is a plain "Q" (letter id 'Q', spells "Q"); bag U4→U5, E16→E15 (F24)
+  Proposed by: Muzzy (his call — ROADMAP Ideas)   Options: keep "Qu" as one seed / plain Q with the id still 'Qu' / plain Q, id 'Q'
+  Chose: id 'Q' — every seed is now one capital letter that spells itself (spell() is just toUpperCase, art is <letter>-<colour>.webp),
+  so nothing anywhere treats Q specially. Old Dev Kit snapshots holding "Qu" load it as "Q" (glyphtenderAdapter withPlainQ);
+  the bundled snapshot is migrated. Online rooms live in memory only, so no saved server game holds "Qu" — deploy the server
+  before the site as usual. Sims before/after: research/sims.md (2026-10-01).
 D46 · 2026-09-30 · The online server runs on Muzzy's own Cloudflare (PartyServer + wrangler), not PartyKit's shared zone (F23)
   Why: `partykit deploy` fails — PartyKit's shared partykit.dev zone hit Cloudflare's 10,000 custom-domain limit.
   Options: partykit deploy --domain (needs a domain Muzzy owns, ~$10/yr) / PartyServer on Workers + Durable Objects

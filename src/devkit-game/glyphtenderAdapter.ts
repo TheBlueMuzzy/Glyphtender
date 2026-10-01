@@ -4,7 +4,7 @@
 //               (everything else is the planned turn)
 //   setState:   jumps the store to that game — the planned move / cast / flying seed are cleared (store.loadState),
 //               and any open menu (end table, Pause) is closed. Older snapshots without stats / options still restore
-//               (the stats start from nothing, the options stay as they are)
+//               (the stats start from nothing, the options stay as they are); an old "Qu" seed loads as a plain "Q" (F24)
 //   canRestore: only offline — in an online game a restore would change play for the others (and this device only holds its own view)
 //   onEvent:    a short line each time the game moves on: a draft placement, a turn, a phase change, a tangle, a note
 // Reads and writes the store only through its public getState / setState / subscribe / loadState.
@@ -95,6 +95,14 @@ function isMoment(state: unknown): state is GlyphtenderMoment {
   return typeof s.game === 'object' && Array.isArray(s.game.hands) && Array.isArray(s.game.glyphlings) && typeof s.game.phase === 'string'
 }
 
+// Snapshots saved before 2026-10-01 hold the old "Qu" seed; it's a plain "Q" now (F24), so read it as one
+const plainQ = (letter: string) => (letter === 'Qu' ? 'Q' : letter)
+function withPlainQ(game: GameState): GameState {
+  const seeds = Object.fromEntries(Object.entries(game.seeds).map(([key, seed]) => [key, { ...seed, letter: plainQ(seed.letter) }]))
+  const lastTurn = game.lastTurn && { ...game.lastTurn, letter: game.lastTurn.letter && plainQ(game.lastTurn.letter) }
+  return { ...game, seeds, lastTurn, hands: game.hands.map((hand) => hand.map(plainQ)), bag: game.bag.map(plainQ) }
+}
+
 export const glyphtenderAdapter: DevKitGame = {
   name: 'Glyphtender',
   version: `${versionFile.version}.${versionFile.build}`,
@@ -110,7 +118,7 @@ export const glyphtenderAdapter: DevKitGame = {
     closeAllScreens() // a menu from the moment we're leaving (the end table, Pause) would sit on top, stuck
     if (!state.game) return store.leaveGame()
     const stats = state.stats?.length === state.game.config.players ? state.stats : undefined
-    store.loadState(state.game, stats) // clears the planned move / cast / flying seed
+    store.loadState(withPlainQ(state.game), stats) // clears the planned move / cast / flying seed
     // Keep the tray order the snapshot had, if it still fits the hands (loadState reset it to 1, 2, 3…)
     const fits = state.trayOrder?.length === state.game.hands.length &&
       state.trayOrder.every((order, seat) => order.length === state.game!.hands[seat].length)
