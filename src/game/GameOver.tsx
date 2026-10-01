@@ -76,6 +76,19 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
     return () => watcher.disconnect()
   }, [end])
 
+  // More below? The page's bottom edge fades (game.css) until it's scrolled to the end — so a cut-off row reads as "scroll"
+  useLayoutEffect(() => {
+    const scroller = pageBox.current?.querySelector<HTMLElement>('.kit-scroll')
+    if (!scroller) return
+    const check = () => scroller.toggleAttribute('data-more', scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 2)
+    check()
+    scroller.addEventListener('scroll', check, { passive: true })
+    const watcher = new ResizeObserver(check)
+    watcher.observe(scroller)
+    if (scroller.firstElementChild) watcher.observe(scroller.firstElementChild)
+    return () => { scroller.removeEventListener('scroll', check); watcher.disconnect() }
+  }, [page, end])
+
   // Swipe sideways to turn the page (up/down still scrolls it)
   const swipe = useRef<{ x: number; y: number } | null>(null)
   const onPointerDown = (e: PointerEvent) => { swipe.current = { x: e.clientX, y: e.clientY } }

@@ -87,7 +87,9 @@
   .game-end { inline-size: 60rem; block-size: 50rem; max-inline-size: 100%; max-block-size: 100%; }
   .game-end > :not(.game-end-page) { flex: none; }
   .game-end-page { flex: 1 1 auto; min-block-size: 0; display: flex; flex-direction: column; touch-action: pan-y; }
-  .game-end-tabpanel { display: flex; flex-direction: column; gap: var(--gap-m); }
+  .game-end-tabpanel { display: flex; flex-direction: column; gap: var(--gap-m); padding-block-end: var(--gap-m); } /* the last row clears the buttons */
+  /* More to scroll to: the bottom edge fades out (GameOver.tsx sets data-more until it's scrolled to the end) */
+  .game-end-page .kit-scroll[data-more] { mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent); }
   /* KIT GAP (logged for the framework): the kit's Tabs wrap 3 tabs onto 2 lines on a 390-wide phone because each tab
      keeps its wide side padding. Here the tabs share one line and give up padding first. */
   .game-end-tabs .kit-tabs { flex-wrap: nowrap; }

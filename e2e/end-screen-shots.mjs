@@ -113,6 +113,20 @@ try {
       const twoLetterRow = await page.getByRole('rowheader', { name: '2-letter' }).count()
       check('the 2-letter row only when 2-letter words count', twoLetterRow === (game.config.rules.minWordLength <= 2 ? 1 : 0))
       await shot('3-scorecard')
+      // Taller than the page: the bottom edge fades (more to see); scrolled to the end, the last row clears the buttons
+      const scroller = page.locator('.game-end-page .kit-scroll')
+      const overflows = await scroller.evaluate((el) => el.scrollHeight > el.clientHeight + 2)
+      if (overflows) {
+        check('more rows below: the bottom edge fades', (await scroller.getAttribute('data-more')) !== null)
+        await scroller.evaluate((el) => el.scrollTo(0, el.scrollHeight))
+        await page.waitForTimeout(100)
+        check('scrolled to the end: no fade', (await scroller.getAttribute('data-more')) === null)
+        const lastRow = await page.locator('.game-scorecard tr').last().boundingBox()
+        const buttons = await page.locator('.game-end-buttons').boundingBox()
+        const view = await scroller.boundingBox()
+        check('the last row is fully shown, clear of Menu / New game', lastRow.y + lastRow.height <= Math.min(buttons.y > view.y ? buttons.y : Infinity, view.y + view.height)) // (phone on its side: the buttons sit up top)
+        await shot('3-scorecard-end')
+      }
 
       // ---- Swipe back (phones): Scorecard → Story ----
       if (size.mobile) {
