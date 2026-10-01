@@ -98,7 +98,7 @@ Goal: the end of a game is worth looking at, every word is readable, the Q is ho
 - 🔨 F26 🎮 Game log + end screen overhaul: big scores, breakdowns (solo words, word lengths, tangles, refreshes, multi-word turns), score-over-time chart with moments, 2–4 players — must:alpha · needs: F13 · sprint 7
   why: the ending tells the story of the game → Secret-Magic tension, Fellowship ("again?")
 - 🔨 F27 🔧 Dev Kit Screen previews: open any gated screen/state (end screen 2/3/4p, reveal, handoff, lobby…) with sample data, sandboxed — never touches the real game — must:alpha · needs: F16, ~F26 · sprint 7
-- 🔨 F28 🧪 4 players everywhere: pass-and-play + online 4-player checked end to end, fixes — must:alpha · needs: F11, F20 · sprint 7
+- ✅ F28 🧪 4 players everywhere: pass-and-play + online 4-player checked end to end, fixes — must:alpha · needs: F11, F20 · sprint 7
 ```mermaid
 flowchart LR
   F04[✅ F04] --> F24[F24 Plain Q]
