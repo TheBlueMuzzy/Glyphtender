@@ -91,15 +91,31 @@ flowchart LR
   F19 --> F23[✅ F23 Own Cloudflare]
 ```
 
+## v0.5 — Polish: the ending, the Q, the words  🔨 sprint 7 (autonomous, 2026-10-01)
+Goal: the end of a game is worth looking at, every word is readable, the Q is honest, 4 players work everywhere, and any gated screen can be previewed from the Dev Kit.
+- 🔨 F24 🎮 Q is a plain Q; bag U4→U5, E16→E15 (stays 120) — must:alpha · needs: F04, F05 · sprint 7
+- 🔨 F25 ✨ Word spotlight: after a cast, each scored word lights up one at a time, looping until play moves on — must:alpha · needs: F09 · sprint 7
+- 🔨 F26 🎮 Game log + end screen overhaul: big scores, breakdowns (solo words, word lengths, tangles, refreshes, multi-word turns), score-over-time chart with moments, 2–4 players — must:alpha · needs: F13 · sprint 7
+  why: the ending tells the story of the game → Secret-Magic tension, Fellowship ("again?")
+- 🔨 F27 🔧 Dev Kit Screen previews: open any gated screen/state (end screen 2/3/4p, reveal, handoff, lobby…) with sample data, sandboxed — never touches the real game — must:alpha · needs: F16, ~F26 · sprint 7
+- 🔨 F28 🧪 4 players everywhere: pass-and-play + online 4-player checked end to end, fixes — must:alpha · needs: F11, F20 · sprint 7
+```mermaid
+flowchart LR
+  F04[✅ F04] --> F24[F24 Plain Q]
+  F09[✅ F09] --> F25[F25 Spotlight]
+  F13[✅ F13] --> F26[F26 End screen]
+  F16[✅ F16] --> F27[F27 Previews]
+  F26 -.-> F27
+  F20[✅ F20] --> F28[F28 4 players]
+```
+
 ## Later
-- **beta (AI):** framework AI module from the original's goal-selection model (`research/original-digest.md §2`) · 7 personalities with bios + gentle banter · AI in any seat, 2–4 players, online idle takeover · AI at human pace + speed setting · Dev Kit AI tool (AI-vs-AI, personality sliders) · basic audio · sims: board size per player count, bag run-out, first-player edge · ❓ AI vocabulary tiers (Zipf 3/2/0 vs 4/3/0) · ❓ Strategist personality
-- **1.0:** tutorial · accessibility pass · Muzzy's final art + board art · audio pass · stats screen + Wordsmith/Tanglesmith radar · credits + privacy · ❓ word list licence (keep + permission, or re-run the Zipf pipeline on a free base)
+- **beta (AI) — waits until Muzzy can sit down and describe it (2026-10-01):** framework AI module from the original's goal-selection model (`research/original-digest.md §2`) · 7 personalities with bios + gentle banter · AI in any seat, 2–4 players, online idle takeover · AI at human pace + speed setting · Dev Kit AI tool (AI-vs-AI, personality sliders) · basic audio · sims: board size per player count, bag run-out, first-player edge · ❓ AI vocabulary tiers (Zipf 3/2/0 vs 4/3/0) · ❓ Strategist personality
+- **1.0:** tutorial · accessibility pass · Muzzy's final art + board art · audio pass · lifetime stats screen + Wordsmith/Tanglesmith radar · credits + privacy · ❓ word list licence (keep + permission, or re-run the Zipf pipeline on a free base)
 - **Should:** board themes · colour preference · random starting player · hint · topiary-grow cast effect
 - **Could:** async play · spectators · leaderboards/accounts · 3D figurine glyphlings
 
 ## Ideas
-- 2026-09-30 — Word spotlight: after a cast, light up each scored word ONE AT A TIME (quick timer) — e.g. QUA → TAB → AY → loop — until play moves on, instead of all words white at once; the all-white outline made QUA look like "QAO" (Muzzy, during the F23 online test)
-- 2026-09-30 — Q is plain Q, not Qu, from now on (Muzzy's call) — needs a GDD rule change + word check: only 10 listed words have a Q without a U (QADI QAID QAT QI QOPH SUQ…), → **decided: add one more U** (U4→U5; default: take one E out, E16→E15, so the bag stays 120 — re-run `npm run sim` when built) (Muzzy)
 - 2026-09-30 — Magic sparkles that pop against the night garden (Muzzy)
 - 2026-09-30 — Signature cast: seed arcs → buried → glyphling splashes magic water → topiary letter grows (from the original's HANDOFF §11.2)
 - 2026-09-30 — Harvest candidates for the framework once proven here: seed tray (tile rack), hex board viewport (fit/zoom), drag-to-slot
