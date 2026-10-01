@@ -3,6 +3,7 @@
 // Rows (research/end-screen.md §2): Magic — total · from words · …solo words · from tangles; Words — 2-letter (only
 // when the table plays with 2-letter words) · 3 · 4 · 5 · 6+ · longest · best turn; Play — multi-word turns ·
 // seeds refreshed · tangled a rival · got tangled (no tint on the last two: neither is "best").
+// Each section heading (Magic / Words / Play) sits on a darkened title bar as wide as the whole table (Muzzy, 2026-10-01).
 // Kit parts: Avatar, Text. The table is plain HTML laid out in game.css (style names only).
 import text from '../../content/text/en.json'
 import type { GameState } from '../engine/types'
@@ -34,7 +35,7 @@ export function EndScorecard({ game, cards, ranked, colours, name }: {
       </thead>
       {scorecardRows(game, cards, seats).map((group) => (
         <tbody key={group.name}>
-          <tr className="game-scorecard-group"><th colSpan={seats.length + 1} scope="colgroup"><Text kind="caption">{group.name}</Text></th></tr>
+          <tr className="game-scorecard-group"><th colSpan={seats.length + 1} scope="colgroup"><div className="game-scorecard-bar"><Text kind="caption">{group.name}</Text></div></th></tr>
           {group.rows.map((row) => {
             const best = bestCells(row)
             return (

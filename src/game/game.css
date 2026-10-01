@@ -294,7 +294,10 @@
   .game-scorecard-labels { inline-size: 46%; }
   .game-scorecard th[scope="row"] { text-align: start; padding-inline-end: var(--gap-xs); font-weight: inherit; }
   .game-scorecard th[scope="col"] { text-align: center; padding-block-end: var(--gap-xs); }
-  .game-scorecard-group th { text-align: start; padding-block-start: var(--gap-s); }
+  .game-scorecard-group th { text-align: start; padding: var(--gap-s) 0 0; }
+  /* section title bar (Magic / Words / Play): a darkened strip the full width of the table, rounded like the cells */
+  .game-scorecard-bar { background: color-mix(in srgb, var(--game-shade) 60%, transparent); border-radius: var(--radius-control);
+    padding: calc(var(--gap-xs) / 2) var(--gap-s); }
   .game-scorecard td { text-align: center; font-family: var(--font-numbers); font-weight: 700; padding: calc(var(--gap-xs) / 2) 0; border-radius: var(--radius-control); }
   .game-scorecard td[data-best] { background: color-mix(in srgb, var(--on-surface) 15%, transparent); }
   .game-scorecard th[scope="col"] .kit-avatar { inline-size: 2.45em; block-size: 2.45em; }

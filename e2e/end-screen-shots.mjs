@@ -12,7 +12,8 @@
 //           desktop the page's content uses ≥ 70% of the window's height (not floating small in the middle);
 //           nothing within 12 px of the window's edges; buttons ≥ 44 px; nothing sideways out of its page
 //   bar     "See board" (end screen) and "See results" (garden) are the SAME rectangle (±1 px), and so are ☰ and New game
-// plus: the end screen covers the whole window, the winner on screen at once, the scorecard tints a best, every
+// plus: the end screen covers the whole window, the winner on screen at once, the scorecard tints a best (and its
+// section headings sit on shaded title bars the width of the table), every
 // chart mark is a ≥ 44 px target, the 2-letter row only when 2-letter words count, no console errors; and with
 // reduce motion on the chart is drawn at once.
 // Starts its OWN dev server (default port 5196 — never Muzzy's 5180) and closes only that one at the end.
@@ -209,6 +210,17 @@ try {
       await tap(page.getByRole('tab', { name: 'Scorecard' }))
       await page.locator('.game-scorecard').waitFor({ timeout: 3000 })
       check('the best in a row is tinted', (await page.locator('.game-scorecard td[data-best]').count()) > 0)
+      // each section heading (Magic / Words / Play) sits on a darkened title bar as wide as the whole table
+      const bars = await page.evaluate(() => {
+        const table = document.querySelector('.game-scorecard').getBoundingClientRect()
+        return [...document.querySelectorAll('.game-scorecard-bar')].map((bar) => {
+          const r = bar.getBoundingClientRect()
+          return { left: r.left - table.left, right: table.right - r.right, bg: getComputedStyle(bar).backgroundColor }
+        })
+      })
+      check('3 section title bars (Magic · Words · Play)', bars.length === 3)
+      check('the section title bars span the table width', bars.every((b) => Math.abs(b.left) <= 1 && Math.abs(b.right) <= 1))
+      check('the section title bars are shaded', bars.every((b) => b.bg !== 'rgba(0, 0, 0, 0)' && b.bg !== 'transparent'))
       const twoLetterRow = await page.getByRole('rowheader', { name: '2-letter' }).count()
       check('the 2-letter row only when 2-letter words count', twoLetterRow === (game.config.rules.minWordLength <= 2 ? 1 : 0))
       await fits('Scorecard')
