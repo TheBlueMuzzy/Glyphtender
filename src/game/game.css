@@ -227,7 +227,6 @@
   @media (min-width: 56rem) { .game-end-tabpanel { padding-inline: var(--gap-xl); } }
   /* a not-so-tall phone (360×780): highlight rows and scorecard rows a little tighter, so the pages still fit */
   @media (max-height: 50rem) {
-    .game-end-awards .kit-listrow { padding-block: var(--gap-xs); }
     .game-end-page .game-end-art[data-size="m"] { inline-size: 2.89em; block-size: 2.89em; }
     .game-end-page .game-scorecard { border-spacing: 0; }
     .game-end-page .game-scorecard-group th { padding-block-start: var(--gap-xs); }
@@ -267,24 +266,23 @@
   .game-end-winners[data-count="1"] .game-end-player-text { flex: 0 1 auto; align-self: center; }
   .game-end-art { display: block; inline-size: 2.44em; block-size: 2.44em; object-fit: contain; }
   .game-end-art[data-size="xs"] { inline-size: 1.78em; block-size: 1.78em; }
+  .game-end-art[data-size="s"] { inline-size: 2.44em; block-size: 2.44em; }
   .game-end-art[data-size="m"] { inline-size: 3.56em; block-size: 3.56em; }
   .game-end-art[data-size="l"] { inline-size: 4.44em; block-size: 4.44em; }
   @media (max-height: 32rem) { .game-end-art:not([data-size="xs"]) { inline-size: 2.75rem; block-size: 2.75rem; } }
   .game-end-name { min-inline-size: 0; max-inline-size: 100%; }
   .game-end-split { display: block; inline-size: 100%; max-inline-size: 10.67em; block-size: 0.44em; }
-  /* the highlights: one compact row per award (the glyphling(s), then the title and reason); two to a line on a wide screen */
+  /* the highlights: a carousel, one award at a time (EndHighlights.tsx) */
   .game-end-highlights { min-inline-size: 0; inline-size: 100%; max-inline-size: 40.89em; margin-inline: auto; }
-  .game-end-awards { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--gap-l); }
-  .game-end-highlights[data-wide] .game-end-awards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .game-end-highlights[data-wide] .game-end-awards > :nth-child(2) { border-block-start: none; } /* (2 to a line: the dividers go between lines only) */
   /* A phone on its side: each player's glyphling beside their words (half the height) */
   @media (max-height: 32rem) {
     .game-end-podium .game-end-player { flex-direction: row; justify-content: center; gap: var(--gap-s); }
     .game-end-podium .game-end-player-text { align-self: center; }
   }
-  .game-end-award { align-items: center; }
-  .game-end-award-art { display: flex; flex: none; }
-  .game-end-award-text { min-inline-size: 0; text-align: start; }
+  /* one award at a time (the kit Carousel): the holder's glyphling (and a smaller rival's), then title over proof */
+  .game-end-award { align-items: center; justify-content: center; inline-size: 100%; }
+  .game-end-award-art { display: flex; align-items: end; flex: none; }
+  .game-end-award-text { min-inline-size: 0; text-align: start; display: flex; flex-direction: column; }
 
   /* Story: the chart (it takes the page's height — GameOver.tsx chartHeight), its key right under it, then the
      caption under the key (2 lines of room, so nothing jumps) — at every size */
@@ -294,6 +292,9 @@
   .game-end-chart-svg text { font-family: var(--font-numbers); }
   .game-end-chart-hit { cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
   .game-end-chart-hit:focus-visible circle:first-child { stroke: var(--focus); stroke-width: 0.15rem; }
+  /* The Highlights star: each new award's star pops in (StoryChart glides it there; reduce motion: no glide, no pop) */
+  .game-end-star-shape { animation: game-end-star-pop var(--motion-normal) var(--ease) backwards; filter: drop-shadow(0 0 0.2rem var(--surface)); }
+  @keyframes game-end-star-pop { from { opacity: 0; scale: 0.4; } }
   .game-end-caption { min-block-size: 3.2em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
   .game-end-key-shape { inline-size: 1em; block-size: 1em; flex: none; }
   @media (max-height: 32rem) { .game-end-caption { min-block-size: 2.8em; } } /* (a phone on its side: every line counts) */

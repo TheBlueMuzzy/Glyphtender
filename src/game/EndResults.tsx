@@ -5,18 +5,17 @@
 // A shared win puts the winners side by side at the same size under "Shared win!".
 // Wide screens (phone on its side, desktop): everyone in one row — a podium 2nd · 1st · 3rd · 4th, the winner raised
 // (2 players: 1st · 2nd; a shared win: the winners first) — Muzzy's "the thing you're trying to do is in the middle".
-// Highlights: the awards (stats.ts pickAwards), ALWAYS UNDER the players at every size, never beside them (Muzzy:
-// "move highlights under the Grand Glyphtender: Color main results section, no scrolling") — one compact row each
-// (glyphling, title, reason; two to a line on a wide screen); tapping one opens the Story chart at that moment.
+// Highlights: the skill awards' carousel (EndHighlights.tsx — one award at a time), ALWAYS UNDER the players at every
+// size, never beside them (Muzzy: "move highlights under the Grand Glyphtender: Color main results section, no scrolling").
 // The page fits without scrolling (e2e:end); a big screen draws it all bigger (game.css --end-zoom).
-// Kit parts: Stack, Row, Text, Badge, ListRow. The art and the split bar are game graphics (like the board).
+// Kit parts: Stack, Row, Text, Badge (+ the Highlights' Carousel). The art and the split bar are game graphics (like the board).
 import text from '../../content/text/en.json'
 import { logIsComplete } from '../engine/log'
 import type { GameState } from '../engine/types'
-import { Badge, ListRow, Row, Stack, Text, fill, ordinal } from '../ui/kit'
+import type { ReactNode } from 'react'
+import { Badge, Row, Stack, Text, fill, ordinal } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
-import { awardText } from './endText'
-import type { Award, Scorecard, Standing } from './stats'
+import type { Scorecard, Standing } from './stats'
 import type { GardenTuning } from './useTuning'
 
 const w = text.game.gameOver
@@ -27,17 +26,17 @@ type Props = {
   game: GameState
   ranked: Standing[]
   cards: Scorecard[]
-  awards: Award[]
+  /** The Highlights carousel (EndHighlights), shown under the players — or nothing when no award was earned. */
+  highlights: ReactNode
   colours: GardenTuning
   wide: boolean
   /** A short screen (phone on its side): everyone a size smaller. */
   compact: boolean
   me: number | null
   name: (seat: number) => string
-  onAward: (award: Award) => void
 }
 
-export function EndResults({ title, game, ranked, cards, awards, colours, wide, compact, me, name, onAward }: Props) {
+export function EndResults({ title, game, ranked, cards, highlights, colours, wide, compact, me, name }: Props) {
   const winners = ranked.filter((s) => s.place === 1)
   const others = ranked.filter((s) => s.place > 1)
   const shared = winners.length > 1
@@ -50,28 +49,6 @@ export function EndResults({ title, game, ranked, cards, awards, colours, wide, 
   const order = !wide ? null
     : shared ? ranked
     : ranked.length >= 3 ? [others[0], winners[0], ...others.slice(1)] : [winners[0], ...others]
-  const highlights = awards.length > 0 && (
-    <Stack gap="xs" className="game-end-highlights" data-wide={wide || undefined}>
-      <Text kind="heading">{w.highlights}</Text>
-      <div className="game-end-awards">{awards.map((a) => {
-        const { title, reason } = awardText(a, name)
-        return (
-          <ListRow key={a.id} onClick={() => onAward(a)} label={
-            <Row gap="s" className="kit-nowrap game-end-award">
-              <span className="game-end-award-art">
-                {a.seats.slice(0, 2).map((seat) => <img key={seat} className="game-end-art" data-size="xs" src={glyphlingArt(seat)} alt={name(seat)} />)}
-              </span>
-              {/* title and reason flow as one line of text (wrapping onto a 2nd only when long) */}
-              <span className="game-end-award-text">
-                <Text kind="label">{title}</Text>
-                <Text kind="caption">{' · '}{reason}</Text>
-              </span>
-            </Row>
-          } />
-        )
-      })}</div>
-    </Stack>
-  )
   return (
     <div className="game-end-results" data-wide={wide || undefined}>
       <Stack gap="s" className="game-end-standings">

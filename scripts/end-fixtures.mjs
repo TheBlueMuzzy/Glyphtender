@@ -3,8 +3,8 @@
 // Not in content/snapshots/: everything there is bundled into the Dev Kit, which ships in live builds — these ~300 KB
 // would download on every page load. (Same snapshot shape, so one can still be pasted into the Dev Kit by hand.)
 //   node scripts/end-fixtures.mjs
-// Uses Vite to load the TypeScript engine (no build needed). Picks the first seed whose game shows the full set of
-// highlights and at least one tangle mark on the chart, so the pictures have something to show.
+// Uses Vite to load the TypeScript engine (no build needed). Picks the first seed whose game earned several highlights
+// (3+, by at least 2 players) and has at least one tangle mark on the chart, so the pictures have something to show.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createServer } from 'vite'
 
@@ -27,7 +27,6 @@ try {
     }
     return state
   }
-  const want = { 2: 3, 3: 3, 4: 4 }
   const colour = ['Yellow', 'Blue', 'Purple', 'Pink']
   const save = (file, name, game) => {
     const winners = game.winners.map((s) => colour[s]).join(' + ')
@@ -49,7 +48,7 @@ try {
       const game = play(players, seed)
       const awards = earnedAwards(game)
       const chart = storyChart(game, 6)
-      if (game.winners.length === 1 && awards.length === want[players] && chart.markers.some((m) => m.kind === 'tangle')) {
+      if (game.winners.length === 1 && awards.length >= 3 && new Set(awards.map((a) => a.holder)).size >= 2 && chart.markers.some((m) => m.kind === 'tangle')) {
         save(`end-${players}p`, `End screen: ${players} players`, game)
         break
       }

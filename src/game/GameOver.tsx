@@ -10,8 +10,10 @@
 // (game.css --end-zoom) so the page fills the screen instead of floating small in the middle. No page scrolls at the
 // sizes e2e:end checks (a phone on its side may, for the tallest pages: the bottom edge then fades).
 // See board closes this so the finished garden is all there to look at. Esc and phone Back do the same.
-//   Results    the winner big, the others by place, the highlights (EndResults.tsx)
-//   Story      everyone's Magic round by round, with the moments marked; tap a mark for what happened (StoryChart.tsx)
+//   Results    the winner big, the others by place, the Highlights carousel under them (EndResults, EndHighlights)
+//   Story      everyone's Magic round by round, with the moments marked; tap a mark for what happened (StoryChart.tsx);
+//              the same Highlights carousel under the key, its award marked on the chart by a 4-pointed star
+// The two carousels share one index (awardAt): turning to Story shows the award Results was showing, star and all.
 //   Scorecard  the breakdown, the best in each row tinted (EndScorecard.tsx)
 // Everything comes from the finished game's log (src/game/stats.ts). Words: en.json → game.gameOver; knobs:
 // content/tuning/endscreen.json.
@@ -22,11 +24,12 @@ import { useGameStore } from '../store/gameStore'
 import { Row, Screen, ScrollArea, Stack, Tabs, Text } from '../ui/kit'
 import { colourOf } from './art'
 import { EndBar } from './EndBar'
+import { EndHighlights } from './EndHighlights'
 import { EndResults } from './EndResults'
 import { EndScorecard } from './EndScorecard'
-import { markerCaption, markerLabel, tangleBonusCaption } from './endText'
+import { awardText, markerCaption, markerLabel, tangleBonusCaption } from './endText'
 import { playerName, winnerTitle } from './prompt'
-import { earnedAwards, markersNear, scorecards, standings, storyChart, type Award } from './stats'
+import { awardPoint, earnedAwards, markersNear, scorecards, standings, storyChart } from './stats'
 import { SeatShape, StoryChart } from './StoryChart'
 import { useEndTuning, useGardenTuning } from './useTuning'
 
@@ -65,7 +68,10 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
   const wide = useMedia('(min-aspect-ratio: 1/1)') // a phone on its side or a desktop: everyone in one row (a podium)
   const short = useMedia('(max-height: 32rem)') // a phone on its side: everything a size smaller (game.css matches)
   const [page, setPage] = useState<Page>('results')
-  const [selected, setSelected] = useState<number | 'tangles' | null>(null)
+  const [selected, setSelected] = useState<number | 'tangles' | 'star' | null>(null)
+  // The Highlights carousel's award — ONE index for both pages' carousels (Results + Story stay in step), and the
+  // Story chart's star sits on that award's moment
+  const [awardAt, setAwardAt] = useState(0)
 
   const end = useMemo(() => {
     if (!game) return null
@@ -150,16 +156,19 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
   if (!game || !end) return null
   const name = playerName
   const tabs = PAGES.map((p) => w.tabs[p])
-  // A highlight tapped on the Results page: the Story chart, at that moment
-  const showAward = (award: Award) => {
-    const at = end.chart.markers.findIndex((m) => m.kind === 'award' && m.award === award.id)
-    setSelected(at >= 0 ? at : null)
-    setPage('story')
-  }
+  // The award showing in the carousel, and its star on the chart (the holder's line, the round it happened)
+  const award = end.awards.length ? end.awards[awardAt % end.awards.length] : null
+  const star = award && awardPoint(game, end.chart, award)
+  const highlights = (heading: boolean) => (
+    <EndHighlights awards={end.awards} index={awardAt} onIndex={setAwardAt} name={name} heading={heading}
+      autoSeconds={tuning.carouselSeconds} pauseSeconds={tuning.carouselPauseSeconds} />
+  )
   // A tapped mark tells its moment — and any marks drawn on top of it (same round, nearly the same Magic)
   const tapped = typeof selected === 'number' && selected >= end.chart.markers.length ? null : selected // (another game since)
+  const starCaption = () => { const t = award && awardText(award, name); return t ? `${t.title}: ${t.reason}` : w.chart.hint }
   const captions = tapped === null ? [w.chart.hint]
     : tapped === 'tangles' ? [tangleBonusCaption(game, name)]
+    : tapped === 'star' ? [starCaption()]
     : markersNear(end.chart, tapped).map((m) => markerCaption(game, m, end.awards, name))
 
   return (
@@ -172,13 +181,13 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
           <ScrollArea key={page} label={w.tabs[page]}>
             <div role="tabpanel" aria-label={w.tabs[page]} className="game-end-tabpanel" data-page={page}>
               {page === 'results' && (
-                <EndResults title={game.winners.length > 1 ? w.sharedWin : winnerTitle(game)} game={game} ranked={end.ranked} cards={end.cards} awards={end.awards} colours={colours} wide={wide} compact={short}
-                  me={me} name={name} onAward={showAward} />
+                <EndResults title={game.winners.length > 1 ? w.sharedWin : winnerTitle(game)} game={game} ranked={end.ranked} cards={end.cards} highlights={highlights(true)} colours={colours} wide={wide} compact={short}
+                  me={me} name={name} />
               )}
               {page === 'story' && (
                 <div ref={storyBox} className="game-end-story">
                   <StoryChart chart={end.chart} colours={colours} tuning={tuning} selected={selected} onSelect={setSelected}
-                    height={chartHeight(pageSize.height, underChart, tuning.chartHeight)}
+                    height={chartHeight(pageSize.height, underChart, tuning.chartHeight)} star={star}
                     label={(m) => markerLabel(m, end.awards, name)} />
                   {/* The key, right under the chart: each line's shape and colour, and whose it is */}
                   <Row gap="m" justify="center" className="game-end-key">
@@ -191,7 +200,9 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
                       </Row>
                     ))}
                   </Row>
-                  {/* Then what happened at the tapped mark, under the key */}
+                  {/* The Highlights carousel (the same one as on Results, in step with it): its award has the star */}
+                  {highlights(false)}
+                  {/* Then what happened at the tapped mark, under it */}
                   <div className="game-end-caption" aria-live="polite">
                     {[...new Set(captions)].map((line) => <Text key={line} kind={selected === null ? 'caption' : 'body'}>{line}</Text>)}
                   </div>

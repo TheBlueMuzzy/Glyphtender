@@ -1,7 +1,10 @@
 // THE STORY CHART — everyone's secret Magic, round by round, finally shown (research/end-screen.md §4).
 // One line per player in their glyphling colour; the last step is the end-of-game tangle bonus, in its own shaded
 // column, drawn dotted. Marks on the lines: a knot where a glyphling got tangled (ringed in the tangler's colour),
-// a star on each highlight's turn, a tick where the lead changed. Tap one (44 px target) → the caption under the chart.
+// a tick where the lead changed — and ONE 4-pointed star in the holder's colour on the award the Highlights carousel
+// is showing (Muzzy, 2026-10-02: "as they carousel, they should show as a 4 pointed star marker on that player's line
+// at the time they did it"): it glides to the next award's spot as the carousel moves (reduce motion: it jumps).
+// Tap a mark or the star (44 px target) → the caption under the chart.
 // Each line ends in its own shape (circle, square, triangle, diamond — not colour alone) and its total.
 // The lines draw themselves in, left to right, when the page opens (endscreen.json chartDrawSeconds; reduce motion = at once).
 // Game graphics like the board: an SVG sized in real pixels (it measures its box), colours from garden.json + style names.
@@ -36,26 +39,29 @@ function guideStep(max: number): number {
   return Math.ceil(max / 3)
 }
 
-const star = (x: number, y: number, r: number) =>
-  Array.from({ length: 10 }, (_, i) => {
-    const angle = (Math.PI / 5) * i - Math.PI / 2
-    const radius = i % 2 ? r * 0.45 : r
-    return `${x + radius * Math.cos(angle)},${y + radius * Math.sin(angle)}`
+/** A 4-pointed star (✦) centred on 0,0: points up, right, down, left; narrow waist between them. */
+const fourStar = (r: number) =>
+  Array.from({ length: 8 }, (_, i) => {
+    const angle = (Math.PI / 4) * i - Math.PI / 2
+    const radius = i % 2 ? r * 0.36 : r
+    return `${(radius * Math.cos(angle)).toFixed(2)},${(radius * Math.sin(angle)).toFixed(2)}`
   }).join(' ')
 
 type Props = {
   chart: Chart
   colours: GardenTuning
   tuning: EndTuning
-  /** The tapped marker (index into chart.markers), 'tangles' for the Tangles column, or null. */
-  selected: number | 'tangles' | null
-  onSelect: (which: number | 'tangles' | null) => void
+  /** The tapped marker (index into chart.markers), 'tangles' for the Tangles column, 'star' for the award star, or null. */
+  selected: number | 'tangles' | 'star' | null
+  onSelect: (which: number | 'tangles' | 'star' | null) => void
+  /** Where the Highlights carousel's award goes (stats.ts awardPoint), or null: no award / no story to draw. */
+  star: ChartMarker | null
   /** How tall the chart is, px. */
   height: number
   label: (marker: ChartMarker) => string
 }
 
-export function StoryChart({ chart, colours, tuning, selected, onSelect, height, label }: Props) {
+export function StoryChart({ chart, colours, tuning, selected, onSelect, height, label, star }: Props) {
   // Real pixels: the SVG is as wide as its box, so its words are true sizes
   const box = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
@@ -105,7 +111,20 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
   const overflow = (labels.at(-1)?.y ?? 0) - (height - PAD.bottom)
   if (overflow > 0) labels.forEach((l) => (l.y -= overflow))
 
-  const key = (which: number | 'tangles') => (e: KeyboardEvent) => {
+  // The star glides from the last award's spot to this one's (reduce motion: it just moves)
+  const starAt = star && chart.series[star.seat] ? { x: X(star.x), y: Y(chart.series[star.seat].points[star.x]) } : null
+  const starRef = useRef<SVGGElement>(null)
+  const starWas = useRef<{ x: number; y: number } | null>(null)
+  useLayoutEffect(() => {
+    const was = starWas.current
+    starWas.current = starAt
+    if (!starAt || !was || (was.x === starAt.x && was.y === starAt.y) || reduceMotion()) return
+    starRef.current?.animate(
+      [{ transform: `translate(${was.x}px, ${was.y}px)` }, { transform: `translate(${starAt.x}px, ${starAt.y}px)` }],
+      { duration: 350, easing: 'ease-in-out' })
+  }, [starAt?.x, starAt?.y]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const key = (which: number | 'tangles' | 'star') => (e: KeyboardEvent) => {
     if (e.key !== 'Enter' && e.key !== ' ') return
     e.preventDefault()
     onSelect(selected === which ? null : which)
@@ -172,11 +191,21 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
                       <circle cx={x} cy={y} r={3.5 * S} fill={colour(m.seat)} />
                     </>
                   )}
-                  {m.kind === 'award' && <polygon points={star(x, y, 9 * S)} fill="var(--accent)" stroke="var(--surface)" strokeWidth={2} />}
                   {m.kind === 'lead' && <line x1={x} x2={x} y1={y - 11 * S} y2={y + 11 * S} stroke={colour(m.seat)} strokeWidth={3} strokeLinecap="round" />}
                 </g>
               )
             })}
+            {/* The Highlights star: the award the carousel shows, on its holder's line — glides from award to award */}
+            {star && starAt && (
+              <g role="button" tabIndex={0} aria-label={label(star)} aria-pressed={selected === 'star'} className="game-end-chart-hit game-end-star"
+                onClick={() => onSelect(selected === 'star' ? null : 'star')} onKeyDown={key('star')} data-marker="star" data-seat={star.seat}
+                data-x={star.x} ref={starRef} transform={`translate(${starAt!.x} ${starAt!.y})`}>
+                <circle r={Math.max(22, 16 * S)} fill="transparent" />
+                {selected === 'star' && <circle r={15 * S} fill="none" stroke="var(--focus)" strokeWidth={2.5} />}
+                <polygon key={`${star.award}:${star.seat}:${star.turnNo}`} className="game-end-star-shape" points={fourStar(12 * S)}
+                  fill={colour(star.seat)} stroke="var(--on-surface)" strokeWidth={1.5} strokeLinejoin="round" />
+              </g>
+            )}
           </g>
         </svg>
       )}

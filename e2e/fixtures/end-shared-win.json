@@ -1,7 +1,7 @@
 {
   "_help": "A finished game for npm run e2e:end, in the Dev Kit snapshot shape (greedy sim players, official words) — the Magic reveal plays, then the end screen. Made by scripts/end-fixtures.mjs.",
   "name": "End screen: shared win (3 players)",
-  "savedAt": "2026-10-02T04:20:30.973Z",
+  "savedAt": "2026-10-02T05:12:20.489Z",
   "game": "Glyphtender",
   "version": "0.2.0.0",
   "summary": "turn 49 · over · winner Blue + Purple · 99 / 100 / 100 Magic",
@@ -460,7 +460,36 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                25,
+                19,
+                28,
+                32,
+                25,
+                26
+              ],
+              "afterMove": [
+                28,
+                22,
+                28,
+                26,
+                25,
+                22
+              ],
+              "afterCast": [
+                28,
+                18,
+                28,
+                26,
+                25,
+                22
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 2,
@@ -492,7 +521,36 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                28,
+                18,
+                28,
+                26,
+                25,
+                22
+              ],
+              "afterMove": [
+                25,
+                18,
+                23,
+                26,
+                25,
+                22
+              ],
+              "afterCast": [
+                25,
+                18,
+                21,
+                26,
+                25,
+                22
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 3,
@@ -524,7 +582,36 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                25,
+                18,
+                21,
+                26,
+                25,
+                22
+              ],
+              "afterMove": [
+                24,
+                18,
+                21,
+                26,
+                17,
+                22
+              ],
+              "afterCast": [
+                24,
+                18,
+                21,
+                26,
+                9,
+                22
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 4,
@@ -556,7 +643,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "7,-3",
+                  "8,-3"
+                ],
+                "at": 0
               }
             ],
             "magic": 4,
@@ -570,7 +662,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                24,
+                18,
+                21,
+                26,
+                9,
+                22
+              ],
+              "afterMove": [
+                22,
+                18,
+                18,
+                26,
+                13,
+                22
+              ],
+              "afterCast": [
+                19,
+                17,
+                18,
+                20,
+                13,
+                22
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 3,
+              "word": "SO"
+            },
+            "sealed": []
           },
           {
             "turnNo": 5,
@@ -602,7 +727,36 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                19,
+                17,
+                18,
+                20,
+                13,
+                22
+              ],
+              "afterMove": [
+                19,
+                22,
+                18,
+                16,
+                13,
+                22
+              ],
+              "afterCast": [
+                19,
+                22,
+                18,
+                10,
+                13,
+                19
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 6,
@@ -634,7 +788,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "6,-5",
+                  "7,-6"
+                ],
+                "at": 0
               }
             ],
             "magic": 4,
@@ -648,7 +807,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                19,
+                22,
+                18,
+                10,
+                13,
+                19
+              ],
+              "afterMove": [
+                19,
+                25,
+                18,
+                10,
+                13,
+                26
+              ],
+              "afterCast": [
+                19,
+                21,
+                18,
+                10,
+                13,
+                25
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 3,
+              "word": "OH"
+            },
+            "sealed": []
           },
           {
             "turnNo": 7,
@@ -680,7 +872,12 @@
                   0
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "2,0",
+                  "3,-1"
+                ],
+                "at": 1
               }
             ],
             "magic": 3,
@@ -694,7 +891,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                19,
+                21,
+                18,
+                10,
+                13,
+                25
+              ],
+              "afterMove": [
+                19,
+                17,
+                24,
+                10,
+                13,
+                25
+              ],
+              "afterCast": [
+                15,
+                17,
+                24,
+                10,
+                13,
+                20
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 4,
+              "word": "FA"
+            },
+            "sealed": []
           },
           {
             "turnNo": 8,
@@ -726,7 +956,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "3,3",
+                  "4,2"
+                ],
+                "at": 0
               }
             ],
             "magic": 4,
@@ -740,7 +975,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                15,
+                17,
+                24,
+                10,
+                13,
+                20
+              ],
+              "afterMove": [
+                14,
+                17,
+                24,
+                8,
+                13,
+                20
+              ],
+              "afterCast": [
+                14,
+                17,
+                24,
+                6,
+                13,
+                20
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 3,
+              "word": "ET"
+            },
+            "sealed": []
           },
           {
             "turnNo": 9,
@@ -772,7 +1040,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "5,-4",
+                  "6,-5"
+                ],
+                "at": 0
               }
             ],
             "magic": 4,
@@ -786,7 +1059,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                17,
+                24,
+                6,
+                13,
+                20
+              ],
+              "afterMove": [
+                14,
+                17,
+                23,
+                6,
+                13,
+                13
+              ],
+              "afterCast": [
+                14,
+                17,
+                19,
+                6,
+                13,
+                12
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 3,
+              "word": "WE"
+            },
+            "sealed": []
           },
           {
             "turnNo": 10,
@@ -818,7 +1124,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "3,-1",
+                  "4,-1"
+                ],
+                "at": 1
               }
             ],
             "magic": 4,
@@ -832,7 +1143,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                17,
+                19,
+                6,
+                13,
+                12
+              ],
+              "afterMove": [
+                21,
+                21,
+                19,
+                8,
+                13,
+                12
+              ],
+              "afterCast": [
+                20,
+                17,
+                19,
+                8,
+                13,
+                12
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 3,
+              "word": "ES"
+            },
+            "sealed": []
           },
           {
             "turnNo": 11,
@@ -864,7 +1208,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "3,2",
+                  "3,3"
+                ],
+                "at": 0
               },
               {
                 "word": "AT",
@@ -877,7 +1226,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "3,2",
+                  "4,2"
+                ],
+                "at": 0
               }
             ],
             "magic": 8,
@@ -891,7 +1245,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                20,
+                17,
+                19,
+                8,
+                13,
+                12
+              ],
+              "afterMove": [
+                18,
+                13,
+                19,
+                12,
+                13,
+                12
+              ],
+              "afterCast": [
+                18,
+                13,
+                19,
+                10,
+                13,
+                12
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 6,
+              "word": "AE + AT"
+            },
+            "sealed": []
           },
           {
             "turnNo": 12,
@@ -925,7 +1312,13 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "2,-1",
+                  "3,-1",
+                  "4,-1"
+                ],
+                "at": 0
               }
             ],
             "magic": 4,
@@ -939,7 +1332,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                18,
+                13,
+                19,
+                10,
+                13,
+                12
+              ],
+              "afterMove": [
+                18,
+                13,
+                20,
+                10,
+                13,
+                12
+              ],
+              "afterCast": [
+                18,
+                13,
+                20,
+                10,
+                13,
+                9
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 7,
+              "word": "OF + OE"
+            },
+            "sealed": []
           },
           {
             "turnNo": 13,
@@ -971,7 +1397,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "4,-1",
+                  "5,-2"
+                ],
+                "at": 1
               }
             ],
             "magic": 4,
@@ -985,7 +1416,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                18,
+                13,
+                20,
+                10,
+                13,
+                9
+              ],
+              "afterMove": [
+                18,
+                13,
+                20,
+                12,
+                13,
+                9
+              ],
+              "afterCast": [
+                18,
+                12,
+                18,
+                12,
+                13,
+                9
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 3,
+              "word": "NU"
+            },
+            "sealed": []
           },
           {
             "turnNo": 14,
@@ -1017,7 +1481,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "3,2",
+                  "4,1"
+                ],
+                "at": 1
               }
             ],
             "magic": 4,
@@ -1031,7 +1500,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                18,
+                12,
+                18,
+                12,
+                13,
+                9
+              ],
+              "afterMove": [
+                18,
+                12,
+                12,
+                12,
+                13,
+                8
+              ],
+              "afterCast": [
+                18,
+                12,
+                7,
+                11,
+                13,
+                8
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 6,
+              "word": "AT + AA"
+            },
+            "sealed": []
           },
           {
             "turnNo": 15,
@@ -1063,7 +1565,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                18,
+                12,
+                7,
+                11,
+                13,
+                8
+              ],
+              "afterMove": [
+                18,
+                12,
+                5,
+                11,
+                13,
+                10
+              ],
+              "afterCast": [
+                18,
+                12,
+                4,
+                11,
+                13,
+                5
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 7,
+              "word": "OF + OM"
+            },
+            "sealed": []
           },
           {
             "turnNo": 16,
@@ -1095,7 +1630,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "3,0",
+                  "4,-1"
+                ],
+                "at": 0
               }
             ],
             "magic": 4,
@@ -1109,7 +1649,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                18,
+                12,
+                4,
+                11,
+                13,
+                5
+              ],
+              "afterMove": [
+                14,
+                16,
+                4,
+                11,
+                13,
+                5
+              ],
+              "afterCast": [
+                14,
+                16,
+                4,
+                11,
+                13,
+                5
+              ]
+            },
+            "castOver": 2,
+            "blocked": {
+              "seat": 2,
+              "magic": 6,
+              "word": "FE + EN"
+            },
+            "sealed": []
           },
           {
             "turnNo": 17,
@@ -1141,7 +1714,12 @@
                   0
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "4,-2",
+                  "4,-1"
+                ],
+                "at": 0
               },
               {
                 "word": "OE",
@@ -1154,7 +1732,12 @@
                   0
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "4,-2",
+                  "5,-2"
+                ],
+                "at": 0
               }
             ],
             "magic": 6,
@@ -1168,7 +1751,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                16,
+                4,
+                11,
+                13,
+                5
+              ],
+              "afterMove": [
+                14,
+                16,
+                14,
+                11,
+                13,
+                6
+              ],
+              "afterCast": [
+                14,
+                16,
+                13,
+                11,
+                13,
+                6
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 9,
+              "word": "WE + FEW"
+            },
+            "sealed": []
           },
           {
             "turnNo": 18,
@@ -1204,7 +1820,14 @@
                   0
                 ],
                 "magic": 5,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "2,1",
+                  "3,0",
+                  "4,-1",
+                  "5,-2"
+                ],
+                "at": 0
               }
             ],
             "magic": 5,
@@ -1218,7 +1841,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                16,
+                13,
+                11,
+                13,
+                6
+              ],
+              "afterMove": [
+                14,
+                16,
+                13,
+                11,
+                13,
+                5
+              ],
+              "afterCast": [
+                14,
+                16,
+                13,
+                11,
+                13,
+                4
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 8,
+              "word": "WINE"
+            },
+            "sealed": []
           },
           {
             "turnNo": 19,
@@ -1252,7 +1908,13 @@
                   0
                 ],
                 "magic": 6,
-                "ownMagic": 3
+                "ownMagic": 3,
+                "hexes": [
+                  "7,-3",
+                  "8,-3",
+                  "9,-3"
+                ],
+                "at": 2
               }
             ],
             "magic": 6,
@@ -1266,7 +1928,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                16,
+                13,
+                11,
+                13,
+                4
+              ],
+              "afterMove": [
+                15,
+                18,
+                13,
+                13,
+                13,
+                4
+              ],
+              "afterCast": [
+                14,
+                14,
+                13,
+                13,
+                13,
+                4
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 4,
+              "word": "YOU"
+            },
+            "sealed": []
           },
           {
             "turnNo": 20,
@@ -1298,7 +1993,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                14,
+                13,
+                13,
+                13,
+                4
+              ],
+              "afterMove": [
+                14,
+                14,
+                13,
+                10,
+                13,
+                4
+              ],
+              "afterCast": [
+                14,
+                14,
+                13,
+                9,
+                13,
+                4
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 2,
+              "magic": 11,
+              "word": "ONE + ER + FIE"
+            },
+            "sealed": []
           },
           {
             "turnNo": 21,
@@ -1330,7 +2058,12 @@
                   2
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "3,0",
+                  "3,1"
+                ],
+                "at": 1
               },
               {
                 "word": "TA",
@@ -1343,7 +2076,12 @@
                   1
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "3,1",
+                  "3,2"
+                ],
+                "at": 0
               }
             ],
             "magic": 6,
@@ -1357,7 +2095,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                14,
+                13,
+                9,
+                13,
+                4
+              ],
+              "afterMove": [
+                14,
+                14,
+                13,
+                9,
+                13,
+                5
+              ],
+              "afterCast": [
+                14,
+                14,
+                13,
+                9,
+                13,
+                4
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 9,
+              "word": "TOR + OK"
+            },
+            "sealed": []
           },
           {
             "turnNo": 22,
@@ -1389,7 +2160,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "9,-3",
+                  "10,-4"
+                ],
+                "at": 1
               }
             ],
             "magic": 4,
@@ -1403,7 +2179,36 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                14,
+                13,
+                9,
+                13,
+                4
+              ],
+              "afterMove": [
+                14,
+                20,
+                13,
+                9,
+                6,
+                4
+              ],
+              "afterCast": [
+                14,
+                16,
+                13,
+                9,
+                6,
+                4
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 23,
@@ -1435,7 +2240,12 @@
                   0
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "3,-2",
+                  "3,-1"
+                ],
+                "at": 0
               },
               {
                 "word": "MO",
@@ -1448,7 +2258,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "3,-2",
+                  "4,-2"
+                ],
+                "at": 0
               },
               {
                 "word": "MM",
@@ -1461,7 +2276,12 @@
                   1
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "2,-1",
+                  "3,-2"
+                ],
+                "at": 1
               }
             ],
             "magic": 10,
@@ -1475,7 +2295,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                16,
+                13,
+                9,
+                6,
+                4
+              ],
+              "afterMove": [
+                14,
+                16,
+                13,
+                9,
+                6,
+                4
+              ],
+              "afterCast": [
+                14,
+                16,
+                12,
+                9,
+                6,
+                4
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 2,
+              "magic": 10,
+              "word": "YE + YO + MY"
+            },
+            "sealed": []
           },
           {
             "turnNo": 24,
@@ -1507,7 +2360,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "2,1",
+                  "2,2"
+                ],
+                "at": 1
               },
               {
                 "word": "EAT",
@@ -1522,7 +2380,13 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "2,2",
+                  "3,2",
+                  "4,2"
+                ],
+                "at": 0
               },
               {
                 "word": "ET",
@@ -1535,7 +2399,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "2,2",
+                  "3,1"
+                ],
+                "at": 0
               }
             ],
             "magic": 12,
@@ -1549,7 +2418,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                16,
+                12,
+                9,
+                6,
+                4
+              ],
+              "afterMove": [
+                14,
+                16,
+                12,
+                9,
+                6,
+                2
+              ],
+              "afterCast": [
+                14,
+                16,
+                12,
+                9,
+                6,
+                1
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 9,
+              "word": "TO + OAT"
+            },
+            "sealed": []
           },
           {
             "turnNo": 25,
@@ -1583,7 +2485,13 @@
                   0
                 ],
                 "magic": 6,
-                "ownMagic": 3
+                "ownMagic": 3,
+                "hexes": [
+                  "8,-2",
+                  "9,-3",
+                  "10,-4"
+                ],
+                "at": 0
               }
             ],
             "magic": 6,
@@ -1597,7 +2505,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                14,
+                16,
+                12,
+                9,
+                6,
+                1
+              ],
+              "afterMove": [
+                13,
+                16,
+                12,
+                9,
+                6,
+                1
+              ],
+              "afterCast": [
+                13,
+                16,
+                12,
+                9,
+                6,
+                1
+              ]
+            },
+            "castOver": 2,
+            "blocked": {
+              "seat": 1,
+              "magic": 3,
+              "word": "OS"
+            },
+            "sealed": []
           },
           {
             "turnNo": 26,
@@ -1629,7 +2570,12 @@
                   1
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "10,-4",
+                  "11,-4"
+                ],
+                "at": 1
               }
             ],
             "magic": 3,
@@ -1643,7 +2589,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                13,
+                16,
+                12,
+                9,
+                6,
+                1
+              ],
+              "afterMove": [
+                13,
+                16,
+                12,
+                15,
+                6,
+                1
+              ],
+              "afterCast": [
+                10,
+                16,
+                12,
+                13,
+                6,
+                1
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 4,
+              "word": "OR"
+            },
+            "sealed": []
           },
           {
             "turnNo": 27,
@@ -1675,7 +2654,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "1,0",
+                  "1,1"
+                ],
+                "at": 1
               },
               {
                 "word": "ET",
@@ -1688,7 +2672,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "1,1",
+                  "2,1"
+                ],
+                "at": 0
               },
               {
                 "word": "EF",
@@ -1701,7 +2690,12 @@
                   1
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "1,1",
+                  "2,0"
+                ],
+                "at": 0
               }
             ],
             "magic": 11,
@@ -1715,7 +2709,36 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                10,
+                16,
+                12,
+                13,
+                6,
+                1
+              ],
+              "afterMove": [
+                10,
+                16,
+                12,
+                13,
+                6,
+                3
+              ],
+              "afterCast": [
+                10,
+                16,
+                12,
+                13,
+                6,
+                2
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 28,
@@ -1747,7 +2770,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "5,-2",
+                  "6,-2"
+                ],
+                "at": 1
               }
             ],
             "magic": 4,
@@ -1761,7 +2789,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                10,
+                16,
+                12,
+                13,
+                6,
+                2
+              ],
+              "afterMove": [
+                9,
+                14,
+                12,
+                13,
+                6,
+                2
+              ],
+              "afterCast": [
+                9,
+                14,
+                12,
+                13,
+                6,
+                2
+              ]
+            },
+            "castOver": 1,
+            "blocked": {
+              "seat": 1,
+              "magic": 3,
+              "word": "EH"
+            },
+            "sealed": []
           },
           {
             "turnNo": 29,
@@ -1793,7 +2854,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "4,2",
+                  "4,3"
+                ],
+                "at": 1
               }
             ],
             "magic": 4,
@@ -1807,7 +2873,36 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                9,
+                14,
+                12,
+                13,
+                6,
+                2
+              ],
+              "afterMove": [
+                9,
+                14,
+                12,
+                10,
+                6,
+                2
+              ],
+              "afterCast": [
+                9,
+                14,
+                12,
+                9,
+                6,
+                2
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 30,
@@ -1843,7 +2938,14 @@
                   2
                 ],
                 "magic": 7,
-                "ownMagic": 3
+                "ownMagic": 3,
+                "hexes": [
+                  "3,-2",
+                  "4,-3",
+                  "5,-4",
+                  "6,-5"
+                ],
+                "at": 1
               }
             ],
             "magic": 7,
@@ -1857,7 +2959,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                9,
+                14,
+                12,
+                9,
+                6,
+                2
+              ],
+              "afterMove": [
+                9,
+                10,
+                12,
+                9,
+                12,
+                2
+              ],
+              "afterCast": [
+                9,
+                10,
+                12,
+                9,
+                12,
+                2
+              ]
+            },
+            "castOver": 3,
+            "blocked": {
+              "seat": 1,
+              "magic": 11,
+              "word": "ION + MITE"
+            },
+            "sealed": []
           },
           {
             "turnNo": 31,
@@ -1889,7 +3024,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "9,-4",
+                  "9,-3"
+                ],
+                "at": 0
               },
               {
                 "word": "AO",
@@ -1902,7 +3042,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "9,-4",
+                  "10,-4"
+                ],
+                "at": 0
               }
             ],
             "magic": 8,
@@ -1916,7 +3061,40 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                9,
+                10,
+                12,
+                9,
+                12,
+                2
+              ],
+              "afterMove": [
+                9,
+                12,
+                12,
+                9,
+                11,
+                2
+              ],
+              "afterCast": [
+                8,
+                12,
+                12,
+                9,
+                11,
+                2
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 2,
+              "magic": 7,
+              "word": "SOS + OS"
+            },
+            "sealed": []
           },
           {
             "turnNo": 32,
@@ -1948,7 +3126,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "4,2",
+                  "5,2"
+                ],
+                "at": 1
               },
               {
                 "word": "OI",
@@ -1961,7 +3144,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "4,3",
+                  "5,2"
+                ],
+                "at": 1
               }
             ],
             "magic": 8,
@@ -1975,7 +3163,36 @@
             "tangledAfter": [],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                8,
+                12,
+                12,
+                9,
+                11,
+                2
+              ],
+              "afterMove": [
+                8,
+                12,
+                12,
+                8,
+                11,
+                2
+              ],
+              "afterCast": [
+                8,
+                12,
+                12,
+                7,
+                11,
+                2
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 33,
@@ -2009,7 +3226,13 @@
                   2
                 ],
                 "magic": 6,
-                "ownMagic": 3
+                "ownMagic": 3,
+                "hexes": [
+                  "1,3",
+                  "2,2",
+                  "3,1"
+                ],
+                "at": 0
               }
             ],
             "magic": 6,
@@ -2032,7 +3255,36 @@
                 "glyphling": 5,
                 "by": null
               }
-            ]
+            ],
+            "mobility": {
+              "before": [
+                8,
+                12,
+                12,
+                7,
+                11,
+                2
+              ],
+              "afterMove": [
+                8,
+                12,
+                12,
+                7,
+                11,
+                1
+              ],
+              "afterCast": [
+                8,
+                12,
+                12,
+                7,
+                11,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 34,
@@ -2064,7 +3316,12 @@
                   1
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "11,-5",
+                  "11,-4"
+                ],
+                "at": 0
               },
               {
                 "word": "OI",
@@ -2077,7 +3334,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "10,-4",
+                  "11,-5"
+                ],
+                "at": 1
               }
             ],
             "magic": 7,
@@ -2093,7 +3355,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                8,
+                12,
+                12,
+                7,
+                11,
+                0
+              ],
+              "afterMove": [
+                9,
+                10,
+                12,
+                7,
+                12,
+                0
+              ],
+              "afterCast": [
+                8,
+                10,
+                12,
+                7,
+                12,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 1,
+              "magic": 8,
+              "word": "OS + WOO"
+            },
+            "sealed": []
           },
           {
             "turnNo": 35,
@@ -2125,7 +3420,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "11,-4",
+                  "12,-4"
+                ],
+                "at": 1
               }
             ],
             "magic": 4,
@@ -2141,7 +3441,68 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                8,
+                10,
+                12,
+                7,
+                12,
+                0
+              ],
+              "afterMove": [
+                8,
+                10,
+                12,
+                8,
+                12,
+                0
+              ],
+              "afterCast": [
+                8,
+                10,
+                12,
+                7,
+                12,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 3,
+              "word": "SI"
+            },
+            "sealed": [
+              {
+                "glyphling": 3,
+                "hexes": [
+                  "10,-1",
+                  "10,-2",
+                  "10,-3",
+                  "11,-2",
+                  "11,-3",
+                  "5,-1",
+                  "5,0",
+                  "5,1",
+                  "6,-1",
+                  "6,0",
+                  "6,1",
+                  "6,2",
+                  "7,-1",
+                  "7,-2",
+                  "7,0",
+                  "7,1",
+                  "8,-1",
+                  "8,0",
+                  "8,1",
+                  "9,-1",
+                  "9,-2",
+                  "9,0"
+                ]
+              }
+            ]
           },
           {
             "turnNo": 36,
@@ -2173,7 +3534,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "6,-6",
+                  "6,-5"
+                ],
+                "at": 0
               }
             ],
             "magic": 4,
@@ -2189,7 +3555,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                8,
+                10,
+                12,
+                7,
+                12,
+                0
+              ],
+              "afterMove": [
+                8,
+                15,
+                12,
+                7,
+                15,
+                0
+              ],
+              "afterCast": [
+                8,
+                15,
+                12,
+                7,
+                15,
+                0
+              ]
+            },
+            "castOver": 1,
+            "blocked": {
+              "seat": 0,
+              "magic": 6,
+              "word": "AE + AH"
+            },
+            "sealed": []
           },
           {
             "turnNo": 37,
@@ -2221,7 +3620,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "10,-5",
+                  "10,-4"
+                ],
+                "at": 0
               },
               {
                 "word": "BI",
@@ -2234,7 +3638,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "10,-5",
+                  "11,-5"
+                ],
+                "at": 0
               },
               {
                 "word": "AB",
@@ -2247,7 +3656,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "9,-4",
+                  "10,-5"
+                ],
+                "at": 1
               }
             ],
             "magic": 12,
@@ -2263,7 +3677,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                8,
+                15,
+                12,
+                7,
+                15,
+                0
+              ],
+              "afterMove": [
+                6,
+                16,
+                12,
+                7,
+                15,
+                0
+              ],
+              "afterCast": [
+                5,
+                15,
+                12,
+                7,
+                15,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 2,
+              "magic": 10,
+              "word": "TO + TI + OAT"
+            },
+            "sealed": []
           },
           {
             "turnNo": 38,
@@ -2295,7 +3742,12 @@
                   1
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "10,-4",
+                  "10,-3"
+                ],
+                "at": 1
               },
               {
                 "word": "OWN",
@@ -2310,7 +3762,13 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "8,-3",
+                  "9,-3",
+                  "10,-3"
+                ],
+                "at": 2
               }
             ],
             "magic": 7,
@@ -2326,7 +3784,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                5,
+                15,
+                12,
+                7,
+                15,
+                0
+              ],
+              "afterMove": [
+                5,
+                15,
+                12,
+                9,
+                15,
+                0
+              ],
+              "afterCast": [
+                5,
+                15,
+                12,
+                8,
+                15,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 10,
+              "word": "ON + OWN"
+            },
+            "sealed": []
           },
           {
             "turnNo": 39,
@@ -2358,7 +3849,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "5,-5",
+                  "5,-4"
+                ],
+                "at": 0
               },
               {
                 "word": "AE",
@@ -2371,7 +3867,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "5,-5",
+                  "6,-5"
+                ],
+                "at": 0
               },
               {
                 "word": "AN",
@@ -2384,7 +3885,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "5,-5",
+                  "6,-6"
+                ],
+                "at": 0
               }
             ],
             "magic": 12,
@@ -2400,7 +3906,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                5,
+                15,
+                12,
+                8,
+                15,
+                0
+              ],
+              "afterMove": [
+                5,
+                12,
+                12,
+                8,
+                10,
+                0
+              ],
+              "afterCast": [
+                5,
+                12,
+                11,
+                8,
+                10,
+                0
+              ]
+            },
+            "castOver": 1,
+            "blocked": {
+              "seat": 0,
+              "magic": 9,
+              "word": "AT + AE + AN"
+            },
+            "sealed": []
           },
           {
             "turnNo": 40,
@@ -2432,7 +3971,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "9,-5",
+                  "9,-4"
+                ],
+                "at": 0
               },
               {
                 "word": "AB",
@@ -2445,7 +3989,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "9,-5",
+                  "10,-5"
+                ],
+                "at": 0
               }
             ],
             "magic": 8,
@@ -2461,7 +4010,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                5,
+                12,
+                11,
+                8,
+                10,
+                0
+              ],
+              "afterMove": [
+                8,
+                11,
+                11,
+                8,
+                10,
+                0
+              ],
+              "afterCast": [
+                6,
+                11,
+                11,
+                8,
+                9,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 2,
+              "magic": 4,
+              "word": "SAW"
+            },
+            "sealed": []
           },
           {
             "turnNo": 41,
@@ -2497,7 +4079,14 @@
                   1
                 ],
                 "magic": 6,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "8,-3",
+                  "9,-3",
+                  "10,-3",
+                  "11,-3"
+                ],
+                "at": 3
               },
               {
                 "word": "SI",
@@ -2510,7 +4099,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "11,-3",
+                  "12,-4"
+                ],
+                "at": 0
               }
             ],
             "magic": 10,
@@ -2526,7 +4120,36 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                6,
+                11,
+                11,
+                8,
+                9,
+                0
+              ],
+              "afterMove": [
+                6,
+                11,
+                11,
+                6,
+                9,
+                0
+              ],
+              "afterCast": [
+                6,
+                11,
+                11,
+                5,
+                9,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 42,
@@ -2560,7 +4183,13 @@
                   2
                 ],
                 "magic": 6,
-                "ownMagic": 3
+                "ownMagic": 3,
+                "hexes": [
+                  "5,-6",
+                  "5,-5",
+                  "5,-4"
+                ],
+                "at": 0
               }
             ],
             "magic": 6,
@@ -2576,7 +4205,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                6,
+                11,
+                11,
+                5,
+                9,
+                0
+              ],
+              "afterMove": [
+                6,
+                14,
+                11,
+                5,
+                15,
+                0
+              ],
+              "afterCast": [
+                6,
+                14,
+                11,
+                5,
+                15,
+                0
+              ]
+            },
+            "castOver": 2,
+            "blocked": {
+              "seat": 1,
+              "magic": 7,
+              "word": "OAT + ON"
+            },
+            "sealed": []
           },
           {
             "turnNo": 43,
@@ -2608,7 +4270,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "11,-6",
+                  "11,-5"
+                ],
+                "at": 0
               },
               {
                 "word": "BA",
@@ -2621,7 +4288,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "10,-5",
+                  "11,-6"
+                ],
+                "at": 1
               }
             ],
             "magic": 8,
@@ -2637,7 +4309,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                6,
+                14,
+                11,
+                5,
+                15,
+                0
+              ],
+              "afterMove": [
+                5,
+                15,
+                11,
+                5,
+                15,
+                0
+              ],
+              "afterCast": [
+                4,
+                15,
+                11,
+                5,
+                13,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 2,
+              "magic": 5,
+              "word": "PISS"
+            },
+            "sealed": []
           },
           {
             "turnNo": 44,
@@ -2669,7 +4374,12 @@
                   1
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "9,-3",
+                  "9,-2"
+                ],
+                "at": 1
               },
               {
                 "word": "TO",
@@ -2682,7 +4392,12 @@
                   1
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "8,-2",
+                  "9,-2"
+                ],
+                "at": 1
               },
               {
                 "word": "ON",
@@ -2695,7 +4410,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "9,-2",
+                  "10,-3"
+                ],
+                "at": 0
               }
             ],
             "magic": 10,
@@ -2711,7 +4431,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                4,
+                15,
+                11,
+                5,
+                13,
+                0
+              ],
+              "afterMove": [
+                4,
+                15,
+                11,
+                7,
+                13,
+                0
+              ],
+              "afterCast": [
+                4,
+                15,
+                11,
+                6,
+                13,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 8,
+              "word": "TI + INS"
+            },
+            "sealed": []
           },
           {
             "turnNo": 45,
@@ -2747,7 +4500,14 @@
                   2
                 ],
                 "magic": 8,
-                "ownMagic": 4
+                "ownMagic": 4,
+                "hexes": [
+                  "5,-6",
+                  "5,-5",
+                  "5,-4",
+                  "5,-3"
+                ],
+                "at": 3
               },
               {
                 "word": "US",
@@ -2760,7 +4520,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "4,-3",
+                  "5,-3"
+                ],
+                "at": 1
               },
               {
                 "word": "OS",
@@ -2773,7 +4538,12 @@
                   2
                 ],
                 "magic": 3,
-                "ownMagic": 1
+                "ownMagic": 1,
+                "hexes": [
+                  "4,-2",
+                  "5,-3"
+                ],
+                "at": 1
               }
             ],
             "magic": 15,
@@ -2789,7 +4559,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                4,
+                15,
+                11,
+                6,
+                13,
+                0
+              ],
+              "afterMove": [
+                4,
+                13,
+                11,
+                6,
+                13,
+                0
+              ],
+              "afterCast": [
+                4,
+                13,
+                11,
+                6,
+                12,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 11,
+              "word": "THE + UH + OH"
+            },
+            "sealed": []
           },
           {
             "turnNo": 46,
@@ -2823,7 +4626,13 @@
                   0
                 ],
                 "magic": 5,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "5,-3",
+                  "6,-3",
+                  "7,-3"
+                ],
+                "at": 1
               },
               {
                 "word": "EH",
@@ -2836,7 +4645,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "5,-2",
+                  "6,-3"
+                ],
+                "at": 1
               }
             ],
             "magic": 9,
@@ -2852,7 +4666,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                4,
+                13,
+                11,
+                6,
+                12,
+                0
+              ],
+              "afterMove": [
+                11,
+                8,
+                11,
+                6,
+                14,
+                0
+              ],
+              "afterCast": [
+                11,
+                7,
+                11,
+                6,
+                14,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 2,
+              "magic": 8,
+              "word": "SLY + EL"
+            },
+            "sealed": []
           },
           {
             "turnNo": 47,
@@ -2888,7 +4735,14 @@
                   1
                 ],
                 "magic": 6,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "10,-5",
+                  "10,-4",
+                  "10,-3",
+                  "10,-2"
+                ],
+                "at": 3
               },
               {
                 "word": "OD",
@@ -2901,7 +4755,12 @@
                   1
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "9,-2",
+                  "10,-2"
+                ],
+                "at": 1
               }
             ],
             "magic": 10,
@@ -2917,7 +4776,36 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                11,
+                7,
+                11,
+                6,
+                14,
+                0
+              ],
+              "afterMove": [
+                11,
+                7,
+                11,
+                10,
+                14,
+                0
+              ],
+              "afterCast": [
+                11,
+                7,
+                11,
+                9,
+                14,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           },
           {
             "turnNo": 48,
@@ -2949,7 +4837,12 @@
                   2
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "6,-5",
+                  "6,-4"
+                ],
+                "at": 1
               }
             ],
             "magic": 4,
@@ -2965,7 +4858,40 @@
             ],
             "newlyTangled": [],
             "freed": [],
-            "completeTangles": []
+            "completeTangles": [],
+            "mobility": {
+              "before": [
+                11,
+                7,
+                11,
+                9,
+                14,
+                0
+              ],
+              "afterMove": [
+                11,
+                7,
+                11,
+                9,
+                12,
+                0
+              ],
+              "afterCast": [
+                11,
+                6,
+                11,
+                9,
+                11,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": {
+              "seat": 0,
+              "magic": 7,
+              "word": "AH + TA"
+            },
+            "sealed": []
           },
           {
             "turnNo": 49,
@@ -2997,7 +4923,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "11,-6",
+                  "12,-6"
+                ],
+                "at": 1
               },
               {
                 "word": "IN",
@@ -3010,7 +4941,12 @@
                   0
                 ],
                 "magic": 4,
-                "ownMagic": 2
+                "ownMagic": 2,
+                "hexes": [
+                  "11,-5",
+                  "12,-6"
+                ],
+                "at": 1
               }
             ],
             "magic": 8,
@@ -3034,7 +4970,36 @@
                 "glyphling": 0,
                 "by": null
               }
-            ]
+            ],
+            "mobility": {
+              "before": [
+                11,
+                6,
+                11,
+                9,
+                11,
+                0
+              ],
+              "afterMove": [
+                3,
+                6,
+                11,
+                9,
+                11,
+                0
+              ],
+              "afterCast": [
+                0,
+                6,
+                11,
+                9,
+                11,
+                0
+              ]
+            },
+            "castOver": 0,
+            "blocked": null,
+            "sealed": []
           }
         ],
         "end": {
@@ -3082,7 +5047,8 @@
             100
           ]
         }
-      }
+      },
+      "pendingLog": null
     },
     "trayOrder": [
       [
