@@ -22,12 +22,13 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEven
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { Row, Screen, ScrollArea, Stack, Tabs, Text } from '../ui/kit'
+import { logOf } from '../engine/log'
 import { colourOf } from './art'
 import { EndBar } from './EndBar'
 import { EndHighlights } from './EndHighlights'
 import { EndResults } from './EndResults'
 import { EndScorecard } from './EndScorecard'
-import { awardText, markerCaption, markerLabel, tangleBonusCaption } from './endText'
+import { markerCaption, markerLabel, tangleBonusCaption, turnCaption } from './endText'
 import { playerName, winnerTitle } from './prompt'
 import { awardPoint, earnedAwards, markersNear, scorecards, standings, storyChart } from './stats'
 import { SeatShape, StoryChart } from './StoryChart'
@@ -165,10 +166,14 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
   )
   // A tapped mark tells its moment — and any marks drawn on top of it (same round, nearly the same Magic)
   const tapped = typeof selected === 'number' && selected >= end.chart.markers.length ? null : selected // (another game since)
-  const starCaption = () => { const t = award && awardText(award, name); return t ? `${t.title}: ${t.reason}` : w.chart.hint }
+  // What happened on the starred award's turn ("Round 4 · Yellow cast N: …") — not the award again (the carousel says it)
+  const starTurn = () => {
+    const turn = award && logOf(game).turns.find((t) => t.turnNo === award.moment)
+    return turn ? turnCaption(turn, name) : w.chart.hint
+  }
   const captions = tapped === null ? [w.chart.hint]
     : tapped === 'tangles' ? [tangleBonusCaption(game, name)]
-    : tapped === 'star' ? [starCaption()]
+    : tapped === 'star' ? [starTurn()] // the carousel above names the award; the star tells that turn's moment
     : markersNear(end.chart, tapped).map((m) => markerCaption(game, m, end.awards, name))
 
   return (
