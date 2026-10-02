@@ -70,6 +70,8 @@ export function secretsIn(frame) {
   if (results) out.push('results')
   // the game log (every turn's words + Magic + running totals) is sent empty until the end (D48)
   if ((game.log && (game.log.turns.length || game.log.end)) || /totalsAfter|ownMagic/.test(frame)) out.push('the game log')
+  // …and what a rival could have spelled on a cast's hex (the Weed toss award reads their hand): log-only (pendingLog)
+  if (game.pendingLog || /"blocked"|"mobility"/.test(frame)) out.push("the log's pending facts")
   return out
 }
 
