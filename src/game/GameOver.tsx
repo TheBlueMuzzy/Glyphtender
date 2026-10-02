@@ -26,7 +26,7 @@ import { EndResults } from './EndResults'
 import { EndScorecard } from './EndScorecard'
 import { markerCaption, markerLabel, tangleBonusCaption } from './endText'
 import { playerName, winnerTitle } from './prompt'
-import { markersNear, pickAwards, scorecards, standings, storyChart, type Award } from './stats'
+import { earnedAwards, markersNear, scorecards, standings, storyChart, type Award } from './stats'
 import { SeatShape, StoryChart } from './StoryChart'
 import { useEndTuning, useGardenTuning } from './useTuning'
 
@@ -69,8 +69,8 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
 
   const end = useMemo(() => {
     if (!game) return null
-    const awards = pickAwards(game, tuning)
-    return { ranked: standings(game), cards: scorecards(game), awards, chart: storyChart(game, awards, tuning.maxMarkers) }
+    const awards = earnedAwards(game, tuning)
+    return { ranked: standings(game), cards: scorecards(game), awards, chart: storyChart(game, tuning.maxMarkers) }
   }, [game, tuning])
 
   // The page's size, and what the Story page has besides the chart (its key + caption): the chart takes what's left
@@ -153,7 +153,7 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
   // A highlight tapped on the Results page: the Story chart, at that moment
   const showAward = (award: Award) => {
     const at = end.chart.markers.findIndex((m) => m.kind === 'award' && m.award === award.id)
-    setSelected(at >= 0 ? at : award.moment === 'tangles' ? 'tangles' : null)
+    setSelected(at >= 0 ? at : null)
     setPage('story')
   }
   // A tapped mark tells its moment — and any marks drawn on top of it (same round, nearly the same Magic)

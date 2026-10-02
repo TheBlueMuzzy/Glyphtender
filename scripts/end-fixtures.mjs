@@ -13,7 +13,7 @@ try {
   const { applyAction, newGame } = await vite.ssrLoadModule('/src/engine/engine.ts')
   const { greedyAction } = await vite.ssrLoadModule('/src/engine/sim.ts')
   const { parseWordList } = await vite.ssrLoadModule('/src/engine/words.ts')
-  const { pickAwards, storyChart } = await vite.ssrLoadModule('/src/game/stats.ts')
+  const { earnedAwards, storyChart } = await vite.ssrLoadModule('/src/game/stats.ts')
   const version = JSON.parse(readFileSync('version.json', 'utf8'))
   const words = parseWordList(readFileSync('public/words/words.csv', 'utf8'))
 
@@ -41,14 +41,14 @@ try {
       state: { game, trayOrder: game.hands.map((h) => h.map((_, i) => i)) },
     }
     writeFileSync(`e2e/fixtures/${file}.json`, JSON.stringify(snapshot, null, 2) + '\n')
-    console.log(`${file}: seed ${game.config.seed}, ${game.turnCount} turns, Magic ${game.magic.join('/')}, awards ${pickAwards(game).map((a) => a.id).join(', ')}`)
+    console.log(`${file}: seed ${game.config.seed}, ${game.turnCount} turns, Magic ${game.magic.join('/')}, awards ${earnedAwards(game).map((a) => a.id).join(', ')}`)
   }
 
   for (const players of [2, 3, 4]) {
     for (let seed = 1; seed < 200; seed++) {
       const game = play(players, seed)
-      const awards = pickAwards(game)
-      const chart = storyChart(game, awards, 6)
+      const awards = earnedAwards(game)
+      const chart = storyChart(game, 6)
       if (game.winners.length === 1 && awards.length === want[players] && chart.markers.some((m) => m.kind === 'tangle')) {
         save(`end-${players}p`, `End screen: ${players} players`, game)
         break

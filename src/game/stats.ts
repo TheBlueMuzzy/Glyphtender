@@ -1,12 +1,16 @@
 // THE END SCREEN'S NUMBERS — worked out from the finished game's log (src/engine/log.ts). Pure: no React, no store.
 //   standings(game)        who came where (ties share a place)
 //   scorecards(game)       one per player: Magic from words / solo words / tangles, words by length, best turn…
-//   pickAwards(game, t)    the highlights (research/end-screen.md §3): fun titles, never Magic, never "worst at"
+//   earnedAwards(game, t)  the Highlights: skill awards earned this game, measured from the log's facts (never Magic)
+//   awardPoint(…)          where an award's star sits on the Story chart
 //   storyChart(game, …)    Magic over the rounds, one line per player, plus a Tangles step and moment markers
 // The words for all of it live in content/text/en.json → game.end; the knobs in content/tuning/endscreen.json.
 import { logIsComplete, logOf } from '../engine/log'
 import type { GameState, LogTurn, LogWord } from '../engine/types'
 import endscreenFile from '../../content/tuning/endscreen.json'
+import textFile from '../../content/text/en.json'
+
+const endWords = textFile.game.gameOver
 
 export type EndTuning = typeof endscreenFile
 
@@ -111,194 +115,164 @@ export function scorecards(game: GameState): Scorecard[] {
 }
 
 // ─── Awards ──────────────────────────────────────────────────
+// The Highlights (GDD §4 Awards; Muzzy, 2026-10-02): "achievements should incentivize specific and correct/clever
+// plays" — and "this game is secretly more about positioning and blocking your opponent than it is spelling". Intent
+// can't be read, so each award measures a turn's EFFECT (the log's facts, engine/insight.ts) and is earned only when
+// the effect is big (endscreen.json thresholds); its caption shows the proof ("Blue: 9 moves → 2"). Never luck, never
+// bad play — a rival's mistake becomes the other player's award. Only awards actually earned show, each at most once
+// per player per game (its biggest moment); Biggest comeback once per game. Awards never add Magic.
 
-export type AwardId = keyof EndTuning['awardPriority']
+export type AwardId = keyof EndTuning['awardOrder']
 
 export interface Award {
   id: AwardId
-  /** The player it's for (null = about the whole table, e.g. Photo finish). */
-  holder: number | null
+  /** The player it's for. */
+  holder: number
   /** Players to show beside it (the holder first). */
   seats: number[]
-  /** The moment it points at on the Story chart: a turn, 'tangles' (the end bonus), or null (no one moment). */
-  moment: number | 'tangles' | null
-  /** Fill-ins for its words in en.json: n (a number), word, words, round, other (a seat), won… */
+  /** The turn it points at (turnNo): where the Story chart's star goes, on the holder's line. */
+  moment: number
+  /** Fill-ins for its words in en.json: n (a number), word, other (a seat)… */
   values: Record<string, string | number | boolean>
+  /** How big the effect was (the bigger one wins between moments of the same award). */
+  effect: number
 }
 
-/** A possible award: everyone who could hold it, best (or earliest) first. */
-interface Candidate { id: AwardId; holders: number[]; tableWide?: boolean; make: (holder: number) => Award }
+const keyOf = (h: { q: number; r: number }) => `${h.q},${h.r}`
+const ownerOfGlyphling = (game: GameState, id: number) => game.glyphlings.find((g) => g.id === id)?.seat ?? Math.floor(id / 2)
 
-/** Never shown together: the first one picked wins the slot. */
-const EXCLUSIVE: AwardId[][] = [['photoFinish', 'deciding'], ['knotTier', 'braveKnot']]
-
-/** Everything with the best value (above 0), earliest first. */
-function bestOf<T>(items: T[], value: (x: T) => number): T[] {
-  const best = Math.max(0, ...items.map(value))
-  return best > 0 ? items.filter((x) => value(x) === best) : []
-}
-const uniqueSeats = (seats: number[]) => [...new Set(seats)]
-
-/** Every award that applies to this game (unordered; pickAwards chooses). */
-export function awardCandidates(game: GameState, tuning: EndTuning): Candidate[] {
+/** Every award earned this game, best moment per player per award, in the carousel's order (awardOrder, then size). */
+export function earnedAwards(game: GameState, tuning: EndTuning = endscreenFile): Award[] {
   const log = logOf(game)
   const turns = log.turns
-  const cards = scorecards(game)
-  const ranked = standings(game)
-  const winners = game.winners.length ? game.winners : ranked.filter((s) => s.place === 1).map((s) => s.seat)
-  const soleWinner = winners.length === 1 ? winners[0] : null
-  const out: Candidate[] = []
-  const turnAward = (id: AwardId, list: LogTurn[], value: (t: LogTurn) => number, values: (t: LogTurn) => Award['values']) => {
-    const top = bestOf(list, value)
-    if (!top.length) return
-    out.push({
-      id, holders: uniqueSeats(top.map((t) => t.seat)),
-      make: (holder) => {
-        const t = top.find((x) => x.seat === holder)!
-        return { id, holder, seats: [holder], moment: t.turnNo, values: { n: value(t), round: t.round, ...values(t) } }
-      },
-    })
-  }
-  const wordsOf = (t: LogTurn) => t.words.map((w) => w.word)
+  if (!turns.length) return []
+  const t = tuning
+  const found: Award[] = []
+  const add = (id: AwardId, holder: number, turn: LogTurn, effect: number, values: Award['values'], seats: number[] = []) =>
+    found.push({ id, holder, seats: [...new Set([holder, ...seats])], moment: turn.turnNo, values: { round: turn.round, ...values }, effect })
+  const wordsOf = (turn: LogTurn) => turn.words.map((w) => w.word).join(endWords.and)
+  const rivalsOf = (seat: number) => game.glyphlings.filter((g) => g.seat !== seat)
+  const totalsBefore = (i: number) => (i > 0 ? turns[i - 1].totalsAfter : game.magic.map(() => 0))
+  const everTangled = (id: number) => game.tangled.includes(id) || turns.some((x) => x.tangledAfter.includes(id))
 
-  // Photo finish (table-wide): won by photoFinishMax or less
-  if (soleWinner !== null && ranked.length > 1) {
-    const margin = ranked[0].magic - ranked[1].magic
-    if (margin <= tuning.photoFinishMax) {
-      const second = ranked.filter((s) => s.place === 2).map((s) => s.seat)
-      out.push({ id: 'photoFinish', holders: [soleWinner], tableWide: true, make: () => ({ id: 'photoFinish', holder: null, seats: [soleWinner, ...second], moment: 'tangles', values: { n: margin } }) })
+  turns.forEach((turn, i) => {
+    const seat = turn.seat
+    const m = turn.mobility
+    // ── Positioning & blocking ──
+    if (m) {
+      for (const g of rivalsOf(seat)) {
+        const [from, mid, to] = [m.before[g.id], m.afterMove[g.id], m.afterCast[g.id]]
+        if (from === undefined || mid === undefined || to === undefined) continue
+        // Lockdown: this turn took a rival glyphling from many moves to almost none
+        if (from - to >= t.lockdownMinDrop && to <= t.lockdownMaxAfter) {
+          add('lockdown', seat, turn, from - to, { other: g.seat, from, to }, [g.seat])
+        }
+        // Pincer: the move AND the cast each took moves from the same rival glyphling
+        if (from - mid >= t.pincerMinEach && mid - to >= t.pincerMinEach && from - to >= t.pincerMinDrop) {
+          add('pincer', seat, turn, from - to, { other: g.seat, from, mid, to }, [g.seat])
+        }
+      }
+      // Close call: one of the mover's glyphlings had 1 move left (the danger cue) at the start of their turn, had
+      // plenty after it — and was never tangled all game
+      for (const g of game.glyphlings.filter((x) => x.seat === seat)) {
+        const now = m.afterCast[g.id] ?? 0
+        if (m.before[g.id] === 1 && now >= t.closeCallMinAfter && !everTangled(g.id)) add('closeCall', seat, turn, now, { n: now })
+      }
     }
-  }
-
-  // The deciding turn: the last time the lead changed hands — the winner led alone from then on
-  if (soleWinner !== null && turns.length) {
-    const leader = (totals: number[]) => {
-      const top = Math.max(...totals)
-      const at = totals.flatMap((m, seat) => (m === top ? [seat] : []))
-      return at.length === 1 ? at[0] : null
+    // Weed toss: a cast that scored (next to) nothing but took a rival's scoring spot, or cut a rival's moves
+    if (turn.letter !== null && turn.target && turn.magic <= t.weedMaxMagic && m && turn.blocked !== undefined) {
+      const refreshed = turn.refresh && turn.refreshed > 0
+      const bonus = refreshed ? 0.5 : 0
+      const block = turn.blocked && turn.blocked.magic >= t.weedMinBlocked ? turn.blocked : null
+      const cut = rivalsOf(seat).map((g) => ({ seat: g.seat, from: m.afterMove[g.id] ?? 0, to: m.afterCast[g.id] ?? 0 }))
+        .filter((c) => c.from - c.to >= t.weedMinCut).sort((a, b) => b.from - b.to - (a.from - a.to))[0]
+      if (block) add('weedToss', seat, turn, block.magic + bonus, { kind: 'block', other: block.seat, n: block.magic, word: block.word, refreshed }, [block.seat])
+      else if (cut) add('weedToss', seat, turn, cut.from - cut.to + bonus, { kind: 'cut', other: cut.seat, from: cut.from, to: cut.to, refreshed }, [cut.seat])
     }
-    const points = [...turns.map((t) => t.totalsAfter), game.magic]
-    let from = points.length - 1
-    while (from > 0 && leader(points[from - 1]) === soleWinner) from--
-    const someoneElseLed = points.slice(0, from).some((p) => { const l = leader(p); return l !== null && l !== soleWinner })
-    if (someoneElseLed) {
-      const t = turns[from]
-      out.push({
-        id: 'deciding', holders: [soleWinner],
-        make: (): Award => (t
-          ? { id: 'deciding', holder: soleWinner, seats: [soleWinner], moment: t.turnNo, values: { round: t.round, n: t.magic, words: wordsOf(t).join(' + '), tangles: false } }
-          : { id: 'deciding', holder: soleWinner, seats: [soleWinner], moment: 'tangles', values: { n: game.tangleMagic[soleWinner], tangles: true } }),
-      })
+    // Walled garden: this cast shut the caster's glyphling in a pocket no rival glyphling can reach — then the Magic
+    // they made in there (this turn on: every turn of theirs that moved from and to hexes inside it)
+    for (const pocket of turn.sealed ?? []) {
+      const inside = new Set(pocket.hexes)
+      let made = 0
+      for (let j = i; j < turns.length; j++) {
+        const later = turns[j]
+        if (later.seat !== seat || !inside.has(keyOf(later.to)) || (j > i && !inside.has(keyOf(later.from)))) continue
+        made += later.magic
+      }
+      if (made >= t.walledMinMagic) add('walledGarden', seat, turn, made, { n: made })
     }
-  }
-
-  turnAward('biggestTurn', turns, (t) => t.magic, (t) => ({ words: wordsOf(t).join(' + ') }))
-  turnAward('twoBirds', turns.filter((t) => t.words.length >= tuning.twoBirdsMin), (t) => t.words.length, (t) => ({ words: wordsOf(t).join(' + ') }))
-
-  // Word awards: the best word of a kind, with the turn it was grown on
-  const allWords = turns.flatMap((t) => t.words.map((w) => ({ t, w })))
-  const wordAward = (id: AwardId, list: typeof allWords, value: (x: (typeof allWords)[number]) => number) => {
-    const top = bestOf(list, value)
-    if (!top.length) return
-    out.push({
-      id, holders: uniqueSeats(top.map((x) => x.t.seat)),
-      make: (holder) => {
-        const { t, w } = top.find((x) => x.t.seat === holder)!
-        return { id, holder, seats: [holder], moment: t.turnNo, values: { n: value({ t, w }), word: w.word, magic: w.magic, round: t.round } }
-      },
-    })
-  }
-  wordAward('longestWord', allWords, (x) => x.w.word.length)
-  wordAward('borrowedBloom', allWords.filter(({ t, w }) => w.owners.filter((o) => o !== t.seat).length * 2 > w.owners.length), (x) => x.w.magic)
-  wordAward('rareSeed', allWords.filter(({ w }) => w.letters.some((l) => /^(Q|Z|X|J)/i.test(l))), (x) => x.w.magic)
-
-  // Per-player totals
-  const playerAward = (id: AwardId, value: (c: Scorecard) => number, min = 1, values: (c: Scorecard) => Award['values'] = () => ({})) => {
-    const top = Math.max(...cards.map(value))
-    if (top < min) return
-    out.push({
-      id, holders: cards.filter((c) => value(c) === top).map((c) => c.seat),
-      make: (holder) => ({ id, holder, seats: [holder], moment: null, values: { n: top, ...values(cards[holder]) } }),
-    })
-  }
-  playerAward('soloGrower', (c) => c.soloMagic)
-  playerAward('generousGardener', (c) => c.lettersGiven, tuning.generousMin)
-  playerAward('tangleHarvest', (c) => c.tangleMagic)
-
-  // Knot tier: tangled a rival's glyphling (who it was is told)
-  const tangledBy = tanglers(turns)
-  const knots = game.tangled.flatMap((id) => {
-    const by = tangledBy.get(id)
-    const owner = game.glyphlings.find((g) => g.id === id)?.seat
-    const turn = [...turns].reverse().find((t) => t.newlyTangled.includes(id))
-    return by !== undefined && owner !== undefined && by !== owner && turn ? [{ by, owner, turn }] : []
+    // Through the hedge: a scoring cast that flew over the caster's own seeds
+    const over = turn.castOver ?? 0
+    if (over >= t.hedgeMinOver && turn.magic > 0) add('throughHedge', seat, turn, over * 100 + turn.magic, { over, n: turn.magic })
+    // Complete tangle: a rival glyphling tangled with only the holder's pieces round it (log.ts completeTangler)
+    for (const c of turn.completeTangles ?? []) {
+      if (c.by === null) continue
+      const owner = ownerOfGlyphling(game, c.glyphling)
+      add('completeTangle', c.by, turn, 1, { other: owner }, [owner])
+    }
+    // ── Spelling ──
+    if (turn.words.length >= t.powerPlayMin) add('powerPlay', seat, turn, turn.words.length * 100 + turn.magic, { n: turn.words.length, words: wordsOf(turn) })
+    const longMin = game.config.boardName === 'small' ? t.longWordMinSmall : t.longWordMinLarge
+    for (const w of turn.words) {
+      if (w.letters.length >= longMin) add('longWord', seat, turn, w.letters.length * 100 + w.magic, { n: w.letters.length, word: w.word })
+      // Bridge: the seed landed INSIDE a word — letters already on both sides of it, joined into one word
+      if (w.at !== undefined && w.at > 0 && Math.min(w.at, w.letters.length - 1 - w.at) >= t.bridgeMinSide) {
+        add('bridge', seat, turn, w.letters.length * 100 + w.magic, { word: w.word, letter: w.letters[w.at], left: w.letters.slice(0, w.at).join(''), right: w.letters.slice(w.at + 1).join('') })
+      }
+      // Hijack: a word a rival grew earlier, made into a longer one where the holder owns most of the seeds
+      const hexes = w.hexes
+      if (hexes && w.owners.filter((o) => o === seat).length * 2 > w.owners.length) {
+        const mine = new Set(hexes)
+        const theirs = turns.slice(0, i).filter((x) => x.seat !== seat).flatMap((x) => x.words.map((v) => ({ x, v })))
+          .find(({ v }) => v.hexes && v.hexes.length < hexes.length && v.hexes.every((h) => mine.has(h)))
+        if (theirs) add('hijack', seat, turn, w.magic, { other: theirs.x.seat, from: theirs.v.word, word: w.word, n: w.magic }, [theirs.x.seat])
+      }
+    }
   })
-  if (knots.length) {
-    out.push({
-      id: 'knotTier', holders: uniqueSeats(knots.map((k) => k.by)),
-      make: (holder) => {
-        const k = knots.find((x) => x.by === holder)!
-        return { id: 'knotTier', holder, seats: [holder, k.owner], moment: k.turn.turnNo, values: { other: k.owner, round: k.turn.round, n: knots.filter((x) => x.by === holder).length } }
-      },
-    })
-  }
 
-  // Brave knot: ended the game by tangling their own glyphling — and the gamble worked, or didn't
-  if (log.end?.selfTangle) {
-    const by = log.end.endedBy
-    out.push({ id: 'braveKnot', holders: [by], make: () => ({ id: 'braveKnot', holder: by, seats: [by], moment: log.end!.endedOnTurn, values: { won: winners.includes(by) } }) })
-  }
-
-  // Secret leader: led alone at the end of the most rounds
-  const rounds = roundEnds(turns)
-  const ledRounds = game.magic.map((_, seat) => rounds.filter((t) => {
-    const top = Math.max(...t.totalsAfter)
-    return t.totalsAfter[seat] === top && t.totalsAfter.filter((m) => m === top).length === 1
-  }).length)
-  playerAward('secretLeader', (c) => ledRounds[c.seat], tuning.secretLeaderMinRounds, () => ({ rounds: rounds.length }))
-
-  // Comeback: the biggest gap the (sole) winner closed
-  if (soleWinner !== null) {
-    const gap = Math.max(0, ...turns.map((t) => Math.max(...t.totalsAfter) - t.totalsAfter[soleWinner]))
-    if (gap >= tuning.comebackMin) {
-      out.push({ id: 'comeback', holders: [soleWinner], make: () => ({ id: 'comeback', holder: soleWinner, seats: [soleWinner], moment: null, values: { n: gap } }) })
+  // ── Momentum & ending ──
+  // Biggest comeback: the one turn that took the lead (alone) from furthest behind — once per game
+  let comeback: { turn: LogTurn; behind: number } | null = null
+  turns.forEach((turn, i) => {
+    const was = totalsBefore(i)
+    const best = (totals: number[]) => Math.max(...totals.filter((_, s) => s !== turn.seat))
+    const behind = best(was) - was[turn.seat]
+    if (behind >= t.comebackMinDeficit && turn.totalsAfter[turn.seat] > best(turn.totalsAfter) && behind > (comeback?.behind ?? 0)) comeback = { turn, behind }
+  })
+  const back = comeback as { turn: LogTurn; behind: number } | null
+  if (back) add('comeback', back.turn.seat, back.turn, back.behind, { n: back.behind, gain: back.turn.magic })
+  // The ending: who ended it, and were they ahead or behind at that moment (before the tangle bonus)?
+  const end = log.end
+  const last = end ? turns.find((x) => x.turnNo === end.endedOnTurn) : undefined
+  if (end && last && last.totalsAfter.length > 1) {
+    const ender = end.endedBy
+    const margin = last.totalsAfter[ender] - Math.max(...last.totalsAfter.filter((_, s) => s !== ender))
+    // Called it: ended the game while secretly in the lead — and it held (they won)
+    if (margin > 0 && game.winners.includes(ender)) add('calledIt', ender, last, margin, { n: margin })
+    // Trickster's Victory: a rival ended the game while behind — the winner gets the credit
+    if (margin < 0 && !game.winners.includes(ender)) {
+      for (const winner of game.winners) add('trickster', winner, last, -margin, { other: ender, n: -margin }, [ender])
     }
   }
 
-  // Fresh start: the most Magic on a player's next turn after a refresh
-  const after = turns.filter((t, i) => {
-    const prev = turns.slice(0, i).reverse().find((p) => p.seat === t.seat)
-    return prev?.refresh === true
-  })
-  turnAward('freshStart', after, (t) => t.magic, (t) => ({ words: wordsOf(t).join(' + ') }))
-
-  return out
+  // Best moment per player per award; then the carousel's order
+  const order = tuning.awardOrder as Record<AwardId, number>
+  const best = new Map<string, Award>()
+  for (const a of found) {
+    if (!((order[a.id] ?? 0) > 0)) continue
+    const k = `${a.id}:${a.holder}`
+    const old = best.get(k)
+    if (!old || a.effect > old.effect) best.set(k, a)
+  }
+  return [...best.values()].sort((a, b) => order[a.id] - order[b.id] || b.effect - a.effect || a.moment - b.moment)
 }
 
-/**
- * The highlights to show: by awardPriority (0 = off), awardsFor2/3/4 of them, and no player gets a second
- * award until every player has one (Fellowship — in a 4-player game everyone gets a moment).
- */
-export function pickAwards(game: GameState, tuning: EndTuning = endscreenFile): Award[] {
-  const players = game.config.players
-  const want = (tuning as Record<string, unknown>)[`awardsFor${players}`] as number | undefined ?? 3
-  const priority = tuning.awardPriority as Record<AwardId, number>
-  const candidates = awardCandidates(game, tuning)
-    .filter((c) => (priority[c.id] ?? 0) > 0)
-    .sort((a, b) => priority[a.id] - priority[b.id])
-  const picked: Award[] = []
-  const awarded = new Set<number>()
-  for (const c of candidates) {
-    if (picked.length >= want) break
-    if (EXCLUSIVE.some((group) => group.includes(c.id) && picked.some((p) => group.includes(p.id)))) continue
-    if (c.tableWide) { picked.push(c.make(c.holders[0])); continue }
-    const everyoneHasOne = awarded.size >= players
-    const holder = c.holders.find((seat) => !awarded.has(seat)) ?? (everyoneHasOne ? c.holders[0] : undefined)
-    if (holder === undefined) continue
-    picked.push(c.make(holder))
-    awarded.add(holder)
-  }
-  return picked
+/** The Story chart's spot for an award: on the holder's line, at the round of its turn. */
+export function awardPoint(game: GameState, chart: StoryChart, award: Award): ChartMarker | null {
+  if (chart.rounds === 0) return null
+  const turn = logOf(game).turns.find((x) => x.turnNo === award.moment)
+  if (!turn) return null
+  return { kind: 'award', seat: award.holder, x: Math.min(turn.round, chart.rounds), turnNo: turn.turnNo, award: award.id }
 }
 
 // ─── The Story chart ─────────────────────────────────────────
@@ -318,7 +292,7 @@ export interface ChartMarker {
   turnNo: number | null
   /** tangle: who tangled it (its outline colour). */
   by?: number
-  /** tangle: which glyphling. award: which award. */
+  /** tangle: which glyphling. award (the Highlights star, awardPoint): which award. */
   glyphling?: number
   award?: AwardId
 }
@@ -332,7 +306,8 @@ export interface StoryChart {
   max: number
 }
 
-export function storyChart(game: GameState, awards: Award[], maxMarkers: number): StoryChart {
+/** The chart: the lines, plus marks for tangles and lead changes (the current award's star is drawn on top: awardPoint). */
+export function storyChart(game: GameState, maxMarkers: number): StoryChart {
   // A log that doesn't cover every turn (an old save) can't tell the story: just the start and the end, no marks
   if (!logIsComplete(game)) {
     return { rounds: 0, series: game.magic.map((final, seat) => ({ seat, points: [0, final] })), markers: [], max: Math.max(1, ...game.magic) }
@@ -341,7 +316,6 @@ export function storyChart(game: GameState, awards: Award[], maxMarkers: number)
   const ends = roundEnds(turns)
   const rounds = ends.length
   const series = game.magic.map((final, seat) => ({ seat, points: [0, ...ends.map((t) => t.totalsAfter[seat]), final] }))
-  const roundOf = (turnNo: number) => turns.find((t) => t.turnNo === turnNo)?.round ?? rounds
   // Tangles: on the tangled glyphling's owner's line, in the round it got tangled, outlined in the tangler's colour
   const tangledBy = tanglers(turns)
   const tangleMarks: ChartMarker[] = game.tangled.flatMap((id) => {
@@ -349,12 +323,6 @@ export function storyChart(game: GameState, awards: Award[], maxMarkers: number)
     const owner = game.glyphlings.find((g) => g.id === id)?.seat
     if (!turn || owner === undefined) return []
     return [{ kind: 'tangle' as const, seat: owner, x: turn.round, turnNo: turn.turnNo, by: tangledBy.get(id), glyphling: id }]
-  })
-  const awardMarks: ChartMarker[] = awards.flatMap((a): ChartMarker[] => {
-    const seat = a.holder ?? a.seats[0]
-    if (a.moment === null || seat === undefined) return []
-    if (a.moment === 'tangles') return [{ kind: 'award' as const, seat, x: rounds + 1, turnNo: null, award: a.id }]
-    return [{ kind: 'award' as const, seat, x: roundOf(a.moment), turnNo: a.moment, award: a.id }]
   })
   // Lead changes: where a new player leads alone at a round's end
   const leadMarks: ChartMarker[] = []
@@ -366,9 +334,9 @@ export function storyChart(game: GameState, awards: Award[], maxMarkers: number)
     if (leader !== null) leadMarks.push({ kind: 'lead', seat: at[0], x: t.round, turnNo: t.turnNo })
     leader = at[0]
   })
-  // No two markers on the same spot; tangles first, then awards, then lead changes
+  // No two markers on the same spot; tangles first, then lead changes
   const markers: ChartMarker[] = []
-  for (const m of [...tangleMarks, ...awardMarks, ...leadMarks]) {
+  for (const m of [...tangleMarks, ...leadMarks]) {
     if (markers.length >= maxMarkers) break
     if (markers.some((o) => o.seat === m.seat && o.x === m.x)) continue
     markers.push(m)

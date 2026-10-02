@@ -4,7 +4,7 @@ import { hexKey } from './hex'
 import { reachArea, sealedPockets, seedsFlownOver, turnMobility } from './insight'
 import { logOf } from './log'
 import { blockedSpot } from './turn'
-import { hexAt, position, wordsOf } from './testkit'
+import { hexAt, position, wordsOf, type SeedPlan } from './testkit'
 
 const words = wordsOf('CAT', 'AT', 'TO')
 const turn = (glyphling: number, to: string, target: string | null) =>
@@ -103,6 +103,6 @@ describe('a spot a rival could have scored on (turn.ts blockedSpot â†’ the logâ€
   })
 })
 
-function cornerPlan() {
-  return { glyphlings: {}, seeds: [{ 'C2-2': 'A', 'C2-3': 'B', 'C2-4': 'C', 'C1-3': 'D' }, {}], hands: [[], []] }
+function cornerPlan(): { seeds: SeedPlan[] } {
+  return { seeds: [{ 'C2-2': 'A', 'C2-3': 'B', 'C2-4': 'C', 'C1-3': 'D' }, {}] }
 }

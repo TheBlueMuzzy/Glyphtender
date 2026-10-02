@@ -6,23 +6,22 @@ import type { Award, Scorecard } from './stats'
 
 const names = ['Yellow', 'Blue', 'Purple', 'Pink']
 const name = (seat: number) => names[seat]
-const award = (id: Award['id'], values: Award['values'], holder = 0): Award => ({ id, holder, seats: [holder], moment: 3, values })
+const award = (id: Award['id'], values: Award['values'], holder = 0): Award => ({ id, holder, seats: [holder], moment: 3, values, effect: 1 })
 const turn = (extra: Partial<LogTurn>): LogTurn => ({
   turnNo: 7, round: 4, seat: 1, glyphlingId: 2, from: { q: 0, r: 0 }, to: { q: 0, r: 1 }, letter: 'N', target: { q: 1, r: 1 },
   words: [], magic: 0, refreshed: 0, refresh: false, totalsAfter: [0, 0], tangledAfter: [], newlyTangled: [], freed: [], ...extra,
 })
 
 describe('award words', () => {
-  it('fills in the numbers and words', () => {
-    expect(awardText(award('biggestTurn', { n: 14, words: 'GARDEN + DEN' }), name)).toEqual({ title: 'Biggest turn', reason: '+14 Magic in one cast: GARDEN + DEN' })
+  it('fills in the proof: "Blue’s glyphling: 9 moves → 2"', () => {
+    expect(awardText(award('lockdown', { other: 1, from: 9, to: 2 }), name)).toEqual({ title: 'Lockdown', reason: "Blue's glyphling: 9 moves → 2" })
   })
-  it('names the other player (Knot tier)', () => {
-    expect(awardText(award('knotTier', { other: 2, n: 1 }, 1), name).reason).toBe("Tangled Purple's glyphling")
+  it('Weed toss: a taken spot or a cut, and whether they refreshed after', () => {
+    expect(awardText(award('weedToss', { kind: 'block', other: 2, n: 8, word: 'GARDEN', refreshed: false }), name).reason).toBe("A junk seed took Purple's +8 spot (GARDEN)")
+    expect(awardText(award('weedToss', { kind: 'cut', other: 1, from: 6, to: 1, refreshed: true }), name).reason).toBe("A junk seed cut Blue's glyphling: 6 moves → 1, then refreshed")
   })
-  it('the deciding moment can be the tangles; a brave knot can win', () => {
-    expect(awardText(award('deciding', { n: 9, tangles: true }), name).reason).toBe('The tangles decided it: +9 at the very end')
-    expect(awardText(award('braveKnot', { won: true }), name).reason).toMatch(/and won!/)
-    expect(awardText(award('braveKnot', { won: false }), name).reason).toMatch(/Bold!/)
+  it('Trickster’s Victory names who ended it', () => {
+    expect(awardText(award('trickster', { other: 3, n: 5 }), name).reason).toBe('Pink ended the game 5 behind')
   })
 })
 

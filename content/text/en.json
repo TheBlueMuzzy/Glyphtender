@@ -88,67 +88,63 @@
       "highlights": "Highlights",
       "noLog": "This game was saved before the game log existed, so there's no story to tell.",
       "awards": {
-        "photoFinish": {
-          "title": "Photo finish",
-          "reason": "Won by just {n} Magic"
+        "lockdown": {
+          "title": "Lockdown",
+          "reason": "{other}'s glyphling: {from} moves → {to}"
         },
-        "deciding": {
-          "title": "The deciding turn",
-          "reason": "Took the lead for good in round {round}: {words}, +{n}",
-          "reasonTangles": "The tangles decided it: +{n} at the very end"
+        "pincer": {
+          "title": "Pincer",
+          "reason": "Move, then cast: {other}'s glyphling {from} → {mid} → {to} moves"
         },
-        "biggestTurn": {
-          "title": "Biggest turn",
-          "reason": "+{n} Magic in one cast: {words}"
+        "weedToss": {
+          "title": "Weed toss",
+          "reason": "A junk seed took {other}'s +{n} spot ({word})",
+          "reasonCut": "A junk seed cut {other}'s glyphling: {from} moves → {to}",
+          "refreshed": ", then refreshed"
         },
-        "twoBirds": {
-          "title": "Two birds",
+        "walledGarden": {
+          "title": "Walled garden",
+          "reason": "Walled their glyphling in, then +{n} Magic inside"
+        },
+        "throughHedge": {
+          "title": "Through the hedge",
+          "reason": "Shot over {over} of their own seeds: +{n}"
+        },
+        "completeTangle": {
+          "title": "Complete tangle",
+          "reason": "Tangled {other}'s glyphling with only their own pieces"
+        },
+        "powerPlay": {
+          "title": "Power Play",
           "reason": "{n} words from one seed: {words}"
         },
-        "longestWord": {
-          "title": "Longest word",
+        "longWord": {
+          "title": "Long word",
           "reason": "{word}, {n} letters"
         },
-        "borrowedBloom": {
-          "title": "Borrowed bloom",
-          "reason": "{word} grew mostly from rivals' seeds: +{magic}"
+        "hijack": {
+          "title": "Hijack",
+          "reason": "Turned {other}'s {from} into {word}: +{n}"
         },
-        "soloGrower": {
-          "title": "Solo grower",
-          "reason": "+{n} Magic from words of only their own seeds"
-        },
-        "knotTier": {
-          "title": "Knot tier",
-          "reason": "Tangled {other}'s glyphling"
-        },
-        "braveKnot": {
-          "title": "Brave knot",
-          "reason": "Tangled their own glyphling to end it. Bold!",
-          "reasonWon": "Tangled their own glyphling to end it, and won!"
-        },
-        "tangleHarvest": {
-          "title": "Tangle harvest",
-          "reason": "+{n} Magic from tangles"
-        },
-        "secretLeader": {
-          "title": "Secret leader",
-          "reason": "Ahead after {n} of {rounds} rounds, and nobody knew"
+        "bridge": {
+          "title": "Bridge",
+          "reason": "{letter} joined {left} + {right} into {word}"
         },
         "comeback": {
-          "title": "Comeback",
-          "reason": "Was {n} Magic behind, and still won"
+          "title": "Biggest comeback",
+          "reason": "Was {n} behind, +{gain}, took the lead"
         },
-        "rareSeed": {
-          "title": "Rare seed",
-          "reason": "{word} with a rare letter: +{magic}"
+        "trickster": {
+          "title": "Trickster's Victory",
+          "reason": "{other} ended the game {n} behind"
         },
-        "generousGardener": {
-          "title": "Generous gardener",
-          "reason": "{n} of their seeds grew into rivals' words"
+        "calledIt": {
+          "title": "Called it",
+          "reason": "Ended the game {n} ahead, and won"
         },
-        "freshStart": {
-          "title": "Fresh start",
-          "reason": "+{n} Magic right after a refresh"
+        "closeCall": {
+          "title": "Close call",
+          "reason": "One move from tangled, got out to {n} moves"
         }
       },
       "chart": {
@@ -194,7 +190,8 @@
       "separator": " · ",
       "and": " + ",
       "newGame": "New game",
-      "menu": "Menu"
+      "menu": "Menu",
+      "highlightsLabel": "Highlights, one at a time"
     },
     "handoff": {
       "title": "Pass to {player}",

@@ -10,14 +10,14 @@ const w = text.game.gameOver
 const card = w.card
 type Name = (seat: number) => string
 
-/** "Biggest turn" + "+14 Magic in one cast: GARDEN + DEN". */
+/** "Lockdown" + "Blue's glyphling: 9 moves → 2" — the award's title and its proof. */
 export function awardText(award: Award, name: Name): { title: string; reason: string } {
-  const words = w.awards[award.id]
+  const words = w.awards[award.id] as { title: string; reason: string; reasonCut?: string; refreshed?: string }
   const values = Object.fromEntries(Object.entries(award.values).map(([k, v]) => [k, typeof v === 'boolean' ? String(v) : v]))
   if (typeof award.values.other === 'number') values.other = name(award.values.other)
   let reason = words.reason
-  if (award.id === 'deciding' && award.values.tangles === true) reason = w.awards.deciding.reasonTangles
-  if (award.id === 'braveKnot' && award.values.won === true) reason = w.awards.braveKnot.reasonWon
+  if (award.id === 'weedToss' && award.values.kind === 'cut' && words.reasonCut) reason = words.reasonCut
+  if (award.id === 'weedToss' && award.values.refreshed === true && words.refreshed) reason += words.refreshed
   return { title: words.title, reason: fill(reason, values) }
 }
 
@@ -44,7 +44,7 @@ export function markerCaption(game: GameState, marker: ChartMarker, awards: Awar
     return fill(w.chart.tangle, { round: turn.round, owner, by: name(marker.by) })
   }
   if (marker.kind === 'award') {
-    const award = awards.find((a) => a.id === marker.award)
+    const award = awards.find((a) => a.id === marker.award && a.holder === marker.seat)
     if (award) {
       const { title, reason } = awardText(award, name)
       return `${title}: ${reason}`
@@ -58,7 +58,7 @@ export function markerCaption(game: GameState, marker: ChartMarker, awards: Awar
 export function markerLabel(marker: ChartMarker, awards: Award[], name: Name): string {
   if (marker.kind === 'tangle') return fill(w.chart.markerTangle, { owner: name(marker.seat) })
   if (marker.kind === 'lead') return fill(w.chart.markerLead, { player: name(marker.seat) })
-  const award = awards.find((a) => a.id === marker.award)
+  const award = awards.find((a) => a.id === marker.award && a.holder === marker.seat)
   return fill(w.chart.markerAward, { title: award ? w.awards[award.id].title : '', player: name(marker.seat) })
 }
 

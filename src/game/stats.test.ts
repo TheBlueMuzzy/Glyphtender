@@ -6,7 +6,7 @@ import { winnersOf } from '../engine/tangle'
 import type { GameState, LogTurn } from '../engine/types'
 import endscreen from '../../content/tuning/endscreen.json'
 import { logIsComplete } from '../engine/log'
-import { awardCandidates, pickAwards, scorecards, standings, storyChart } from './stats'
+import { awardPoint, earnedAwards, scorecards, standings, storyChart } from './stats'
 
 // ─── Hand-built logs ───
 // A turn: [seat, words as "WORD:owners" (owners = one digit per seed, e.g. "CAT:010"), extra fields]
@@ -103,121 +103,174 @@ describe('scorecards', () => {
   it('a game without a log (an old snapshot) gives empty cards, not a crash', () => {
     const old = { ...newGame({ players: 3, seed: 1 }), magic: [5, 6, 7], log: undefined }
     expect(scorecards(old).map((c) => [c.total, c.wordsMade, c.bestTurn])).toEqual([[5, 0, null], [6, 0, null], [7, 0, null]])
-    expect(pickAwards(old).every((a) => a.id === 'photoFinish')).toBe(true) // only what the totals alone can tell
-    expect(storyChart(old, [], 6).series[2].points).toEqual([0, 7])
+    expect(earnedAwards(old)).toEqual([])
+    expect(storyChart(old, 6).series[2].points).toEqual([0, 7])
   })
 })
 
-describe('awards', () => {
-  it('2 players: 3 awards, one each before anyone gets a second', () => {
-    const g = finished(2, [
-      [0, ['GARDENS:0000000']], // Yellow: 14 — biggest turn + longest word
-      [1, ['TO:01', 'AT:11']], //   Blue: 7, two birds
-      [0, ['AT:00']],
-      [1, ['BAT:111', 'TAB:111']], // Blue 12+... (two birds again)
-    ])
-    const awards = pickAwards(g)
-    expect(awards).toHaveLength(3)
-    const holders = awards.map((a) => a.holder)
-    expect(new Set(holders.slice(0, 2)).size).toBe(2) // the first two go to different players
-    expect(awards.every((a) => a.holder === null || a.holder < 2)).toBe(true)
+describe('awards (skill, earned only)', () => {
+  const T = endscreen
+  /** Mobility for 2 players (4 glyphlings): everyone has 8 moves, except the changes asked for (id → [before, afterMove, afterCast]). */
+  const mob = (changes: Record<number, [number, number, number]> = {}, count = 4) => {
+    const m = { before: Array(count).fill(8), afterMove: Array(count).fill(8), afterCast: Array(count).fill(8) }
+    for (const [id, [a, b, c]] of Object.entries(changes)) { m.before[+id] = a; m.afterMove[+id] = b; m.afterCast[+id] = c }
+    return m
+  }
+  const ids = (g: GameState, tuning = T) => earnedAwards(g, tuning).map((a) => `${a.id}:${a.holder}`)
+  const one = (g: GameState, id: string) => earnedAwards(g).find((a) => a.id === id)
+
+  it('nothing earned → no awards at all (the Highlights area hides)', () => {
+    expect(earnedAwards(finished(2, [[0, ['AT:00']], [1, ['TO:11']], [0, [], { mobility: mob() }]]))).toEqual([])
   })
 
-  it('4 players: 4 awards, every player gets one when there are enough', () => {
-    const g = finished(4, [
-      [0, ['GARDENS:0000000']],
-      [1, ['TO:10', 'AT:11', 'ON:11']],
-      [2, ['ZAP:212']],
-      [3, ['BAT:333']],
-      [0, ['AT:00']],
-      [1, ['AT:11']],
-      [2, ['AT:22']],
-      [3, ['QUIET:33333']],
-    ], { tangled: [[2, 8], [4, 7]], tangleMagic: [0, 6, 0, 3] })
-    const awards = pickAwards(g)
-    expect(awards).toHaveLength(4)
-    expect(new Set(awards.map((a) => a.holder)).size).toBe(4)
+  it('Lockdown: one turn took a rival glyphling from many moves to almost none — with the proof', () => {
+    const g = finished(2, [[0, ['AT:00'], { mobility: mob({ 2: [9, 5, 2] }) }], [1, ['TO:11']]])
+    expect(one(g, 'lockdown')).toMatchObject({ holder: 0, seats: [0, 1], moment: 1, values: { other: 1, from: 9, to: 2 } })
+    // too small a drop, or too many moves left: not a lockdown
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 2: [6, 6, 2] }) }]]))).not.toContain('lockdown:0')
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 2: [12, 12, 4] }) }]]))).not.toContain('lockdown:0')
+    // your own glyphling losing moves is never your lockdown
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 1: [9, 9, 0] }) }]]))).not.toContain('lockdown:0')
   })
 
-  it('a photo finish replaces the deciding turn', () => {
-    const g = finished(2, [[0, ['CAT:000']], [1, ['GARDEN:111111']], [0, ['TEAS:0000']]]) // 6, 12, then Yellow 14 vs 12
-    const ids = pickAwards(g).map((a) => a.id)
-    expect(ids[0]).toBe('photoFinish')
-    expect(ids).not.toContain('deciding')
-    expect(pickAwards(g)[0]).toMatchObject({ holder: null, seats: [0, 1], values: { n: 2 } })
+  it('Pincer: the move AND the cast each cut the same rival glyphling', () => {
+    const g = finished(2, [[0, [], { mobility: mob({ 3: [8, 5, 2] }) }]])
+    expect(one(g, 'pincer')).toMatchObject({ holder: 0, values: { from: 8, mid: 5, to: 2 } })
+    // only the cast cut it (or only the move): no pincer
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 3: [8, 8, 2] }) }]]))).not.toContain('pincer:0')
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 3: [8, 2, 2] }) }]]))).not.toContain('pincer:0')
+    // two DIFFERENT glyphlings each cut once: no pincer
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 2: [8, 4, 4], 3: [8, 8, 4] }) }]]))).not.toContain('pincer:0')
   })
 
-  it('the deciding turn: when the winner took the lead for good', () => {
-    const g = finished(2, [
-      [0, ['GARDEN:000000']], // Yellow 12
-      [1, ['AT:11']], //        Blue 4
-      [0, ['AT:00']], //        Yellow 16
-      [1, ['GARDENS:1111111', 'AT:11']], // Blue 22 — leads
-      [1, ['SEAT:1111']], //    Blue 30 (a 2nd turn in a row, as if Yellow were all tangled)
-      [0, ['GARDENERS:000000000', 'TO:00']], // Yellow 38: leads for good on turn 6
-    ])
-    const deciding = awardCandidates(g, endscreen).find((c) => c.id === 'deciding')!.make(0)
-    expect(deciding).toMatchObject({ holder: 0, moment: 6, values: { tangles: false } })
+  it('Weed toss: a junk cast that took a rival’s scoring spot (bonus: refreshed after), or cut their moves', () => {
+    const block = { seat: 1, magic: 9, word: 'GARDEN' }
+    const g = finished(2, [[0, [], { mobility: mob(), blocked: block, target: { q: 1, r: 1 }, refresh: true, refreshed: 3 }]])
+    expect(one(g, 'weedToss')).toMatchObject({ holder: 0, values: { kind: 'block', other: 1, n: 9, word: 'GARDEN', refreshed: true } })
+    const cut = finished(2, [[0, [], { mobility: mob({ 2: [8, 7, 2] }), blocked: null, target: { q: 1, r: 1 } }]])
+    expect(one(cut, 'weedToss')).toMatchObject({ values: { kind: 'cut', from: 7, to: 2, refreshed: false } })
+    // the cast scored: not junk. A small spot, or no cast: nothing.
+    expect(ids(finished(2, [[0, ['AT:00'], { mobility: mob(), blocked: block, target: { q: 1, r: 1 } }]]))).not.toContain('weedToss:0')
+    expect(ids(finished(2, [[0, [], { mobility: mob(), blocked: { ...block, magic: 2 }, target: { q: 1, r: 1 } }]]))).not.toContain('weedToss:0')
+    expect(ids(finished(2, [[0, [], { mobility: mob(), blocked: block, target: null, letter: null }]]))).not.toContain('weedToss:0')
   })
 
-  it('the deciding moment can be the tangle bonus', () => {
-    const g = finished(2, [[0, ['GARDEN:000000']], [1, ['GARDENS:1111111']]], { tangleMagic: [20, 0] }) // 12 vs 14, then +20
-    const deciding = awardCandidates(g, endscreen).find((c) => c.id === 'deciding')!.make(0)
-    expect(deciding).toMatchObject({ holder: 0, moment: 'tangles', values: { tangles: true, n: 20 } })
+  it('Walled garden: your own cast sealed the pocket, then you made Magic inside it', () => {
+    const pocket = ['0,1', '0,2', '0,3']
+    const inside = (from: string, to: string) => ({ from: { q: 0, r: +from }, to: { q: 0, r: +to } })
+    const plan: TurnPlan[] = [
+      [0, ['AT:00'], { ...inside('1', '2'), sealed: [{ glyphling: 0, hexes: pocket }] }], // 4
+      [1, ['TO:11']],
+      [0, ['GARDENS:0000000'], inside('2', '3')], // 14 inside
+      [1, ['TO:11']],
+      [0, ['CATS:0000'], inside('3', '1')], //  8 inside
+    ]
+    expect(one(finished(2, plan), 'walledGarden')).toMatchObject({ holder: 0, moment: 1, values: { n: 26 } })
+    // Magic made OUTSIDE the pocket doesn't count
+    const out = plan.map((p, i) => (i >= 2 && p[0] === 0 ? [0, p[1], { from: { q: 5, r: 5 }, to: { q: 5, r: 6 } }] : p) as TurnPlan)
+    expect(ids(finished(2, out))).not.toContain('walledGarden:0')
+    // no pocket sealed by your cast (an old log, or a pocket you were already in): nothing
+    expect(ids(finished(2, plan.map((p) => [p[0], p[1], { ...p[2], sealed: undefined }] as TurnPlan)))).not.toContain('walledGarden:0')
   })
 
-  it('no deciding turn when the winner led the whole way, and none for a shared win', () => {
-    const led = finished(2, [[0, ['GARDEN:000000']], [1, ['AT:11']], [0, ['AT:00']]])
-    expect(awardCandidates(led, endscreen).map((c) => c.id)).not.toContain('deciding')
-    const tie = finished(2, [[0, ['CAT:000']], [1, ['CAT:111']]])
-    expect(standings(tie).map((s) => s.place)).toEqual([1, 1])
-    expect(awardCandidates(tie, endscreen).map((c) => c.id)).not.toContain('deciding')
-    expect(awardCandidates(tie, endscreen).map((c) => c.id)).not.toContain('photoFinish')
+  it('Through the hedge: a scoring cast over 2+ of your own seeds', () => {
+    expect(one(finished(2, [[0, ['CAT:000'], { castOver: 3 }]]), 'throughHedge')).toMatchObject({ values: { over: 3, n: 6 } })
+    expect(ids(finished(2, [[0, ['CAT:000'], { castOver: 1 }]]))).not.toContain('throughHedge:0')
+    expect(ids(finished(2, [[0, [], { castOver: 4 }]]))).not.toContain('throughHedge:0') // the shot scored nothing
   })
 
-  it('ties for an award go to a player who has none yet', () => {
-    const g = finished(3, [[0, ['CAT:000']], [1, ['DOG:111']], [2, ['EMU:222']]]) // a three-way tie on everything
-    const awards = pickAwards(g)
-    expect(new Set(awards.map((a) => a.holder)).size).toBe(awards.length)
+  it('Complete tangle: to whoever completed it (log.ts completeTangler), naming whose glyphling', () => {
+    const g = finished(2, [[0, []], [1, [], { completeTangles: [{ glyphling: 0, by: 1 }] }]])
+    expect(one(g, 'completeTangle')).toMatchObject({ holder: 1, seats: [1, 0], values: { other: 0 } })
+    expect(ids(finished(2, [[0, [], { completeTangles: [{ glyphling: 2, by: null }] }]]))).toEqual([])
   })
 
-  it('awards that don’t apply are skipped (borrowed bloom needs a word mostly of rivals’ seeds)', () => {
-    const solo = finished(2, [[0, ['CAT:000']], [1, ['DOG:111']]])
-    expect(awardCandidates(solo, endscreen).map((c) => c.id)).not.toContain('borrowedBloom')
-    const borrowed = finished(2, [[0, ['CAT:110']], [1, ['DOG:111']]])
-    expect(awardCandidates(borrowed, endscreen).find((c) => c.id === 'borrowedBloom')?.holders).toEqual([0])
+  it('Power Play: 3+ words from one seed · Long word: 6+ letters', () => {
+    const g = finished(2, [[0, ['AT:00', 'TO:00', 'TA:00']], [1, ['GARDENS:1111111']], [0, ['GARDEN:000000']]])
+    expect(one(g, 'powerPlay')).toMatchObject({ holder: 0, values: { n: 3, words: 'AT + TO + TA' } })
+    expect(earnedAwards(g).filter((a) => a.id === 'longWord').map((a) => [a.holder, a.values.word])).toEqual([[1, 'GARDENS'], [0, 'GARDEN']])
+    expect(ids(finished(2, [[0, ['AT:00', 'TO:00']], [1, ['GARDE:11111']]])).filter((x) => /powerPlay|longWord/.test(x))).toEqual([])
   })
 
-  it('brave knot: tangled their own glyphling to end it — and whether it worked', () => {
-    const g = finished(2, [[0, ['CAT:000']], [1, ['DOGS:1111']], [0, ['AT:00']]], { tangled: [[0, 3], [3, 2]], selfTangle: true, tangleMagic: [9, 0] })
-    const brave = awardCandidates(g, endscreen).find((c) => c.id === 'braveKnot')!.make(0)
-    expect(brave).toMatchObject({ holder: 0, moment: 3, values: { won: true } })
-  })
-
-  it('knot tier: who tangled a rival, and whose glyphling it was', () => {
-    const g = finished(3, [[0, ['CAT:000']], [1, ['DOG:111']], [2, ['EMU:222']]], { tangled: [[0, 2], [5, 2]] })
-    const knot = awardCandidates(g, endscreen).find((c) => c.id === 'knotTier')!
-    expect(knot.holders).toEqual([1])
-    expect(knot.make(1)).toMatchObject({ seats: [1, 0], values: { other: 0 } })
-  })
-
-  it('awardPriority 0 turns an award off', () => {
-    const g = finished(2, [[0, ['GARDENS:0000000']], [1, ['TO:01', 'AT:11']]])
-    const off = { ...endscreen, awardPriority: { ...endscreen.awardPriority, biggestTurn: 0, longestWord: 0 } }
-    const ids = pickAwards(g, off).map((a) => a.id)
-    expect(ids).not.toContain('biggestTurn')
-    expect(ids).not.toContain('longestWord')
-  })
-
-  it('never more awards than asked for, and never more than one per player while someone has none', () => {
-    for (const players of [2, 3, 4]) {
-      const plan: TurnPlan[] = []
-      for (let round = 0; round < 5; round++) for (let seat = 0; seat < players; seat++) plan.push([seat, [`${'ABCDEFG'.slice(0, 2 + ((seat + round) % 5))}:${String(seat).repeat(2 + ((seat + round) % 5))}`]])
-      const awards = pickAwards(finished(players, plan))
-      expect(awards.length).toBeLessThanOrEqual(players === 4 ? 4 : 3)
-      const holders = awards.map((a) => a.holder).filter((h) => h !== null)
-      if (holders.length <= players) expect(new Set(holders).size).toBe(holders.length)
+  it('Bridge: the seed landed inside a word, letters on both sides · Hijack: a rival’s word grown into yours', () => {
+    const words = (word: string, owners: string, at: number, hexes: string[]) => {
+      const own = [...owners].map(Number)
+      return { word, letters: [...word], owners: own, magic: word.length, ownMagic: 0, at, hexes }
     }
+    const h = (n: number) => Array.from({ length: n }, (_, i) => `0,${i}`)
+    const g = finished(2, [
+      [0, [], { words: [words('ART', '000', 2, h(3))], magic: 3 }],
+      [1, [], { words: [words('PARTS', '11011', 0, ['0,-1', ...h(3), '0,3'])], magic: 5 }], // not a bridge: the seed is at the start
+      [0, [], { words: [words('ROUND', '00100', 2, h(5))], magic: 5 }],
+    ])
+    expect(one(g, 'bridge')).toMatchObject({ holder: 0, values: { letter: 'U', left: 'RO', right: 'ND', word: 'ROUND' } })
+    expect(earnedAwards(g).filter((a) => a.id === 'bridge')).toHaveLength(1)
+    // Blue's PARTS holds Yellow's ART and Blue owns most of it (4 of 5)
+    expect(one(g, 'hijack')).toMatchObject({ holder: 1, values: { other: 0, from: 'ART', word: 'PARTS' } })
+    // owning only half isn't most; and an old log without hexes can't tell
+    const half = finished(2, [[0, [], { words: [words('ART', '000', 2, h(3))] }], [1, [], { words: [words('ARTS', '0011', 3, h(4))] }]])
+    expect(ids(half)).not.toContain('hijack:1')
+  })
+
+  it('Biggest comeback: the one turn that took the lead from furthest behind — once per game', () => {
+    const g = finished(2, [
+      [0, ['GARDENS:0000000']], // Yellow 14
+      [1, ['AT:11']], //             Blue 4 (10 behind)
+      [0, ['AT:00']], //             Yellow 18
+      [1, ['GARDENS:1111111', 'SEA:111']], // Blue 4 + 14 + 6 = 24: was 14 behind, took the lead
+    ])
+    expect(earnedAwards(g).filter((a) => a.id === 'comeback')).toEqual([expect.objectContaining({ holder: 1, moment: 4, values: expect.objectContaining({ n: 14, gain: 20 }) })])
+    // a turn that only closed the gap isn't a comeback
+    expect(ids(finished(2, [[0, ['GARDENS:0000000']], [1, ['GARDEN:111111']]]))).not.toContain('comeback:1')
+  })
+
+  it('Called it (ended it while ahead, and won) · Trickster’s Victory (a rival ended it while behind → the winner)', () => {
+    const ahead = finished(2, [[0, ['AT:00']], [1, ['TO:01']], [0, ['CAT:000']]]) // Yellow ends it on 10 v 3
+    expect(one(ahead, 'calledIt')).toMatchObject({ holder: 0, moment: 3, values: { n: 7 } })
+    const behind = finished(3, [[0, ['GARDENS:0000000']], [1, ['AT:11']], [2, ['TO:22']]]) // Purple ends it 10 behind
+    expect(one(behind, 'trickster')).toMatchObject({ holder: 0, seats: [0, 2], moment: 3, values: { other: 2, n: 10 } })
+    expect(ids(behind)).not.toContain('calledIt:2')
+    // ahead when it ended, but the tangle bonus took the win away: no Called it
+    const lost = finished(2, [[0, ['AT:00']], [1, ['TO:11']], [0, ['AT:00']]], { tangleMagic: [0, 9] })
+    expect(ids(lost)).not.toContain('calledIt:0')
+  })
+
+  it('Close call: one move from tangled at the start of your turn, then plenty — and never tangled', () => {
+    const g = finished(2, [[0, [], { mobility: mob({ 1: [1, 6, 6] }) }]])
+    expect(one(g, 'closeCall')).toMatchObject({ holder: 0, values: { n: 6 } })
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 1: [1, 2, 2] }) }]]))).not.toContain('closeCall:0') // barely out
+    // tangled later after all: no close call
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 1: [1, 6, 6] }) }], [1, []]], { tangled: [[1, 2]] }))).not.toContain('closeCall:0')
+    // a rival's glyphling getting out on YOUR turn isn't your close call
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 2: [1, 6, 6] }) }]]))).toEqual([])
+  })
+
+  it('each award once per player (the biggest moment); several players can earn the same one; order = awardOrder', () => {
+    const g = finished(2, [
+      [0, [], { mobility: mob({ 2: [9, 9, 2] }) }],
+      [1, [], { mobility: mob({ 0: [10, 10, 0] }) }],
+      [0, [], { mobility: mob({ 3: [12, 12, 1] }) }],
+    ])
+    const locks = earnedAwards(g).filter((a) => a.id === 'lockdown')
+    expect(locks.map((a) => [a.holder, a.values.from, a.values.to])).toEqual([[0, 12, 1], [1, 10, 0]]) // biggest first
+    const off = { ...T, awardOrder: { ...T.awardOrder, lockdown: 0 } }
+    expect(earnedAwards(g, off).some((a) => a.id === 'lockdown')).toBe(false)
+    const mixed = finished(2, [[0, ['GARDENS:0000000'], { mobility: mob({ 2: [9, 9, 2] }) }]])
+    expect(earnedAwards(mixed).map((a) => a.id)).toEqual(['lockdown', 'longWord', 'calledIt'])
+  })
+
+  it('an old log without the new facts: those awards just can’t be earned (no crash)', () => {
+    const g = finished(2, [[0, ['AT:00']], [1, ['TO:11']], [0, ['CATS:0000']]])
+    expect(() => earnedAwards(g)).not.toThrow()
+    expect(ids(g)).toEqual(['calledIt:0'])
+    expect(earnedAwards({ ...g, log: undefined })).toEqual([])
+  })
+
+  it('the star’s spot on the Story chart: the holder’s line, the award’s round', () => {
+    const g = finished(2, [[0, ['AT:00']], [1, ['TO:11']], [0, ['CAT:000'], { mobility: mob({ 2: [9, 9, 1] }) }]])
+    const chart = storyChart(g, 6)
+    const lock = one(g, 'lockdown')!
+    expect(awardPoint(g, chart, lock)).toEqual({ kind: 'award', seat: 0, x: 2, turnNo: 3, award: 'lockdown' })
   })
 })
 
@@ -230,34 +283,33 @@ describe('the Story chart', () => {
   const g = finished(3, plan, { tangled: [[3, 7], [2, 6]], tangleMagic: [3, 0, 6] })
 
   it('one point per round (after everyone’s turn), starting at 0, then the Tangles step', () => {
-    const chart = storyChart(g, [], 6)
+    const chart = storyChart(g, 6)
     expect(chart.rounds).toBe(3)
     expect(chart.series.map((s) => s.points)).toEqual([[0, 8, 12, 18, 21], [0, 6, 18, 18, 18], [0, 6, 10, 10, 16]])
     expect(chart.max).toBe(21)
   })
 
   it('tangle knots sit on the tangled glyphling’s owner’s line, in the round it was tangled, marked with who did it', () => {
-    const knots = storyChart(g, [], 6).markers.filter((m) => m.kind === 'tangle')
+    const knots = storyChart(g, 6).markers.filter((m) => m.kind === 'tangle')
     expect(knots).toEqual([
       { kind: 'tangle', seat: 1, x: 3, turnNo: 7, by: 0, glyphling: 3 },
       { kind: 'tangle', seat: 1, x: 2, turnNo: 6, by: 2, glyphling: 2 },
     ])
   })
 
-  it('lead changes and award moments are marked too, but never more than maxMarkers', () => {
+  it('lead changes are marked too, but never more than maxMarkers (award stars are drawn separately: awardPoint)', () => {
     const calm = finished(3, plan) // no tangles: the lead change gets its spot (a knot there would take it)
-    expect(storyChart(calm, [], 6).markers).toEqual([{ kind: 'lead', seat: 1, x: 2, turnNo: 6 }])
-    expect(storyChart(g, [], 6).markers.some((m) => m.kind === 'lead')).toBe(false) // same spot as Blue's knot: the knot wins
-    const awards = pickAwards(g)
-    expect(storyChart(g, awards, 6).markers.some((m) => m.kind === 'award')).toBe(true)
-    expect(storyChart(g, awards, 2).markers).toHaveLength(2)
+    expect(storyChart(calm, 6).markers).toEqual([{ kind: 'lead', seat: 1, x: 2, turnNo: 6 }])
+    expect(storyChart(g, 6).markers.some((m) => m.kind === 'lead')).toBe(false) // same spot as Blue's knot: the knot wins
+    expect(storyChart(g, 6).markers.some((m) => m.kind === 'award')).toBe(false)
+    expect(storyChart(g, 1).markers).toHaveLength(1)
   })
 })
 
 describe('real games (the engine’s random player)', () => {
   const words = new Map(['AT', 'TA', 'AN', 'NA', 'IN', 'IT', 'TO', 'ON', 'NO', 'ES', 'RE', 'ER', 'EAT', 'TEA', 'ATE', 'NET', 'TEN', 'SET', 'RAT', 'TAR', 'ART'].map((w) => [w, 1]))
   for (const players of [2, 3, 4]) {
-    it(`${players} players: cards add up to the totals, awards follow the rules, the chart ends on the totals`, () => {
+    it(`${players} players: cards add up to the totals, awards follow the rules (once per player, a star on the holder’s line), the chart ends on the totals`, () => {
       for (const seed of [1, 2, 3, 4]) {
         let state = newGame({ players, seed })
         let rng = seed
@@ -267,11 +319,12 @@ describe('real games (the engine’s random player)', () => {
           state = applyAction(state, pick.action, words)
         }
         scorecards(state).forEach((c) => expect(c.wordMagic + c.tangleMagic).toBe(c.total))
-        const awards = pickAwards(state)
-        expect(awards.length).toBeLessThanOrEqual(players === 4 ? 4 : 3)
-        const holders = awards.flatMap((a) => (a.holder === null ? [] : [a.holder]))
-        expect(new Set(holders).size).toBe(Math.min(holders.length, players)) // a second award only once everyone has one
-        const chart = storyChart(state, awards, endscreen.maxMarkers)
+        const awards = earnedAwards(state)
+        const keys = awards.map((a) => `${a.id}:${a.holder}`)
+        expect(new Set(keys).size).toBe(keys.length) // each award at most once per player
+        expect(awards.filter((a) => a.id === 'comeback').length).toBeLessThanOrEqual(1)
+        const chart = storyChart(state, endscreen.maxMarkers)
+        for (const a of awards) expect(awardPoint(state, chart, a)?.seat).toBe(a.holder)
         expect(chart.series.map((s) => s.points.at(-1))).toEqual(state.magic)
         expect(chart.markers.length).toBeLessThanOrEqual(endscreen.maxMarkers)
       }
@@ -295,7 +348,7 @@ describe('a game saved before the log existed, played to the end (a partial log)
     expect(cards[0].wordMagic).toBe(partial.magic[0] - 2)
   })
   it('draws no misleading story: just the start and the end, no markers', () => {
-    const chart = storyChart(partial, pickAwards(partial, endscreen), endscreen.maxMarkers)
+    const chart = storyChart(partial, endscreen.maxMarkers)
     expect(chart.rounds).toBe(0)
     expect(chart.series.map((s) => s.points)).toEqual([[0, partial.magic[0]], [0, partial.magic[1]]])
     expect(chart.markers).toEqual([])
