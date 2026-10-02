@@ -76,7 +76,7 @@ function startFrom(view: GameView) {
   const online: OnlineLink = { mySeat: view.mySeat, gameId: view.gameId, version: view.version, post, landed, resume: showNext }
   const seats: Seat[] = view.names.map((name, seat) => ({ kind: seat === view.mySeat ? 'local' : 'online', name, colour: SEAT_COLOURS[seat] }))
   set({
-    game, online, seats, waiting: false, flying: false, handoff: null, revealAt: null, landed: null, refreshFx: null, trail: null,
+    game, online, seats, waiting: false, flying: false, handoff: null, revealAt: null, landed: null, refreshFx: null, trail: null, scoring: null,
     move: null, cast: null, selected: null, setAside: [], note: null,
     options: {
       players: game.config.players, boardName: game.config.boardName, minWordLength: game.config.rules.minWordLength, hideSeeds: false,
@@ -87,11 +87,12 @@ function startFrom(view: GameView) {
   })
 }
 
-/** Shows the waiting views in order, one at a time (a flying seed, a replay or my refresh's shrink holds the queue). */
+/** Shows the waiting views in order, one at a time (a flying seed, a replay, a cast's score sequence or my refresh's
+ *  shrink holds the queue — the store calls resume → here when the score has faded). */
 function showNext() {
   while (inbox.length > 0) {
-    const { flying, online, game, refreshFx } = store()
-    if (flying || replaying || refreshFx?.stage === 'out' || !online || !game) return
+    const { flying, online, game, refreshFx, scoring } = store()
+    if (flying || replaying || scoring !== null || refreshFx?.stage === 'out' || !online || !game) return
     const view = inbox.shift()!
     if (view.version <= online.version) {
       // The server answered a sync (or a rejoin) with the game as it was: it never got my action
@@ -137,6 +138,8 @@ function apply(view: GameView) {
     move: null, cast: null, selected: null, setAside: [], note: null,
     stats: view.results?.stats ?? store().stats,
   })
+  // a seed that just landed scores now (its words one at a time); the next view waits for it to fade
+  if (sprout !== landed) store().startScoring()
   // the new seeds grow into the emptied places (hand indexes from the kept count on are the new ones)
   if (myRefresh) store().refreshArrived(newSeedSlots(order[online.mySeat], old.hands[online.mySeat].length - myRefresh.length))
 }

@@ -218,6 +218,23 @@ describe('online store — turns', () => {
     expect(boardTrail(store())).toBeNull() // landed: no trail stays on the board
   })
 
+  it("a score sequence holds the queue: Blue's turn waits until the last cast's score has faded, then replays", () => {
+    finishDraft()
+    yellowPlansAndCasts()
+    deliver()
+    store().finishCast()
+    if (store().game!.phase === 'refresh') { store().refresh(true); deliver() }
+    useGameStore.setState({ scoring: 99 }) // (as if Yellow's cast is still scoring on the board)
+    const version = store().online!.version
+    bluePlays(7)
+    deliver()
+    expect(store().trail).toBeNull() // nothing of Blue's turn yet — not even the trail
+    expect(store().online!.version).toBe(version)
+    store().endScoring() // faded: now Blue's turn plays out
+    expect(store().scoring).toBeNull()
+    expect(store().trail).not.toBeNull()
+  })
+
   it('a sync answered with the same version means my action was lost: the plan comes back to play again', () => {
     finishDraft()
     yellowPlansAndCasts()

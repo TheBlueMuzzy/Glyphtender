@@ -1,6 +1,6 @@
 // THE THROW — what plays after Cast (the F01 story): the glyphling hops and throws, the seed flies an arc
 // to its target (time = flightBase + flightPerHex × distance), lands, the game commits the turn, then the
-// runeblossom sprouts with a little overshoot (the words it made keep their white border until play moves on — WordBorders.tsx).
+// runeblossom sprouts with a little overshoot (then the words it made score one at a time and fade — ScorePops.tsx).
 // Every frame changes SVG attributes directly (no React state per frame). Reduce motion → no flight.
 import { useEffect, type RefObject } from 'react'
 import { hexToPixel, type Hex } from '../engine/hex'

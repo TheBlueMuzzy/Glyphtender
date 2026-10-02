@@ -2,14 +2,16 @@
 // a thick WHITE border (neutral — never a player colour) drawn BEHIND the seeds, so the letters sit on top and
 // only the part outside them shows, like a frame round the word's hexes. Used twice:
 //   planned — the words the aimed seed would make, while you aim
-//   grown   — the words the last cast grew, from the landing until play moves on (Board decides when)
-// WORD SPOTLIGHT (F25): when there are 2+ words, ONE is lit at a time — QUA → TAB → AY → round again — so words that
-// share letters never read as one blob. One word just stays lit. Each word can carry a small label ("QUA +4",
-// garden.json spotlightLabel) on a free spot that covers no letters, drawn above the pieces (WordLabels).
-// The loop is Web Animations on the word groups (useWordSpotlight.ts; spotlight.ts has the keyframes) — no React state per frame.
+//   grown   — the words the last cast grew: each lights in its turn as it scores, then fades with the final total
+//             (the score sequence — ScorePops.tsx plays them; they start dark and END dark, so nothing outlives the turn)
+// WORD SPOTLIGHT (F25): while aiming at 2+ words, ONE is lit at a time — QUA → TAB → AY → round again — so words that
+// share letters never read as one blob. One word just stays lit. Each word can carry a small label ("QUA +4" while
+// aiming; just "QUA" as it scores — its points pop on the seeds; garden.json spotlightLabel) on a free spot that
+// covers no letters, drawn above the pieces (WordLabels).
+// The aiming loop is Web Animations on the word groups (useWordSpotlight.ts; spotlight.ts has the keyframes) — no React state per frame.
 // Colour + thickness: garden.json (wordBorder, wordBorderWidth, grownGlowStrength, spotlightLabel…);
 // timing: anim.json (spotlightHold, spotlightFade). Reduce motion → no fades, the words just step.
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import text from '../../content/text/en.json'
 import { hexCorners, hexKey, hexToPixel, type Hex } from '../engine/hex'
 import type { MadeWord } from '../engine/types'
@@ -41,7 +43,7 @@ export function WordBorders({ planned, grown, grownKey, colours }: Props) {
   const words = (kind: SpotKind, list: SpotWord[], peak: number) =>
     list.map((w, i) => (
       <g key={`${kind}-${grownKey}-${i}-${w.word}`} data-spot-of={kind} data-spot-word={i} data-word={w.word}
-        opacity={list.length > 1 ? 0 : peak}>
+        opacity={kind === 'grown' || list.length > 1 ? 0 : peak}>
         {w.hexes.map((h) => border(h, hexKey(h)))}
       </g>
     ))
@@ -60,39 +62,28 @@ type LabelProps = Props & {
   view: Box
   /** Screen pixels per hex size, so the label never gets smaller than spotlightLabelMinPx. */
   pxPerHex: number
-  /** Seconds after the landing before the grown words' labels may show — once the score pops have flown (they'd clash). */
-  grownWait: number
 }
 
-/** The lit word's label ("QUA +4"), drawn above the pieces; it lights and fades with its word's border. */
-export function WordLabels({ planned, grown, grownKey, colours, taken, view, pxPerHex, grownWait }: LabelProps) {
-  // The grown words' labels wait for the score pops to fly off (the pops sit just above the seeds, where a label goes)
-  const grownRef = useRef<SVGGElement>(null)
-  const showLabels = colours.spotlightLabel && grown.length > 0
-  useLayoutEffect(() => {
-    if (!showLabels || grownWait <= 0) return
-    const wait = grownRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], { delay: grownWait * 1000, duration: 200, fill: 'backwards' })
-    return () => wait?.cancel()
-    // (only a new landing waits again)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grownKey, showLabels])
+/** The lit word's label ("QUA +4" while aiming, "QUA" as it scores), drawn above the pieces; it lights and fades with its word's border. */
+export function WordLabels({ planned, grown, grownKey, colours, taken, view, pxPerHex }: LabelProps) {
   const size = Math.max(colours.spotlightLabelSize, colours.spotlightLabelMinPx / pxPerHex)
   const takenId = taken.map(hexKey).join(';')
-  const place = useMemo(() => (list: SpotWord[]) => list.map((w) => {
-    const words = fill(text.game.spotlightLabel, { word: w.word, n: w.magic })
+  const place = useMemo(() => (list: SpotWord[], kind: SpotKind) => list.map((w) => {
+    // (as a word scores, its points pop on its seeds and fly to the glyphling — the bubble is just the word)
+    const words = kind === 'planned' ? fill(text.game.spotlightLabel, { word: w.word, n: w.magic }) : w.word
     const width = words.length * size * 0.62 + size * 1.1, height = size * 1.6 // a pill round the words
     return { words, width, height, ...labelSpot(w.hexes, taken, view, width, height) }
     // (taken is compared by its hexes, not by the array)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [takenId, view, size])
-  const plannedSpots = useMemo(() => place(planned), [place, planned])
-  const grownSpots = useMemo(() => place(grown), [place, grown])
+  const plannedSpots = useMemo(() => place(planned, 'planned'), [place, planned])
+  const grownSpots = useMemo(() => place(grown, 'grown'), [place, grown])
   if (!colours.spotlightLabel) return null
 
   const labels = (kind: SpotKind, list: SpotWord[], spots: ReturnType<typeof place>, peak: number) =>
     spots.map((s, i) => (
       <g key={`${kind}-${grownKey}-${i}-${list[i].word}`} data-spot-of={kind} data-spot-word={i} data-spot-label={s.words}
-        opacity={list.length > 1 ? 0 : peak}>
+        opacity={kind === 'grown' || list.length > 1 ? 0 : peak}>
         <rect x={s.x - s.width / 2} y={s.y - s.height / 2} width={s.width} height={s.height} rx={s.height / 2}
           fill={colours.background} fillOpacity={0.88} stroke={colours.wordBorder} strokeWidth={size * 0.1} />
         <text x={s.x} y={s.y} textAnchor="middle" dominantBaseline="central" fontSize={size} fontWeight={800}
@@ -102,7 +93,7 @@ export function WordLabels({ planned, grown, grownKey, colours, taken, view, pxP
   return (
     <g pointerEvents="none" data-spot-labels>
       {labels('planned', planned, plannedSpots, 1)}
-      <g ref={grownRef}>{labels('grown', grown, grownSpots, colours.grownGlowStrength)}</g>
+      {labels('grown', grown, grownSpots, colours.grownGlowStrength)}
     </g>
   )
 }

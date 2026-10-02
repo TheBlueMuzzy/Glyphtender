@@ -9,8 +9,9 @@
 //              "not planted yet" look — garden.json plannedSeedLook, PlannedSeedLook.tsx)
 //   done     — plain piece
 //   drop here — while dragging, the legal hex under the piece: a brighter, filled option (dropTarget.ts)
-// WORDS (word indicators on): a white border behind the seeds — planned while aiming, then after they grow, until play
-// moves on (WordBorders.tsx). 2+ words → the word spotlight: one word lit at a time, looping, with a "QUA +4" label (F25).
+// WORDS (word indicators on): a white border behind the seeds — planned while aiming (2+ words → the word spotlight:
+// one word lit at a time, looping, with a "QUA +4" label — F25). After the cast lands the words SCORE one at a time in
+// that order (ScorePops.tsx: outline + "QUA", seed pops fly to the glyphling's growing total), then all of it fades.
 // MOVES glide from hex to hex (useGlide.ts) — a planned move, Undo, and moves made anywhere else.
 // TURN TRAILS (TurnTrail.tsx, trail.ts), in the player's colour, under the pieces: the plan (dotted move path) and
 // another player's replayed turn (draws on before the glide). No cast arc; gone once the seed lands.
@@ -39,8 +40,6 @@ import { WordBorders, WordLabels, type SpotWord } from './WordBorders'
 import { useWordSpotlight } from './useWordSpotlight'
 import { TurnTrail } from './TurnTrail'
 import { boardTrail, trailKey as trailKeyOf } from '../store/trail'
-import { popTimeline, scorePops } from '../store/wordMarks'
-import { reduceMotion } from '../ui/kit'
 import { usePreview } from './usePreview'
 import { HEX, useThrow } from './useThrow'
 import { useAnimTuning, useGardenTuning, useLayoutTuning } from './useTuning'
@@ -64,8 +63,6 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   const revealAt = useGameStore((s) => s.revealAt)
   const seats = useGameStore((s) => s.seats)
   const waiting = useGameStore((s) => s.waiting)
-  const settingAside = useGameStore((s) => s.setAside.length > 0)
-  const refreshing = useGameStore((s) => s.refreshFx !== null)
   const indicators = useGameStore((s) => s.options?.wordIndicators ?? true)
   const replayTrail = useGameStore((s) => s.trail)
   const finishCast = useGameStore((s) => s.finishCast)
@@ -136,17 +133,12 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
   // The score pops belong to the seed that just landed (its turn grew words)
   const turn = game.lastTurn
   const pops = indicators && landed && turn?.target && hexKey(turn.target) === landed.key && turn.words.length > 0 ? turn : null
-  // The words it grew stay lit (one at a time) until play moves on: the next player picks something up or plans a move,
-  // a refresh, the next throw, the end-of-game reveal — or the next turn (a move-only turn has no landing of its own)
-  const movedOn = move || cast || selected || flying || settingAside || refreshing || revealAt !== null
-  const grown: SpotWord[] = pops && !movedOn ? pops.words : NO_WORDS
-  // The grown words' labels show once the score pops have flown into the total (reduce motion: there are no seed pops)
-  const labelWait = useMemo(() => (pops && !reduceMotion() ? popTimeline(scorePops(game, pops), timing).fly + timing.scoreFlyTime : 0),
-    [pops, game, timing])
+  // The words it grew score one at a time, then fade with the final total (ScorePops plays them; they start and end dark,
+  // so nothing from this turn is left once the next one starts — the store's `scoring` holds the next turn till then)
+  const grown: SpotWord[] = pops ? pops.words : NO_WORDS
   // The turn trail: a replayed turn (live) or my plan — trail.ts
   const shownTrail = useMemo(() => boardTrail({ game, trail: replayTrail, move, cast }), [game, replayTrail, move, cast])
   useWordSpotlight(svgRef, 'planned', planned, 0, 1, timing, colours.spotlightLabel)
-  useWordSpotlight(svgRef, 'grown', grown, landed?.count ?? 0, colours.grownGlowStrength, timing, colours.spotlightLabel)
   const s = colours.pieceScale
   // Where a word's label may go: off every piece (seeds, glyphlings where they're drawn, the aimed seed), inside the board's box
   const taken = useMemo(() => [
@@ -255,9 +247,9 @@ export function Board({ onHexSize, traySide = 'bottom' }: Props) {
 
       {/* The lit word's label ("QUA +4") — above the pieces, on a spot that covers no letters */}
       <WordLabels planned={planned} grown={grown} grownKey={landed?.count ?? 0} colours={colours} pxPerHex={pxPerHex}
-        taken={taken} view={labelBox} grownWait={labelWait} />
+        taken={taken} view={labelBox} />
 
-      {pops && <ScorePops key={`pops-${landed?.count}`} game={game} turn={pops} colours={colours} timing={timing} pxPerHex={pxPerHex} />}
+      {pops && <ScorePops key={`pops-${landed?.count}`} game={game} turn={pops} colours={colours} timing={timing} pxPerHex={pxPerHex} view={labelBox} />}
 
       {game.phase === 'over' && <RevealMarks game={game} steps={reveal} at={revealAt} colours={colours} timing={timing} />}
 

@@ -4,7 +4,8 @@
 // draft, a refresh) · a seed already planted on the board · a tray seed before you've moved (tapped OR dragged —
 // before the move seeds can't be dragged at all, not even to reorder the tray: Muzzy, B008) · anything of yours
 // while it isn't your turn (online). Quiet moments shake nothing: a seed in the air, the device being passed on,
-// my move on its way to the server, a refresh playing out on the tray, and the finished game (you're just looking).
+// my move on its way to the server, a refresh playing out on the tray, a cast's score playing out, and the finished game
+// (you're just looking).
 import { legalMoves } from '../engine/engine'
 import { hexKey, type Hex } from '../engine/hex'
 import type { GameStore } from './gameStore'
@@ -16,11 +17,11 @@ export type Tap = { glyph: number } | { hand: number } | { hex: Hex }
 /** The piece to shake: a glyphling (id), a planted seed (hexKey) or a tray seed (hand index). */
 export type NopeTarget = { kind: 'glyph' | 'seed' | 'hand'; key: string }
 
-type NopeState = Pick<GameStore, 'game' | 'move' | 'flying' | 'waiting' | 'handoff' | 'seats'> & Partial<Pick<GameStore, 'refreshFx'>>
+type NopeState = Pick<GameStore, 'game' | 'move' | 'flying' | 'waiting' | 'handoff' | 'seats'> & Partial<Pick<GameStore, 'refreshFx' | 'scoring'>>
 
 export function nopeFor(s: NopeState, tap: Tap): NopeTarget | null {
   const game = s.game
-  if (!game || game.phase === 'over' || s.flying || s.waiting || s.handoff || s.refreshFx) return null
+  if (!game || game.phase === 'over' || s.flying || s.waiting || s.handoff || s.refreshFx || (s.scoring ?? null) !== null) return null
   const myTurn = isLocalHuman(s.seats, game.current)
   if ('glyph' in tap) {
     const g = game.glyphlings.find((x) => x.id === tap.glyph)

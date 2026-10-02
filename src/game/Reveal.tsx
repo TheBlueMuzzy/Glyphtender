@@ -33,12 +33,13 @@ export function RevealPanel({ compact, big }: { compact: boolean; big: boolean }
   const steps = useMemo(() => revealSteps(game), [game])
   const end = steps.length
 
-  // Start once the last runeblossom has grown and its score pops are done (reduce motion: straight to the end)
+  // Start once the last runeblossom has grown and its score sequence has faded (reduce motion: then straight to the end)
   const pops = useGameStore((s) => s.options?.wordIndicators ?? true)
   useEffect(() => {
     if (revealAt !== null) return
     const quick = reduceMotion()
-    const timer = setTimeout(() => setRevealAt(quick ? end : 0), quick ? 0 : landingSeconds(game, pops, timing) * 1000)
+    const scored = pops && (game.lastTurn?.words.length ?? 0) > 0 // its score sequence still plays (and fades) first
+    const timer = setTimeout(() => setRevealAt(quick ? end : 0), quick && !scored ? 0 : landingSeconds(game, pops, timing) * 1000)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealAt, end])

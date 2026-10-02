@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { hexAt, position, wordsOf } from '../engine/testkit'
 import { legalDraftHexes } from '../engine/engine'
 import { useGameStore } from './gameStore'
@@ -36,8 +36,8 @@ describe('seats', () => {
 })
 
 // Yellow moves C6-7 → C6-6 and casts onto C6-4 (a T sits at C6-3, so an A there makes "TA").
-function yellowToPlay(options: { hideSeeds: boolean }) {
-  store().startGame({ players: 2, seed: 3, hideSeeds: options.hideSeeds })
+function yellowToPlay(options: { hideSeeds: boolean; wordIndicators?: boolean }) {
+  store().startGame({ players: 2, seed: 3, hideSeeds: options.hideSeeds, wordIndicators: options.wordIndicators })
   store().loadState(position({
     glyphlings: { 0: 'C6-7', 1: 'C1-4', 2: 'C11-1', 3: 'C11-4' },
     seeds: [{ 'C6-3': 'T' }],
@@ -69,8 +69,39 @@ describe('game store — passing the device (handoff)', () => {
     expect(store().selected).toBeNull()
     store().showSeeds()
     expect(store().handoff).toBeNull()
+    store().endScoring() // (the handoff box only shows once the score sequence has faded — Handoff.tsx waits for it)
     store().tapGlyphling(2)
     expect(store().selected).toEqual({ kind: 'glyphling', id: 2 })
+  })
+
+  it('a cast that scores: nothing can be touched until its score sequence has faded, then play goes on (nothing left over)', () => {
+    yellowToPlay({ hideSeeds: false })
+    playYellow(0) // A → "TA"
+    expect(store().game?.current).toBe(1)
+    expect(store().scoring).toBe(store().landed!.count)
+    store().tapGlyphling(2) // Blue's turn, but Yellow's score is still playing out
+    expect(store().selected).toBeNull()
+    expect(store().nope).toBeNull() // a quiet moment: nothing shakes "no"
+    store().endScoring()
+    expect(store().scoring).toBeNull()
+    store().tapGlyphling(2)
+    expect(store().selected).toEqual({ kind: 'glyphling', id: 2 })
+  })
+
+  it('the score sequence ends by itself (its timer), and word indicators off = no sequence at all', () => {
+    vi.useFakeTimers()
+    try {
+      yellowToPlay({ hideSeeds: false })
+      playYellow(0)
+      expect(store().scoring).not.toBeNull()
+      vi.advanceTimersByTime(60_000)
+      expect(store().scoring).toBeNull()
+      yellowToPlay({ hideSeeds: false, wordIndicators: false })
+      playYellow(0)
+      expect(store().scoring).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('a turn with no Magic: the same player refreshes first, THEN the device is passed', () => {
