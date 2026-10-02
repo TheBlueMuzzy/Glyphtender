@@ -1,16 +1,16 @@
 {
   "_help": {
-    "handSize": "How many seeds each player holds. Hands are refilled up to this. Takes effect from the next new game (Save, then refresh).",
-    "minWordLength": "Shortest word that makes Magic, in seeds. 2 = normal, 3 = the \"2-letter words off\" table option. Takes effect from the next new game (Save, then refresh).",
-    "ownershipBonus": "Extra Magic for each of YOUR seeds inside a word you make. A word = its seeds + this per seed you own. Takes effect from the next new game (Save, then refresh).",
-    "tangleBonus": "At the end, for each tangled glyphling, every OTHER player gets this much Magic per seed or glyphling of theirs next to it. Takes effect from the next new game (Save, then refresh).",
-    "tanglesToEnd": "The game ends when a turn finishes with this many glyphlings tangled (or more). Takes effect from the next new game (Save, then refresh)."
+    "handSize": "How many seeds each player holds; hands refill up to this. More = more choice each turn. Takes effect from the next new game (Save, then refresh).",
+    "minWordLength": "2 = normal; 3 = the \"2-letter words off\" table option. Higher = harder to score. Takes effect from the next new game (Save, then refresh).",
+    "ownershipBonus": "Each of YOUR seeds in a word you make adds this much extra Magic (a word = its seeds + this per seed you own). Higher = using your own seeds matters more. Takes effect from the next new game (Save, then refresh).",
+    "tangleBonus": "At the end, for each tangled glyphling, every OTHER player gets this much Magic per seed or glyphling of theirs next to it. Higher = tangling rivals pays more. Takes effect from the next new game (Save, then refresh).",
+    "tanglesToEnd": "The game ends when a turn finishes with this many glyphlings tangled (or more). Higher = longer games. Takes effect from the next new game (Save, then refresh)."
   },
   "_labels": {
-    "handSize": "Seeds in hand",
-    "minWordLength": "Shortest word (letters)",
+    "handSize": "Seeds in each player's hand",
+    "minWordLength": "Shortest word that scores (letters)",
     "ownershipBonus": "Bonus Magic per own seed in a word",
-    "tangleBonus": "Tangle bonus Magic (end of game)",
+    "tangleBonus": "Tangle bonus Magic at the end (per neighbouring piece)",
     "tanglesToEnd": "Tangled glyphlings that end the game"
   },
   "_sections": {
