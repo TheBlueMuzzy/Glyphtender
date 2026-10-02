@@ -39,7 +39,7 @@ const shot = (p, label, settle) => p.shot(label, settle, 'online4')
 // Is it this player's turn, with nothing in the air and nothing on its way to the server?
 const open = (p) => p.page && !p.page.isClosed()
 const myTurn = (p) => open(p) && p.store((s) => !!s.game && !!s.online && s.game.phase !== 'over'
-  && s.game.current === s.online.mySeat && !s.waiting && !s.flying && s.wordsStatus === 'ready')
+  && s.game.current === s.online.mySeat && !s.waiting && !s.flying && s.scoring === null && s.wordsStatus === 'ready') // (a score sequence holds play)
 
 // One turn through the screen: a draft placement, Keep all on a refresh, or move + cast (Magic if it can) + Cast
 async function playTurn(p) {

@@ -127,6 +127,8 @@ try {
           s().startCast()
         }, turn)
         await page.waitForFunction(() => !window.__glyphtender.store.getState().flying, null, { timeout: 5000 })
+        // (its score sequence plays out and fades before Blue can play)
+        await page.waitForFunction(() => window.__glyphtender.store.getState().scoring === null, null, { timeout: 15000 })
         await page.waitForTimeout(400)
         if (!(await store((s) => s.game.current === 1 && s.game.lastTurn.seat === 0))) { fail(`${size.name}: Yellow's turn didn't pass to Blue`); break }
         turn = await page.evaluate(() => import('/src/engine/engine.ts').then(({ legalMoves, legalCasts }) => {

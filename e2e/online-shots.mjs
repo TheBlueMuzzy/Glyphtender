@@ -41,7 +41,7 @@ const bo = player('Bo', await browser.newContext({ viewport: { width: 1440, heig
 
 // Is it this player's turn, with nothing in the air and nothing on its way to the server?
 const myTurn = (p) => p.page && !p.page.isClosed() && p.store((s) => !!s.game && !!s.online && s.game.phase !== 'over'
-  && s.game.current === s.online.mySeat && !s.waiting && !s.flying && s.wordsStatus === 'ready')
+  && s.game.current === s.online.mySeat && !s.waiting && !s.flying && s.scoring === null && s.wordsStatus === 'ready') // (a score sequence holds play)
 
 // One turn through the screen: a draft placement, Keep all on a refresh (Refresh 1 the first time), or move + cast (Magic if it can) + Cast
 let refreshSeen = false
