@@ -79,8 +79,8 @@ export function scorecardRows(game: GameState, cards: Scorecard[], seats: number
     { name: card.groups.magic, rows: [
       { label: card.total, values: col((c) => c.total), tint: true },
       { label: card.wordMagic, values: col((c) => c.wordMagic), tint: true },
-      { label: card.soloMagic, values: col((c) => c.soloMagic), tint: true },
       { label: card.tangleMagic, values: col((c) => c.tangleMagic), tint: true },
+      { label: card.soloMagic, values: col((c) => c.soloMagic), tint: true },
     ] },
     { name: card.groups.words, rows: [
       ...lengths,
