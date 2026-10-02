@@ -160,7 +160,7 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
   const award = end.awards.length ? end.awards[awardAt % end.awards.length] : null
   const star = award && awardPoint(game, end.chart, award)
   const highlights = (heading: boolean) => (
-    <EndHighlights awards={end.awards} index={awardAt} onIndex={setAwardAt} name={name} heading={heading}
+    <EndHighlights awards={end.awards} index={awardAt} onIndex={setAwardAt} name={name} heading={heading} big={wide && !short && heading}
       autoSeconds={tuning.carouselSeconds} pauseSeconds={tuning.carouselPauseSeconds} />
   )
   // A tapped mark tells its moment — and any marks drawn on top of it (same round, nearly the same Magic)

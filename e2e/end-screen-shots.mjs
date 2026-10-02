@@ -6,11 +6,15 @@
 // See results (back).
 // Checks (Muzzy's notes, 2026-10-01):
 //   reveal  the Magic chips never overlap (B016), sit in one tidy centred group, Skip is a normal-size button
-//   results the highlights' top is UNDER the players' bottom (never beside), at every size
-//   story   the key under the chart, the caption under the key
+//   results the highlights' top is UNDER the players' bottom (never beside), at every size; the Highlights are a
+//           carousel showing ONE award (none earned → no Highlights at all); at 390×844 and 1440×900 it moves on by
+//           itself (carouselSeconds) and a tap moves it on AND holds it (carouselPauseSeconds) before it carries on
+//   story   the key under the chart, the same carousel under the key, the caption under that; a 4-pointed star on the
+//           shown award's holder's line, which moves when the carousel moves on
 //   all     no page scrolls (phones on their side / short windows may — reported as a NOTE, not a failure); on a
 //           desktop the page's content uses ≥ 70% of the window's height (not floating small in the middle);
-//           nothing within 12 px of the window's edges; buttons ≥ 44 px; nothing sideways out of its page
+//           (or as wide as the page — width ran out first); nothing within 12 px of the window's edges; buttons ≥ 44 px;
+//           nothing sideways out of its page (a carousel's off-screen awards aside: they're hidden, waiting their turn)
 //   bar     "See board" (end screen) and "See results" (garden) are the SAME rectangle (±1 px), and so are ☰ and New game
 // plus: the end screen covers the whole window, the winner on screen at once, the scorecard tints a best (and its
 // section headings sit on shaded title bars the width of the table), every
@@ -37,6 +41,8 @@ const SIZES = [
   { width: 1920, height: 1080, mobile: false, desktop: true },
 ]
 const GAMES = ['end-2p', 'end-3p', 'end-4p', 'end-shared-win']
+const TUNING = JSON.parse(readFileSync('content/tuning/endscreen.json', 'utf8'))
+const TIMED = ['390x844', '1440x900'] // the sizes where the carousel's clock is checked too (it takes ~15 s a game)
 const EDGE = 12 // px: nothing closer than this to the window's edges
 const FILL = 0.7 // desktop: the page's content is at least this share of the window's height
 mkdirSync(OUT, { recursive: true })
@@ -47,7 +53,9 @@ function problems(EDGE) {
   const scroller = document.querySelector('.game-end .kit-scroll')
   const view = scroller?.getBoundingClientRect()
   // (inside the page only what's in view counts — the page's own box is checked against the edges instead)
+  const waiting = (el) => el.closest('.kit-carousel-item[aria-hidden="true"]') // a carousel's other items: hidden off to the side
   for (const el of [document.querySelector('.game-end-page'), ...document.querySelectorAll('.game-end button, .game-end .kit-text, .game-end img, .game-end-chart-svg')]) {
+    if (waiting(el)) continue
     const r = el.getBoundingClientRect()
     if (!r.width || !r.height) continue
     if (scroller?.contains(el) && (r.top < view.top - 0.5 || r.bottom > view.bottom + 0.5)) continue
@@ -66,6 +74,7 @@ function problems(EDGE) {
     if (view && r && r.left < view.right && r.right > view.left && r.top < view.bottom - 0.5 && r.bottom > view.top + 0.5) out.push(`the page runs under ${sel}`)
   }
   for (const el of document.querySelectorAll('.game-end .kit-scroll .kit-text, .game-end .kit-scroll img, .game-end .kit-scroll svg')) {
+    if (waiting(el)) continue
     const r = el.getBoundingClientRect()
     if (r.width && (r.left < view.left - 1 || r.right > view.right + 1)) out.push(`sticks out of the page: ${(el.textContent || el.tagName).trim().slice(0, 30)}`)
   }
@@ -127,10 +136,14 @@ try {
         else fail(`${tag}: ${name} doesn't fit without scrolling (${over} px too tall)`)
       }
       // Desktop: the page's content fills the window (≥ 70% of its height), not floating small in the middle
+      // (or, when it's the WIDTH that ran out first — the page as wide as it can go — that counts as filled too: with one
+      // Highlights line instead of a list, a 3-wide podium on a 1099×846 window hits the sides before the bottom)
       const fills = async (name, sel) => {
         if (!size.desktop) return
         const r = await box(sel)
-        check(`${name} fills the window (${Math.round(r.height)} px = ${Math.round((r.height / size.height) * 100)}% of ${size.height})`, r.height >= size.height * FILL)
+        const page = await box('.game-end-page')
+        const wide = r.width >= page.width * 0.9
+        check(`${name} fills the window (${Math.round(r.height)} px = ${Math.round((r.height / size.height) * 100)}% of ${size.height}; ${Math.round((r.width / page.width) * 100)}% of the width)`, r.height >= size.height * FILL || wide)
       }
 
       await page.goto(`http://127.0.0.1:${PORT}/`)
@@ -176,6 +189,37 @@ try {
         return !highlights || highlights.top >= players - 0.5
       })
       check('the highlights sit UNDER the players', under)
+      // The Highlights carousel: one award showing at a time; none earned → no Highlights at all
+      const timed = TIMED.includes(`${size.width}x${size.height}`)
+      const current = () => page.evaluate(() => {
+        const items = document.querySelectorAll('.game-end-results .kit-carousel-item')
+        const on = document.querySelector('.game-end-results .kit-carousel-item[data-current] .game-end-award')
+        return { count: items.length, id: on ? `${on.dataset.award}:${on.dataset.holder}` : null }
+      })
+      const awards = await current()
+      const shownAtOnce = await page.evaluate(() => {
+        const view = document.querySelector('.game-end-results .kit-carousel-view')?.getBoundingClientRect()
+        if (!view) return 0
+        return [...document.querySelectorAll('.game-end-results .kit-carousel-item')].filter((el) => {
+          const r = el.getBoundingClientRect()
+          return r.right > view.left + 1 && r.left < view.right - 1
+        }).length
+      })
+      if (awards.count) check(`the Highlights carousel shows ONE award at a time (${shownAtOnce} in view)`, shownAtOnce === 1 && awards.id !== null)
+      else check('no award earned → no Highlights', (await page.locator('.game-end-highlights').count()) === 0)
+      if (timed && awards.count > 1) {
+        await page.waitForTimeout(TUNING.carouselSeconds * 1000 + 600)
+        const next = await current()
+        check(`the carousel moves on by itself (${awards.id} → ${next.id})`, next.id !== awards.id)
+        await tap(page.locator('.game-end-results .kit-carousel-view'))
+        const tapped = await current()
+        check(`a tap moves it on (${next.id} → ${tapped.id})`, tapped.id !== next.id)
+        await page.waitForTimeout(TUNING.carouselSeconds * 1000 + 600) // the usual wait: held by the tap, so no change yet
+        check('a tap holds it (no change one usual wait later)', (await current()).id === tapped.id)
+        await page.waitForTimeout(TUNING.carouselPauseSeconds * 1000)
+        check('…then it carries on', (await current()).id !== tapped.id)
+        console.log(`ok   ${tag} carousel: moves on, a tap moves + holds, then carries on`)
+      }
       await fits('Results')
       await fills('Results', '.game-end-results')
       await shot('1-results')
@@ -198,7 +242,28 @@ try {
         const caption = await page.locator('.game-end-caption').innerText()
         check(`tapping a mark tells what happened (“${caption}”)`, !/Tap a mark/.test(caption) && caption.length > 5)
       }
+      // The star: on the shown award's holder's line; it moves when the carousel moves on
+      const starNow = () => page.evaluate(() => {
+        const star = document.querySelector('[data-marker="star"]')
+        const on = document.querySelector('.game-end-story .kit-carousel-item[data-current] .game-end-award')
+        return { star: star ? `${star.dataset.seat}@${star.dataset.x}` : null, seat: star?.dataset.seat ?? null, holder: on?.dataset.holder ?? null, award: on ? `${on.dataset.award}:${on.dataset.holder}` : null }
+      })
+      if (awards.count) {
+        const s1 = await starNow()
+        check(`a 4-pointed star on the shown award's holder's line (star seat ${s1.seat}, award ${s1.award})`, s1.star !== null && s1.seat === s1.holder)
+        check('the same carousel under the key on the Story page', (await page.locator('.game-end-story .kit-carousel').count()) === 1)
+        if (timed && awards.count > 1) {
+          await page.waitForTimeout(TUNING.carouselSeconds * 1000 + 600)
+          const s2 = await starNow()
+          check(`the star follows the carousel (${s1.award} @ ${s1.star} → ${s2.award} @ ${s2.star})`, s2.award !== s1.award && s2.seat === s2.holder)
+          if (s2.star === s1.star) notes.push(`${tag}: two awards share one spot (${s1.star})`)
+        }
+      } else check('no award → no star', (await page.locator('[data-marker="star"]').count()) === 0)
       const [chartBox, keyBox, captionBox] = await Promise.all(['.game-end-chart', '.game-end-key', '.game-end-caption'].map(box))
+      if (awards.count) {
+        const carousel = await box('.game-end-story .game-end-highlights')
+        check('the Highlights sit under the key, the caption under them', carousel.y >= keyBox.y + keyBox.height - 0.5 && captionBox.y >= carousel.y + carousel.height - 0.5)
+      }
       check('the key sits right under the chart', keyBox.y >= chartBox.y + chartBox.height - 0.5 && keyBox.y - (chartBox.y + chartBox.height) < 30
         && keyBox.x < chartBox.x + chartBox.width && keyBox.x + keyBox.width > chartBox.x)
       check('the caption sits under the key', captionBox.y >= keyBox.y + keyBox.height - 0.5 && captionBox.x < chartBox.x + chartBox.width)

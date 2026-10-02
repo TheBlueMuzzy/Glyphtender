@@ -21,9 +21,11 @@ type Props = {
   pauseSeconds: number
   /** Show the "Highlights" heading above it (Results); the Story page goes without. */
   heading?: boolean
+  /** A wide screen (desktop, phone on its side): the award a size bigger, so it holds its own under the podium. */
+  big?: boolean
 }
 
-export function EndHighlights({ awards, index, onIndex, name, autoSeconds, pauseSeconds, heading = true }: Props) {
+export function EndHighlights({ awards, index, onIndex, name, autoSeconds, pauseSeconds, heading = true, big = false }: Props) {
   if (!awards.length) return null
   return (
     <Stack gap="xs" className="game-end-highlights">
@@ -35,12 +37,12 @@ export function EndHighlights({ awards, index, onIndex, name, autoSeconds, pause
             <Row key={`${a.id}:${a.holder}`} gap="s" className="kit-nowrap game-end-award" data-award={a.id} data-holder={a.holder}>
               <span className="game-end-award-art">
                 {a.seats.slice(0, 2).map((seat, i) => (
-                  <img key={seat} className="game-end-art" data-size={i === 0 ? 's' : 'xs'} src={glyphlingArt(seat)} alt={name(seat)} />
+                  <img key={seat} className="game-end-art" data-size={i === 0 ? (big ? 'm' : 's') : 'xs'} src={glyphlingArt(seat)} alt={name(seat)} />
                 ))}
               </span>
               <span className="game-end-award-text">
-                <Text kind="label">{title}</Text>
-                <Text kind="caption">{reason}</Text>
+                <Text kind={big ? 'heading' : 'label'}>{title}</Text>
+                <Text kind={big ? 'body' : 'caption'}>{reason}</Text>
               </span>
             </Row>
           )
