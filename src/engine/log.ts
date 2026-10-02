@@ -37,9 +37,10 @@ export function logWords(state: GameState): LogWord[] {
 }
 
 /**
- * Who completed this glyphling's tangle (Muzzy, 2026-10-02): the one seat whose seeds fill EVERY hex next to it —
- * no other seat's seed and no glyphling at all; the board's edge neither helps nor hurts. Never the owner (your own
- * seeds round your own glyphling isn't a complete tangle). null = nobody. Read on the board the moment it got tangled.
+ * Who completed this glyphling's tangle (Muzzy, 2026-10-02): the one seat whose pieces fill EVERY hex next to it —
+ * its seeds AND its glyphlings ("your glyphlings count as your tiles", like the tangle bonus); no other seat's piece;
+ * the board's edge neither helps nor hurts. Never the owner (your own pieces round your own glyphling isn't a complete
+ * tangle). null = nobody. Read on the board the moment it got tangled.
  */
 export function completeTangler(state: GameState, glyphlingId: number): number | null {
   const g = state.glyphlings.find((x) => x.id === glyphlingId)
@@ -48,7 +49,7 @@ export function completeTangler(state: GameState, glyphlingId: number): number |
   const around = neighbours(getBoard(state.config.boardName), g.hex).map((h) => taken.get(hexKey(h)))
   const by = around[0]?.seat
   const complete = around.length > 0 && by !== undefined && by !== g.seat
-    && around.every((who) => who?.kind === 'seed' && who.seat === by)
+    && around.every((who) => who !== undefined && who.seat === by)
   return complete ? by : null
 }
 

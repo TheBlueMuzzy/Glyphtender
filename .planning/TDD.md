@@ -141,6 +141,7 @@ flowchart LR
 ## 8. Decisions log
 ```
 D53 · 2026-10-02 · Complete tangles are decided by the engine and written in the game log (Muzzy's scorecard notes)
+  Correction (Muzzy, same day): the completer's own GLYPHLINGS count as their tiles too (not just seeds) — log.ts completeTangler.
   Why: Muzzy — "remove Tangled a rival and got tangled. just put Complete Tangles (an opponent only had YOUR
   runeblossoms adjacent to them when they were tangled. (walls don't count for anyone))".
   Options: work it out in stats.ts from the final board / record it in the log at the moment of the tangle.

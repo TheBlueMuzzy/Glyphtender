@@ -127,7 +127,8 @@ describe('the game log (log.ts)', () => {
 })
 
 // A COMPLETE TANGLE (Muzzy, 2026-10-02): an opponent's glyphling that, the moment it got tangled, had ONLY your
-// seeds next to it. The board's edge doesn't count either way; another player's seed or any glyphling spoils it.
+// seeds or glyphlings next to it (your glyphlings count as your tiles). The board's edge doesn't count either way;
+// another player's seed or glyphling (or the owner's own) spoils it.
 // C1-1 is a corner of the small board: its only neighbours are C1-2, C2-2 and C2-3.
 describe('complete tangles in the log', () => {
   /** Blue's glyphling 3 steps C1-4 → C1-3 and casts into C1-2, the last open hex next to Yellow's glyphling 0. */
@@ -148,8 +149,14 @@ describe('complete tangles in the log', () => {
   it("the owner's own seed next to it → nobody", () => {
     expect(completes(corner([{ 'C2-3': 'B' }, { 'C2-2': 'A' }]))).toEqual([{ glyphling: 0, by: null }])
   })
-  it('a glyphling next to it (even one of the closer’s) → nobody', () => {
-    expect(completes(corner([{}, { 'C2-2': 'A' }], { 2: 'C2-3' }))).toEqual([{ glyphling: 0, by: null }])
+  it("the closer's own glyphling next to it counts as theirs (Muzzy: your glyphlings count as your tiles) → Blue completed it", () => {
+    expect(completes(corner([{}, { 'C2-2': 'A' }], { 2: 'C2-3' }))).toEqual([{ glyphling: 0, by: 1 }])
+  })
+  it("another player's glyphling next to it → nobody", () => {
+    expect(completes(corner([{}, { 'C2-2': 'A' }, {}], { 4: 'C2-3', 5: 'C9-6' }, 3))).toEqual([{ glyphling: 0, by: null }])
+  })
+  it("the owner's own other glyphling next to it → nobody", () => {
+    expect(completes(corner([{}, { 'C2-2': 'A' }], { 1: 'C2-3' }))).toEqual([{ glyphling: 0, by: null }])
   })
   it('a glyphling hemmed in by its OWNER’s seeds only is never complete', () => {
     // Yellow's own seeds all round it, then Yellow's own cast closes it
