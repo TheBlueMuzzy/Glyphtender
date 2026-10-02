@@ -1,9 +1,10 @@
 // A turn: move one glyphling, then cast a seed from where it landed.
-import { hexKey, type Hex } from './hex'
+import { hexKey, sameHex, type Hex } from './hex'
+import { withoutSeed } from './insight'
 import { findGlyphling, includesHex, legalCasts, legalMoves } from './moves'
 import { endTurn } from './tangle'
 import { findWords, type FoundWord } from './wordFinder'
-import type { GameState, MadeWord, TurnSummary, WordList } from './types'
+import type { GameState, LogBlock, MadeWord, TurnSummary, WordList } from './types'
 
 export type TurnAction = { type: 'turn'; glyphling: number; to: Hex; seed: number | null; target: Hex | null }
 
@@ -76,13 +77,45 @@ export function applyTurn(state: GameState, action: TurnAction, words: WordList)
     drew: 0,
   }
   const magic = after.magic.map((m, s) => (s === seat ? m + preview.magic : m))
+  // For the game log (the Weed toss award): the best word a rival could have grown on this cast's hex. It reads
+  // rivals' hands, so it waits in pendingLog — hidden online like the log (party/views.ts) — until endTurn logs it.
+  const pendingLog = { blocked: blockedSpot(after, seat, action.target, words) }
   if (preview.words.length > 0) {
     // Made Magic → draw 1 seed (if the bag isn't empty).
     const drawn = after.bag.slice(0, 1)
     const hands = after.hands.map((h, s) => (s === seat ? [...h, ...drawn] : h))
-    return endTurn({ ...after, magic, hands, bag: after.bag.slice(drawn.length), lastTurn: { ...lastTurn, drew: drawn.length } })
+    return endTurn({ ...after, magic, hands, bag: after.bag.slice(drawn.length), lastTurn: { ...lastTurn, drew: drawn.length }, pendingLog })
   }
   // No Magic → the same player may refresh their hand (skipped when the bag is empty: nothing to refill from).
-  if (after.bag.length > 0) return { ...after, magic, lastTurn, phase: 'refresh' }
-  return endTurn({ ...after, magic, lastTurn })
+  if (after.bag.length > 0) return { ...after, magic, lastTurn, phase: 'refresh', pendingLog }
+  return endTurn({ ...after, magic, lastTurn, pendingLog })
+}
+
+/**
+ * Weed toss (stats.ts): the best word a RIVAL could have grown on the cast's hex on their next turn, had it stayed
+ * empty — any letter in their hand, cast by one of their glyphlings after one legal move, on the board as it was
+ * after this turn's move. null = no rival could have made a word there. It reads rivals' real hands, so it's only
+ * ever written into the secret game log (shown once the game is over). `after` = the board after the cast.
+ */
+export function blockedSpot(after: GameState, seat: number, target: Hex | null, words: WordList): LogBlock | null {
+  if (!target) return null
+  const open = withoutSeed(after, target)
+  let best: LogBlock | null = null
+  for (let rival = 0; rival < after.config.players; rival++) {
+    if (rival === seat) continue
+    const letters = [...new Set(open.hands[rival] ?? [])].filter((l) => /^[A-Z]$/.test(l))
+    let top: { magic: number; word: string } | null = null
+    for (const letter of letters) {
+      const planted = { ...open, seeds: { ...open.seeds, [hexKey(target)]: { letter, seat: rival } } }
+      const made = magicFor(planted, findWords(planted, target, words), rival)
+      const total = made.reduce((sum, w) => sum + w.magic, 0)
+      if (total > (top?.magic ?? 0)) top = { magic: total, word: made.map((w) => w.word).join(' + ') }
+    }
+    if (!top || top.magic <= (best?.magic ?? 0)) continue
+    // …and could they have got a seed there? One legal move, then a straight cast (over their own pieces only).
+    const reach = open.glyphlings.some((g) => g.seat === rival
+      && legalMoves(open, g.id).some((m) => legalCasts(open, g.id, m).some((h) => sameHex(h, target))))
+    if (reach) best = { seat: rival, magic: top.magic, word: top.word }
+  }
+  return best
 }

@@ -22,6 +22,7 @@ export function hideSecrets(game: GameState, seat: number): GameState {
     tangleMagic: zeros,
     winners: [],
     log: emptyLog(), // the running totals + every word's Magic: never before the end (D47)
+    pendingLog: null, // what a rival could have spelled with their hand (Weed toss): log-only, never before the end
     lastTurn: game.lastTurn && {
       ...game.lastTurn,
       magic: 0,

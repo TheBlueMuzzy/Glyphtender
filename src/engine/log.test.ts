@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getBoard } from './boards'
 import { applyAction, legalDraftHexes, legalMoves } from './engine'
-import { neighbours } from './hex'
+import { hexKey, neighbours } from './hex'
 import { logOf } from './log'
 import { randomAction } from './sim'
 import { newGame } from './setup'
@@ -26,7 +26,8 @@ describe('the game log (log.ts)', () => {
     const [turn] = logOf(next).turns
     expect(turn).toMatchObject({ turnNo: 1, round: 1, seat: 0, glyphlingId: 0, letter: 'T', magic: 8, refreshed: 0, refresh: false })
     const cat = turn.words.find((w) => w.word === 'CAT')!
-    expect(cat).toEqual({ word: 'CAT', letters: ['C', 'A', 'T'], owners: [0, 1, 0], magic: 5, ownMagic: 2 })
+    expect(cat).toMatchObject({ word: 'CAT', letters: ['C', 'A', 'T'], owners: [0, 1, 0], magic: 5, ownMagic: 2, at: 2 })
+    expect(cat.hexes).toEqual(['C6-2', 'C6-3', 'C6-4'].map((l) => hexKey(hexAt(l))))
     expect(turn.words.find((w) => w.word === 'TO')).toMatchObject({ owners: [0, 1], magic: 3, ownMagic: 1 })
     expect(turn.totalsAfter).toEqual([12, 9])
   })

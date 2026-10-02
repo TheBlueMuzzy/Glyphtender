@@ -77,7 +77,9 @@ function expectNoSecrets(view: GameView) {
   expect(view.results).toBeNull()
   // the game log holds every turn's Magic and the running totals: sent empty until the end (D47)
   expect(game.log ?? { turns: [], end: null }).toEqual({ turns: [], end: null })
-  expect(JSON.stringify(view)).not.toMatch(/totalsAfter|ownMagic|"tangles"/)
+  // …and what a rival could have spelled with their hand on a cast's hex (Weed toss): log-only, never sent before the end
+  expect(game.pendingLog ?? null).toBeNull()
+  expect(JSON.stringify(view)).not.toMatch(/totalsAfter|ownMagic|"tangles"|"blocked"|"mobility"/)
 }
 
 /** Every player plays random legal moves from their OWN view until the game ends. */

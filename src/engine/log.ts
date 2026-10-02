@@ -5,6 +5,7 @@
 // sends an empty log until the game is over (party/views.ts).
 import { getBoard } from './boards'
 import { hexKey, neighbours } from './hex'
+import { sealedPockets, seedsFlownOver, turnMobility } from './insight'
 import { occupancy } from './moves'
 import type { GameLog, GameState, LogEnd, LogTangle, LogTurn, LogWord } from './types'
 
@@ -23,15 +24,19 @@ export function logWords(state: GameState): LogWord[] {
   const turn = state.lastTurn
   if (!turn) return []
   const bonus = state.config.rules.ownershipBonus
+  const cast = turn.target ? hexKey(turn.target) : null
   return turn.words.map((w) => {
     const seeds = w.hexes.map((h) => state.seeds[hexKey(h)])
     const owners = seeds.map((s) => s?.seat ?? -1)
+    const hexes = w.hexes.map(hexKey)
     return {
       word: w.word,
       letters: seeds.map((s) => s?.letter ?? '?'),
       owners,
       magic: w.magic,
       ownMagic: owners.filter((o) => o === turn.seat).length * bonus,
+      hexes,
+      at: hexes.indexOf(cast ?? ''),
     }
   })
 }
@@ -83,6 +88,11 @@ export function logTurn(state: GameState, tangled: number[], refreshed: number |
     newlyTangled,
     freed: state.tangled.filter((id) => !tangled.includes(id)),
     completeTangles: newlyTangled.map((id) => ({ glyphling: id, by: completeTangler(state, id) })),
+    // The skill awards' facts (insight.ts)
+    mobility: turnMobility(state, turn.glyphlingId, turn.from, turn.target),
+    castOver: seedsFlownOver(state, turn.seat, turn.to, turn.target),
+    blocked: state.pendingLog?.blocked ?? null,
+    sealed: sealedPockets(state, turn.seat, turn.target),
   }
 }
 

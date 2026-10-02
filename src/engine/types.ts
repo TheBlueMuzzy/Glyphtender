@@ -78,6 +78,25 @@ export interface LogWord {
   magic: number
   /** The part of `magic` that came from the caster's own seeds (ownershipBonus each). */
   ownMagic: number
+  /** Its seeds' hexes (hexKey), in reading order — and where in it the seed cast this turn sits (0 = first).
+   *  Missing in logs written before 2026-10-02 (the Hijack and Bridge awards then can't be earned). */
+  hexes?: string[]
+  at?: number
+}
+
+/** Every glyphling's legal moves, by glyphling id: at the start of the turn, after the move, after the cast. */
+export interface LogMobility {
+  before: number[]
+  afterMove: number[]
+  afterCast: number[]
+}
+
+/** A spot a rival could have scored on: the best word one of their hand's seeds would have grown there. */
+export interface LogBlock {
+  seat: number
+  magic: number
+  /** The word(s), e.g. "GARDEN" or "TO + AT". */
+  word: string
 }
 
 /** One completed turn (draft placements aren't turns). */
@@ -109,6 +128,15 @@ export interface LogTurn {
    *  it held that seat's seeds and nothing else (no other seat's seed, no glyphling; the board edge is ignored),
    *  and the glyphling isn't theirs — or null. Missing in logs written before complete tangles were recorded. */
   completeTangles?: { glyphling: number; by: number | null }[]
+  // ── The skill awards' facts (insight.ts; missing in logs written before 2026-10-02 → those awards can't be earned) ──
+  /** Legal moves of every glyphling before the move, after it, and after the cast (Lockdown, Pincer, Close call). */
+  mobility?: LogMobility
+  /** How many of the caster's own seeds the cast flew over (Through the hedge). */
+  castOver?: number
+  /** The best word a rival could have grown on the cast's hex next turn, had it stayed empty (Weed toss). */
+  blocked?: LogBlock | null
+  /** The caster's glyphlings this cast shut in a pocket no rival glyphling can reach — with its hexes (Walled garden). */
+  sealed?: { glyphling: number; hexes: string[] }[]
 }
 
 /** One tangled glyphling at the end, and the bonus it gave each seat. */
@@ -169,6 +197,9 @@ export interface GameState {
   rng: number
   /** What happened each turn (log.ts). Missing in games saved before the log existed = an empty log. */
   log?: GameLog
+  /** Facts about the turn in progress that only the log may keep (they read rivals' hands): set by applyTurn, written
+   *  into the log and cleared by endTurn. Secret like the log — party/views.ts never sends it. */
+  pendingLog?: { blocked: LogBlock | null } | null
 }
 
 /** Everything a seat can do. */
