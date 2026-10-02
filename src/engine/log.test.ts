@@ -125,3 +125,50 @@ describe('the game log (log.ts)', () => {
     expect(turn.newlyTangled).not.toContain(0)
   })
 })
+
+// A COMPLETE TANGLE (Muzzy, 2026-10-02): an opponent's glyphling that, the moment it got tangled, had ONLY your
+// seeds next to it. The board's edge doesn't count either way; another player's seed or any glyphling spoils it.
+// C1-1 is a corner of the small board: its only neighbours are C1-2, C2-2 and C2-3.
+describe('complete tangles in the log', () => {
+  /** Blue's glyphling 3 steps C1-4 → C1-3 and casts into C1-2, the last open hex next to Yellow's glyphling 0. */
+  const blueCloses = { type: 'turn' as const, glyphling: 3, to: hexAt('C1-3'), seed: 0, target: hexAt('C1-2') }
+  const corner = (seeds: Record<string, string>[], extra: Record<number, string> = {}, players = 2) => position({
+    players, current: 1,
+    glyphlings: { 0: 'C1-1', 1: 'C6-5', 2: 'C6-8', 3: 'C1-4', ...extra },
+    seeds, hands: Array.from({ length: players }, () => ['S']),
+  })
+  const completes = (s: GameState) => logOf(applyAction(s, blueCloses, words)).turns[0].completeTangles
+
+  it('only Blue seeds next to it (the corner: the board edge is ignored) → Blue completed it', () => {
+    expect(completes(corner([{}, { 'C2-2': 'A', 'C2-3': 'B' }]))).toEqual([{ glyphling: 0, by: 1 }])
+  })
+  it("one other player's seed next to it → nobody", () => {
+    expect(completes(corner([{}, { 'C2-2': 'A' }, { 'C2-3': 'B' }], { 4: 'C9-4', 5: 'C9-6' }, 3))).toEqual([{ glyphling: 0, by: null }])
+  })
+  it("the owner's own seed next to it → nobody", () => {
+    expect(completes(corner([{ 'C2-3': 'B' }, { 'C2-2': 'A' }]))).toEqual([{ glyphling: 0, by: null }])
+  })
+  it('a glyphling next to it (even one of the closer’s) → nobody', () => {
+    expect(completes(corner([{}, { 'C2-2': 'A' }], { 2: 'C2-3' }))).toEqual([{ glyphling: 0, by: null }])
+  })
+  it('a glyphling hemmed in by its OWNER’s seeds only is never complete', () => {
+    // Yellow's own seeds all round it, then Yellow's own cast closes it
+    const s = position({
+      glyphlings: { 0: 'C1-1', 1: 'C1-4', 2: 'C6-5', 3: 'C6-8' },
+      seeds: [{ 'C2-2': 'A', 'C2-3': 'B' }, {}], hands: [['S'], ['S']],
+    })
+    const next = applyAction(s, { type: 'turn', glyphling: 1, to: hexAt('C1-3'), seed: 0, target: hexAt('C1-2') }, words)
+    expect(logOf(next).turns[0].completeTangles).toEqual([{ glyphling: 0, by: null }])
+  })
+  it('two players complete one each in one game; nothing logged on turns with no new tangle', () => {
+    const s = position({
+      glyphlings: { 0: 'C1-1', 1: 'C11-4', 2: 'C11-1', 3: 'C1-4' },
+      seeds: [{ 'C10-2': 'A', 'C10-3': 'B' }, { 'C2-2': 'C', 'C2-3': 'D' }], hands: [['S'], ['T']],
+    })
+    const one = applyAction(s, { type: 'turn', glyphling: 1, to: hexAt('C11-3'), seed: 0, target: hexAt('C11-2') }, words)
+    expect(one.phase).toBe('play')
+    const two = applyAction(one, blueCloses, words)
+    expect(two.phase).toBe('over')
+    expect(logOf(two).turns.map((t) => t.completeTangles)).toEqual([[{ glyphling: 2, by: 0 }], [{ glyphling: 0, by: 1 }]])
+  })
+})

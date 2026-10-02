@@ -3,7 +3,9 @@
 // Pure: it reads the game and returns new data. The end screen works everything out from it (src/game/stats.ts).
 // SECRET: totalsAfter and the words' Magic are the running scores everyone is guessing at — the online server
 // sends an empty log until the game is over (party/views.ts).
-import { hexKey } from './hex'
+import { getBoard } from './boards'
+import { hexKey, neighbours } from './hex'
+import { occupancy } from './moves'
 import type { GameLog, GameState, LogEnd, LogTangle, LogTurn, LogWord } from './types'
 
 /** A log with nothing in it yet. */
@@ -35,6 +37,22 @@ export function logWords(state: GameState): LogWord[] {
 }
 
 /**
+ * Who completed this glyphling's tangle (Muzzy, 2026-10-02): the one seat whose seeds fill EVERY hex next to it —
+ * no other seat's seed and no glyphling at all; the board's edge neither helps nor hurts. Never the owner (your own
+ * seeds round your own glyphling isn't a complete tangle). null = nobody. Read on the board the moment it got tangled.
+ */
+export function completeTangler(state: GameState, glyphlingId: number): number | null {
+  const g = state.glyphlings.find((x) => x.id === glyphlingId)
+  if (!g) return null
+  const taken = occupancy(state)
+  const around = neighbours(getBoard(state.config.boardName), g.hex).map((h) => taken.get(hexKey(h)))
+  const by = around[0]?.seat
+  const complete = around.length > 0 && by !== undefined && by !== g.seat
+    && around.every((who) => who?.kind === 'seed' && who.seat === by)
+  return complete ? by : null
+}
+
+/**
  * The entry for the turn that just finished. `state` is the game as endTurn gets it (the board after the cast,
  * Magic already added); `tangled` = the glyphlings tangled now; `refreshed` = seeds set aside (null = no refresh).
  */
@@ -45,6 +63,7 @@ export function logTurn(state: GameState, tangled: number[], refreshed: number |
   // A new round each time play comes back round to the same or an earlier seat (seat 0 always starts)
   const round = before ? (turn.seat <= before.seat ? before.round + 1 : before.round)
     : Math.floor(state.turnCount / state.config.players) + 1 // (a game saved before the log: a fair guess)
+  const newlyTangled = tangled.filter((id) => !state.tangled.includes(id))
   return {
     turnNo: state.turnCount + 1,
     round,
@@ -60,8 +79,9 @@ export function logTurn(state: GameState, tangled: number[], refreshed: number |
     refresh: refreshed !== null,
     totalsAfter: [...state.magic],
     tangledAfter: [...tangled],
-    newlyTangled: tangled.filter((id) => !state.tangled.includes(id)),
+    newlyTangled,
     freed: state.tangled.filter((id) => !tangled.includes(id)),
+    completeTangles: newlyTangled.map((id) => ({ glyphling: id, by: completeTangler(state, id) })),
   }
 }
 

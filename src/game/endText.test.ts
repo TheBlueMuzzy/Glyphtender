@@ -48,7 +48,7 @@ describe('chart captions', () => {
 describe('scorecard rows', () => {
   const card = (seat: number): Scorecard => ({
     seat, total: 10 + seat, wordMagic: 10, soloMagic: 2, tangleMagic: seat, byLength: [1, 2, 3, 0, 0], wordsMade: 6, longestWord: 'TREE',
-    bestWord: null, bestTurn: null, multiWordTurns: 0, seedsRefreshed: 3, tangledRivals: 0, gotTangled: 1, lettersBorrowed: 0, lettersGiven: 0,
+    bestWord: null, bestTurn: null, multiWordTurns: 0, seedsRefreshed: 3, completeTangles: seat, lettersBorrowed: 0, lettersGiven: 0,
   })
   it('the 2-letter row only when 2-letter words count', () => {
     const two = newGame({ players: 2, seed: 1 })
@@ -57,6 +57,19 @@ describe('scorecard rows', () => {
     expect(labels(two)).toContain('2-letter')
     expect(labels(three)).not.toContain('2-letter')
     expect(labels(three)).toContain('6+ letters')
+  })
+  it('Magic: Total, From words, From tangles, From solo words; Play: Multi-word turns, Seeds refreshed, Complete tangles', () => {
+    const [magic, , play] = scorecardRows(newGame({ players: 2, seed: 1 }), [card(0), card(1)], [1, 0])
+    expect(magic.rows.map((r) => r.label)).toEqual(['Total', 'From words', 'From tangles', 'From solo words'])
+    expect(play.rows.map((r) => r.label)).toEqual(['Multi-word turns', 'Seeds refreshed', 'Complete tangles'])
+    expect(play.rows[2].values).toEqual([1, 0])
+    expect(play.rows[2].tint).toBe(true)
+  })
+  it('complete tangles unknown (an old log) → "–" for everyone, never tinted', () => {
+    const old = (seat: number) => ({ ...card(seat), completeTangles: null })
+    const [, , play] = scorecardRows(newGame({ players: 2, seed: 1 }), [old(0), old(1)], [1, 0])
+    expect(play.rows[2].shown).toEqual(['–', '–'])
+    expect(bestCells(play.rows[2])).toEqual([false, false])
   })
   it('columns follow the seats given (best place first)', () => {
     const [magic] = scorecardRows(newGame({ players: 2, seed: 1 }), [card(0), card(1)], [1, 0])

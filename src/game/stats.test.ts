@@ -81,10 +81,24 @@ describe('scorecards', () => {
     expect([y.multiWordTurns, b.multiWordTurns]).toEqual([1, 1])
     expect(y.wordsMade).toBe(4)
   })
-  it('seeds refreshed, tangles both ways, letters borrowed and given', () => {
+  it('seeds refreshed, letters borrowed and given', () => {
     expect(b.seedsRefreshed).toBe(3)
-    expect([y.tangledRivals, y.gotTangled, b.tangledRivals, b.gotTangled]).toEqual([1, 1, 1, 1])
     expect([y.lettersBorrowed, y.lettersGiven, b.lettersBorrowed, b.lettersGiven]).toEqual([4, 1, 1, 4])
+  })
+  it('complete tangles: counted from the log, per player who completed them', () => {
+    const done = finished(3, [
+      [0, [], { newlyTangled: [], completeTangles: [] }],
+      [1, [], { completeTangles: [{ glyphling: 0, by: 1 }, { glyphling: 4, by: null }] }],
+      [2, [], { completeTangles: [] }],
+      [0, [], { completeTangles: [{ glyphling: 2, by: 0 }] }],
+      [1, [], { completeTangles: [{ glyphling: 5, by: 1 }] }],
+    ])
+    expect(scorecards(done).map((c) => c.completeTangles)).toEqual([1, 2, 0])
+  })
+  it('complete tangles from a log written before they were recorded: unknown (null), never a guess', () => {
+    expect(scorecards(g).map((c) => c.completeTangles)).toEqual([null, null])
+    const old = { ...newGame({ players: 2, seed: 1 }), magic: [5, 6], log: undefined }
+    expect(scorecards(old).map((c) => c.completeTangles)).toEqual([null, null])
   })
   it('a game without a log (an old snapshot) gives empty cards, not a crash', () => {
     const old = { ...newGame({ players: 3, seed: 1 }), magic: [5, 6, 7], log: undefined }

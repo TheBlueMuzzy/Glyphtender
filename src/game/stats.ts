@@ -57,10 +57,9 @@ export interface Scorecard {
   multiWordTurns: number
   /** Seeds set aside on refreshes, all game. */
   seedsRefreshed: number
-  /** Rivals' glyphlings this player tangled (still tangled at the end). */
-  tangledRivals: number
-  /** This player's glyphlings tangled at the end. */
-  gotTangled: number
+  /** Rivals' glyphlings this player COMPLETELY tangled: only this player's seeds next to it when it got tangled
+   *  (the board edge ignored; log.ts completeTangler). null = unknown: a log written before they were recorded. */
+  completeTangles: number | null
   /** Letters from other players' seeds in this player's words. */
   lettersBorrowed: number
   /** This player's seeds in other players' words. */
@@ -79,8 +78,8 @@ export function tanglers(turns: LogTurn[]): Map<number, number> {
 
 export function scorecards(game: GameState): Scorecard[] {
   const log = logOf(game)
-  const ownerOf = (id: number) => game.glyphlings.find((g) => g.id === id)?.seat ?? -1
-  const tangledBy = tanglers(log.turns)
+  // (an old log can't say: unknown for everyone, rather than a wrong 0)
+  const knowsComplete = logIsComplete(game) && log.turns.every((t) => t.completeTangles)
   return game.magic.map((total, seat) => {
     const mine = log.turns.filter((t) => t.seat === seat)
     const words = mine.flatMap((t) => t.words)
@@ -102,8 +101,9 @@ export function scorecards(game: GameState): Scorecard[] {
       bestTurn: best && { magic: best.magic, words: best.words.map((w) => w.word), turnNo: best.turnNo },
       multiWordTurns: mine.filter((t) => t.words.length >= 2).length,
       seedsRefreshed: mine.reduce((sum, t) => sum + t.refreshed, 0),
-      tangledRivals: game.tangled.filter((id) => tangledBy.get(id) === seat && ownerOf(id) !== seat).length,
-      gotTangled: game.tangled.filter((id) => ownerOf(id) === seat).length,
+      completeTangles: knowsComplete
+        ? log.turns.reduce((sum, t) => sum + (t.completeTangles ?? []).filter((c) => c.by === seat).length, 0)
+        : null,
       lettersBorrowed: words.reduce((sum, w) => sum + w.owners.filter((o) => o !== seat).length, 0),
       lettersGiven: othersWords.reduce((sum, w) => sum + w.owners.filter((o) => o === seat).length, 0),
     }

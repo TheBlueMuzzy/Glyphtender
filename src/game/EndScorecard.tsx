@@ -1,8 +1,8 @@
 // END SCREEN, PAGE 3: SCORECARD — one row per stat, one column per player (best place first), the same rows for
 // everyone, so it's easy to compare. The best number in a row gets a soft tint: where each player was strongest.
-// Rows (research/end-screen.md §2): Magic — total · from words · …solo words · from tangles; Words — 2-letter (only
-// when the table plays with 2-letter words) · 3 · 4 · 5 · 6+ · longest · best turn; Play — multi-word turns ·
-// seeds refreshed · tangled a rival · got tangled (no tint on the last two: neither is "best").
+// Rows (research/end-screen.md §2; Muzzy's order 2026-10-02): Magic — total · from words · from tangles · from solo
+// words; Words — 2-letter (only when the table plays with 2-letter words) · 3 · 4 · 5 · 6+ · longest · best turn;
+// Play — multi-word turns · seeds refreshed (no tint: not "best") · complete tangles ("–" for an old log).
 // Each section heading (Magic / Words / Play) sits on a darkened title bar as wide as the whole table (Muzzy, 2026-10-01).
 // Kit parts: Avatar, Text. The table is plain HTML laid out in game.css (style names only).
 import text from '../../content/text/en.json'

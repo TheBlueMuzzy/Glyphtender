@@ -90,8 +90,7 @@ export function scorecardRows(game: GameState, cards: Scorecard[], seats: number
     { name: card.groups.play, rows: [
       { label: card.multiWord, values: col((c) => c.multiWordTurns), tint: true },
       { label: card.refreshed, values: col((c) => c.seedsRefreshed), tint: false },
-      { label: card.tangledRivals, values: col((c) => c.tangledRivals), tint: true },
-      { label: card.gotTangled, values: col((c) => c.gotTangled), tint: false },
+      { label: card.completeTangles, values: col((c) => c.completeTangles ?? 0), shown: seats.map((seat) => cards[seat].completeTangles ?? card.none), tint: true },
     ] },
   ]
 }

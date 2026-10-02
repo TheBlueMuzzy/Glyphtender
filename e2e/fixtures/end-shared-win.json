@@ -1,7 +1,7 @@
 {
   "_help": "A finished game for npm run e2e:end, in the Dev Kit snapshot shape (greedy sim players, official words) — the Magic reveal plays, then the end screen. Made by scripts/end-fixtures.mjs.",
   "name": "End screen: shared win (3 players)",
-  "savedAt": "2026-10-01T06:09:30.451Z",
+  "savedAt": "2026-10-02T04:20:30.973Z",
   "game": "Glyphtender",
   "version": "0.2.0.0",
   "summary": "turn 49 · over · winner Blue + Purple · 99 / 100 / 100 Magic",
@@ -459,7 +459,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 2,
@@ -490,7 +491,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 3,
@@ -521,7 +523,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 4,
@@ -566,7 +569,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 5,
@@ -597,7 +601,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 6,
@@ -642,7 +647,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 7,
@@ -687,7 +693,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 8,
@@ -732,7 +739,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 9,
@@ -777,7 +785,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 10,
@@ -822,7 +831,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 11,
@@ -880,7 +890,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 12,
@@ -927,7 +938,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 13,
@@ -972,7 +984,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 14,
@@ -1017,7 +1030,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 15,
@@ -1048,7 +1062,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 16,
@@ -1093,7 +1108,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 17,
@@ -1151,7 +1167,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 18,
@@ -1200,7 +1217,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 19,
@@ -1247,7 +1265,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 20,
@@ -1278,7 +1297,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 21,
@@ -1336,7 +1356,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 22,
@@ -1381,7 +1402,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 23,
@@ -1452,7 +1474,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 24,
@@ -1525,7 +1548,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 25,
@@ -1572,7 +1596,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 26,
@@ -1617,7 +1642,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 27,
@@ -1688,7 +1714,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 28,
@@ -1733,7 +1760,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 29,
@@ -1778,7 +1806,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 30,
@@ -1827,7 +1856,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 31,
@@ -1885,7 +1915,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 32,
@@ -1943,7 +1974,8 @@
             ],
             "tangledAfter": [],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 33,
@@ -1994,7 +2026,13 @@
             "newlyTangled": [
               5
             ],
-            "freed": []
+            "freed": [],
+            "completeTangles": [
+              {
+                "glyphling": 5,
+                "by": null
+              }
+            ]
           },
           {
             "turnNo": 34,
@@ -2054,7 +2092,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 35,
@@ -2101,7 +2140,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 36,
@@ -2148,7 +2188,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 37,
@@ -2221,7 +2262,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 38,
@@ -2283,7 +2325,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 39,
@@ -2356,7 +2399,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 40,
@@ -2416,7 +2460,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 41,
@@ -2480,7 +2525,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 42,
@@ -2529,7 +2575,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 43,
@@ -2589,7 +2636,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 44,
@@ -2662,7 +2710,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 45,
@@ -2739,7 +2788,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 46,
@@ -2801,7 +2851,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 47,
@@ -2865,7 +2916,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 48,
@@ -2912,7 +2964,8 @@
               5
             ],
             "newlyTangled": [],
-            "freed": []
+            "freed": [],
+            "completeTangles": []
           },
           {
             "turnNo": 49,
@@ -2975,7 +3028,13 @@
             "newlyTangled": [
               0
             ],
-            "freed": []
+            "freed": [],
+            "completeTangles": [
+              {
+                "glyphling": 0,
+                "by": null
+              }
+            ]
           }
         ],
         "end": {
