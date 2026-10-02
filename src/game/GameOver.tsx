@@ -11,8 +11,9 @@
 // sizes e2e:end checks (a phone on its side may, for the tallest pages: the bottom edge then fades).
 // See board closes this so the finished garden is all there to look at. Esc and phone Back do the same.
 //   Results    the winner big, the others by place, the Highlights carousel under them (EndResults, EndHighlights)
-//   Story      everyone's Magic round by round, with the moments marked; tap a mark for what happened (StoryChart.tsx);
-//              the same Highlights carousel under the key, its award marked on the chart by a 4-pointed star
+//   Story      everyone's Magic round by round, with the moments and every award marked; drag the line across it and
+//              each moment on that round shows under the chart, stacked (StoryChart.tsx); the same Highlights
+//              carousel under the key, its award the big 4-pointed star
 // The two carousels share one index (awardAt): turning to Story shows the award Results was showing, star and all.
 //   Scorecard  the breakdown, the best in each row tinted (EndScorecard.tsx)
 // Everything comes from the finished game's log (src/game/stats.ts). Words: en.json → game.gameOver; knobs:
@@ -21,16 +22,15 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
-import { Row, Screen, ScrollArea, Stack, Tabs, Text } from '../ui/kit'
-import { logOf } from '../engine/log'
+import { Row, Screen, ScrollArea, Stack, Tabs, Text, fill } from '../ui/kit'
 import { colourOf } from './art'
 import { EndBar } from './EndBar'
 import { EndHighlights } from './EndHighlights'
 import { EndResults } from './EndResults'
 import { EndScorecard } from './EndScorecard'
-import { markerCaption, markerLabel, tangleBonusCaption, turnCaption } from './endText'
+import { markerCaption, tangleBonusCaption } from './endText'
 import { playerName, winnerTitle } from './prompt'
-import { awardPoint, earnedAwards, markersNear, scorecards, standings, storyChart } from './stats'
+import { awardPoint, earnedAwards, scorecards, standings, storyChart, type ChartMarker } from './stats'
 import { SeatShape, StoryChart } from './StoryChart'
 import { useEndTuning, useGardenTuning } from './useTuning'
 
@@ -69,7 +69,8 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
   const wide = useMedia('(min-aspect-ratio: 1/1)') // a phone on its side or a desktop: everyone in one row (a podium)
   const short = useMedia('(max-height: 32rem)') // a phone on its side: everything a size smaller (game.css matches)
   const [page, setPage] = useState<Page>('results')
-  const [selected, setSelected] = useState<number | 'tangles' | 'star' | null>(null)
+  // The Story chart's scrub line: a round, rounds + 1 = the Tangles column, null = not touched yet
+  const [scrub, setScrub] = useState<number | null>(null)
   // The Highlights carousel's award — ONE index for both pages' carousels (Results + Story stay in step), and the
   // Story chart's star sits on that award's moment
   const [awardAt, setAwardAt] = useState(0)
@@ -77,7 +78,9 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
   const end = useMemo(() => {
     if (!game) return null
     const awards = earnedAwards(game, tuning)
-    return { ranked: standings(game), cards: scorecards(game), awards, chart: storyChart(game, tuning.maxMarkers) }
+    const chart = storyChart(game, tuning.maxMarkers)
+    const awardMarks = awards.map((a) => awardPoint(game, chart, a)).filter((m): m is ChartMarker => m !== null)
+    return { ranked: standings(game), cards: scorecards(game), awards, chart, awardMarks }
   }, [game, tuning])
 
   // The page's size, and what the Story page has besides the chart (its key + caption): the chart takes what's left
@@ -164,17 +167,14 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
     <EndHighlights awards={end.awards} index={awardAt} onIndex={setAwardAt} name={name} heading={heading} big={wide && !short && heading}
       autoSeconds={tuning.carouselSeconds} pauseSeconds={tuning.carouselPauseSeconds} />
   )
-  // A tapped mark tells its moment — and any marks drawn on top of it (same round, nearly the same Magic)
-  const tapped = typeof selected === 'number' && selected >= end.chart.markers.length ? null : selected // (another game since)
-  // What happened on the starred award's turn ("Round 4 · Yellow cast N: …") — not the award again (the carousel says it)
-  const starTurn = () => {
-    const turn = award && logOf(game).turns.find((t) => t.turnNo === award.moment)
-    return turn ? turnCaption(turn, name) : w.chart.hint
-  }
-  const captions = tapped === null ? [w.chart.hint]
-    : tapped === 'tangles' ? [tangleBonusCaption(game, name)]
-    : tapped === 'star' ? [starTurn()] // the carousel above names the award; the star tells that turn's moment
-    : markersNear(end.chart, tapped).map((m) => markerCaption(game, m, end.awards, name))
+  // The scrub line's round: every moment on it (tangles, lead changes, awards), stacked; the Tangles column: the bonus
+  const spotLabel = (x: number) => x > end.chart.rounds ? w.chart.tangles : x === 0 ? w.chart.start : fill(w.chart.spot, { round: x })
+  const scrubbed = scrub !== null && scrub > end.chart.rounds + 1 ? null : scrub // (another game since)
+  const moments = scrubbed === null ? [] : [...end.chart.markers, ...end.awardMarks].filter((m) => m.x === scrubbed)
+  const captions = scrubbed === null ? [w.chart.hint]
+    : scrubbed > end.chart.rounds ? [tangleBonusCaption(game, name)]
+    : moments.length ? moments.map((m) => markerCaption(game, m, end.awards, name))
+    : [fill(w.chart.quiet, { round: spotLabel(scrubbed) })]
 
   return (
     <Screen dialog label={winnerTitle(game)}>
@@ -186,14 +186,14 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
           <ScrollArea key={page} label={w.tabs[page]}>
             <div role="tabpanel" aria-label={w.tabs[page]} className="game-end-tabpanel" data-page={page}>
               {page === 'results' && (
-                <EndResults title={game.winners.length > 1 ? w.sharedWin : winnerTitle(game)} game={game} ranked={end.ranked} cards={end.cards} highlights={highlights(true)} colours={colours} wide={wide} compact={short}
+                <EndResults title={game.winners.length > 1 ? w.sharedWin : winnerTitle(game)} game={game} ranked={end.ranked} cards={end.cards} highlights={highlights(true)} colours={colours} tuning={tuning} wide={wide} compact={short}
                   me={me} name={name} />
               )}
               {page === 'story' && (
                 <div ref={storyBox} className="game-end-story">
-                  <StoryChart chart={end.chart} colours={colours} tuning={tuning} selected={selected} onSelect={setSelected}
-                    height={chartHeight(pageSize.height, underChart, tuning.chartHeight)} star={star}
-                    label={(m) => markerLabel(m, end.awards, name)} />
+                  <StoryChart chart={end.chart} colours={colours} tuning={tuning} scrub={scrubbed} onScrub={setScrub}
+                    height={chartHeight(pageSize.height, underChart, tuning.chartHeight)} awards={end.awardMarks} star={star}
+                    spotLabel={spotLabel} />
                   {/* The key, right under the chart: each line's shape and colour, and whose it is */}
                   <Row gap="m" justify="center" className="game-end-key">
                     {end.ranked.map((s) => (
@@ -207,9 +207,9 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
                   </Row>
                   {/* The Highlights carousel (the same one as on Results, in step with it): its award has the star */}
                   {highlights(false)}
-                  {/* Then what happened at the tapped mark, under it */}
+                  {/* Then what happened where the line is, under it (one line per moment) */}
                   <div className="game-end-caption" aria-live="polite">
-                    {[...new Set(captions)].map((line) => <Text key={line} kind={selected === null ? 'caption' : 'body'}>{line}</Text>)}
+                    {[...new Set(captions)].map((line) => <Text key={line} kind={scrubbed === null ? 'caption' : 'body'}>{line}</Text>)}
                   </div>
                 </div>
               )}

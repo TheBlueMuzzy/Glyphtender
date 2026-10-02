@@ -1,14 +1,17 @@
 // THE STORY CHART — everyone's secret Magic, round by round, finally shown (research/end-screen.md §4).
 // One line per player in their glyphling colour; the last step is the end-of-game tangle bonus, in its own shaded
 // column, drawn dotted. Marks on the lines: a knot where a glyphling got tangled (ringed in the tangler's colour),
-// a tick where the lead changed — and ONE 4-pointed star in the holder's colour on the award the Highlights carousel
-// is showing (Muzzy, 2026-10-02: "as they carousel, they should show as a 4 pointed star marker on that player's line
-// at the time they did it"): it glides to the next award's spot as the carousel moves (reduce motion: it jumps).
-// Tap a mark or the star (44 px target) → the caption under the chart.
+// a tick where the lead changed, and a 4-pointed star in the holder's colour on EVERY award's moment — the award the
+// Highlights carousel is showing has the big star (Muzzy, 2026-10-02: "the story line could also have the
+// achievements marked on them").
+// THE SCRUB LINE (Muzzy, 2026-10-02: tapping a mark "is really difficult on the phone"): drag anywhere on the chart
+// and a vertical line follows the finger, snapping to a round (or the Tangles column); every moment on that round
+// shows in the caption under the chart, stacked (GameOver.tsx). A tap jumps it there; ← / → move it when the chart
+// has focus (it's a slider). Before it's touched, a faint dashed line + grip waits at the start.
 // Each line ends in its own shape (circle, square, triangle, diamond — not colour alone) and its total.
 // The lines draw themselves in, left to right, when the page opens (endscreen.json chartDrawSeconds; reduce motion = at once).
 // Game graphics like the board: an SVG sized in real pixels (it measures its box), colours from garden.json + style names.
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { fill, reduceMotion } from '../ui/kit'
 import type { ChartMarker, EndTuning, StoryChart as Chart } from './stats'
 import { colourOf } from './art'
@@ -51,17 +54,20 @@ type Props = {
   chart: Chart
   colours: GardenTuning
   tuning: EndTuning
-  /** The tapped marker (index into chart.markers), 'tangles' for the Tangles column, 'star' for the award star, or null. */
-  selected: number | 'tangles' | 'star' | null
-  onSelect: (which: number | 'tangles' | 'star' | null) => void
-  /** Where the Highlights carousel's award goes (stats.ts awardPoint), or null: no award / no story to draw. */
+  /** Where the scrub line is: a round (0 = the start … chart.rounds); chart.rounds + 1 = the Tangles column; null = not touched yet. */
+  scrub: number | null
+  onScrub: (x: number) => void
+  /** Every earned award's spot (stats.ts awardPoint) — a small star each. */
+  awards: ChartMarker[]
+  /** The award the Highlights carousel shows right now: the big star. Null: no award / no story to draw. */
   star: ChartMarker | null
   /** How tall the chart is, px. */
   height: number
-  label: (marker: ChartMarker) => string
+  /** What a spot of the line reads as, for screen readers ("Round 4"). */
+  spotLabel: (x: number) => string
 }
 
-export function StoryChart({ chart, colours, tuning, selected, onSelect, height, label, star }: Props) {
+export function StoryChart({ chart, colours, tuning, scrub, onScrub, awards, star, height, spotLabel }: Props) {
   // Real pixels: the SVG is as wide as its box, so its words are true sizes
   const box = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
@@ -89,6 +95,8 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
     after.current?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: ms, fill: 'backwards' })
   }, [width, tuning.chartDrawSeconds])
 
+  const dragging = useRef(false)
+
   const FONT = fontFor(width)
   const PAD = padFor(FONT)
   const S = FONT / 15 // marks and end shapes grow with the words
@@ -111,34 +119,47 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
   const overflow = (labels.at(-1)?.y ?? 0) - (height - PAD.bottom)
   if (overflow > 0) labels.forEach((l) => (l.y -= overflow))
 
-  // The star glides from the last award's spot to this one's (reduce motion: it just moves)
-  const starAt = star && chart.series[star.seat] ? { x: X(star.x), y: Y(chart.series[star.seat].points[star.x]) } : null
-  const starRef = useRef<SVGGElement>(null)
-  const starWas = useRef<{ x: number; y: number } | null>(null)
-  useLayoutEffect(() => {
-    const was = starWas.current
-    starWas.current = starAt
-    if (!starAt || !was || (was.x === starAt.x && was.y === starAt.y) || reduceMotion()) return
-    starRef.current?.animate(
-      [{ transform: `translate(${was.x}px, ${was.y}px)` }, { transform: `translate(${starAt.x}px, ${starAt.y}px)` }],
-      { duration: 350, easing: 'ease-in-out' })
-  }, [starAt?.x, starAt?.y]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const key = (which: number | 'tangles' | 'star') => (e: KeyboardEvent) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return
-    e.preventDefault()
-    onSelect(selected === which ? null : which)
+  // The scrub line's spots: each round's x, and the middle of the Tangles column
+  const spots = Array.from({ length: end + 1 }, (_, i) => (i === end ? X(chart.rounds) + tangleW / 2 : X(i)))
+  const nearest = (px: number) => spots.reduce((best, x, i) => (Math.abs(x - px) < Math.abs(spots[best] - px) ? i : best), 0)
+  const scrubTo = (e: PointerEvent<SVGSVGElement>) => onScrub(nearest(e.clientX - e.currentTarget.getBoundingClientRect().left))
+  // (the pointer events stop here, so dragging the line never also turns the page — GameOver.tsx's swipe)
+  const down = (e: PointerEvent<SVGSVGElement>) => {
+    e.stopPropagation()
+    dragging.current = true
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    scrubTo(e)
   }
+  const move = (e: PointerEvent<SVGSVGElement>) => {
+    e.stopPropagation()
+    if (dragging.current) scrubTo(e)
+  }
+  const up = (e: PointerEvent<SVGSVGElement>) => {
+    e.stopPropagation()
+    dragging.current = false
+  }
+  const key = (e: KeyboardEvent) => {
+    const by = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+    if (!by) return
+    e.preventDefault()
+    onScrub(Math.max(0, Math.min(end, (scrub ?? -1) + by)))
+  }
+  const at = scrub ?? 0
+  const lineX = spots[at] ?? PAD.left
+
   const colour = (seat: number) => colours[colourOf(seat)]
+  const pointOf = (m: ChartMarker) => ({ x: X(m.x), y: Y(chart.series[m.seat].points[m.x]) })
+  const isStar = (m: ChartMarker) => !!star && m.award === star.award && m.seat === star.seat
+  const ring = (x: number, y: number, r: number) => <circle cx={x} cy={y} r={r} fill="none" stroke="var(--focus)" strokeWidth={2.5} />
 
   return (
     <div ref={box} className="game-end-chart">
       {width > 0 && (
-        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={w.label} className="game-end-chart-svg">
-          {/* The Tangles column, shaded; tap it for the bonus */}
-          <g role="button" tabIndex={0} aria-label={w.tangles} onClick={() => onSelect(selected === 'tangles' ? null : 'tangles')} onKeyDown={key('tangles')} className="game-end-chart-hit">
-            <rect x={X(chart.rounds)} y={PAD.top} width={tangleW} height={plotH} fill="var(--border)" opacity={selected === 'tangles' ? 0.55 : 0.3} rx={6} />
-          </g>
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="game-end-chart-svg"
+          role="slider" tabIndex={0} aria-label={w.label} aria-valuemin={0} aria-valuemax={end} aria-valuenow={at} aria-valuetext={spotLabel(at)}
+          onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onKeyDown={key} data-scrub={scrub ?? undefined}>
+          {/* The Tangles column, shaded (darker while the line is in it) */}
+          <rect x={X(chart.rounds)} y={PAD.top} width={tangleW} height={plotH} fill="var(--border)" opacity={scrub === end ? 0.55 : 0.3} rx={6} />
           {/* Faint guide lines + their numbers */}
           {Array.from({ length: Math.floor(top / guide) + 1 }, (_, i) => i * guide).map((v) => (
             <g key={v}>
@@ -175,16 +196,12 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
             {labels.map((l) => (
               <text key={l.seat} x={X(end) + 12 * S} y={l.y} dy="0.35em" fontSize={FONT} fontWeight={700} fill="var(--on-surface)">{l.total}</text>
             ))}
-            {/* The moments */}
+            {/* The moments (ringed while the line is on their round) */}
             {chart.markers.map((m, i) => {
-              const x = X(m.x)
-              const y = Y(chart.series[m.seat].points[m.x])
-              const on = selected === i
+              const { x, y } = pointOf(m)
               return (
-                <g key={i} role="button" tabIndex={0} aria-label={label(m)} aria-pressed={on} className="game-end-chart-hit"
-                  onClick={() => onSelect(on ? null : i)} onKeyDown={key(i)} data-marker={m.kind}>
-                  <circle cx={x} cy={y} r={Math.max(22, 16 * S)} fill="transparent" />
-                  {on && <circle cx={x} cy={y} r={13 * S} fill="none" stroke="var(--focus)" strokeWidth={2.5} />}
+                <g key={i} data-marker={m.kind} data-seat={m.seat} data-x={m.x}>
+                  {scrub === m.x && ring(x, y, 13 * S)}
                   {m.kind === 'tangle' && (
                     <>
                       <circle cx={x} cy={y} r={8 * S} fill="var(--surface)" stroke={colour(m.by ?? m.seat)} strokeWidth={3} />
@@ -195,17 +212,28 @@ export function StoryChart({ chart, colours, tuning, selected, onSelect, height,
                 </g>
               )
             })}
-            {/* The Highlights star: the award the carousel shows, on its holder's line — glides from award to award */}
-            {star && starAt && (
-              <g role="button" tabIndex={0} aria-label={label(star)} aria-pressed={selected === 'star'} className="game-end-chart-hit game-end-star"
-                onClick={() => onSelect(selected === 'star' ? null : 'star')} onKeyDown={key('star')} data-marker="star" data-seat={star.seat}
-                data-x={star.x} ref={starRef} transform={`translate(${starAt!.x} ${starAt!.y})`}>
-                <circle r={Math.max(22, 16 * S)} fill="transparent" />
-                {selected === 'star' && <circle r={15 * S} fill="none" stroke="var(--focus)" strokeWidth={2.5} />}
-                <polygon key={`${star.award}:${star.seat}:${star.turnNo}`} className="game-end-star-shape" points={fourStar(12 * S)}
-                  fill={colour(star.seat)} stroke="var(--on-surface)" strokeWidth={1.5} strokeLinejoin="round" />
-              </g>
-            )}
+            {/* Every award's star on its holder's line; the carousel's award is the big one, drawn last (on top) */}
+            {[...awards.filter((m) => !isStar(m)), ...awards.filter(isStar)].map((m) => {
+              const { x, y } = pointOf(m)
+              const big = isStar(m)
+              return (
+                <g key={`${m.award}:${m.seat}`} data-marker={big ? 'star' : 'award'} data-award={m.award} data-seat={m.seat} data-x={m.x}>
+                  {scrub === m.x && ring(x, y, (big ? 15 : 11) * S)}
+                  <g transform={`translate(${x} ${y})`}>
+                    <polygon key={big ? 'big' : 'small'} className={big ? 'game-end-star-shape' : undefined} points={fourStar((big ? 12 : 8) * S)}
+                      fill={colour(m.seat)} stroke="var(--on-surface)" strokeWidth={big ? 1.5 : 1} strokeLinejoin="round" />
+                  </g>
+                </g>
+              )
+            })}
+          </g>
+          {/* The scrub line: full height at its spot, a grip at the bottom (faint and dashed until it's touched) */}
+          <g className="game-end-scrub" opacity={scrub === null ? 0.5 : 1} pointerEvents="none">
+            <line x1={lineX} x2={lineX} y1={PAD.top} y2={PAD.top + plotH} stroke="var(--on-surface)" strokeWidth={2}
+              strokeDasharray={scrub === null ? '4 4' : undefined} />
+            <rect x={lineX - 10 * S} y={PAD.top + plotH - 8 * S} width={20 * S} height={16 * S} rx={8 * S} fill="var(--on-surface)" />
+            <path d={`M${lineX - 3 * S} ${PAD.top + plotH - 4 * S} l${-3.5 * S} ${4 * S} l${3.5 * S} ${4 * S} M${lineX + 3 * S} ${PAD.top + plotH - 4 * S} l${3.5 * S} ${4 * S} l${-3.5 * S} ${4 * S}`}
+              fill="none" stroke="var(--surface)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
           </g>
         </svg>
       )}

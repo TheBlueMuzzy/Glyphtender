@@ -81,8 +81,7 @@
       "points": "{n} Magic",
       "winner": "Winner",
       "you": "You",
-      "place": "{place}",
-      "tiedPlace": "={place}",
+      "placeLabel": "{place} place",
       "split": "Words\u00a0{words} · Tangles\u00a0{tangles}",
       "splitLabel": "{words} Magic from words, {tangles} from tangles",
       "highlights": "Highlights",
@@ -152,7 +151,9 @@
         "start": "Start",
         "round": "R{n}",
         "tangles": "Tangles",
-        "hint": "Tap a mark on a line to see what happened.",
+        "hint": "Drag the line across the chart to see what happened.",
+        "spot": "Round {round}",
+        "quiet": "{round} · nothing marked",
         "turn": "Round {round} · {player} cast {letter}: {words}, +{n}",
         "turnNoWords": "Round {round} · {player} cast {letter}, no words",
         "moveOnly": "Round {round} · {player} moved",
@@ -161,10 +162,7 @@
         "tangleBonus": "Tangles: {list}",
         "tangleBonusPart": "{player} +{n}",
         "noTangleBonus": "Tangles: nobody got a bonus",
-        "lead": "Round {round} · {player} takes the lead",
-        "markerTangle": "{owner}'s glyphling tangled",
-        "markerAward": "{title}: {player}",
-        "markerLead": "{player} takes the lead"
+        "lead": "Round {round} · {player} takes the lead"
       },
       "card": {
         "label": "Scorecard",
@@ -261,7 +259,7 @@
     "wordIndicators": "Word indicators",
     "wordIndicatorsDetail": "Off: no word borders, no Magic numbers",
     "start": "Start",
-    "back": "Back"
+    "back": "Main menu"
   },
   "online": {
     "lobby": {

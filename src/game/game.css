@@ -219,6 +219,10 @@
   /* a big screen: the tabs and page keep a readable width in the middle (wider as the words grow) */
   .game-end > :is(.game-end-tabs, .game-end-page) { inline-size: 100%; max-inline-size: 53.33em; margin-inline: auto; }
   .game-end-tabs { max-inline-size: 40rem; }
+  /* …but the page's scroll box spans the whole window (so the Highlights strip can run edge to edge); its contents
+     keep that readable width in the middle */
+  .game-end > .game-end-page { max-inline-size: none; }
+  .game-end-tabpanel { inline-size: 100%; max-inline-size: 53.33em; margin-inline: auto; box-sizing: border-box; }
   .game-end > :not(.game-end-page) { flex: none; }
   .game-end-page { flex: 1 1 auto; min-block-size: 0; display: flex; flex-direction: column; touch-action: pan-y; }
   /* each page fills the page box; a page shorter than the room sits in its middle */
@@ -271,9 +275,15 @@
   .game-end-art[data-size="l"] { inline-size: 4.44em; block-size: 4.44em; }
   @media (max-height: 32rem) { .game-end-art:not([data-size="xs"]) { inline-size: 2.75rem; block-size: 2.75rem; } }
   .game-end-name { min-inline-size: 0; max-inline-size: 100%; }
+  /* The place ribbon, pinned on the glyphling's top-left corner (endscreen.json ribbonSize = its share of the picture) */
+  .game-end-art-pin { position: relative; display: block; flex: none; }
+  .game-end-ribbon { position: absolute; inset-block-start: -6%; inset-inline-start: -2%; inline-size: calc(var(--ribbon-size, 0.45) * 100%); block-size: auto; filter: drop-shadow(0 0.08em 0.12em rgb(0 0 0 / 0.45)); }
   .game-end-split { display: block; inline-size: 100%; max-inline-size: 10.67em; block-size: 0.44em; }
   /* the highlights: a carousel, one award at a time (EndHighlights.tsx) */
   .game-end-highlights { min-inline-size: 0; inline-size: 100%; max-inline-size: 40.89em; margin-inline: auto; }
+  /* the "Highlights" title: centred on a dark strip that runs the whole width of the window (Muzzy) — painted past
+     the box with border-image, so it never makes the page scroll sideways */
+  .game-end-highlights-strip { text-align: center; padding-block: 0.3em; border-image: conic-gradient(rgb(0 0 0 / 0.28) 0 0) fill 0 // 0 100vw; }
   /* A phone on its side: each player's glyphling beside their words (half the height) */
   @media (max-height: 32rem) {
     .game-end-podium .game-end-player { flex-direction: row; justify-content: center; gap: var(--gap-s); }
@@ -290,12 +300,13 @@
   .game-end-chart { inline-size: 100%; min-inline-size: 0; }
   .game-end-chart-svg { display: block; font-family: var(--font-body); }
   .game-end-chart-svg text { font-family: var(--font-numbers); }
-  .game-end-chart-hit { cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
-  .game-end-chart-hit:focus-visible circle:first-child { stroke: var(--focus); stroke-width: 0.15rem; }
-  /* The Highlights star: each new award's star pops in (StoryChart glides it there; reduce motion: no glide, no pop) */
+  /* drag sideways = move the scrub line; up/down still scrolls the page */
+  .game-end-chart-svg { touch-action: pan-y; cursor: ew-resize; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; border-radius: var(--radius-s, 0.5rem); }
+  .game-end-chart-svg:focus-visible { box-shadow: 0 0 0 0.15rem var(--focus); }
+  /* The Highlights star: the carousel's award's star pops in as the carousel moves (reduce motion: no pop) */
   .game-end-star-shape { animation: game-end-star-pop var(--motion-normal) var(--ease) backwards; filter: drop-shadow(0 0 0.2rem var(--surface)); }
   @keyframes game-end-star-pop { from { opacity: 0; scale: 0.4; } }
-  .game-end-caption { min-block-size: 3.2em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .game-end-caption { min-block-size: 4.2em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
   .game-end-key-shape { inline-size: 1em; block-size: 1em; flex: none; }
   @media (max-height: 32rem) { .game-end-caption { min-block-size: 2.8em; } } /* (a phone on its side: every line counts) */
 

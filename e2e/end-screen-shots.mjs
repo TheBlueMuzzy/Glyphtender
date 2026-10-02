@@ -189,6 +189,26 @@ try {
         return !highlights || highlights.top >= players - 0.5
       })
       check('the highlights sit UNDER the players', under)
+      // Place ribbons (Muzzy, 2026-10-02): every glyphling wears its place's ribbon; ties share one; no "=" / "2nd" words
+      const ribbons = await page.evaluate(() => [...document.querySelectorAll('.game-end-player')].map((el) => ({
+        seat: Number(el.dataset.seat), place: Number(el.querySelector('.game-end-ribbon')?.dataset.place ?? 0), text: el.innerText,
+      })))
+      const placeOf = (seat) => 1 + game.magic.filter((m) => m > game.magic[seat]).length
+      check(`every player wears their place's ribbon (${ribbons.map((r) => `${r.seat}:${r.place}`).join(' ')})`,
+        ribbons.length === game.config.players && ribbons.every((r) => r.place === placeOf(r.seat)))
+      check('no place words on the results (no "=3rd", no "2nd")', ribbons.every((r) => !/=|\b\d(st|nd|rd|th)\b/.test(r.text)))
+      // The Highlights title: centred on a dark strip that runs the window's whole width (painted, not scrolled)
+      if (await page.locator('.game-end-highlights-strip').count()) {
+        const strip = await page.evaluate(() => {
+          const el = document.querySelector('.game-end-highlights-strip')
+          const r = el.getBoundingClientRect(), t = el.firstElementChild.getBoundingClientRect()
+          const scroller = el.closest('.kit-scroll').getBoundingClientRect()
+          return { centred: Math.abs((t.left + t.right) / 2 - (r.left + r.right) / 2) < 2, scrollerWide: scroller.width >= window.innerWidth - 20,
+            image: getComputedStyle(el).borderImageSource !== 'none', sideways: document.querySelector('.game-end-page .kit-scroll').scrollWidth > document.querySelector('.game-end-page .kit-scroll').clientWidth + 1 }
+        })
+        check('the Highlights title is centred', strip.centred)
+        check('the Highlights strip runs the whole window width without sideways scroll', strip.image && strip.scrollerWide && !strip.sideways)
+      }
       // The Highlights carousel: one award showing at a time; none earned → no Highlights at all
       const timed = TIMED.includes(`${size.width}x${size.height}`)
       const current = () => page.evaluate(() => {
@@ -228,20 +248,44 @@ try {
       await tap(page.getByRole('tab', { name: 'Story' }))
       await page.locator('.game-end-chart-svg').waitFor({ timeout: 3000 })
       await page.waitForTimeout(1900) // the lines draw themselves in (endscreen.json chartDrawSeconds)
-      const marks = page.locator('[data-marker]')
-      const count = await marks.count()
-      check('the chart has moment marks', count > 0)
-      const small = await page.evaluate(() => [...document.querySelectorAll('[data-marker]')].filter((m) => {
+      check('the chart has moment marks', (await page.locator('[data-marker]').count()) > 0)
+      // The scrub line (Muzzy: tapping a mark is too fiddly on a phone): drag across the chart → the line follows,
+      // snapping to rounds; every moment on its round shows in the caption, stacked; the page doesn't turn
+      const svg = page.locator('.game-end-chart-svg')
+      const target = await page.evaluate(() => {
+        const m = [...document.querySelectorAll('[data-marker]')].find((el) => el.dataset.x !== undefined)
+        if (!m) return null
         const r = m.getBoundingClientRect()
-        return r.width < 43.5 || r.height < 43.5
-      }).length)
-      check('every mark is a finger-sized target', small === 0)
-      if (count) {
-        await tap(marks.last()) // the one drawn on top
-        await page.waitForTimeout(300) // (a longer caption: the chart gives up the height on the next frame)
-        const caption = await page.locator('.game-end-caption').innerText()
-        check(`tapping a mark tells what happened (“${caption}”)`, !/Tap a mark/.test(caption) && caption.length > 5)
+        return { x: r.left + r.width / 2, round: Number(m.dataset.x), all: document.querySelectorAll(`[data-marker][data-x="${m.dataset.x}"]`).length }
+      })
+      const chartRect = await svg.boundingBox()
+      const midY = chartRect.y + chartRect.height / 2
+      if (size.mobile) {
+        // a finger drag: touch events through CDP (touchscreen.tap only taps)
+        const cdp = await page.context().newCDPSession(page)
+        const touch = (type, x) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y: midY }] })
+        await touch('touchStart', chartRect.x + 30)
+        for (let i = 1; i <= 8; i++) await touch('touchMove', chartRect.x + 30 + ((target?.x ?? chartRect.x + chartRect.width / 2) - chartRect.x - 30) * (i / 8))
+        await touch('touchEnd')
+      } else {
+        await page.mouse.move(chartRect.x + 30, midY)
+        await page.mouse.down()
+        await page.mouse.move(target?.x ?? chartRect.x + chartRect.width / 2, midY, { steps: 8 })
+        await page.mouse.up()
       }
+      await page.waitForTimeout(300) // (the chart gives up height for a longer caption on the next frame)
+      check('dragging on the chart does not turn the page', (await page.getByRole('tab', { name: 'Story', selected: true }).count()) === 1)
+      const scrubAt = Number(await svg.getAttribute('data-scrub'))
+      const lines = await page.locator('.game-end-caption > *').count()
+      const caption = await page.locator('.game-end-caption').innerText()
+      if (target) {
+        check(`the line lands on the dragged-to round (${scrubAt} vs ${target.round})`, scrubAt === target.round)
+        check(`every moment on that round shows, stacked (${lines} lines for ${target.all} marks: “${caption.replace(/\n/g, ' | ')}”)`,
+          !/Drag the line/.test(caption) && lines >= 1 && lines <= target.all)
+      }
+      await svg.focus()
+      await page.keyboard.press('ArrowRight')
+      check('→ moves the line a round', Number(await svg.getAttribute('data-scrub')) === Math.min(scrubAt + 1, Number(await svg.getAttribute('aria-valuemax'))))
       // The star: on the shown award's holder's line; it moves when the carousel moves on
       const starNow = () => page.evaluate(() => {
         const star = document.querySelector('[data-marker="star"]')

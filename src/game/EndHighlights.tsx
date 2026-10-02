@@ -3,7 +3,7 @@
 // It moves on by itself every endscreen.json carouselSeconds; a tap, ◀ ▶ or a swipe moves it and holds it
 // carouselPauseSeconds (UI kit Carousel). The SAME carousel sits under the results (Results page) and under the chart's
 // key (Story page), sharing one index (GameOver.tsx), so the Story chart's star marks the award showing right now.
-// Nothing earned → nothing here (the area hides). Kit parts: Carousel, Stack, Row, Text.
+// The "Highlights" title sits centred on a dark strip across the whole window. Nothing earned → nothing here. Kit parts: Carousel, Stack, Row, Text.
 import text from '../../content/text/en.json'
 import { Carousel, Row, Stack, Text } from '../ui/kit'
 import { glyphlingArt } from './art'
@@ -29,7 +29,7 @@ export function EndHighlights({ awards, index, onIndex, name, autoSeconds, pause
   if (!awards.length) return null
   return (
     <Stack gap="xs" className="game-end-highlights">
-      {heading && <Text kind="heading">{w.highlights}</Text>}
+      {heading && <div className="game-end-highlights-strip"><Text kind="heading">{w.highlights}</Text></div>}
       <Carousel label={w.highlights} index={index} onIndexChange={onIndex} autoSeconds={autoSeconds} pauseSeconds={pauseSeconds}>
         {awards.map((a) => {
           const { title, reason } = awardText(a, name)

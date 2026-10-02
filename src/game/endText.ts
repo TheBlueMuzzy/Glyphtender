@@ -54,14 +54,6 @@ export function markerCaption(game: GameState, marker: ChartMarker, awards: Awar
   return turn ? turnCaption(turn, name) : tangleBonusCaption(game, name)
 }
 
-/** A short name for a marker, for screen readers. */
-export function markerLabel(marker: ChartMarker, awards: Award[], name: Name): string {
-  if (marker.kind === 'tangle') return fill(w.chart.markerTangle, { owner: name(marker.seat) })
-  if (marker.kind === 'lead') return fill(w.chart.markerLead, { player: name(marker.seat) })
-  const award = awards.find((a) => a.id === marker.award && a.holder === marker.seat)
-  return fill(w.chart.markerAward, { title: award ? w.awards[award.id].title : '', player: name(marker.seat) })
-}
-
 // ─── The scorecard's rows ───
 
 export type ScoreRow = { label: string; values: number[]; shown?: (string | number)[]; tint: boolean }

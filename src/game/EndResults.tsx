@@ -1,7 +1,8 @@
 // END SCREEN, PAGE 1: RESULTS — what everyone sees first (research/end-screen.md §2).
 // The winner big and centred (glyphling, name, Magic in the biggest words on the screen, and a thin bar split into
 // Magic from Words and from Tangles — on a tall phone the glyphling sits BESIDE those, so the page fits without
-// scrolling); everyone else smaller underneath, in place order ("=2nd" for ties).
+// scrolling); everyone else smaller underneath, in place order. Each glyphling wears its place's ribbon (1st–4th,
+// endscreen.json ribbon colours); a tie just shares the ribbon — no "=" or "tied" words (Muzzy, 2026-10-02).
 // A shared win puts the winners side by side at the same size under "Shared win!".
 // Wide screens (phone on its side, desktop): everyone in one row — a podium 2nd · 1st · 3rd · 4th, the winner raised
 // (2 players: 1st · 2nd; a shared win: the winners first) — Muzzy's "the thing you're trying to do is in the middle".
@@ -12,10 +13,11 @@
 import text from '../../content/text/en.json'
 import { logIsComplete } from '../engine/log'
 import type { GameState } from '../engine/types'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Badge, Row, Stack, Text, fill, ordinal } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
 import type { Scorecard, Standing } from './stats'
+import type { EndTuning } from './stats'
 import type { GardenTuning } from './useTuning'
 
 const w = text.game.gameOver
@@ -29,6 +31,8 @@ type Props = {
   /** The Highlights carousel (EndHighlights), shown under the players — or nothing when no award was earned. */
   highlights: ReactNode
   colours: GardenTuning
+  /** The ribbons' colours and size. */
+  tuning: EndTuning
   wide: boolean
   /** A short screen (phone on its side): everyone a size smaller. */
   compact: boolean
@@ -36,13 +40,13 @@ type Props = {
   name: (seat: number) => string
 }
 
-export function EndResults({ title, game, ranked, cards, highlights, colours, wide, compact, me, name }: Props) {
+export function EndResults({ title, game, ranked, cards, highlights, colours, tuning, wide, compact, me, name }: Props) {
   const winners = ranked.filter((s) => s.place === 1)
   const others = ranked.filter((s) => s.place > 1)
   const shared = winners.length > 1
   const big = compact ? 'm' : 'l'
   const player = (s: Standing, size: 'l' | 'm' | 's') => (
-    <PlayerResult key={s.seat} standing={s} card={cards[s.seat]} size={size} colours={colours} name={name(s.seat)} me={me === s.seat} />
+    <PlayerResult key={s.seat} standing={s} card={cards[s.seat]} size={size} colours={colours} tuning={tuning} name={name(s.seat)} me={me === s.seat} />
   )
   // Wide: everyone in one row (a phone on its side has no height to spare) — one winner + 3 or more players: the
   // podium order 2 · 1 · 3 · 4; 2 players: winner · other; a shared win: the winners first, at the same size
@@ -68,18 +72,19 @@ export function EndResults({ title, game, ranked, cards, highlights, colours, wi
   )
 }
 
-/** One player: glyphling, place, name, Magic, and the Words | Tangles bar. */
-function PlayerResult({ standing, card, size, colours, name, me }: {
-  standing: Standing; card: Scorecard; size: 'l' | 'm' | 's'; colours: GardenTuning; name: string; me: boolean
+/** One player: glyphling with its place ribbon, name, Magic, and the Words | Tangles bar. */
+function PlayerResult({ standing, card, size, colours, tuning, name, me }: {
+  standing: Standing; card: Scorecard; size: 'l' | 'm' | 's'; colours: GardenTuning; tuning: EndTuning; name: string; me: boolean
 }) {
-  const place = fill(standing.tied ? w.tiedPlace : w.place, { place: ordinal(standing.place) })
   const winner = standing.place === 1
   return (
     <div className="game-end-player" data-size={size} data-winner={winner || undefined} data-seat={standing.seat}>
-      <img className="game-end-art" src={glyphlingArt(standing.seat)} alt="" data-size={size} />
+      <span className="game-end-art-pin" style={{ '--ribbon-size': tuning.ribbonSize } as CSSProperties}>
+        <img className="game-end-art" src={glyphlingArt(standing.seat)} alt="" data-size={size} />
+        <Ribbon place={standing.place} colour={ribbonColour(tuning, standing.place)} />
+      </span>
       <div className="game-end-player-text">
         <Row gap="xs" justify="center" className="game-end-name">
-          {!winner && <Text kind="label">{place}</Text>}
           <Text kind={size === 'l' ? 'heading' : 'label'}>{name}</Text>
           {me && <Badge>{w.you}</Badge>}
         </Row>
@@ -103,6 +108,22 @@ function SplitBar({ words, tangles, colour, tangleColour }: { words: number; tan
       <rect width={100} height={8} rx={4} fill="var(--border)" opacity={0.5} />
       {words > 0 && <rect width={Math.max(0, wordShare - gap / 2)} height={8} rx={4} fill={colour} />}
       {tangles > 0 && <rect x={wordShare + gap / 2} width={Math.max(0, 100 - wordShare - gap / 2)} height={8} rx={4} fill={tangleColour} />}
+    </svg>
+  )
+}
+
+const ribbonColour = (tuning: EndTuning, place: number) =>
+  [tuning.ribbon1, tuning.ribbon2, tuning.ribbon3, tuning.ribbon4][Math.min(place, 4) - 1]
+
+/** A place ribbon (rosette): two tails under a round badge with the place number, pinned on the glyphling's corner. */
+function Ribbon({ place, colour }: { place: number; colour: string }) {
+  return (
+    <svg className="game-end-ribbon" viewBox="0 0 40 48" role="img" aria-label={fill(w.placeLabel, { place: ordinal(place) })} data-place={place}>
+      <path d="M12 26 L6 46 L13 42 L17 47 L20 28 Z M28 26 L34 46 L27 42 L23 47 L20 28 Z" fill={colour} stroke="var(--surface)" strokeWidth={1.5} strokeLinejoin="round" />
+      <path d="M12 26 L6 46 L13 42 L17 47 L20 28 Z M28 26 L34 46 L27 42 L23 47 L20 28 Z" fill="black" opacity={0.18} />
+      <circle cx={20} cy={18} r={16} fill={colour} stroke="var(--surface)" strokeWidth={2} />
+      <circle cx={20} cy={18} r={12} fill="none" stroke="black" strokeOpacity={0.22} strokeWidth={1.5} strokeDasharray="2 2" />
+      <text x={20} y={18} dy="0.36em" textAnchor="middle" fontSize={17} fontWeight={800} fill="#1b1b24">{place}</text>
     </svg>
   )
 }
