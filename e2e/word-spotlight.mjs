@@ -1,9 +1,10 @@
 // WORD SPOTLIGHT (F25) — a cast that makes 2 words and one that makes 3, at phone 390×844 and desktop 1440×900:
-// while aiming (the "Cast · +N" preview) and after the seed lands, the words light up ONE AT A TIME, in order, round
-// and round. Checks, sampling the real animations every ~50 ms over two loops: never two words lit at once, every word
-// gets lit, the lit word changes over time in order (0 → 1 → 2 → 0 …), each word's label ("QUA +4") lights with its
-// word and covers none of its letters (after a landing, once the score pops have flown — they'd clash). Then the next player picks up a glyphling → the words go dark (play moved on).
-// Pictures: spot-<size>-<n>w-<aim|grown>-<i>-<WORD>.png, one per lit word, for a person to look at.
+// while aiming (the "Cast · +N" preview) the words light up ONE AT A TIME, in order, round and round. Checks, sampling
+// the real animations every ~50 ms over two loops: never two words lit at once, every word gets lit, the lit word
+// changes over time in order (0 → 1 → 2 → 0 …), each word's label ("QUA +4") lights with its word and covers none of
+// its letters. After the seed lands the words SCORE once, one at a time in the same order (the score sequence —
+// e2e/score-sequence.mjs looks closer): never two lit, each bubble just the word, then all dark before the next turn.
+// Pictures: spot-<size>-<n>w-aim-<i>-<WORD>.png, one per lit word, + spot-<size>-<n>w-after.png, for a person to look at.
 // The dev hook finds the gardens (random play until such a cast exists); the planning is real store actions.
 // Starts its OWN dev server (default port 5189) and closes only that one.
 //   npm run e2e:spotlight [outDir] [port]
@@ -149,24 +150,27 @@ try {
       await page.waitForFunction(() => !window.__glyphtender.store.getState().flying, null, { timeout: 5000 })
       const turn = await act('(s) => ({ words: s.game.lastTurn.words.map((w) => ({ word: w.word, magic: w.magic, hexes: w.hexes.map((h) => h.q + "," + h.r) })) })')
       if (turn.words.length !== count) fail(`${tag}: the cast grew ${turn.words.length} words`)
-      const grown = turn.words
-      await watchCycle('grown', grown, `${tag} grown`)
-      // (by now the score pops have flown into the total, so the labels show — they wait for that)
-      const popsGone = await page.evaluate(() => [...document.querySelectorAll('[data-score-pops] text')]
-        .every((el) => el.getAnimations().every((a) => a.playState === 'finished')))
-      if (!popsGone) fail(`${tag}: the score pops were still playing two loops after landing`)
-      await shotEach('grown', grown, `${tag} grown`, `spot-${size.name}-${count}w-grown`)
-
-      // Play moves on: the next player picks up one of their glyphlings → no word is lit any more
-      const next = await act('(s) => s.game.glyphlings.find((g) => g.seat === s.game.current && !s.game.tangled.includes(g.id))?.id ?? null')
-      if (next !== null) {
-        await act(`(s) => s.tapGlyphling(${next})`)
-        await page.waitForTimeout(100)
-        const left = (await moment('grown')).borders.length
-        if (left) fail(`${tag}: the next player picked up a glyphling but ${left} grown words are still drawn`)
-        else console.log(`ok   ${tag} · gone once the next player picks up a glyphling`)
-        await page.screenshot({ path: `${OUT}/spot-${size.name}-${count}w-moved-on.png` })
+      // The words score ONCE, one at a time, in the aiming order; bubbles say just the word; then all dark
+      const order = [], bubbles = new Set()
+      let worst = 0
+      while (await act('(s) => s.scoring !== null')) {
+        const m = await moment('grown')
+        const lit = m.borders.filter((b) => b.o > 0.02)
+        worst = Math.max(worst, lit.length)
+        const full = m.borders.find((b) => b.o > 0.6)
+        if (full && order[order.length - 1] !== full.i) order.push(full.i)
+        m.labels.filter((l) => l.o > 0.6).forEach((l) => bubbles.add(l.word))
+        await page.waitForTimeout(40)
       }
+      const want = turn.words.map((_, i) => i).join(' ')
+      if (order.join(' ') !== want) fail(`${tag} scoring: the words lit ${order.join(' → ')} (expected ${want}, once each)`)
+      if (worst > 1) fail(`${tag} scoring: ${worst} words lit at once`)
+      const extra = [...bubbles].filter((b) => !turn.words.some((w) => w.word === b))
+      if (garden.spotlightLabel && extra.length) fail(`${tag} scoring: bubbles with more than the word: ${extra.join(', ')}`)
+      const left = (await moment('grown')).borders.filter((b) => b.o > 0.01).length
+      if (left) fail(`${tag}: ${left} words still lit after the score sequence`)
+      await page.screenshot({ path: `${OUT}/spot-${size.name}-${count}w-after.png` })
+      console.log(`${order.join(' ') === want && worst <= 1 && !left ? 'ok  ' : 'FAIL'} ${tag} scored ${order.map((i) => turn.words[i].word).join(' → ')} once each · bubbles [${[...bubbles].join(' ')}] · nothing lit after`)
     }
     if (errors.length) fail(`${size.name} console errors: ${errors.join(' | ')}`)
     await page.close()

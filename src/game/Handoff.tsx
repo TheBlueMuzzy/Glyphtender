@@ -23,19 +23,19 @@ export function Handoff({ stacked, flipped }: { stacked: boolean; flipped: boole
   const timing = useAnimTuning()
   const colours = useGardenTuning()
 
-  // After a throw, wait until the runeblossom has grown and its score sequence has faded away (reduce motion too:
-  // the words still step and the total still counts up — only the movement goes)
+  // After a throw, wait until its score sequence has faded away (the store's `scoring`; reduce motion too — the words
+  // still step and the total still counts up, only the movement goes) — or, if it scored nothing, until it has grown
+  const scoring = useGameStore((s) => s.scoring !== null)
   const [ready, setReady] = useState<typeof handoff>(null)
   useEffect(() => {
-    if (!handoff) return
+    if (!handoff || scoring) return
     const { game, options } = useGameStore.getState()
-    const pops = (options?.wordIndicators ?? true) && (game?.lastTurn?.words.length ?? 0) > 0
-    const seconds = !game || !handoff.afterGrow ? 0 : landingSeconds(game, pops, timing)
-    const wait = seconds * 1000
-    const timer = setTimeout(() => setReady(handoff), wait)
+    const scored = (options?.wordIndicators ?? true) && (game?.lastTurn?.words.length ?? 0) > 0 // (its sequence outlasts the sprout)
+    const seconds = !game || !handoff.afterGrow || scored ? 0 : landingSeconds(game, false, timing)
+    const timer = setTimeout(() => setReady(handoff), seconds * 1000)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handoff])
+  }, [handoff, scoring])
   if (!handoff || ready !== handoff) return null
 
   const player = playerName(handoff.seat)

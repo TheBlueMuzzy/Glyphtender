@@ -150,27 +150,24 @@ try {
       await page.evaluate((sel) => document.querySelectorAll(sel).forEach((el) => el.getAnimations().forEach((a) => a.play())), selector)
       return count
     }
-    // The score pops after a word grows: each seed's "+1"/"+2" (9b), flying together (9c), the turn's total (9d).
-    // Every pop animation is frozen at the same moment (Web Animations' currentTime counts from the landing).
+    // The score sequence after a word grows (one shared clock — every part is one animation from the landing): the
+    // first word's seeds popping "+1"/"+2" (9b), its points flying into the glyphling's total (9c), the final total (9d).
     const scorePopShots = async () => {
       const turn = await store((s) => ({ magic: s.game.lastTurn.magic, seeds: s.game.lastTurn.words.reduce((n, w) => n + w.hexes.length, 0) }))
       const pops = await page.locator('[data-score-pop]').count()
-      const total = await page.locator('[data-score-total]').textContent()
+      const total = await page.locator('[data-score-count]').last().textContent()
       if (pops !== turn.seeds) fail(`${size.name}: ${pops} score pops for ${turn.seeds} seeds in the words`)
-      if (total !== `+${turn.magic}`) fail(`${size.name}: the pops' total says ${total}, the turn made ${turn.magic}`)
+      if (total !== `+${turn.magic}`) fail(`${size.name}: the final total says ${total}, the turn made ${turn.magic}`)
       const times = await page.evaluate(() => {
-        const timings = (el) => el.getAnimations().map((a) => a.effect.getComputedTiming())
-        const all = [...document.querySelectorAll('[data-score-pop]')].flatMap(timings)
-        const fly = Math.max(...all.map((t) => t.delay))
-        const flyTime = Math.min(...all.filter((t) => t.delay === fly).map((t) => t.duration))
-        const totalAt = timings(document.querySelector('[data-score-total]'))[0].delay
-        return { popped: fly - 60, flying: fly + flyTime * 0.5, total: totalAt + 450 }
+        const at = (el, k) => { const a = el.getAnimations()[0]; return a.effect.getKeyframes()[k].computedOffset * a.effect.getComputedTiming().duration }
+        const pop = document.querySelector('[data-score-pop]'), last = [...document.querySelectorAll('[data-score-count]')].at(-1)
+        return { popped: at(pop, 4) - 30, flying: (at(pop, 4) + at(pop, 5)) / 2, total: at(last, 3) - 100 }
       })
-      // (the grown words' spotlight loop runs on the same clock — frozen with them, so each picture is one true moment)
-      await frozenShot('9b-score-pops', '[data-score-pops] text, [data-spot-of="grown"]', times.popped)
-      await frozenShot('9c-pops-flying', '[data-score-pops] text, [data-spot-of="grown"]', times.flying)
-      await frozenShot('9d-score-total', '[data-score-pops] text, [data-spot-of="grown"]', times.total)
-      console.log(`${pops === turn.seeds ? 'ok  ' : 'FAIL'} ${size.name} 9b-9d score pops · ${pops} pops → ${total}`)
+      const parts = '[data-score-pops] text, [data-score-total], [data-spot-of="grown"]'
+      await frozenShot('9b-score-pops', parts, times.popped)
+      await frozenShot('9c-pops-flying', parts, times.flying)
+      await frozenShot('9d-score-total', parts, times.total)
+      console.log(`${pops === turn.seeds && total === `+${turn.magic}` ? 'ok  ' : 'FAIL'} ${size.name} 9b-9d score sequence · ${pops} pops → ${total}`)
     }
     // Word indicators off: plan a word-making cast (trying each glyphling and move) — plain "Cast", no border, no pops
     const indicatorsOffTurn = async () => {
@@ -432,7 +429,7 @@ try {
           await page.waitForTimeout(120)
           await page.screenshot({ path: `${OUT}/${size.name}-8-throw.png` })
           await waitLanded()
-          await page.waitForTimeout(350) // the runeblossom has sprouted; its words stay outlined (one at a time) until play moves on
+          await page.waitForTimeout(350) // the runeblossom has sprouted; its words score one at a time, then fade
           await page.screenshot({ path: `${OUT}/${size.name}-9-grown.png` })
           await scorePopShots()
           grewWords = true

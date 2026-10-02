@@ -139,6 +139,7 @@ const noPlan = (): Pick<GameStore, 'move' | 'cast' | 'selected' | 'setAside' | '
   ({ move: null, cast: null, selected: null, setAside: [], note: null })
 const NO_WORDS: WordList = new Map() // the draft and refresh never read words
 const anim = liveTuning('anim', animFile) // the refresh's timings (read when a refresh starts)
+const SCORE_BEAT_MS = 120 // the score sequence's timer waits this much past the fade (see startScoring)
 
 export const useGameStore = create<GameStore>()((set, get) => {
   // Sends an engine action; says "problem" instead of crashing if it was somehow illegal.
@@ -387,7 +388,9 @@ export const useGameStore = create<GameStore>()((set, get) => {
       const scores = (options?.wordIndicators ?? true) && !!landed && !!turn?.target && hexKey(turn.target) === landed.key && turn.words.length > 0
       if (!game || !scores) return set({ scoring: null })
       set({ scoring: landed!.count })
-      scoreTimer = setTimeout(() => get().endScoring(), landingSeconds(game, true, anim.current) * 1000)
+      // (+ a beat: the board's animations start a frame or two after this, and the fade's last frame must be painted
+      // before anything of the next turn shows)
+      scoreTimer = setTimeout(() => get().endScoring(), landingSeconds(game, true, anim.current) * 1000 + SCORE_BEAT_MS)
     },
     endScoring: () => {
       stopScoring()
