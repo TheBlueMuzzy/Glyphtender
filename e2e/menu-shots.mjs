@@ -45,9 +45,7 @@ for (const size of SIZES) {
   await page.waitForTimeout(400)
   const back = await page.getByRole('button', { name: 'Settings' }).isVisible()
   if (!back) { failures++; console.log(`FAIL ${size.name}: Esc did not close Settings`) }
-  await page.getByRole('button', { name: /Prototype/ }).click()
-  await page.waitForURL(/sketches\/move-cast/)
-  console.log(`ok   ${size.name} prototype button → ${new globalThis.URL(page.url()).pathname}`)
+  if (await page.getByRole('button', { name: /Prototype/ }).count()) { failures++; console.log(`FAIL ${size.name}: the retired prototype button is back`) }
   if (errors.length) { failures++; console.log('console errors:', errors) }
   await page.close()
 }

@@ -13,13 +13,8 @@ import settings from '../../content/ui/settings.json'
 import credits from '../../content/credits.json'
 import version from '../../version.json'
 
-// The move → cast prototype is its own page (sketches/move-cast/), so the menu button goes there.
-const prototypeUrl = `${import.meta.env.BASE_URL}sketches/move-cast/`
-
 // Online needs a live server: shown in local dev, and on the live site only once VITE_PARTY_HOST is set at build time.
 const onlineAvailable = import.meta.env.DEV || !!import.meta.env.VITE_PARTY_HOST
-// The move-cast prototype is a dev tool — local dev only, never on the live site.
-const showPrototype = import.meta.env.DEV
 
 // HOME — title, tagline, and the menu buttons in our order (Play is the main button).
 export function MainMenuScreen() {
@@ -31,7 +26,6 @@ export function MainMenuScreen() {
       items={[
         { label: w.play, onClick: openNewGame, primary: true },
         ...(onlineAvailable ? [{ label: w.playOnline, onClick: () => screens.push('online') }] : []),
-        ...(showPrototype ? [{ label: w.prototype, onClick: () => window.location.assign(prototypeUrl) }] : []),
         { label: w.settings, onClick: () => screens.push('settings') },
       ]}
     />
