@@ -1,25 +1,25 @@
 {
   "_help": {
-    "flightBase": "Seconds every thrown seed spends in the air, however short the throw.",
-    "flightPerHex": "Extra seconds in the air for each hex it travels.",
-    "arcHeight": "How high the seed arcs, as a share of the throw distance. 0 = flat.",
-    "seedSize": "Size of the flying seed, in hex sizes.",
-    "hopHeight": "How high the glyphling hops as it throws, in hex sizes.",
-    "hopTime": "How long the throwing hop takes, in seconds.",
-    "growTime": "How long the runeblossom takes to grow out of the ground, in seconds.",
-    "growFrom": "How small the runeblossom starts when it sprouts (0.1 = a tiny sprout, 1 = full size).",
-    "pulseTime": "How long one pulse of a planned piece's halo takes, in seconds.",
+    "flightBase": "The least time any thrown seed flies, even on a short throw. Higher = slower, floatier throws. The per-hex setting below adds more for long throws. Try 0.2–0.5.",
+    "flightPerHex": "Added for each hex the seed flies over, so long throws take longer. 0 = every throw takes the same time. Try 0.03–0.08.",
+    "arcHeight": "Higher = a taller, loopier arc; 0 = it flies flat. It grows with the throw's length, so long throws arc higher. Try 0.2–0.5.",
+    "seedSize": "How big the seed looks in the air. 0.3 = about a third of a hex. Try 0.2–0.4.",
+    "hopHeight": "The little jump the glyphling does as it throws. Higher = a bigger jump; 0 = no hop. Try 0.15–0.35.",
+    "hopTime": "Higher = a slower, floatier hop; lower = a quick flick. Try 0.12–0.25.",
+    "growTime": "How long the seed takes to grow up out of the ground once it lands. Higher = a slower bloom. Try 0.3–0.8.",
+    "growFrom": "How big the sprout is at the very start. Low = it grows from a tiny dot (more dramatic); 1 = it starts full size (no grow). Try 0.05–0.3.",
+    "pulseTime": "The ring round a piece you have planned but not confirmed (a moved glyphling, an aimed seed and its tray slot) blinks bright → faint → bright. Higher = a slower, calmer blink. Also how fast tangled glyphlings blink at the end of the game. Try 0.8–2.",
     "wordGlowTime": "How long after a seed lands the garden stays clear before the handoff box or the end-of-game reveal may cover it, when the cast scores nothing (or word indicators are off), in seconds. A cast that scores waits for its whole score sequence instead.",
     "spotlightHold": "Word spotlight, while aiming: when the aimed seed would make 2 or more words, they light up ONE at a time (QUA +4 → TAB +5 → round again). This is how long each word stays lit, in seconds. (One word just stays lit.) After Cast the words score in this same order — see the Score sequence.",
     "spotlightFade": "Word spotlight: how long each word takes to fade in and to fade out, in seconds — while aiming, and as each word takes its turn in the score sequence. The next word starts after the last one has faded, so only one is ever lit. Reduce motion = no fade (the words just step).",
-    "revealTangles": "End of game: how long the tangled glyphlings pulse before the bonuses are shown, in seconds.",
-    "revealBonus": "End of game: time for each \"+3\" tangle bonus to pop on a rival piece, in seconds (they pop one hex at a time).",
-    "revealCount": "End of game: time for each player's Magic to count up (lowest first), including a short pause after, in seconds.",
-    "revealWinner": "End of game: how long \"Grand Glyphtender!\" shows before the end table opens, in seconds.",
-    "revealPopTime": "How long one \"+3\" takes to pop in (grow past full size and settle), in seconds.",
-    "moveBase": "Seconds every glyphling move takes to glide to its new hex, however short the move.",
-    "movePerHex": "Extra seconds of gliding for each hex the glyphling travels.",
-    "moveSettle": "How far a gliding glyphling slides past its new hex before settling back, in hex sizes. 0 = no bounce.",
+    "revealTangles": "At the end, the tangled glyphlings blink before any bonus shows. Higher = a longer build-up; 0 = straight to the bonuses. Try 1–2.",
+    "revealBonus": "The \"+3\" tangle bonuses pop on rival pieces one hex at a time; this is the time each one gets. Higher = a slower count. (How bouncy each pop is: the pop-in time below.) Try 0.4–0.8.",
+    "revealCount": "Each player's Magic counts up in turn, lowest first, with a short pause after. Higher = more suspense. Try 1–2.",
+    "revealWinner": "How long the winner banner stays before the end table opens. Higher = more time to celebrate. Try 2–3.",
+    "revealPopTime": "Each \"+3\" swells past full size, then settles. Higher = a slower, softer pop; lower = snappier. (The gap between bonuses is a separate setting above.) Try 0.3–0.5.",
+    "moveBase": "The least time a glyphling takes to glide to its new hex, even one hex away. Higher = slower moves. The per-hex setting below adds more for long moves. Try 0.1–0.25.",
+    "movePerHex": "Added for each hex it crosses, so long moves take longer. 0 = every move takes the same time. Try 0.02–0.06.",
+    "moveSettle": "How far a gliding glyphling overshoots its new hex before settling back. Higher = a bouncier stop; 0 = it stops dead. Try 0.03–0.1.",
     "scorePopDelay": "Score sequence (word indicators on): seconds after a seed lands before the first word starts scoring.",
     "scoreWordTime": "Score sequence: the words score ONE AT A TIME (outline + word bubble, its seeds pop their points, the points fly to the glyphling). This is the time each word gets, in seconds — a long word may take a little longer, because the next word waits until its last point has arrived in the total.",
     "scorePopGap": "Score sequence: seconds between one seed's \"+1\" / \"+2\" popping and the next (they ripple along the word) — and between one point arriving in the glyphling's total and the next.",
@@ -30,31 +30,31 @@
     "scoreTotalFade": "Score sequence: how long the final total, the last word's outline and its bubble take to fade away, in seconds. Only then does the next turn (or the handoff box) start.",
     "scoreTotalGrow": "Score sequence: how much bigger the glyphling's running total gets for every point that flies in (0.05 = 5% per point), so a big turn ends with a big number. Capped by Total: biggest size.",
     "scoreTotalMaxGrow": "Score sequence: the most the running total can grow, so huge turns stay on the board (0.8 = up to 80% bigger than its starting size).",
-    "turnPulseTime": "Whose turn: how long one slow pulse of the current player's glyphlings takes, in seconds (they pulse until one is moved). How much they swell: feel.json → turnPulse.",
-    "noShakeTime": "\"No\" shake: how long the quick sideways shake takes when you tap something you can't move, in seconds. How far it moves: feel.json → noShake.",
-    "refreshShrinkTime": "Refresh: how long each set-aside seed takes to shrink away, in seconds.",
-    "refreshGrowTime": "Refresh: how long each new seed takes to grow into its slot (swelling a little past full size, then settling), in seconds. How much it swells: feel.json → refreshGrow.",
-    "refreshStagger": "Refresh: seconds between one slot starting and the next (they go one after another, left to right).",
-    "refreshPause": "Refresh: the pause between the last seed shrinking away and the new ones growing in, in seconds. Play passes to the next player only after they've grown.",
-    "trailLead": "Turn trails: when another player's turn is replayed online, how long their trail takes to draw on (from ring → dotted path → to ring → target ring) before their glyphling glides, in seconds. Reduce motion = it just appears.",
-    "trailHold": "Turn trails: how long the drawn trail holds before the glide and throw play, in seconds. trailLead + trailHold is how much slower each replayed turn is."
+    "turnPulseTime": "At the start of a turn the current player's glyphlings slowly swell and shrink until one is moved. Higher = slower, calmer breathing. How much they swell: Juice sizes. Try 1–2.5.",
+    "noShakeTime": "Tap something you can't move and it gives a quick sideways shake. Higher = a slower, longer shake. How far it moves: Juice sizes. Try 0.25–0.5.",
+    "refreshShrinkTime": "After a Refresh, each set-aside seed shrinks out of the tray. Higher = a slower shrink. Try 0.15–0.4.",
+    "refreshGrowTime": "Each new seed grows into its tray slot, swells a little past full size and settles. Higher = a slower grow. How far it swells: Juice sizes. Try 0.25–0.5.",
+    "refreshStagger": "The slots shrink and grow one after another, left to right. Higher = a slower ripple across the tray; 0 = all at once. Try 0.04–0.12.",
+    "refreshPause": "The beat after the last old seed shrinks away and before the new ones grow in. Higher = a longer empty moment. Play passes on only once the new seeds have grown. Try 0.05–0.25.",
+    "trailLead": "When another player's turn is replayed online, their trail (rings and dotted path) draws on over this long before their glyphling glides. Higher = slower and easier to follow. Reduce motion = it just appears. Try 0.3–0.8.",
+    "trailHold": "How long the finished trail stays still before the glide and throw play. Higher = more time to see where they are going. Together with the draw-on time, this is how much slower each replayed turn is. Try 0.2–0.6."
   },
   "_labels": {
-    "pulseTime": "Planned piece: halo pulse time",
-    "flightBase": "Throw: time in the air (every throw)",
-    "flightPerHex": "Throw: extra air time per hex",
-    "arcHeight": "Throw: arc height",
-    "seedSize": "Flying seed: size",
-    "hopHeight": "Throw: glyphling hop height",
-    "hopTime": "Throw: glyphling hop time",
-    "growTime": "Grow: runeblossom grow time",
-    "growFrom": "Grow: starting size of the sprout",
-    "moveBase": "Move: glide time (every move)",
-    "movePerHex": "Move: extra glide time per hex",
-    "moveSettle": "Move: overshoot before settling",
-    "wordGlowTime": "Words: clear time after a landing",
-    "spotlightHold": "Spotlight: time per word",
-    "spotlightFade": "Spotlight: fade in / out time",
+    "pulseTime": "Planned piece ring: blink speed (seconds)",
+    "flightBase": "Thrown seed: time in the air, every throw (seconds)",
+    "flightPerHex": "Thrown seed: extra air time per hex it travels (seconds)",
+    "arcHeight": "Thrown seed: how high it arcs",
+    "seedSize": "Thrown seed: size while flying (hexes)",
+    "hopHeight": "Glyphling: hop height as it throws (hexes)",
+    "hopTime": "Glyphling: how long the throwing hop lasts (seconds)",
+    "growTime": "Runeblossom: time to grow after the seed lands (seconds)",
+    "growFrom": "Runeblossom: size it starts growing from (0–1)",
+    "moveBase": "Glyphling: glide time, every move (seconds)",
+    "movePerHex": "Glyphling: extra glide time per hex it travels (seconds)",
+    "moveSettle": "Glyphling: bounce past its new hex (hexes)",
+    "wordGlowTime": "After a seed lands: pause before anything covers the board (seconds)",
+    "spotlightHold": "Word spotlight: time each word stays lit (seconds)",
+    "spotlightFade": "Word spotlight: fade time as it moves between words (seconds)",
     "scorePopDelay": "Score: wait after landing",
     "scoreWordTime": "Score: time per word",
     "scorePopGap": "Score: time between seed pops",
@@ -65,19 +65,19 @@
     "scoreTotalFade": "Score: fade-out time",
     "scoreTotalGrow": "Total: growth per point",
     "scoreTotalMaxGrow": "Total: biggest size",
-    "trailLead": "Trail: draw-on time (online replays)",
-    "trailHold": "Trail: hold before the glide (online replays)",
-    "turnPulseTime": "Whose turn: pulse time",
-    "noShakeTime": "\"No\" shake: time",
-    "refreshShrinkTime": "Refresh: shrink-away time",
-    "refreshGrowTime": "Refresh: grow-in time",
-    "refreshStagger": "Refresh: time between slots",
-    "refreshPause": "Refresh: pause between shrink and grow",
-    "revealTangles": "Reveal: tangle pulse time",
-    "revealBonus": "Reveal: time per \"+3\" bonus",
-    "revealCount": "Reveal: Magic count-up per player",
-    "revealWinner": "Reveal: winner banner time",
-    "revealPopTime": "Reveal: \"+3\" pop-in time"
+    "trailLead": "Turn trail: time to draw itself on, online replays (seconds)",
+    "trailHold": "Turn trail: pause once it is drawn, online replays (seconds)",
+    "turnPulseTime": "Whose turn: how slowly the glyphlings breathe (seconds per breath)",
+    "noShakeTime": "\"No\" shake: how long it lasts (seconds)",
+    "refreshShrinkTime": "Refresh: time each old seed takes to shrink away (seconds)",
+    "refreshGrowTime": "Refresh: time each new seed takes to grow in (seconds)",
+    "refreshStagger": "Refresh: gap between one tray slot and the next (seconds)",
+    "refreshPause": "Refresh: empty-tray pause between old seeds and new (seconds)",
+    "revealTangles": "End reveal: how long tangled glyphlings blink first (seconds)",
+    "revealBonus": "End reveal: gap between one \"+3\" bonus and the next (seconds)",
+    "revealCount": "End reveal: time for each player's Magic to count up (seconds)",
+    "revealWinner": "End reveal: how long \"Grand Glyphtender!\" shows (seconds)",
+    "revealPopTime": "End reveal: how long each \"+3\" takes to pop in (seconds)"
   },
   "_sections": {
     "Planned seed look": [
@@ -138,44 +138,196 @@
     ]
   },
   "_ranges": {
-    "flightBase": [0.1, 1, 0.05],
-    "flightPerHex": [0, 0.15, 0.01],
-    "arcHeight": [0, 0.8, 0.05],
-    "seedSize": [0.1, 0.6, 0.02],
-    "hopHeight": [0, 0.6, 0.02],
-    "hopTime": [0.05, 0.5, 0.01],
-    "growTime": [0.1, 1.2, 0.05],
-    "growFrom": [0, 1, 0.05],
-    "pulseTime": [0.4, 3, 0.1],
-    "wordGlowTime": [0, 3, 0.1],
-    "spotlightHold": [0.3, 3, 0.05],
-    "spotlightFade": [0, 0.5, 0.01],
-    "revealTangles": [0, 3, 0.1],
-    "revealBonus": [0.1, 1.5, 0.05],
-    "revealCount": [0.5, 3, 0.1],
-    "revealWinner": [0.5, 5, 0.1],
-    "revealPopTime": [0.1, 1, 0.05],
-    "moveBase": [0, 0.6, 0.01],
-    "movePerHex": [0, 0.15, 0.01],
-    "moveSettle": [0, 0.3, 0.01],
-    "scorePopDelay": [0, 1, 0.05],
-    "scorePopGap": [0, 0.3, 0.01],
-    "scoreWordTime": [0.3, 2, 0.05],
-    "scoreTotalGrow": [0, 0.2, 0.01],
-    "scoreTotalMaxGrow": [0, 2, 0.05],
-    "scorePopTime": [0.1, 1, 0.05],
-    "scorePopHold": [0, 1.5, 0.05],
-    "scoreFlyTime": [0.1, 1.2, 0.05],
-    "scoreTotalHold": [0.2, 3, 0.1],
-    "scoreTotalFade": [0.1, 1.5, 0.05],
-    "turnPulseTime": [0.6, 4, 0.1],
-    "noShakeTime": [0.1, 1, 0.05],
-    "refreshShrinkTime": [0.05, 1, 0.05],
-    "refreshGrowTime": [0.05, 1, 0.05],
-    "refreshStagger": [0, 0.3, 0.01],
-    "refreshPause": [0, 0.6, 0.05],
-    "trailLead": [0, 1.5, 0.05],
-    "trailHold": [0, 1.5, 0.05]
+    "flightBase": [
+      0.1,
+      1,
+      0.05
+    ],
+    "flightPerHex": [
+      0,
+      0.15,
+      0.01
+    ],
+    "arcHeight": [
+      0,
+      0.8,
+      0.05
+    ],
+    "seedSize": [
+      0.1,
+      0.6,
+      0.02
+    ],
+    "hopHeight": [
+      0,
+      0.6,
+      0.02
+    ],
+    "hopTime": [
+      0.05,
+      0.5,
+      0.01
+    ],
+    "growTime": [
+      0.1,
+      1.2,
+      0.05
+    ],
+    "growFrom": [
+      0,
+      1,
+      0.05
+    ],
+    "pulseTime": [
+      0.4,
+      3,
+      0.1
+    ],
+    "wordGlowTime": [
+      0,
+      3,
+      0.1
+    ],
+    "spotlightHold": [
+      0.3,
+      3,
+      0.05
+    ],
+    "spotlightFade": [
+      0,
+      0.5,
+      0.01
+    ],
+    "revealTangles": [
+      0,
+      3,
+      0.1
+    ],
+    "revealBonus": [
+      0.1,
+      1.5,
+      0.05
+    ],
+    "revealCount": [
+      0.5,
+      3,
+      0.1
+    ],
+    "revealWinner": [
+      0.5,
+      5,
+      0.1
+    ],
+    "revealPopTime": [
+      0.1,
+      1,
+      0.05
+    ],
+    "moveBase": [
+      0,
+      0.6,
+      0.01
+    ],
+    "movePerHex": [
+      0,
+      0.15,
+      0.01
+    ],
+    "moveSettle": [
+      0,
+      0.3,
+      0.01
+    ],
+    "scorePopDelay": [
+      0,
+      1,
+      0.05
+    ],
+    "scorePopGap": [
+      0,
+      0.3,
+      0.01
+    ],
+    "scoreWordTime": [
+      0.3,
+      2,
+      0.05
+    ],
+    "scoreTotalGrow": [
+      0,
+      0.2,
+      0.01
+    ],
+    "scoreTotalMaxGrow": [
+      0,
+      2,
+      0.05
+    ],
+    "scorePopTime": [
+      0.1,
+      1,
+      0.05
+    ],
+    "scorePopHold": [
+      0,
+      1.5,
+      0.05
+    ],
+    "scoreFlyTime": [
+      0.1,
+      1.2,
+      0.05
+    ],
+    "scoreTotalHold": [
+      0.2,
+      3,
+      0.1
+    ],
+    "scoreTotalFade": [
+      0.1,
+      1.5,
+      0.05
+    ],
+    "turnPulseTime": [
+      0.6,
+      4,
+      0.1
+    ],
+    "noShakeTime": [
+      0.1,
+      1,
+      0.05
+    ],
+    "refreshShrinkTime": [
+      0.05,
+      1,
+      0.05
+    ],
+    "refreshGrowTime": [
+      0.05,
+      1,
+      0.05
+    ],
+    "refreshStagger": [
+      0,
+      0.3,
+      0.01
+    ],
+    "refreshPause": [
+      0,
+      0.6,
+      0.05
+    ],
+    "trailLead": [
+      0,
+      1.5,
+      0.05
+    ],
+    "trailHold": [
+      0,
+      1.5,
+      0.05
+    ]
   },
   "flightBase": 0.3,
   "flightPerHex": 0.05,
