@@ -109,7 +109,12 @@ describe('scorecards', () => {
 })
 
 describe('awards (skill, earned only)', () => {
-  const T = endscreen
+  // Fixed test thresholds (the real ones in endscreen.json are provisional and will be re-tuned)
+  const T = {
+    ...endscreen, lockdownMinDrop: 5, lockdownMaxAfter: 2, pincerMinEach: 2, pincerMinDrop: 5, weedMaxMagic: 0, weedMinBlocked: 6,
+    weedMinCut: 4, walledMinMagic: 12, walledMaxSize: 40, hedgeMinOver: 2, powerPlayMin: 3, longWordMinSmall: 6, longWordMinLarge: 6,
+    hijackMinFrom: 3, bridgeMinSide: 2, comebackMinDeficit: 8, closeCallMinAfter: 4, tricksterMinBehind: 1, calledItMinLead: 1,
+  }
   /** Mobility for 2 players (4 glyphlings): everyone has 8 moves, except the changes asked for (id → [before, afterMove, afterCast]). */
   const mob = (changes: Record<number, [number, number, number]> = {}, count = 4) => {
     const m = { before: Array(count).fill(8), afterMove: Array(count).fill(8), afterCast: Array(count).fill(8) }
@@ -117,10 +122,10 @@ describe('awards (skill, earned only)', () => {
     return m
   }
   const ids = (g: GameState, tuning = T) => earnedAwards(g, tuning).map((a) => `${a.id}:${a.holder}`)
-  const one = (g: GameState, id: string) => earnedAwards(g).find((a) => a.id === id)
+  const one = (g: GameState, id: string) => earnedAwards(g, T).find((a) => a.id === id)
 
   it('nothing earned → no awards at all (the Highlights area hides)', () => {
-    expect(earnedAwards(finished(2, [[0, ['AT:00']], [1, ['TO:11']], [0, [], { mobility: mob() }]]))).toEqual([])
+    expect(earnedAwards(finished(2, [[0, ['AT:00']], [1, ['TO:11']], [0, [], { mobility: mob() }]]), T)).toEqual([])
   })
 
   it('Lockdown: one turn took a rival glyphling from many moves to almost none — with the proof', () => {
@@ -147,8 +152,10 @@ describe('awards (skill, earned only)', () => {
     const block = { seat: 1, magic: 9, word: 'GARDEN' }
     const g = finished(2, [[0, [], { mobility: mob(), blocked: block, target: { q: 1, r: 1 }, refresh: true, refreshed: 3 }]])
     expect(one(g, 'weedToss')).toMatchObject({ holder: 0, values: { kind: 'block', other: 1, n: 9, word: 'GARDEN', refreshed: true } })
-    const cut = finished(2, [[0, [], { mobility: mob({ 2: [8, 7, 2] }), blocked: null, target: { q: 1, r: 1 } }]])
-    expect(one(cut, 'weedToss')).toMatchObject({ values: { kind: 'cut', from: 7, to: 2, refreshed: false } })
+    const cutPlan = (refreshed: number): TurnPlan[] => [[0, [], { mobility: mob({ 2: [8, 7, 2] }), blocked: null, target: { q: 1, r: 1 }, refresh: true, refreshed }]]
+    expect(one(finished(2, cutPlan(2)), 'weedToss')).toMatchObject({ values: { kind: 'cut', from: 7, to: 2, refreshed: true } })
+    // the cut kind needs the refresh after it too (Muzzy: "to block someone so you can also intentionally refresh")
+    expect(ids(finished(2, cutPlan(0)))).not.toContain('weedToss:0')
     // the cast scored: not junk. A small spot, or no cast: nothing.
     expect(ids(finished(2, [[0, ['AT:00'], { mobility: mob(), blocked: block, target: { q: 1, r: 1 } }]]))).not.toContain('weedToss:0')
     expect(ids(finished(2, [[0, [], { mobility: mob(), blocked: { ...block, magic: 2 }, target: { q: 1, r: 1 } }]]))).not.toContain('weedToss:0')
@@ -188,7 +195,7 @@ describe('awards (skill, earned only)', () => {
   it('Power Play: 3+ words from one seed · Long word: 6+ letters', () => {
     const g = finished(2, [[0, ['AT:00', 'TO:00', 'TA:00']], [1, ['GARDENS:1111111']], [0, ['GARDEN:000000']]])
     expect(one(g, 'powerPlay')).toMatchObject({ holder: 0, values: { n: 3, words: 'AT + TO + TA' } })
-    expect(earnedAwards(g).filter((a) => a.id === 'longWord').map((a) => [a.holder, a.values.word])).toEqual([[1, 'GARDENS'], [0, 'GARDEN']])
+    expect(earnedAwards(g, T).filter((a) => a.id === 'longWord').map((a) => [a.holder, a.values.word])).toEqual([[1, 'GARDENS'], [0, 'GARDEN']])
     expect(ids(finished(2, [[0, ['AT:00', 'TO:00']], [1, ['GARDE:11111']]])).filter((x) => /powerPlay|longWord/.test(x))).toEqual([])
   })
 
@@ -204,7 +211,7 @@ describe('awards (skill, earned only)', () => {
       [0, [], { words: [words('ROUND', '00100', 2, h(5))], magic: 5 }],
     ])
     expect(one(g, 'bridge')).toMatchObject({ holder: 0, values: { letter: 'U', left: 'RO', right: 'ND', word: 'ROUND' } })
-    expect(earnedAwards(g).filter((a) => a.id === 'bridge')).toHaveLength(1)
+    expect(earnedAwards(g, T).filter((a) => a.id === 'bridge')).toHaveLength(1)
     // Blue's PARTS holds Yellow's ART and Blue owns most of it (4 of 5)
     expect(one(g, 'hijack')).toMatchObject({ holder: 1, values: { other: 0, from: 'ART', word: 'PARTS' } })
     // owning only half isn't most; and an old log without hexes can't tell
@@ -219,7 +226,7 @@ describe('awards (skill, earned only)', () => {
       [0, ['AT:00']], //             Yellow 18
       [1, ['GARDENS:1111111', 'SEA:111']], // Blue 4 + 14 + 6 = 24: was 14 behind, took the lead
     ])
-    expect(earnedAwards(g).filter((a) => a.id === 'comeback')).toEqual([expect.objectContaining({ holder: 1, moment: 4, values: expect.objectContaining({ n: 14, gain: 20 }) })])
+    expect(earnedAwards(g, T).filter((a) => a.id === 'comeback')).toEqual([expect.objectContaining({ holder: 1, moment: 4, values: expect.objectContaining({ n: 14, gain: 20 }) })])
     // a turn that only closed the gap isn't a comeback
     expect(ids(finished(2, [[0, ['GARDENS:0000000']], [1, ['GARDEN:111111']]]))).not.toContain('comeback:1')
   })
@@ -251,19 +258,19 @@ describe('awards (skill, earned only)', () => {
       [1, [], { mobility: mob({ 0: [10, 10, 0] }) }],
       [0, [], { mobility: mob({ 3: [12, 12, 1] }) }],
     ])
-    const locks = earnedAwards(g).filter((a) => a.id === 'lockdown')
+    const locks = earnedAwards(g, T).filter((a) => a.id === 'lockdown')
     expect(locks.map((a) => [a.holder, a.values.from, a.values.to])).toEqual([[0, 12, 1], [1, 10, 0]]) // biggest first
     const off = { ...T, awardOrder: { ...T.awardOrder, lockdown: 0 } }
     expect(earnedAwards(g, off).some((a) => a.id === 'lockdown')).toBe(false)
     const mixed = finished(2, [[0, ['GARDENS:0000000'], { mobility: mob({ 2: [9, 9, 2] }) }]])
-    expect(earnedAwards(mixed).map((a) => a.id)).toEqual(['lockdown', 'longWord', 'calledIt'])
+    expect(earnedAwards(mixed, T).map((a) => a.id)).toEqual(['lockdown', 'longWord', 'calledIt'])
   })
 
   it('an old log without the new facts: those awards just can’t be earned (no crash)', () => {
     const g = finished(2, [[0, ['AT:00']], [1, ['TO:11']], [0, ['CATS:0000']]])
-    expect(() => earnedAwards(g)).not.toThrow()
+    expect(() => earnedAwards(g, T)).not.toThrow()
     expect(ids(g)).toEqual(['calledIt:0'])
-    expect(earnedAwards({ ...g, log: undefined })).toEqual([])
+    expect(earnedAwards({ ...g, log: undefined }, T)).toEqual([])
   })
 
   it('the star’s spot on the Story chart: the holder’s line, the award’s round', () => {

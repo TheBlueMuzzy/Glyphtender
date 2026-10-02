@@ -187,11 +187,13 @@ export function earnedAwards(game: GameState, tuning: EndTuning = endscreenFile)
       const cut = rivalsOf(seat).map((g) => ({ seat: g.seat, from: m.afterMove[g.id] ?? 0, to: m.afterCast[g.id] ?? 0 }))
         .filter((c) => c.from - c.to >= t.weedMinCut).sort((a, b) => b.from - b.to - (a.from - a.to))[0]
       if (block) add('weedToss', seat, turn, block.magic + bonus, { kind: 'block', other: block.seat, n: block.magic, word: block.word, refreshed }, [block.seat])
-      else if (cut) add('weedToss', seat, turn, cut.from - cut.to + bonus, { kind: 'cut', other: cut.seat, from: cut.from, to: cut.to, refreshed }, [cut.seat])
+      // (the cut kind: thrown to block AND to clear the hand — Muzzy: "to block someone so you can also intentionally refresh")
+      else if (cut && refreshed) add('weedToss', seat, turn, cut.from - cut.to + bonus, { kind: 'cut', other: cut.seat, from: cut.from, to: cut.to, refreshed }, [cut.seat])
     }
     // Walled garden: this cast shut the caster's glyphling in a pocket no rival glyphling can reach — then the Magic
     // they made in there (this turn on: every turn of theirs that moved from and to hexes inside it)
     for (const pocket of turn.sealed ?? []) {
+      if (pocket.hexes.length > t.walledMaxSize) continue // a cell, not half the garden cut off by chance
       const inside = new Set(pocket.hexes)
       let made = 0
       for (let j = i; j < turns.length; j++) {
@@ -224,7 +226,7 @@ export function earnedAwards(game: GameState, tuning: EndTuning = endscreenFile)
       if (hexes && w.owners.filter((o) => o === seat).length * 2 > w.owners.length) {
         const mine = new Set(hexes)
         const theirs = turns.slice(0, i).filter((x) => x.seat !== seat).flatMap((x) => x.words.map((v) => ({ x, v })))
-          .find(({ v }) => v.hexes && v.hexes.length < hexes.length && v.hexes.every((h) => mine.has(h)))
+          .find(({ v }) => v.hexes && v.letters.length >= t.hijackMinFrom && v.hexes.length < hexes.length && v.hexes.every((h) => mine.has(h)))
         if (theirs) add('hijack', seat, turn, w.magic, { other: theirs.x.seat, from: theirs.v.word, word: w.word, n: w.magic }, [theirs.x.seat])
       }
     }
@@ -248,9 +250,9 @@ export function earnedAwards(game: GameState, tuning: EndTuning = endscreenFile)
     const ender = end.endedBy
     const margin = last.totalsAfter[ender] - Math.max(...last.totalsAfter.filter((_, s) => s !== ender))
     // Called it: ended the game while secretly in the lead — and it held (they won)
-    if (margin > 0 && game.winners.includes(ender)) add('calledIt', ender, last, margin, { n: margin })
+    if (margin >= Math.max(1, t.calledItMinLead) && game.winners.includes(ender)) add('calledIt', ender, last, margin, { n: margin })
     // Trickster's Victory: a rival ended the game while behind — the winner gets the credit
-    if (margin < 0 && !game.winners.includes(ender)) {
+    if (-margin >= Math.max(1, t.tricksterMinBehind) && !game.winners.includes(ender)) {
       for (const winner of game.winners) add('trickster', winner, last, -margin, { other: ender, n: -margin }, [ender])
     }
   }
