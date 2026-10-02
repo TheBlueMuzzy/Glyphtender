@@ -110,7 +110,7 @@ flowchart LR
 ```
 
 ## Later
-- **beta (AI) — waits until Muzzy can sit down and describe it (2026-10-01):** framework AI module from the original's goal-selection model (`research/original-digest.md §2`) · 7 personalities with bios + gentle banter · AI in any seat, 2–4 players, online idle takeover · AI at human pace + speed setting · Dev Kit AI tool (AI-vs-AI, personality sliders) · basic audio · sims: board size per player count, bag run-out, first-player edge · ❓ AI vocabulary tiers (Zipf 3/2/0 vs 4/3/0) · ❓ Strategist personality
+- **beta (AI) — waits until Muzzy can sit down and describe it (2026-10-01):** framework AI module from the original's goal-selection model (`research/original-digest.md §2`) · 7 personalities with bios + gentle banter · AI in any seat, 2–4 players, online idle takeover · AI at human pace + speed setting · Dev Kit AI tool (AI-vs-AI, personality sliders) · basic audio · sims: board size per player count, bag run-out, first-player edge · **Re-tune award thresholds with AI personalities (AI-vs-AI)** (the 14 skill awards' thresholds are provisional — research/sims.md 2026-10-02) · ❓ AI vocabulary tiers (Zipf 3/2/0 vs 4/3/0) · ❓ Strategist personality
 - **1.0:** tutorial · accessibility pass · Muzzy's final art + board art · audio pass · lifetime stats screen + Wordsmith/Tanglesmith radar · credits + privacy · ❓ word list licence (keep + permission, or re-run the Zipf pipeline on a free base)
 - **Should:** board themes · colour preference · random starting player · hint · topiary-grow cast effect
 - **Could:** async play · spectators · leaderboards/accounts · 3D figurine glyphlings

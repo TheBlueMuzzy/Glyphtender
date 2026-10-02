@@ -58,3 +58,33 @@
 - **Refreshed a little more** (greedy ~10–18%, up 0–5 points) — but the sim's refresh is random (each seed set aside 1-in-3), it never chooses to dump a dead Q. A human holding a Q with no U in sight can refresh it away, so real players should be stuck with it less than this.
 - **Random players** cast the Q a bit more and get stuck with it less after — they never decide by letter, so this is the reshuffle, not the rule.
 - Worth watching with the beta AI: whether holding the Q feels like a dead seat in the hand. The knob if it does: a sixth U in content/data/bag.json (from another E).
+
+## 2026-10-02 — skill awards: a FLOOR check (`npm run sim:awards`)
+> 200 games per row × random / greedy × 2, 3, 4 players × Small, Large = **2,400 games**, seeds 1–200, official words. Share of games where each award was earned by anyone, at the thresholds now in content/tuning/endscreen.json.
+> **These players can't tell us how often SKILLED play earns the positioning awards** — random plays any legal move, greedy picks the most Magic of 20 random turns; neither positions or blocks on purpose (Muzzy). So this is only a floor check: an award these players earn often is too easy (earned by accident) and its threshold went up until mindless play rarely gets it; the rest were set by hand to clearly deliberate values. **All thresholds are PROVISIONAL — re-tune once the beta AI personalities can play positionally (AI-vs-AI).**
+
+| Award | Threshold (provisional) | Random | Greedy | Notes |
+|---|---|---|---|---|
+| Lockdown | a rival glyphling ≥ 6 moves fewer, ≤ 1 left | 3.2% | 7.3% | 5 / ≤ 2 was 14% / 20% |
+| Pincer | move AND cast each ≥ 4 fewer, ≥ 8 in all | 8.6% | 8.8% | 2 / 5 was 51% / 50% |
+| Weed toss | cast made 0 and took a rival's ≥ 14-Magic spot, or cut ≥ 10 + refreshed | 9.4% | 0.3% | random's junk casts land anywhere: the cut kind is what random earns (≥ 7 was 32%) |
+| Walled garden | own cast sealed a ≤ 10-hex pocket, ≥ 30 Magic made inside | 9.8% | 16.9% | without the size cap random play "seals" half the board by chance (12 Magic: 44% / 49%) |
+| Through the hedge | a scoring cast over ≥ 4 own seeds | 6.3% | 22.3% | 2 was 57% / 78% — a crowded garden makes it easy |
+| Complete tangle | (no threshold) | 1.5% | 2.3% | natural rate |
+| Power Play | ≥ 5 words from one seed | 1.9% | 5.6% | 3 was 69% / 97%, 4 was 19% / 45% (2-letter words make many) |
+| Long word | ≥ 6 letters (both gardens) | 0% | 6.5% | 5 letters: greedy 39% Small / 46% Large |
+| Hijack | rival's word of ≥ 3 letters grown, you own most | 0.8% | 24.3% | from 2-letter words greedy hit 90%; ≥ 4 is 5% |
+| Bridge | ≥ 2 letters each side of the seed | 0.3% | 1.9% | 1 each side: 64% / 84% |
+| Biggest comeback | took the lead from ≥ 12 behind | 2.3% | 10.0% | 8 was 15% / 49% |
+| Trickster's Victory | a rival ended it ≥ 10 behind → the winner | 27.6% | 31.8% | natural rate: these bots end ~75–95% of games by tangling their own glyphling |
+| Called it | ended it ≥ 10 ahead, and won | 24.7% | 32.7% | natural rate (same reason) |
+| Close call | 1 move left at the start of your turn, ≥ 6 after, never tangled | 3.2% | 4.0% | 4 was 12% / 8% |
+
+Awards per game at these thresholds: random 1.0 · greedy 1.8 (2,400 games). Per-row numbers: `npm run sim:awards`.
+
+**What it says**
+- **Mindless play now rarely earns a positioning award** (≤ 10% of games for random and greedy, Walled garden 17% for greedy) — so when a real player gets Lockdown / Pincer / Weed toss / Walled garden it most likely came from a deliberate squeeze.
+- **Spelling awards are where greedy (a Magic-maximiser — a spelling skill) is ahead of random**, as it should be: Hijack 24%, Through the hedge 22%, Long word 6.5%.
+- **The ending awards ride on how games end.** Sim bots end almost every game by self-tangling, so Trickster's Victory and Called it are ~25–33% here; humans and the beta AI (who won't walk into dead ends blindly) should see them less — and more often deliberately.
+- Next: re-run with the beta AI personalities playing each other (ROADMAP → Later: "Re-tune award thresholds with AI personalities (AI-vs-AI)") and aim the positioning awards at "most games have one, nobody gets everything".
+

@@ -52,6 +52,7 @@ One row per stat, one column per player (a ~110 px label column plus 4 × ~65 px
 - **Play:** Multi-word turns · Seeds refreshed · Tangled others · Got tangled
 
 ## 3. Highlights: Glyphtender-specific awards (they never add Magic)
+> **Superseded 2026-10-02 (TDD D54):** these awards were all replaced by 14 skill awards (positioning & blocking first), earned only, shown one at a time in a carousel with a star on the Story chart — see GDD §4 Highlights. Kept here as the history of the idea.
 
 | # | Award (working name) | What it means | Data needed |
 |---|---|---|---|
