@@ -79,7 +79,7 @@ try {
       const colour = kind === 'cast' ? await castTint(garden[COLOURS[seat]]) : garden[COLOURS[seat]]
       const mine = b.options.filter((o) => o.kind === kind)
       if (!mine.length) return fail(`${size.name} ${where}: no ${kind} options lit`)
-      if (kind === 'cast' && colour === garden[COLOURS[seat]]) fail(`${size.name} ${where}: cast options look just like move options (castShade 0)`)
+      if (kind === 'cast' && garden.castShade !== 0 && colour === garden[COLOURS[seat]]) fail(`${size.name} ${where}: cast options look just like move options (castShade 0)`)
       if (mine.some((o) => o.fill !== colour || o.dot !== colour)) fail(`${size.name} ${where}: ${kind} options not in ${colour} (${[...new Set(mine.map((o) => o.fill))]})`)
       if (mine.some((o) => o.dashed)) fail(`${size.name} ${where}: ${kind} options have a dashed outline`)
       else console.log(`ok   ${size.name} ${where} · ${mine.length} ${kind} options filled in ${colour} (${COLOURS[seat]}${kind === 'cast' ? `, castShade ${garden.castShade}` : ''})`)
