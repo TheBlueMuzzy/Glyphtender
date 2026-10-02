@@ -231,8 +231,8 @@
   "scorePopSize": 0.7,
   "scoreTotalSize": 1.2,
   "scorePopMinPx": 16,
-  "castFill": 0.75,
+  "castFill": 0.1,
   "trailWidth": 0.08,
   "trailStrength": 0.9,
-  "castShade": 0.4
+  "castShade": 0
 }
