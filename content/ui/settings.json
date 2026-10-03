@@ -9,7 +9,8 @@
       { "id": "muteInBackground", "type": "toggle", "label": "Mute when in the background", "default": true }
     ]},
     { "id": "display", "label": "Display", "rows": [
-      { "id": "fullscreen", "type": "toggle", "label": "Full screen", "default": false },
+      { "id": "fullscreen", "type": "toggle", "label": "Full screen", "detail": "Hides the browser's bars. On phones, any tap goes full screen", "default": false },
+      { "id": "fullscreenTip", "type": "info", "label": "Full screen", "default": "Share → Add to Home Screen" },
       { "id": "quality", "type": "selector", "label": "Graphics quality", "options": ["Auto", "Low", "Medium", "High"], "default": "Auto" },
       { "id": "brightness", "type": "slider", "label": "Brightness", "default": 50 },
       { "id": "frameRate", "type": "selector", "label": "Frame rate cap", "options": ["30", "60", "Unlimited"], "default": "60", "on": false }

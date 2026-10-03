@@ -26,8 +26,17 @@ const check = (what, ok) => { if (!ok) fail(what) }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
 const { browser, stop } = await startServers(VITE_PORT, PARTY_PORT, 'npm run e2e:online4 e2e-shots <vitePort> <partyPort>')
-const player = async (name, viewport, mobile) => makePlayer(name,
-  await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile }), { mobile }, { vitePort: VITE_PORT, out: OUT, fail })
+// (Settings → Full screen off: this check resizes a phone's window, which a full-screen page can't do — e2e:fullscreen
+// covers full screen itself)
+async function context(viewport, mobile) {
+  const ctx = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile })
+  await ctx.addInitScript(() => {
+    const key = 'kit-settings:'
+    localStorage.setItem(key, JSON.stringify({ ...JSON.parse(localStorage.getItem(key) ?? '{}'), fullscreen: false }))
+  })
+  return ctx
+}
+const player = async (name, viewport, mobile) => makePlayer(name, await context(viewport, mobile), { mobile }, { vitePort: VITE_PORT, out: OUT, fail })
 const TALL = { width: 390, height: 844 }, WIDE = { width: 844, height: 390 }, DESK = { width: 1440, height: 900 }
 const ada = await player('Ada', TALL, true)
 const bo = await player('Bo', DESK, false)

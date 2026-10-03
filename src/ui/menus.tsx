@@ -1,15 +1,15 @@
 // MENUS — the home page and the screens it opens, all built from the UI kit.
 // Words: content/text/en.json · settings rows: content/ui/settings.json · look: content/ui/style.json
-import { Credits, HowToPlay, MainMenu, Pause, Settings, fill, screens } from './kit'
+import { Button, Credits, HowToPlay, MainMenu, Pause, Settings, fill, screens } from './kit'
 import { GameOverScreen } from '../game/GameOver'
 import { leaveToMenu, newGameFromEnd, openNewGame } from './newGame'
-import { settingsChanged } from './gameSettings'
+import { settings, settingsChanged } from './gameSettings'
+import { canFullscreen, hiddenFullscreenRows, isInstalled, setFullscreen, useFullscreen } from './fullscreen'
 import { LobbyScreen } from './online/LobbyScreen'
 import { OnlineStartScreen } from './online/OnlineStartScreen'
 import { useOnline } from './online/session'
 import { useGameStore } from '../store/gameStore'
 import text from '../../content/text/en.json'
-import settings from '../../content/ui/settings.json'
 import credits from '../../content/credits.json'
 import version from '../../version.json'
 
@@ -19,6 +19,9 @@ const onlineAvailable = import.meta.env.DEV || !!import.meta.env.VITE_PARTY_HOST
 // HOME — title, tagline, and the menu buttons in our order (Play is the main button).
 export function MainMenuScreen() {
   const w = text.mainMenu
+  // Full screen / Leave full screen — only where it can work and isn't already app-like (fullscreen.ts)
+  const fullscreen = useFullscreen((s) => s.on)
+  const fullscreenButton = canFullscreen() && !isInstalled()
   return (
     <MainMenu
       title={w.title}
@@ -28,7 +31,11 @@ export function MainMenuScreen() {
         ...(onlineAvailable ? [{ label: w.playOnline, onClick: () => screens.push('online') }] : []),
         { label: w.settings, onClick: () => screens.push('settings') },
       ]}
-    />
+    >
+      {fullscreenButton && (
+        <Button variant="ghost" onClick={() => setFullscreen(!fullscreen)}>{fullscreen ? w.exitFullscreen : w.fullscreen}</Button>
+      )}
+    </MainMenu>
   )
 }
 
@@ -41,7 +48,7 @@ export function SettingsScreen() {
   const onAction = (id: string) => {
     if (id === 'credits') screens.push('credits')
   }
-  return <Settings schema={settings} info={{ version: `v${version.version}` }} onAction={onAction} onChange={settingsChanged} />
+  return <Settings schema={settings} info={{ version: `v${version.version}` }} hide={hiddenFullscreenRows()} onAction={onAction} onChange={settingsChanged} />
 }
 
 // CREDITS — people from en.json, then every asset listed in content/credits.json.

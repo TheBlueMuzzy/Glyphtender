@@ -57,14 +57,14 @@ function BonusFlight({ at, seat, label, colours, timing, seconds }: {
 }) {
   const anchor = useRef<SVGCircleElement>(null)
   const pop = useRef<HTMLSpanElement>(null)
-  const [spot, setSpot] = useState<{ x: number; y: number; size: number } | null>(null)
+  const [spot, setSpot] = useState<{ x: number; y: number; size: number; layer: Element } | null>(null)
   // Where the piece is on screen, and how big the "+3" is there (the board's scale)
   useLayoutEffect(() => {
     const el = anchor.current
     const m = el?.getScreenCTM()
     if (!el || !m) return
     const p = new DOMPoint(at.x, at.y - HEX * 0.1).matrixTransform(m)
-    setSpot({ x: p.x, y: p.y, size: colours.revealPopSize * m.a })
+    setSpot({ x: p.x, y: p.y, size: colours.revealPopSize * m.a, layer: el.closest('.game') ?? document.body })
   }, [at.x, at.y, colours.revealPopSize])
   useLayoutEffect(() => {
     const el = pop.current
@@ -93,7 +93,7 @@ function BonusFlight({ at, seat, label, colours, timing, seconds }: {
           style={{ left: spot.x, top: spot.y, fontSize: spot.size, color: colours.revealPop, ['--pop-outline' as string]: colours.background }}>
           {label}
         </span>,
-        anchor.current?.closest('.game') ?? document.body,
+        spot.layer,
       )}
     </>
   )

@@ -5,7 +5,9 @@
     "subtitle": "The best speller doesn't always win.",
     "play": "Play",
     "settings": "Settings",
-    "playOnline": "Play online"
+    "playOnline": "Play online",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Leave full screen"
   },
   "game": {
     "players": {
