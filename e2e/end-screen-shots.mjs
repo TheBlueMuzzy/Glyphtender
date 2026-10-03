@@ -5,7 +5,8 @@
 // mark (shot) → Scorecard (shot) → swipe back (phones) → See board (shot: the finished garden + the end bar) →
 // See results (back).
 // Checks (Muzzy's notes, 2026-10-01):
-//   reveal  the Magic chips never overlap (B016), sit in one tidy centred group, Skip is a normal-size button
+//   reveal  the Magic chips never overlap (B016), sit in one tidy centred group, Skip is a normal-size button (the
+//           hidden sizer copy behind each card — Reveal.tsx — isn't a chip)
 //   results the highlights' top is UNDER the players' bottom (never beside), at every size; the Highlights are a
 //           carousel showing ONE award (none earned → no Highlights at all); at 390×844 and 1440×900 it moves on by
 //           itself (carouselSeconds) and a tap moves it on AND holds it (carouselPauseSeconds) before it carries on
@@ -87,7 +88,7 @@ function chipProblems() {
   const group = document.querySelector('.game-reveal')
   if (!group) return ['no Magic chips']
   const panel = document.querySelector('.game-panel').getBoundingClientRect()
-  const chips = [...group.querySelectorAll('.kit-player-chip')].map((c) => [c.getAttribute('aria-label'), c.getBoundingClientRect()])
+  const chips = [...group.querySelectorAll('.kit-player-chip:not(.game-reveal-sizer *)')].map((c) => [c.getAttribute('aria-label'), c.getBoundingClientRect()])
   chips.forEach(([name, a], i) => {
     if (a.right > panel.right + 0.5 || a.left < panel.left - 0.5) out.push(`chip past its panel: ${name}`)
     for (const [other, b] of chips.slice(i + 1)) {
@@ -151,7 +152,7 @@ try {
       await page.evaluate((g) => window.__glyphtender.store.getState().loadState(g), game)
 
       // ---- The Magic reveal, playing: calm and centred — chips in one tidy group, Skip a normal-size button ----
-      await page.waitForFunction(() => document.querySelectorAll('.game-reveal .kit-player-chip-score').length >= 1, null, { timeout: 20000 })
+      await page.waitForFunction(() => document.querySelectorAll('.game-reveal .kit-player-chip-score:not(.game-reveal-sizer *)').length >= 1, null, { timeout: 20000 })
       await page.screenshot({ path: `${OUT}/end-${tag}-0-reveal.png` })
       ;(await page.evaluate(chipProblems)).forEach((p) => fail(`${tag} reveal: ${p}`))
       const skip = page.getByRole('button', { name: 'Skip' })

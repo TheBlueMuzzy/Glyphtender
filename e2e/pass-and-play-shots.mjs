@@ -53,7 +53,7 @@ function problems() {
   }
   // B016: the reveal's Magic chips never run into each other or past their panel (a chip never shrinks)
   const panel = document.querySelector('.game-reveal')?.getBoundingClientRect()
-  const chips = [...document.querySelectorAll('.game-reveal .kit-player-chip')].map((c) => [c.getAttribute('aria-label'), c.getBoundingClientRect()])
+  const chips = [...document.querySelectorAll('.game-reveal .kit-player-chip:not(.game-reveal-sizer *)')].map((c) => [c.getAttribute('aria-label'), c.getBoundingClientRect()])
   chips.forEach(([name, a], i) => {
     if (a.right > panel.right + 0.5 || a.left < panel.left - 0.5) out.push(`reveal chip past its panel: ${name}`)
     for (const [other, b] of chips.slice(i + 1)) {
@@ -224,12 +224,12 @@ try {
     // ---- the end: the Magic reveal plays by itself ----
     check('the game ended', await page.evaluate(() => window.__glyphtender.playRest(9)))
     await page.waitForFunction(() => window.__glyphtender.store.getState().revealAt !== null, null, { timeout: 5000 })
-    check('Magic is secret as the reveal starts', (await page.getByText('Magic ?').count()) === COUNT)
+    check('Magic is secret as the reveal starts', (await page.evaluate(() => [...document.querySelectorAll('.game-reveal [data-reveal-seat] > .kit-player-chip')].filter((c) => c.textContent.includes('Magic ?')).length)) === COUNT)
     check('a Skip button while it plays', await page.getByRole('button', { name: 'Skip' }).isVisible())
     const steps = await page.evaluate(() => document.querySelectorAll('[data-reveal]').length)
     check('the reveal is drawn on the board', steps === 1)
     // Mid-reveal: once the first player's Magic is counting
-    await page.waitForFunction(() => document.querySelectorAll('.game-reveal .kit-player-chip-score').length >= 1, null, { timeout: 20000 })
+    await page.waitForFunction(() => document.querySelectorAll('.game-reveal .kit-player-chip-score:not(.game-reveal-sizer *)').length >= 1, null, { timeout: 20000 })
     await shot('7-reveal-mid', 800) // after the prompt's pop (a brief scale-up of its full-width line) has settled
     if (await side()) {
       check(`the side column keeps its width in the reveal (turn ${turnColumn}px, reveal ${await columnWidth()}px)`, (await columnWidth()) === turnColumn)

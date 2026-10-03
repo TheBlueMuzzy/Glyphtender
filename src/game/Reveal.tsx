@@ -5,8 +5,8 @@
 // Then the end table opens. Skip (in the button row) jumps to the end at any moment;
 // with reduce motion on it starts at the end. Timings: content/tuning/anim.json (reveal…).
 // This panel takes the tray's place: one kit PlayerChip per player — "Magic ?" until their turn to count,
-// then the number counts up (the chip does that itself; no float-up — the "+3"s fly in instead) with the tangle Magic
-// that has arrived so far under the name. The chips sit in one
+// then the number counts up (the chip does that itself; no float-up — the "+3"s fly in instead; no "Tangles +N" line —
+// the flying "+3"s say it, Muzzy). Every card is a FIXED size from the start (a hidden sizer copy, game.css). The chips sit in one
 // tidy centred column, all as wide as the widest (game.css .game-reveal) — calm, not spread to the corners (Muzzy at
 // 768×343: "this layout looks weird"). After the reveal the same chips stay with the finished garden (See board).
 // Kit parts only: PlayerChip.
@@ -15,7 +15,7 @@ import text from '../../content/text/en.json'
 import { useGameStore } from '../store/gameStore'
 import { revealSteps, revealView, stepSeconds } from '../store/revealPlan'
 import { landingSeconds } from '../store/wordMarks'
-import { PlayerChip, fill, reduceMotion, screens } from '../ui/kit'
+import { PlayerChip, reduceMotion, screens } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
 import { juiceFor } from './feel'
 import { playerName } from './prompt'
@@ -27,7 +27,7 @@ const w = text.game.reveal
  *  Sizes: big (a roomy screen, e.g. a desktop) and a phone held upright (lots of room under the board) = the full-size
  *  chip, and on a roomy screen the whole group is drawn bigger (layout.json revealBigZoom, but never wider than its
  *  column) to match the big board; compact (the side column, e.g. a phone on its side) = small, or with 3–4 players
- *  the one-line chip (else they run into the end bar), which has no room for the tangle Magic line. */
+ *  the one-line chip (else they run into the end bar). */
 export function RevealPanel({ compact, big }: { compact: boolean; big: boolean }) {
   const game = useGameStore((s) => s.game)!
   const revealAt = useGameStore((s) => s.revealAt)
@@ -96,18 +96,24 @@ export function RevealPanel({ compact, big }: { compact: boolean; big: boolean }
     return () => watch.disconnect()
   }, [big, layout.revealBigZoom, revealAt])
 
-  const size = !compact ? 'm' : game.magic.length > 2 ? 'xs' : 's'
+  const size: 'm' | 's' | 'xs' = !compact ? 'm' : game.magic.length > 2 ? 'xs' : 's'
   return (
     <div ref={panel} className="game-reveal" role="group" aria-label={w.label}>
       {game.magic.map((_, seat) => {
         const score = view.scores[seat]
         const winner = view.announced && game.winners.includes(seat)
+        const chip = { size, name: playerName(seat), avatar: glyphlingArt(seat), color: colours[colourOf(seat)], scoreIcon: '✦', floatUps: false, words: { score: w.magic } }
+        // A fixed card (Muzzy: "static so that it can fit all of the UI elements that could be put into it"): a hidden
+        // copy at its biggest — the winner's star, "Magic ?" and the widest score — holds the space from the start, so
+        // nothing in the sequence makes a card grow; the column makes every card as wide as the widest
+        const widest = Number(String(Math.max(...game.magic, 0)).replace(/\d/g, '8'))
         return (
           <div key={seat} data-reveal-seat={seat}>
-            <PlayerChip size={size} name={playerName(seat)} avatar={glyphlingArt(seat)} color={colours[colourOf(seat)]}
-              score={score ?? undefined} scoreIcon="✦" floatUps={false}
-              detail={score === null ? w.secret : size === 'xs' ? undefined : fill(w.tangleDetail, { n: view.tangles[seat] })}
-              badge={winner ? w.winnerBadge : undefined} active={counting === seat || winner} words={{ score: w.magic }} />
+            <div className="game-reveal-sizer" aria-hidden="true">
+              <PlayerChip {...chip} score={widest} detail={size === 'xs' ? undefined : w.secret} badge={w.winnerBadge} />
+            </div>
+            <PlayerChip {...chip} score={score ?? undefined} detail={score === null ? w.secret : undefined}
+              badge={winner ? w.winnerBadge : undefined} active={counting === seat || winner} />
           </div>
         )
       })}

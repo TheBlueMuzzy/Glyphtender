@@ -4,6 +4,7 @@
 // the animations hold their last frame until the next landing (B007: a faint "+2" once stayed on the board).
 // ScorePops.tsx plays them; reduce motion (`still`) = no flying, no scale bounce — words step, the total steps up, fade.
 import type { ScoreSequence } from '../store/wordMarks'
+import { throwHandle } from './trailShape'
 
 type Timing = { popTime: number; fade: number }
 
@@ -30,8 +31,29 @@ export function wordFrames(seq: ScoreSequence, i: number, peak: number, t: Timin
   ]
 }
 
-/** Seed pop `i` ("+2" over its letter): pops in (swelling past full size), waits, flies (dx, dy) into the total and vanishes. */
-export function popFrames(seq: ScoreSequence, i: number, dx: number, dy: number, swell: number, t: Timing): Keyframe[] {
+const FLIGHT_STEPS = 14 // points along the arc (the browser draws straight between them — 14 reads as a smooth curve)
+
+/**
+ * Points flying (dx, dy) into a total, on the same arc a thrown seed flies (trailShape.throwHandle, anim.json arcHeight —
+ * Muzzy: "the points should fly in an arc (like the seed). straight is boring and hard to read"), with the seed's
+ * ease in-out. They shrink to 0.6 on the way and fade in the last fifth. `from` / `to` = offsets (shares of the whole
+ * animation); `place(x, y, scale)` = the transform for that spot. Used by every "points fly into a total" in the game.
+ */
+export function flightFrames(dx: number, dy: number, arcHeight: number, from: number, to: number,
+  place: (x: number, y: number, scale: number) => string): Keyframe[] {
+  const handle = throwHandle({ x: 0, y: 0 }, { x: dx, y: dy }, arcHeight)
+  return Array.from({ length: FLIGHT_STEPS + 1 }, (_, k) => {
+    const t = k / FLIGHT_STEPS
+    const e = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2 // ease in-out (the seed's)
+    const x = 2 * (1 - e) * e * handle.x + e * e * dx
+    const y = 2 * (1 - e) * e * handle.y + e * e * dy
+    return { transform: place(x, y, 1 - 0.4 * e), opacity: t <= 0.8 ? 1 : (1 - t) / 0.2, offset: from + (to - from) * t }
+  })
+}
+
+/** Seed pop `i` ("+2" over its letter): pops in (swelling past full size), waits, flies (dx, dy) on an arc into the
+ *  total and vanishes. */
+export function popFrames(seq: ScoreSequence, i: number, dx: number, dy: number, swell: number, t: Timing, arcHeight: number): Keyframe[] {
   const at = offsetIn(seq)
   const p = seq.pops[i]
   return [
@@ -39,8 +61,7 @@ export function popFrames(seq: ScoreSequence, i: number, dx: number, dy: number,
     { transform: move(0, 0, 0.2), opacity: 0, offset: at(p.pop), easing: 'ease-out' },
     { transform: move(0, 0, swell), opacity: 1, offset: at(p.pop + t.popTime * 0.6) },
     { transform: move(0, 0, 1), opacity: 1, offset: at(p.pop + t.popTime) },
-    { transform: move(0, 0, 1), opacity: 1, offset: at(p.fly), easing: 'ease-in' },
-    { transform: move(dx, dy, 0.6), opacity: 0, offset: at(p.arrive) },
+    ...flightFrames(dx, dy, arcHeight, at(p.fly), at(p.arrive), move),
     { transform: move(dx, dy, 0.6), opacity: 0, offset: 1 },
   ]
 }

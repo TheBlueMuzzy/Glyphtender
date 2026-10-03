@@ -64,10 +64,10 @@ export function ScorePops({ game, turn, colours, timing, pxPerHex, view }: Props
     // Each word's outline (WordBorders, under the seeds) and its bubble (WordLabels), lit in its turn
     seq.words.forEach((_, i) => svg.querySelectorAll(`[data-spot-of="grown"][data-spot-word="${i}"]`)
       .forEach((el) => play(el, wordFrames(seq, i, colours.grownGlowStrength, t, still))))
-    // Each seed's "+2" pops over its letter and flies into the total (reduce motion: they never show)
+    // Each seed's "+2" pops over its letter and flies on an arc (like the seed) into the total (reduce motion: they never show)
     const seedSwell = 1 + juiceFor('seedPop').grow
     if (!still) group.querySelectorAll('[data-score-pop]').forEach((el, i) =>
-      play(el, popFrames(seq, i, total.x - spots[i].x, total.y - spots[i].y, seedSwell, t)))
+      play(el, popFrames(seq, i, total.x - spots[i].x, total.y - spots[i].y, seedSwell, t, timing.arcHeight)))
     // The running total: grows with every point, its number steps +2 → +4 → … → the final total, which fades
     play(group.querySelector('[data-score-total]'), totalScaleFrames(seq, 1 + juiceFor('totalPop').grow, t, still))
     group.querySelectorAll('[data-score-count]').forEach((el, k) => play(el, countFrames(seq, k)))

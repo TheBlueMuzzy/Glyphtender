@@ -14,6 +14,7 @@ import type { RevealStep } from '../store/revealPlan'
 import { revealView, stepSeconds } from '../store/revealPlan'
 import { fill, reduceMotion } from '../ui/kit'
 import { juiceFor } from './feel'
+import { flightFrames } from './scoreFrames'
 import { HEX } from './useThrow'
 import type { AnimTuning, GardenTuning } from './useTuning'
 
@@ -47,7 +48,7 @@ export function RevealMarks({ game, steps, at, colours, timing }: Props) {
 }
 
 /**
- * One "+3": pops in over its piece (swelling past full size, like a seed's "+2"), waits, then flies into its owner's
+ * One "+3": pops in over its piece (swelling past full size, like a seed's "+2"), waits, then flies on the seed's arc into its owner's
  * total on the reveal chips and vanishes as it lands — exactly as the step ends, when the total takes the +3 and pops.
  * It flies on a layer over the whole game screen (not the board's SVG), because the chips are outside the board — inside
  * the game screen, so a menu opened over the game still covers it.
@@ -79,12 +80,11 @@ function BonusFlight({ at, seat, label, colours, timing, seconds }: {
       { transform: move(0, 0, 0.2), opacity: 0, offset: 0, easing: 'ease-out' },
       { transform: move(0, 0, swell), opacity: 1, offset: at(timing.revealPopTime * 0.6) },
       { transform: move(0, 0, 1), opacity: 1, offset: at(timing.revealPopTime) },
-      { transform: move(0, 0, 1), opacity: 1, offset: at(fly), easing: 'ease-in' },
-      // (ends invisible: the last frame is held until the next step replaces it — B007)
-      { transform: move(dx, dy, 0.6), opacity: 0, offset: 1 },
+      // (the seed's arc, like every "points fly into a total"; ends invisible — the last frame is held: B007)
+      ...flightFrames(dx, dy, timing.arcHeight, at(fly), 1, move),
     ], { duration: seconds * 1000, fill: 'both' })
     return () => a.cancel()
-  }, [spot, seat, seconds, timing.revealPopTime, timing.scoreFlyTime])
+  }, [spot, seat, seconds, timing.revealPopTime, timing.scoreFlyTime, timing.arcHeight])
   return (
     <>
       <circle ref={anchor} cx={at.x} cy={at.y} r={0} />

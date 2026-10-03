@@ -134,9 +134,14 @@
   /* The Magic reveal (Reveal.tsx): the players' Magic chips in the tray's place — one tidy centred column, every chip
      as wide as the widest. One per line, never side by side: a chip never shrinks, so two in a row ran into each
      other (B016). Skip under them is a normal-size button (ActionBar.tsx). */
-  .game-reveal { display: grid; grid-template-columns: max-content; justify-content: center; gap: var(--gap-xs); max-inline-size: 100%; }
+  .game-reveal { display: grid; grid-template-columns: max-content; justify-content: center; gap: var(--gap-s); max-inline-size: 100%; }
+  /* each card: the real chip over a hidden copy at its biggest (Reveal.tsx), so the card never grows mid-sequence */
   .game-reveal > [data-reveal-seat] { display: grid; }
+  .game-reveal > [data-reveal-seat] > * { grid-area: 1 / 1; min-inline-size: 0; }
   .game-reveal > [data-reveal-seat] > .kit-player-chip { inline-size: auto; }
+  .game-reveal-sizer { visibility: hidden; pointer-events: none; }
+  /* the score keeps to the card's right edge, in line on every card (the name stays left) */
+  .game-reveal .kit-player-chip-score { margin-inline-start: auto; }
   .game[data-phase="over"] .game-panel { justify-content: center; }
 
   /* After the reveal (data-ended): the finished garden, the chips, and the end bar along the whole bottom

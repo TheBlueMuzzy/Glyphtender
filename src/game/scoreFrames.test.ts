@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import animJson from '../../content/tuning/anim.json'
 import { scoreSequence, type ScorePop } from '../store/wordMarks'
-import { countFrames, popFrames, totalScaleFrames, wordFrames } from './scoreFrames'
+import { countFrames, flightFrames, popFrames, totalScaleFrames, wordFrames } from './scoreFrames'
 
 const pop = (word: number, order: number): ScorePop => ({ hex: { q: order, r: 0 }, amount: 2, word, order, stack: 0 })
 const seq = scoreSequence([pop(0, 0), pop(0, 1), pop(1, 2), pop(1, 3), pop(2, 4), pop(2, 5)], animJson)
@@ -19,7 +19,7 @@ describe('score sequence keyframes', () => {
   const all = [
     ...seq.words.map((_, i) => wordFrames(seq, i, 1, t, false)),
     ...seq.words.map((_, i) => wordFrames(seq, i, 1, t, true)),
-    ...seq.pops.map((_, i) => popFrames(seq, i, 3, -2, 1.3, t)),
+    ...seq.pops.map((_, i) => popFrames(seq, i, 3, -2, 1.3, t, animJson.arcHeight)),
     ...seq.arrivals.map((_, k) => countFrames(seq, k)),
   ]
 
@@ -47,5 +47,16 @@ describe('score sequence keyframes', () => {
     const sizes = totalScaleFrames(seq, 1.5, t, true).map((f) => Number(/scale\(([\d.]+)\)/.exec(String(f.transform))![1]))
     expect(sizes.every((v, i) => i === 0 || v >= sizes[i - 1])).toBe(true)
     expect(sizes.at(-1)).toBeCloseTo(seq.arrivals.at(-1)!.size)
+  })
+
+  it('points fly on an ARC (like the seed), not a straight line — they lift above the straight path, and land on the total', () => {
+    const place = (x: number, y: number, scale: number) => `${x},${y},${scale}`
+    const frames = flightFrames(100, 0, animJson.arcHeight, 0.2, 0.6, place)
+    const spots = frames.map((f) => String(f.transform).split(',').map(Number))
+    expect(Math.min(...spots.map(([, y]) => y))).toBeLessThan(-20) // well above the straight line (y = 0)
+    expect(spots.at(-1)!.slice(0, 2)).toEqual([100, 0])
+    expect(frames[0].offset).toBe(0.2)
+    expect(frames.at(-1)!.offset).toBeCloseTo(0.6)
+    expect(Number(frames.at(-1)!.opacity)).toBe(0)
   })
 })
