@@ -29,7 +29,7 @@ export function RevealMarks({ game, steps, at, colours, timing }: Props) {
         return (
           <polygon key={id} data-reveal-tangled={id} points={hexCorners(x, y, HEX * 0.97)} fill={colours.vine}
             opacity={lit ? 0.45 : 0}>
-            {pulsing && <animate attributeName="opacity" values="0.1;0.55;0.1" dur={`${timing.pulseTime}s`} repeatCount="indefinite" />}
+            {pulsing && <animate attributeName="opacity" values="0.1;0.55;0.1" dur={`${timing.tangleBlinkTime}s`} repeatCount="indefinite" />}
           </polygon>
         )
       })}

@@ -8,11 +8,12 @@
     "hopTime": "Higher = a slower, floatier hop; lower = a quick flick. Try 0.12–0.25.",
     "growTime": "How long the seed takes to grow up out of the ground once it lands. Higher = a slower bloom. Try 0.3–0.8.",
     "growFrom": "How big the sprout is at the very start. Low = it grows from a tiny dot (more dramatic); 1 = it starts full size (no grow). Try 0.05–0.3.",
-    "pulseTime": "The ring round a piece you have planned but not confirmed (a moved glyphling, an aimed seed and its tray slot) blinks bright → faint → bright. Higher = a slower, calmer blink. Also how fast tangled glyphlings blink at the end of the game. Try 0.8–2.",
+    "pulseTime": "The ring round a piece you have planned but not confirmed (a moved glyphling, an aimed seed and its tray slot) blinks bright → faint → bright. Higher = a slower, calmer blink. (The end-of-game tangled blink has its own speed: End reveal.) Try 0.8–2.",
     "wordGlowTime": "How long after a seed lands the garden stays clear before the handoff box or the end-of-game reveal may cover it, when the cast scores nothing (or word indicators are off), in seconds. A cast that scores waits for its whole score sequence instead.",
     "spotlightHold": "Word spotlight, while aiming: when the aimed seed would make 2 or more words, they light up ONE at a time (QUA +4 → TAB +5 → round again). This is how long each word stays lit, in seconds. (One word just stays lit.) After Cast the words score in this same order — see the Score sequence.",
     "spotlightFade": "Word spotlight: how long each word takes to fade in and to fade out, in seconds — while aiming, and as each word takes its turn in the score sequence. The next word starts after the last one has faded, so only one is ever lit. Reduce motion = no fade (the words just step).",
     "revealTangles": "At the end, the tangled glyphlings blink before any bonus shows. Higher = a longer build-up; 0 = straight to the bonuses. Try 1–2.",
+    "tangleBlinkTime": "At the end, how fast the tangled glyphlings blink, in seconds per blink. Higher = a slower, heavier blink. (How long they blink before the bonuses: the setting above.) Try 0.8–2.",
     "revealBonus": "The \"+3\" tangle bonuses pop on rival pieces one hex at a time; this is the time each one gets. Higher = a slower count. (How bouncy each pop is: the pop-in time below.) Try 0.4–0.8.",
     "revealCount": "Each player's Magic counts up in turn, lowest first, with a short pause after. Higher = more suspense. Try 1–2.",
     "revealWinner": "How long the winner banner stays before the end table opens. Higher = more time to celebrate. Try 2–3.",
@@ -74,6 +75,7 @@
     "refreshStagger": "Refresh: gap between one tray slot and the next (seconds)",
     "refreshPause": "Refresh: empty-tray pause between old seeds and new (seconds)",
     "revealTangles": "End reveal: how long tangled glyphlings blink first (seconds)",
+    "tangleBlinkTime": "End reveal: tangled glyphlings' blink speed (seconds)",
     "revealBonus": "End reveal: gap between one \"+3\" bonus and the next (seconds)",
     "revealCount": "End reveal: time for each player's Magic to count up (seconds)",
     "revealWinner": "End reveal: how long \"Grand Glyphtender!\" shows (seconds)",
@@ -131,6 +133,7 @@
     ],
     "End-of-game reveal": [
       "revealTangles",
+      "tangleBlinkTime",
       "revealBonus",
       "revealCount",
       "revealWinner",
@@ -200,6 +203,11 @@
     ],
     "revealTangles": [
       0,
+      3,
+      0.1
+    ],
+    "tangleBlinkTime": [
+      0.4,
       3,
       0.1
     ],
@@ -342,6 +350,7 @@
   "spotlightHold": 0.8,
   "spotlightFade": 0.12,
   "revealTangles": 1.4,
+  "tangleBlinkTime": 1.2,
   "revealBonus": 0.55,
   "revealCount": 1.5,
   "revealWinner": 2.5,
