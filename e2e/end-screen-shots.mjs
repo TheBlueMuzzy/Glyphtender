@@ -244,19 +244,27 @@ try {
       await fills('Results', '.game-end-results')
       await shot('1-results')
 
-      // ---- Story: the chart, its key under it, the caption under the key; tap a mark → its caption ----
+      // ---- Story: the chart, its key under it, the moment slot under the key; drag the line → its moments ----
       await tap(page.getByRole('tab', { name: 'Story' }))
       await page.locator('.game-end-chart-svg').waitFor({ timeout: 3000 })
       await page.waitForTimeout(1900) // the lines draw themselves in (endscreen.json chartDrawSeconds)
       check('the chart has moment marks', (await page.locator('[data-marker]').count()) > 0)
+      check('no Highlights carousel on the Story page (the slot shows awards instead)', (await page.locator('.game-end-story .kit-carousel').count()) === 0)
       // The scrub line (Muzzy: tapping a mark is too fiddly on a phone): drag across the chart → the line follows,
-      // snapping to rounds; every moment on its round shows in the caption, stacked; the page doesn't turn
+      // snapping to rounds; the slot under the key shows that round's moments ONE at a time, in a FIXED size
+      // (stacking "moves the story" — Muzzy), taking turns when there are several; the page doesn't turn
       const svg = page.locator('.game-end-chart-svg')
+      const slotSize = async () => ({ chart: (await box('.game-end-chart')).height, slot: (await box('.game-end-caption')).height })
+      const before = await slotSize()
+      // drag to the busiest round (most marks — awards win ties), so taking turns gets checked too
       const target = await page.evaluate(() => {
-        const m = [...document.querySelectorAll('[data-marker]')].find((el) => el.dataset.x !== undefined)
-        if (!m) return null
+        const marks = [...document.querySelectorAll('[data-marker][data-x]')]
+        if (!marks.length) return null
+        const count = (x) => marks.filter((m) => m.dataset.x === x).length
+        const m = marks.reduce((best, m) => (count(m.dataset.x) > count(best.dataset.x)
+          || (count(m.dataset.x) === count(best.dataset.x) && m.dataset.award && !best.dataset.award) ? m : best))
         const r = m.getBoundingClientRect()
-        return { x: r.left + r.width / 2, round: Number(m.dataset.x), all: document.querySelectorAll(`[data-marker][data-x="${m.dataset.x}"]`).length }
+        return { x: r.left + r.width / 2, round: Number(m.dataset.x), all: count(m.dataset.x) }
       })
       const chartRect = await svg.boundingBox()
       const midY = chartRect.y + chartRect.height / 2
@@ -273,44 +281,40 @@ try {
         await page.mouse.move(target?.x ?? chartRect.x + chartRect.width / 2, midY, { steps: 8 })
         await page.mouse.up()
       }
-      await page.waitForTimeout(300) // (the chart gives up height for a longer caption on the next frame)
+      await page.waitForTimeout(300)
       check('dragging on the chart does not turn the page', (await page.getByRole('tab', { name: 'Story', selected: true }).count()) === 1)
       const scrubAt = Number(await svg.getAttribute('data-scrub'))
-      const lines = await page.locator('.game-end-caption > *').count()
-      const caption = await page.locator('.game-end-caption').innerText()
+      const slotNow = () => page.evaluate(() => {
+        const slot = document.querySelector('.game-end-caption')
+        const award = slot.querySelector('.game-end-award')
+        const star = document.querySelector('[data-marker="star"]')
+        return { shown: slot.querySelectorAll('.game-end-moment').length, moments: Number(slot.dataset.moments), text: slot.innerText.replace(/\n/g, ' | '),
+          award: award ? `${award.dataset.award}:${award.dataset.holder}` : null, star: star ? `${star.dataset.award}:${star.dataset.seat}` : null }
+      })
+      const s1 = await slotNow()
       if (target) {
         check(`the line lands on the dragged-to round (${scrubAt} vs ${target.round})`, scrubAt === target.round)
-        check(`every moment on that round shows, stacked (${lines} lines for ${target.all} marks: “${caption.replace(/\n/g, ' | ')}”)`,
-          !/Drag the line/.test(caption) && lines >= 1 && lines <= target.all)
+        check(`the slot shows ONE of that round's ${target.all} moments (“${s1.text}”)`, !/Drag the line/.test(s1.text) && s1.shown === 1 && s1.moments === target.all)
+        check(`the big star is the award the slot shows (slot ${s1.award}, star ${s1.star})`, s1.award === s1.star)
+        const after = await slotSize()
+        check(`the chart and slot keep their size (${JSON.stringify(before)} → ${JSON.stringify(after)})`,
+          Math.abs(after.chart - before.chart) < 1 && Math.abs(after.slot - before.slot) < 1)
+        if (timed && target.all > 1) {
+          await page.waitForTimeout(TUNING.carouselSeconds * 1000 + 600)
+          const s2 = await slotNow()
+          check(`several moments take turns by themselves (“${s1.text}” → “${s2.text}”)`, s2.text !== s1.text && s2.shown === 1 && s2.award === s2.star)
+          check('…still without moving the chart', Math.abs((await slotSize()).chart - before.chart) < 1)
+        }
       }
       await svg.focus()
       await page.keyboard.press('ArrowRight')
       check('→ moves the line a round', Number(await svg.getAttribute('data-scrub')) === Math.min(scrubAt + 1, Number(await svg.getAttribute('aria-valuemax'))))
-      // The star: on the shown award's holder's line; it moves when the carousel moves on
-      const starNow = () => page.evaluate(() => {
-        const star = document.querySelector('[data-marker="star"]')
-        const on = document.querySelector('.game-end-story .kit-carousel-item[data-current] .game-end-award')
-        return { star: star ? `${star.dataset.seat}@${star.dataset.x}` : null, seat: star?.dataset.seat ?? null, holder: on?.dataset.holder ?? null, award: on ? `${on.dataset.award}:${on.dataset.holder}` : null }
-      })
-      if (awards.count) {
-        const s1 = await starNow()
-        check(`a 4-pointed star on the shown award's holder's line (star seat ${s1.seat}, award ${s1.award})`, s1.star !== null && s1.seat === s1.holder)
-        check('the same carousel under the key on the Story page', (await page.locator('.game-end-story .kit-carousel').count()) === 1)
-        if (timed && awards.count > 1) {
-          await page.waitForTimeout(TUNING.carouselSeconds * 1000 + 600)
-          const s2 = await starNow()
-          check(`the star follows the carousel (${s1.award} @ ${s1.star} → ${s2.award} @ ${s2.star})`, s2.award !== s1.award && s2.seat === s2.holder)
-          if (s2.star === s1.star) notes.push(`${tag}: two awards share one spot (${s1.star})`)
-        }
-      } else check('no award → no star', (await page.locator('[data-marker="star"]').count()) === 0)
+      if (!awards.count) check('no award → no stars', (await page.locator('[data-marker="star"], [data-marker="award"]').count()) === 0)
+      else check(`a star per award on the chart (${awards.count})`, (await page.locator('[data-marker="star"], [data-marker="award"]').count()) === awards.count)
       const [chartBox, keyBox, captionBox] = await Promise.all(['.game-end-chart', '.game-end-key', '.game-end-caption'].map(box))
-      if (awards.count) {
-        const carousel = await box('.game-end-story .game-end-highlights')
-        check('the Highlights sit under the key, the caption under them', carousel.y >= keyBox.y + keyBox.height - 0.5 && captionBox.y >= carousel.y + carousel.height - 0.5)
-      }
       check('the key sits right under the chart', keyBox.y >= chartBox.y + chartBox.height - 0.5 && keyBox.y - (chartBox.y + chartBox.height) < 30
         && keyBox.x < chartBox.x + chartBox.width && keyBox.x + keyBox.width > chartBox.x)
-      check('the caption sits under the key', captionBox.y >= keyBox.y + keyBox.height - 0.5 && captionBox.x < chartBox.x + chartBox.width)
+      check('the slot sits under the key', captionBox.y >= keyBox.y + keyBox.height - 0.5 && captionBox.x < chartBox.x + chartBox.width)
       await fits('Story')
       await fills('Story', '.game-end-story')
       await shot('2-story')

@@ -306,9 +306,13 @@
   /* The Highlights star: the carousel's award's star pops in as the carousel moves (reduce motion: no pop) */
   .game-end-star-shape { animation: game-end-star-pop var(--motion-normal) var(--ease) backwards; filter: drop-shadow(0 0 0.2rem var(--surface)); }
   @keyframes game-end-star-pop { from { opacity: 0; scale: 0.4; } }
-  .game-end-caption { min-block-size: 4.2em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  /* the Story slot: ONE moment at a time in a FIXED height (an award row with a 3-line proof fits), so the chart above
+     never moves as the line goes from a quiet round to a busy one; a new moment fades in */
+  .game-end-caption { block-size: 5.6em; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+  .game-end-moment { display: flex; justify-content: center; inline-size: 100%; animation: game-end-moment-in var(--motion-normal) var(--ease) backwards; }
+  @keyframes game-end-moment-in { from { opacity: 0; } }
   .game-end-key-shape { inline-size: 1em; block-size: 1em; flex: none; }
-  @media (max-height: 32rem) { .game-end-caption { min-block-size: 2.8em; } } /* (a phone on its side: every line counts) */
+  @media (max-height: 32rem) { .game-end-caption { block-size: 4.2em; } } /* (a phone on its side: every line counts) */
 
   /* Scorecard: label column + one narrow column per player; the best in each row softly tinted. Rows kept
      tight so 4 players' 15 rows fit a 390×844 phone without scrolling (the fade stays for smaller screens) */

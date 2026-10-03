@@ -12,9 +12,9 @@
 // See board closes this so the finished garden is all there to look at. Esc and phone Back do the same.
 //   Results    the winner big, the others by place, the Highlights carousel under them (EndResults, EndHighlights)
 //   Story      everyone's Magic round by round, with the moments and every award marked; drag the line across it and
-//              each moment on that round shows under the chart, stacked (StoryChart.tsx); the same Highlights
-//              carousel under the key, its award the big 4-pointed star
-// The two carousels share one index (awardAt): turning to Story shows the award Results was showing, star and all.
+//              what happened on that round shows in ONE fixed-size slot under the key (Muzzy, 2026-10-02: stacking
+//              "moves the story" — it mustn't): an award in its Highlights look, a tangle / lead change as a line;
+//              several on one round take turns by themselves (no dots, no arrows); the award showing is the big star
 //   Scorecard  the breakdown, the best in each row tinted (EndScorecard.tsx)
 // Everything comes from the finished game's log (src/game/stats.ts). Words: en.json → game.gameOver; knobs:
 // content/tuning/endscreen.json.
@@ -25,7 +25,7 @@ import { useGameStore } from '../store/gameStore'
 import { Row, Screen, ScrollArea, Stack, Tabs, Text, fill } from '../ui/kit'
 import { colourOf } from './art'
 import { EndBar } from './EndBar'
-import { EndHighlights } from './EndHighlights'
+import { AwardRow, EndHighlights } from './EndHighlights'
 import { EndResults } from './EndResults'
 import { EndScorecard } from './EndScorecard'
 import { markerCaption, tangleBonusCaption } from './endText'
@@ -71,9 +71,10 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
   const [page, setPage] = useState<Page>('results')
   // The Story chart's scrub line: a round, rounds + 1 = the Tangles column, null = not touched yet
   const [scrub, setScrub] = useState<number | null>(null)
-  // The Highlights carousel's award — ONE index for both pages' carousels (Results + Story stay in step), and the
-  // Story chart's star sits on that award's moment
+  // The Results page's Highlights carousel: which award shows
   const [awardAt, setAwardAt] = useState(0)
+  // The Story slot: which of the line's moments shows (they take turns when there are several)
+  const [momentAt, setMomentAt] = useState(0)
 
   const end = useMemo(() => {
     if (!game) return null
@@ -157,24 +158,32 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
     if (next >= 0 && next < PAGES.length) setPage(PAGES[next])
   }
 
+  // The Story slot: a new spot for the line starts at its first moment (moveLine); several moments take turns every
+  // endscreen.json carouselSeconds (one moment: the timer just keeps showing it)
+  const moveLine = (x: number) => { setScrub(x); setMomentAt(0) }
+  useEffect(() => {
+    if (page !== 'story' || scrub === null) return
+    const timer = setInterval(() => setMomentAt((i) => i + 1), tuning.carouselSeconds * 1000)
+    return () => clearInterval(timer)
+  }, [page, scrub, tuning.carouselSeconds])
+
   if (!game || !end) return null
   const name = playerName
   const tabs = PAGES.map((p) => w.tabs[p])
-  // The award showing in the carousel, and its star on the chart (the holder's line, the round it happened)
-  const award = end.awards.length ? end.awards[awardAt % end.awards.length] : null
-  const star = award && awardPoint(game, end.chart, award)
-  const highlights = (heading: boolean) => (
-    <EndHighlights awards={end.awards} index={awardAt} onIndex={setAwardAt} name={name} heading={heading} big={wide && !short && heading}
-      autoSeconds={tuning.carouselSeconds} pauseSeconds={tuning.carouselPauseSeconds} />
-  )
-  // The scrub line's round: every moment on it (tangles, lead changes, awards), stacked; the Tangles column: the bonus
+  // The scrub line's spot → what the slot shows: the round's moments (tangles, lead changes, awards) one at a time;
+  // the Tangles column: the bonus; a quiet round: just its name; untouched: how to use the line
   const spotLabel = (x: number) => x > end.chart.rounds ? w.chart.tangles : x === 0 ? w.chart.start : fill(w.chart.spot, { round: x })
   const scrubbed = scrub !== null && scrub > end.chart.rounds + 1 ? null : scrub // (another game since)
   const moments = scrubbed === null ? [] : [...end.chart.markers, ...end.awardMarks].filter((m) => m.x === scrubbed)
-  const captions = scrubbed === null ? [w.chart.hint]
-    : scrubbed > end.chart.rounds ? [tangleBonusCaption(game, name)]
-    : moments.length ? moments.map((m) => markerCaption(game, m, end.awards, name))
-    : [fill(w.chart.quiet, { round: spotLabel(scrubbed) })]
+  const moment = moments.length ? moments[momentAt % moments.length] : null
+  const awardOf = (m: ChartMarker | null) => m?.kind === 'award' ? end.awards.find((a) => a.id === m.award && a.holder === m.seat) ?? null : null
+  const slotAward = awardOf(moment)
+  const slotText = scrubbed === null ? w.chart.hint
+    : scrubbed > end.chart.rounds ? tangleBonusCaption(game, name)
+    : moment ? markerCaption(game, moment, end.awards, name)
+    : fill(w.chart.quiet, { round: spotLabel(scrubbed) })
+  // The big star: the award the slot is showing (none showing → every star small)
+  const star = slotAward ? moment : null
 
   return (
     <Screen dialog label={winnerTitle(game)}>
@@ -186,12 +195,13 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
           <ScrollArea key={page} label={w.tabs[page]}>
             <div role="tabpanel" aria-label={w.tabs[page]} className="game-end-tabpanel" data-page={page}>
               {page === 'results' && (
-                <EndResults title={game.winners.length > 1 ? w.sharedWin : winnerTitle(game)} game={game} ranked={end.ranked} cards={end.cards} highlights={highlights(true)} colours={colours} tuning={tuning} wide={wide} compact={short}
+                <EndResults title={game.winners.length > 1 ? w.sharedWin : winnerTitle(game)} game={game} ranked={end.ranked} cards={end.cards} highlights={<EndHighlights awards={end.awards} index={awardAt} onIndex={setAwardAt} name={name} big={wide && !short}
+                  autoSeconds={tuning.carouselSeconds} pauseSeconds={tuning.carouselPauseSeconds} />} colours={colours} tuning={tuning} wide={wide} compact={short}
                   me={me} name={name} />
               )}
               {page === 'story' && (
                 <div ref={storyBox} className="game-end-story">
-                  <StoryChart chart={end.chart} colours={colours} tuning={tuning} scrub={scrubbed} onScrub={setScrub}
+                  <StoryChart chart={end.chart} colours={colours} tuning={tuning} scrub={scrubbed} onScrub={moveLine}
                     height={chartHeight(pageSize.height, underChart, tuning.chartHeight)} awards={end.awardMarks} star={star}
                     spotLabel={spotLabel} />
                   {/* The key, right under the chart: each line's shape and colour, and whose it is */}
@@ -205,11 +215,13 @@ export function GameOverScreen({ onNewGame, onMenu }: Props) {
                       </Row>
                     ))}
                   </Row>
-                  {/* The Highlights carousel (the same one as on Results, in step with it): its award has the star */}
-                  {highlights(false)}
-                  {/* Then what happened where the line is, under it (one line per moment) */}
-                  <div className="game-end-caption" aria-live="polite">
-                    {[...new Set(captions)].map((line) => <Text key={line} kind={scrubbed === null ? 'caption' : 'body'}>{line}</Text>)}
+                  {/* The slot: what happened where the line is — ONE thing at a time, always the same size, so the chart
+                      never moves (an award in its Highlights look; anything else as a line) */}
+                  <div className="game-end-caption" aria-live="polite" data-moments={moments.length}>
+                    <div key={`${scrubbed}:${momentAt % Math.max(1, moments.length)}`} className="game-end-moment">
+                      {slotAward ? <AwardRow award={slotAward} name={name} />
+                        : <Text kind={scrubbed === null ? 'caption' : 'body'}>{slotText}</Text>}
+                    </div>
                   </div>
                 </div>
               )}
