@@ -113,7 +113,7 @@ describe('scorecards', () => {
 describe('awards (skill, earned only)', () => {
   // Fixed test thresholds (the real ones in endscreen.json are provisional and will be re-tuned)
   const T = {
-    ...endscreen, lockdownMinDrop: 5, lockdownMaxAfter: 2, pincerMinEach: 2, pincerMinDrop: 5, weedMaxMagic: 0, weedMinBlocked: 6,
+    ...endscreen, lockdownMinDrop: 5, lockdownMaxAfter: 2, pincerMinFrom: 6, pincerMinEach: 2, pincerMaxLeft: 0.5, weedMaxMagic: 0, weedMinBlocked: 6,
     weedMinCut: 4, walledMinMagic: 12, walledMaxSize: 40, hedgeMinOver: 2, powerPlayMin: 3, longWordMinSmall: 6, longWordMinLarge: 6,
     hijackMinFrom: 3, bridgeMinSide: 2, closeCallMinAfter: 4, tricksterMinBehind: 1, calledItMinLead: 1,
   }
@@ -142,7 +142,11 @@ describe('awards (skill, earned only)', () => {
 
   it('Pincer: the move AND the cast each cut the same rival glyphling', () => {
     const g = finished(2, [[0, [], { mobility: mob({ 3: [8, 5, 2] }) }]])
-    expect(one(g, 'pincer')).toMatchObject({ holder: 0, values: { from: 8, mid: 5, to: 2 } })
+    expect(one(g, 'pincer')).toMatchObject({ holder: 0, values: { from: 8, to: 2 } })
+    // both cut, but it still has more than half its moves left: no pincer
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 3: [12, 10, 7] }) }]]))).not.toContain('pincer:0')
+    // already cornered (fewer than pincerMinFrom moves): no pincer
+    expect(ids(finished(2, [[0, [], { mobility: mob({ 3: [5, 3, 1] }) }]]))).not.toContain('pincer:0')
     // only the cast cut it (or only the move): no pincer
     expect(ids(finished(2, [[0, [], { mobility: mob({ 3: [8, 8, 2] }) }]]))).not.toContain('pincer:0')
     expect(ids(finished(2, [[0, [], { mobility: mob({ 3: [8, 2, 2] }) }]]))).not.toContain('pincer:0')
@@ -201,10 +205,10 @@ describe('awards (skill, earned only)', () => {
     expect(ids(game(own), { ...T, walledMaxSize: 1 })).not.toContain('walledGarden:0')
   })
 
-  it('Muzzy’s real game (2026-10-03, 0 awards before D55) earns its 4: Walled garden by a rival’s wall, hedge ×2, comeback', () => {
+  it('Muzzy’s real game (2026-10-03, 0 awards before D55) earns its 5: Walled garden by a rival’s wall, hedge ×2, comeback, Pincer (12 → 9 → 5, since the halving rule)', () => {
     const real = JSON.parse(readFileSync('e2e/fixtures/muzzy-zero-awards.json', 'utf8')).state.game as GameState
     const got = earnedAwards(real)
-    expect(got.map((a) => `${a.id}:${a.holder}`).sort()).toEqual(['comeback:0', 'throughHedge:0', 'throughHedge:1', 'walledGarden:0'])
+    expect(got.map((a) => `${a.id}:${a.holder}`).sort()).toEqual(['comeback:0', 'pincer:0', 'throughHedge:0', 'throughHedge:1', 'walledGarden:0'])
     expect(got.find((a) => a.id === 'walledGarden')?.values.n).toBe(43)
   })
 

@@ -69,7 +69,7 @@ if (end && last) {
 const need: Record<string, string> = {
   'lockdown: moves taken from one rival glyphling': `≥ ${t.lockdownMinDrop}`,
   ['lockdown: …while leaving it ≤ ' + t.lockdownMaxAfter + ' (best drop that did)']: `≥ ${t.lockdownMinDrop}`,
-  'pincer: smaller of move-cut / cast-cut': `≥ ${t.pincerMinEach} each, ≥ ${t.pincerMinDrop} total`,
+  'pincer: smaller of move-cut / cast-cut': `≥ ${t.pincerMinEach} each, from ≥ ${t.pincerMinFrom}, ≤ ${t.pincerMaxLeft * 100}% left`,
   'closeCall: moves after escaping from 1': `≥ ${t.closeCallMinAfter} (and never tangled)`,
   'weedToss: Magic blocked by a 0-Magic cast': `≥ ${t.weedMinBlocked}`,
   'walledGarden: Magic made in a sealed pocket': `≥ ${t.walledMinMagic} (pocket ≤ ${t.walledMaxSize} hexes)`,

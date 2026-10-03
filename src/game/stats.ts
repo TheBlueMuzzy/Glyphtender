@@ -199,9 +199,10 @@ export function earnedAwards(game: GameState, tuning: EndTuning = endscreenFile)
         if (from - to >= t.lockdownMinDrop && to <= t.lockdownMaxAfter) {
           add('lockdown', seat, turn, from - to, { other: g.seat, from, to }, [g.seat])
         }
-        // Pincer: the move AND the cast each took moves from the same rival glyphling
-        if (from - mid >= t.pincerMinEach && mid - to >= t.pincerMinEach && from - to >= t.pincerMinDrop) {
-          add('pincer', seat, turn, from - to, { other: g.seat, from, mid, to }, [g.seat])
+        // Pincer: the move AND the cast each took moves from the same rival glyphling, and together they cut it to
+        // half or less (Muzzy, 2026-10-03: "reduced an opponent's movement options by half") — from real room only
+        if (from >= t.pincerMinFrom && from - mid >= t.pincerMinEach && mid - to >= t.pincerMinEach && to <= from * t.pincerMaxLeft) {
+          add('pincer', seat, turn, from - to, { other: g.seat, from, to }, [g.seat])
         }
       }
       // Close call: one of the mover's glyphlings had 1 move left (the danger cue) at the start of their turn, had

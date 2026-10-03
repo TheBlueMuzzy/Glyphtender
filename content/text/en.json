@@ -93,7 +93,7 @@
         },
         "pincer": {
           "title": "Pincer",
-          "reason": "Move, then cast: {other}'s glyphling {from} → {mid} → {to} moves"
+          "reason": "Your move and cast in one turn cut {other}'s glyphling from {from} moves to {to}"
         },
         "weedToss": {
           "title": "Weed toss",
