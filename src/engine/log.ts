@@ -5,7 +5,7 @@
 // sends an empty log until the game is over (party/views.ts).
 import { getBoard } from './boards'
 import { hexKey, neighbours } from './hex'
-import { sealedPockets, seedsFlownOver, turnMobility } from './insight'
+import { seedsFlownOver, turnMobility } from './insight'
 import { occupancy } from './moves'
 import type { GameLog, GameState, LogEnd, LogTangle, LogTurn, LogWord } from './types'
 
@@ -92,7 +92,6 @@ export function logTurn(state: GameState, tangled: number[], refreshed: number |
     mobility: turnMobility(state, turn.glyphlingId, turn.from, turn.target),
     castOver: seedsFlownOver(state, turn.seat, turn.to, turn.target),
     blocked: state.pendingLog?.blocked ?? null,
-    sealed: sealedPockets(state, turn.seat, turn.target),
   }
 }
 

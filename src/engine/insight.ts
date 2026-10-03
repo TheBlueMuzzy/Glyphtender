@@ -1,6 +1,6 @@
 // WHAT A TURN DID TO THE BOARD — the facts the skill awards are measured from (src/game/stats.ts; GDD §4 Awards).
 // Intent can't be read, so the awards measure the EFFECT of a turn: how many moves it took from a rival glyphling,
-// whether its cast sealed a pocket, whether it flew over the caster's own seeds, whether it took a spot a rival could
+// the garden a glyphling can walk in (reachArea — Walled garden), whether it flew over the caster's own seeds, whether it took a spot a rival could
 // have scored on (that one needs the word list: blockedSpot, turn.ts). Pure: reads a game, returns numbers.
 // logTurn (log.ts) writes them into the game log.
 // Every board here is rebuilt from the board AFTER the cast: take the new seed away = the board after the move;
@@ -72,21 +72,4 @@ export function reachArea(state: GameState, start: Hex): Set<string> {
     }
   }
   return seen
-}
-
-/**
- * Walled garden: the caster's glyphlings that THIS cast shut in a pocket of their own — before the cast a rival
- * glyphling stood in the same area (reachArea), after it no rival glyphling does. Only the cast's seed changed between
- * the two boards, so it's the caster's own shot that closed the cell (Muzzy). The pocket = the area's hexes.
- */
-export function sealedPockets(after: GameState, seat: number, target: Hex | null): { glyphling: number; hexes: string[] }[] {
-  if (!target) return []
-  const open = withoutSeed(after, target)
-  const rivalIn = (state: GameState, area: Set<string>) =>
-    state.glyphlings.some((g) => g.seat !== seat && area.has(hexKey(g.hex)))
-  return after.glyphlings.filter((g) => g.seat === seat).flatMap((g) => {
-    const now = reachArea(after, g.hex)
-    if (now.size < 2 || rivalIn(after, now) || !rivalIn(open, reachArea(open, g.hex))) return []
-    return [{ glyphling: g.id, hexes: [...now].sort() }]
-  })
 }

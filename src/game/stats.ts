@@ -5,6 +5,8 @@
 //   awardPoint(…)          where an award's star sits on the Story chart
 //   storyChart(game, …)    Magic over the rounds, one line per player, plus a Tangles step and moment markers
 // The words for all of it live in content/text/en.json → game.end; the knobs in content/tuning/endscreen.json.
+import { hexKey } from '../engine/hex'
+import { reachArea } from '../engine/insight'
 import { logIsComplete, logOf } from '../engine/log'
 import type { GameState, LogTurn, LogWord } from '../engine/types'
 import endscreenFile from '../../content/tuning/endscreen.json'
@@ -141,6 +143,36 @@ export interface Award {
 const keyOf = (h: { q: number; r: number }) => `${h.q},${h.r}`
 const ownerOfGlyphling = (game: GameState, id: number) => game.glyphlings.find((g) => g.id === id)?.seat ?? Math.floor(id / 2)
 
+/**
+ * Walled gardens, rebuilt from the log: after each turn, every glyphling's garden (engine/insight.ts reachArea) on
+ * that turn's board — the final seeds minus those cast later (a seed never moves or goes away) — with the glyphlings
+ * where the log's moves put them. A glyphling is walled in when no rival glyphling stands in its garden; WHOEVER
+ * built the wall (Muzzy, 2026-10-03: "you walled me in and I STILL crushed you"). Per glyphling: the first turn its
+ * walled garden is `maxSize` hexes or fewer, and that cell.
+ */
+export function walledCells(game: GameState, maxSize: number): { glyphling: number; seat: number; from: number; hexes: Set<string> }[] {
+  const turns = logOf(game).turns
+  const castOn = turns.map((t) => (t.target ? hexKey(t.target) : null))
+  const seeds = { ...game.seeds }
+  for (const key of castOn) if (key) delete seeds[key] // the board before the first turn
+  const where = new Map(game.glyphlings.map((g) => [g.id, turns.find((t) => t.glyphlingId === g.id)?.from ?? g.hex]))
+  const found = new Map<number, { glyphling: number; seat: number; from: number; hexes: Set<string> }>()
+  turns.forEach((turn, j) => {
+    const cast = castOn[j]
+    if (cast && game.seeds[cast]) seeds[cast] = game.seeds[cast]
+    where.set(turn.glyphlingId, turn.to)
+    const board = { ...game, seeds }
+    for (const g of game.glyphlings) {
+      if (found.has(g.id)) continue
+      const garden = reachArea(board, where.get(g.id)!)
+      if (garden.size > maxSize) continue
+      const rivalIn = game.glyphlings.some((o) => o.seat !== g.seat && garden.has(hexKey(where.get(o.id)!)))
+      if (!rivalIn) found.set(g.id, { glyphling: g.id, seat: g.seat, from: j, hexes: garden })
+    }
+  })
+  return [...found.values()]
+}
+
 /** Every award earned this game, best moment per player per award, in the carousel's order (awardOrder, then size). */
 export function earnedAwards(game: GameState, tuning: EndTuning = endscreenFile): Award[] {
   const log = logOf(game)
@@ -190,19 +222,6 @@ export function earnedAwards(game: GameState, tuning: EndTuning = endscreenFile)
       // (the cut kind: thrown to block AND to clear the hand — Muzzy: "to block someone so you can also intentionally refresh")
       else if (cut && refreshed) add('weedToss', seat, turn, cut.from - cut.to + bonus, { kind: 'cut', other: cut.seat, from: cut.from, to: cut.to, refreshed }, [cut.seat])
     }
-    // Walled garden: this cast shut the caster's glyphling in a pocket no rival glyphling can reach — then the Magic
-    // they made in there (this turn on: every turn of theirs that moved from and to hexes inside it)
-    for (const pocket of turn.sealed ?? []) {
-      if (pocket.hexes.length > t.walledMaxSize) continue // a cell, not half the garden cut off by chance
-      const inside = new Set(pocket.hexes)
-      let made = 0
-      for (let j = i; j < turns.length; j++) {
-        const later = turns[j]
-        if (later.seat !== seat || !inside.has(keyOf(later.to)) || (j > i && !inside.has(keyOf(later.from)))) continue
-        made += later.magic
-      }
-      if (made >= t.walledMinMagic) add('walledGarden', seat, turn, made, { n: made })
-    }
     // Through the hedge: a scoring cast that flew over the caster's own seeds
     const over = turn.castOver ?? 0
     if (over >= t.hedgeMinOver && turn.magic > 0) add('throughHedge', seat, turn, over * 100 + turn.magic, { over, n: turn.magic })
@@ -232,14 +251,29 @@ export function earnedAwards(game: GameState, tuning: EndTuning = endscreenFile)
     }
   })
 
+  // Walled garden: a glyphling walled into a small garden no rival glyphling can reach (whoever built the wall) —
+  // then the Magic its owner made in there, from the turn the garden was walledMaxSize hexes or fewer (Muzzy: "it got
+  // smaller and smaller, so it should have triggered when I got to 10 and tracked from there"): every turn of theirs
+  // that moved from and to hexes inside it
+  for (const cell of walledCells(game, t.walledMaxSize)) {
+    let made = 0
+    for (let j = cell.from; j < turns.length; j++) {
+      const later = turns[j]
+      if (later.seat !== cell.seat || !cell.hexes.has(keyOf(later.to)) || (j > cell.from && !cell.hexes.has(keyOf(later.from)))) continue
+      made += later.magic
+    }
+    if (made >= t.walledMinMagic) add('walledGarden', cell.seat, turns[cell.from], made, { n: made })
+  }
+
   // ── Momentum & ending ──
-  // Biggest comeback: the one turn that took the lead (alone) from furthest behind — once per game
+  // Biggest comeback: the one turn that took the lead (alone) from furthest behind — once per game, no minimum
+  // (Muzzy, 2026-10-03: look at every comeback and award the biggest)
   let comeback: { turn: LogTurn; behind: number } | null = null
   turns.forEach((turn, i) => {
     const was = totalsBefore(i)
     const best = (totals: number[]) => Math.max(...totals.filter((_, s) => s !== turn.seat))
     const behind = best(was) - was[turn.seat]
-    if (behind >= t.comebackMinDeficit && turn.totalsAfter[turn.seat] > best(turn.totalsAfter) && behind > (comeback?.behind ?? 0)) comeback = { turn, behind }
+    if (behind > 0 && turn.totalsAfter[turn.seat] > best(turn.totalsAfter) && behind > (comeback?.behind ?? 0)) comeback = { turn, behind }
   })
   const back = comeback as { turn: LogTurn; behind: number } | null
   if (back) add('comeback', back.turn.seat, back.turn, back.behind, { n: back.behind, gain: back.turn.magic })

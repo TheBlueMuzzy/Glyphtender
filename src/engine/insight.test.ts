@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { applyAction } from './engine'
 import { hexKey } from './hex'
-import { reachArea, sealedPockets, seedsFlownOver, turnMobility } from './insight'
+import { reachArea, seedsFlownOver, turnMobility } from './insight'
 import { logOf } from './log'
 import { blockedSpot } from './turn'
-import { hexAt, position, wordsOf, type SeedPlan } from './testkit'
+import { hexAt, position, wordsOf } from './testkit'
 
 const words = wordsOf('CAT', 'AT', 'TO')
 const turn = (glyphling: number, to: string, target: string | null) =>
@@ -55,23 +55,9 @@ describe('what a turn did to the board (insight.ts → the game log)', () => {
     hands: [['T'], []], bag: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
   })
 
-  it('walled garden: the cast that shuts the caster’s glyphling in a pocket no rival glyphling can reach', () => {
-    const after = applyAction(corner, turn(0, 'C1-2', 'C1-3'), words)
-    expect(sealedPockets(after, 0, hexAt('C1-3'))).toEqual([{ glyphling: 0, hexes: [hexKey(hexAt('C1-1')), hexKey(hexAt('C1-2'))].sort() }])
-    const done = after.phase === 'refresh' ? applyAction(after, { type: 'refresh', setAside: [] }, words) : after
-    expect(logOf(done).turns[0].sealed).toHaveLength(1)
-  })
-
-  it('no pocket when the cast didn’t close it (a rival can still get in, or it was closed already)', () => {
-    // the cast lands elsewhere: the corner is still open
-    const open = applyAction(corner, turn(0, 'C1-2', 'C1-4'), words)
-    expect(sealedPockets(open, 0, hexAt('C1-4'))).toEqual([])
-    // a rival's glyphling inside the pocket: not a walled garden
-    const shared = position({ ...cornerPlan(), glyphlings: { 0: 'C1-1', 1: 'C6-5', 2: 'C1-2', 3: 'C11-4' } })
-    expect(sealedPockets(shared, 0, hexAt('C1-3'))).toEqual([])
-    // no cast, no seal
-    expect(sealedPockets(position({ ...cornerPlan(), glyphlings: { 0: 'C1-1', 1: 'C6-5', 2: 'C11-1', 3: 'C11-4' } }), 0, null)).toEqual([])
-    // seeds are walls, glyphlings aren't: the area walks round glyphlings
+  it('a garden: every hex a glyphling could ever walk to — seeds are walls, glyphlings aren’t (Walled garden, stats.ts)', () => {
+    const walled = applyAction(corner, turn(0, 'C1-2', 'C1-3'), words)
+    expect([...reachArea(walled, hexAt('C1-2'))].sort()).toEqual([hexKey(hexAt('C1-1')), hexKey(hexAt('C1-2'))].sort())
     expect(reachArea(corner, hexAt('C11-1')).has(hexKey(hexAt('C11-4')))).toBe(true)
   })
 })
@@ -102,7 +88,3 @@ describe('a spot a rival could have scored on (turn.ts blockedSpot → the log�
     expect(applyAction(after, { type: 'refresh', setAside: [] }, words).pendingLog).toBeNull() // …then into the log
   })
 })
-
-function cornerPlan(): { seeds: SeedPlan[] } {
-  return { seeds: [{ 'C2-2': 'A', 'C2-3': 'B', 'C2-4': 'C', 'C1-3': 'D' }, {}] }
-}

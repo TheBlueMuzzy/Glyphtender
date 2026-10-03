@@ -88,3 +88,26 @@ Awards per game at these thresholds: random 1.0 · greedy 1.8 (2,400 games). Per
 - **The ending awards ride on how games end.** Sim bots end almost every game by self-tangling, so Trickster's Victory and Called it are ~25–33% here; humans and the beta AI (who won't walk into dead ends blindly) should see them less — and more often deliberately.
 - Next: re-run with the beta AI personalities playing each other (ROADMAP → Later: "Re-tune award thresholds with AI personalities (AI-vs-AI)") and aim the positioning awards at "most games have one, nobody gets everything".
 
+## 2026-10-03 — awards re-tuned from Muzzy's real game (`npm run sim:awards`, 2,400 games)
+> Muzzy's first full 2p game earned 0 awards; `npx tsx scripts/award-near-misses.ts e2e/fixtures/muzzy-zero-awards.json` showed near-misses everywhere and a Walled garden bug (D55). Changes: Walled garden counts any wall and follows the garden as it shrinks; hedge ≥ 3 · close call ≥ 4 · power play ≥ 4 · comeback no minimum.
+
+| award | random | greedy |
+|---|---|---|
+| lockdown | 3.2% | 7.3% |
+| pincer | 8.6% | 8.8% |
+| weedToss | 9.4% | 0.3% |
+| walledGarden | 14.3% | 32.3% |
+| throughHedge | 22.4% | 46.1% |
+| completeTangle | 1.5% | 2.3% |
+| powerPlay | 19.3% | 44.6% |
+| longWord | 0.0% | 6.5% |
+| hijack | 0.8% | 24.3% |
+| bridge | 0.3% | 1.9% |
+| comeback | 77.8% | 92.3% |
+| trickster | 27.6% | 31.8% |
+| calledIt | 24.7% | 32.7% |
+| closeCall | 11.8% | 8.1% |
+
+Awards per game: **random 2.31 · greedy 3.76** (was 1.0 · 1.8). Muzzy's game: 0 → 4 (Walled garden 43 Magic in a 4-hex garden, Through the hedge ×2, Biggest comeback from 9 behind).
+- Biggest comeback is now near-universal by design (Muzzy: always award the biggest comeback).
+- Walled garden is earned by bots more often now (any wall counts) — Muzzy's call; re-check with the beta AI.

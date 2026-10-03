@@ -91,7 +91,7 @@ flowchart LR
   F19 --> F23[✅ F23 Own Cloudflare]
 ```
 
-## v0.5 — Polish: the ending, the Q, the words  🔨 sprint 7 (autonomous, 2026-10-01)
+## v0.5 — Polish: the ending, the Q, the words  ✅ approved 2026-10-03 (sprint 7 + playtest rounds) — ready to /deliver as v0.3.0
 Goal: the end of a game is worth looking at, every word is readable, the Q is honest, 4 players work everywhere, and any gated screen can be previewed from the Dev Kit.
 - ✅ F24 🎮 Q is a plain Q; bag U4→U5, E16→E15 (stays 120) — must:alpha · needs: F04, F05 · sprint 7
 - ✅ F25 ✨ Word spotlight: after a cast, each scored word lights up one at a time, looping until play moves on — must:alpha · needs: F09 · sprint 7

@@ -135,8 +135,6 @@ export interface LogTurn {
   castOver?: number
   /** The best word a rival could have grown on the cast's hex next turn, had it stayed empty (Weed toss). */
   blocked?: LogBlock | null
-  /** The caster's glyphlings this cast shut in a pocket no rival glyphling can reach — with its hexes (Walled garden). */
-  sealed?: { glyphling: number; hexes: string[] }[]
 }
 
 /** One tangled glyphling at the end, and the bonus it gave each seat. */

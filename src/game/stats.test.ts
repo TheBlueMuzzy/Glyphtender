@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { applyAction } from '../engine/engine'
 import { randomAction } from '../engine/sim'
@@ -6,6 +7,7 @@ import { winnersOf } from '../engine/tangle'
 import type { GameState, LogTurn } from '../engine/types'
 import endscreen from '../../content/tuning/endscreen.json'
 import { logIsComplete } from '../engine/log'
+import { hexAt, position } from '../engine/testkit'
 import { awardPoint, earnedAwards, scorecards, standings, storyChart } from './stats'
 
 // ─── Hand-built logs ───
@@ -113,7 +115,7 @@ describe('awards (skill, earned only)', () => {
   const T = {
     ...endscreen, lockdownMinDrop: 5, lockdownMaxAfter: 2, pincerMinEach: 2, pincerMinDrop: 5, weedMaxMagic: 0, weedMinBlocked: 6,
     weedMinCut: 4, walledMinMagic: 12, walledMaxSize: 40, hedgeMinOver: 2, powerPlayMin: 3, longWordMinSmall: 6, longWordMinLarge: 6,
-    hijackMinFrom: 3, bridgeMinSide: 2, comebackMinDeficit: 8, closeCallMinAfter: 4, tricksterMinBehind: 1, calledItMinLead: 1,
+    hijackMinFrom: 3, bridgeMinSide: 2, closeCallMinAfter: 4, tricksterMinBehind: 1, calledItMinLead: 1,
   }
   /** Mobility for 2 players (4 glyphlings): everyone has 8 moves, except the changes asked for (id → [before, afterMove, afterCast]). */
   const mob = (changes: Record<number, [number, number, number]> = {}, count = 4) => {
@@ -162,22 +164,48 @@ describe('awards (skill, earned only)', () => {
     expect(ids(finished(2, [[0, [], { mobility: mob(), blocked: block, target: null, letter: null }]]))).not.toContain('weedToss:0')
   })
 
-  it('Walled garden: your own cast sealed the pocket, then you made Magic inside it', () => {
-    const pocket = ['0,1', '0,2', '0,3']
-    const inside = (from: string, to: string) => ({ from: { q: 0, r: +from }, to: { q: 0, r: +to } })
-    const plan: TurnPlan[] = [
-      [0, ['AT:00'], { ...inside('1', '2'), sealed: [{ glyphling: 0, hexes: pocket }] }], // 4
-      [1, ['TO:11']],
-      [0, ['GARDENS:0000000'], inside('2', '3')], // 14 inside
-      [1, ['TO:11']],
-      [0, ['CATS:0000'], inside('3', '1')], //  8 inside
+  it('Walled garden: walled into a small garden no rival can reach — by anyone — then Magic made inside it', () => {
+    // The small garden's C1-1 / C1-2 corner: seeds on C2-2, C2-3, C2-4, and the wall's last seed cast onto C1-3
+    const board = position({
+      glyphlings: { 0: 'C1-1', 1: 'C6-5', 2: 'C11-1', 3: 'C11-4' },
+      seeds: [{ 'C2-2': 'A', 'C2-3': 'B', 'C2-4': 'C', 'C1-3': 'D' }, {}],
+    })
+    const at = (label: string) => hexAt(label)
+    const blue = (from: string, to: string, words: string[], target: string | null = null): TurnPlan =>
+      [0, words, { glyphlingId: 0, from: at(from), to: at(to), target: target ? at(target) : null }]
+    const yellow = (target: string | null = null): TurnPlan =>
+      [1, ['TO:11'], { glyphlingId: 2, from: at('C11-1'), to: at('C11-1'), target: target ? at(target) : null }]
+    const game = (plan: TurnPlan[], glyphlings = board.glyphlings) => ({ ...finished(2, plan), seeds: board.seeds, glyphlings })
+    const tight = { ...T, walledMaxSize: 10 }
+    // Blue's own cast closes the corner (C1-3), then Blue scores in there: 4 + 14 + 8
+    const own: TurnPlan[] = [
+      blue('C1-1', 'C1-2', ['AT:00'], 'C1-3'), yellow(),
+      blue('C1-2', 'C1-1', ['GARDENS:0000000']), yellow(),
+      blue('C1-1', 'C1-2', ['CATS:0000']),
     ]
-    expect(one(finished(2, plan), 'walledGarden')).toMatchObject({ holder: 0, moment: 1, values: { n: 26 } })
-    // Magic made OUTSIDE the pocket doesn't count
-    const out = plan.map((p, i) => (i >= 2 && p[0] === 0 ? [0, p[1], { from: { q: 5, r: 5 }, to: { q: 5, r: 6 } }] : p) as TurnPlan)
-    expect(ids(finished(2, out))).not.toContain('walledGarden:0')
-    // no pocket sealed by your cast (an old log, or a pocket you were already in): nothing
-    expect(ids(finished(2, plan.map((p) => [p[0], p[1], { ...p[2], sealed: undefined }] as TurnPlan)))).not.toContain('walledGarden:0')
+    expect(earnedAwards(game(own), tight).find((a) => a.id === 'walledGarden')).toMatchObject({ holder: 0, moment: 1, values: { n: 26 } })
+    // Yellow's cast builds the wall round Blue: still Blue's Walled garden (Muzzy: "you walled me in and I STILL crushed
+    // you") — counted from that turn on: 14 + 8
+    const theirs: TurnPlan[] = [
+      blue('C1-1', 'C1-2', ['AT:00']), yellow('C1-3'),
+      blue('C1-2', 'C1-1', ['GARDENS:0000000']), yellow(),
+      blue('C1-1', 'C1-2', ['CATS:0000']),
+    ]
+    expect(earnedAwards(game(theirs), tight).find((a) => a.id === 'walledGarden')).toMatchObject({ holder: 0, moment: 2, values: { n: 22 } })
+    // a rival glyphling walled in WITH it: not a walled garden
+    const shared = board.glyphlings.map((g) => (g.id === 3 ? { ...g, hex: at('C1-1') } : g))
+    expect(ids(game(own, shared), tight)).not.toContain('walledGarden:0')
+    // Magic made OUTSIDE the garden doesn't count; a garden bigger than walledMaxSize doesn't either
+    const outside = own.map((p, i) => (i >= 2 && p[0] === 0 ? blue('C6-5', 'C6-6', p[1]) : p))
+    expect(ids(game(outside), tight)).not.toContain('walledGarden:0')
+    expect(ids(game(own), { ...T, walledMaxSize: 1 })).not.toContain('walledGarden:0')
+  })
+
+  it('Muzzy’s real game (2026-10-03, 0 awards before D55) earns its 4: Walled garden by a rival’s wall, hedge ×2, comeback', () => {
+    const real = JSON.parse(readFileSync('e2e/fixtures/muzzy-zero-awards.json', 'utf8')).state.game as GameState
+    const got = earnedAwards(real)
+    expect(got.map((a) => `${a.id}:${a.holder}`).sort()).toEqual(['comeback:0', 'throughHedge:0', 'throughHedge:1', 'walledGarden:0'])
+    expect(got.find((a) => a.id === 'walledGarden')?.values.n).toBe(43)
   })
 
   it('Through the hedge: a scoring cast over 2+ of your own seeds', () => {
