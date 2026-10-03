@@ -13,7 +13,7 @@
 import text from '../../content/text/en.json'
 import { logIsComplete } from '../engine/log'
 import type { GameState } from '../engine/types'
-import type { CSSProperties, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Badge, Row, Stack, Text, fill, ordinal } from '../ui/kit'
 import { colourOf, glyphlingArt } from './art'
 import type { Scorecard, Standing } from './stats'
@@ -79,10 +79,12 @@ function PlayerResult({ standing, card, size, colours, tuning, name, me }: {
   const winner = standing.place === 1
   return (
     <div className="game-end-player" data-size={size} data-winner={winner || undefined} data-seat={standing.seat}>
-      <span className="game-end-art-pin" style={{ '--ribbon-size': tuning.ribbonSize } as CSSProperties}>
-        <img className="game-end-art" src={glyphlingArt(standing.seat)} alt="" data-size={size} />
-        <Ribbon place={standing.place} colour={ribbonColour(tuning, standing.place)} />
-      </span>
+      {/* the glyphling with its place ribbon drawn on its corner — one picture, the size the glyphling always was */}
+      <svg className="game-end-art" data-size={size} viewBox="0 0 100 100" overflow="visible" role="img"
+        aria-label={fill(w.placeLabel, { place: ordinal(standing.place) })}>
+        <image href={glyphlingArt(standing.seat)} width={100} height={100} preserveAspectRatio="xMidYMid meet" />
+        <Ribbon place={standing.place} colour={ribbonColour(tuning, standing.place)} size={tuning.ribbonSize} />
+      </svg>
       <div className="game-end-player-text">
         <Row gap="xs" justify="center" className="game-end-name">
           <Text kind={size === 'l' ? 'heading' : 'label'}>{name}</Text>
@@ -115,15 +117,16 @@ function SplitBar({ words, tangles, colour, tangleColour }: { words: number; tan
 const ribbonColour = (tuning: EndTuning, place: number) =>
   [tuning.ribbon1, tuning.ribbon2, tuning.ribbon3, tuning.ribbon4][Math.min(place, 4) - 1]
 
-/** A place ribbon (rosette): two tails under a round badge with the place number, pinned on the glyphling's corner. */
-function Ribbon({ place, colour }: { place: number; colour: string }) {
+/** A place ribbon (rosette): two tails under a round badge with the place number, on the glyphling picture's top-left
+ *  corner (drawn 40 × 48; `size` = its width as a share of the picture's). */
+function Ribbon({ place, colour, size }: { place: number; colour: string; size: number }) {
   return (
-    <svg className="game-end-ribbon" viewBox="0 0 40 48" role="img" aria-label={fill(w.placeLabel, { place: ordinal(place) })} data-place={place}>
+    <g className="game-end-ribbon" transform={`translate(-2 -6) scale(${(size * 100) / 40})`} data-place={place}>
       <path d="M12 26 L6 46 L13 42 L17 47 L20 28 Z M28 26 L34 46 L27 42 L23 47 L20 28 Z" fill={colour} stroke="var(--surface)" strokeWidth={1.5} strokeLinejoin="round" />
       <path d="M12 26 L6 46 L13 42 L17 47 L20 28 Z M28 26 L34 46 L27 42 L23 47 L20 28 Z" fill="black" opacity={0.18} />
       <circle cx={20} cy={18} r={16} fill={colour} stroke="var(--surface)" strokeWidth={2} />
       <circle cx={20} cy={18} r={12} fill="none" stroke="black" strokeOpacity={0.22} strokeWidth={1.5} strokeDasharray="2 2" />
-      <text x={20} y={18} dy="0.36em" textAnchor="middle" fontSize={17} fontWeight={800} fill="#1b1b24">{place}</text>
-    </svg>
+      <text x={20} y={18} dy="0.36em" textAnchor="middle" fontSize={17} fontWeight={800} fill="var(--surface)">{place}</text>
+    </g>
   )
 }

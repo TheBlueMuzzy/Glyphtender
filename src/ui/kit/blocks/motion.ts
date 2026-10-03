@@ -39,7 +39,7 @@ export function useCountUp(value: number) {
     }
     const start = performance.now()
     let frame = requestAnimationFrame(function step(now) {
-      const progress = Math.min(1, (now - start) / duration)
+      const progress = Math.min(1, Math.max(0, (now - start) / duration)) // (a frame can be stamped just before start: never count below `from`)
       shownNow.current = Math.round(from + (value - from) * progress)
       setShown(shownNow.current)
       if (progress < 1) frame = requestAnimationFrame(step)

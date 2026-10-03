@@ -125,7 +125,7 @@ export interface LogTurn {
   newlyTangled: number[]
   freed: number[]
   /** For each glyphling in newlyTangled, in the same order: the seat that COMPLETED the tangle — every hex next to
-   *  it held that seat's seeds and nothing else (no other seat's seed, no glyphling; the board edge is ignored),
+   *  it held that seat's pieces and nothing else — its seeds or its own glyphlings (Muzzy, 2026-10-02); no other seat's seed or glyphling; the board edge is ignored,
    *  and the glyphling isn't theirs — or null. Missing in logs written before complete tangles were recorded. */
   completeTangles?: { glyphling: number; by: number | null }[]
   // ── The skill awards' facts (insight.ts; missing in logs written before 2026-10-02 → those awards can't be earned) ──

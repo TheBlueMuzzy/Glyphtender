@@ -114,6 +114,9 @@
   .game-pulse { transform-box: fill-box; transform-origin: center; }
   /* a "+3" tangle bonus pops from its own middle (RevealMarks animates the scale) */
   .game-pop { transform-box: fill-box; transform-origin: center; }
+  /* a tangle bonus "+3" flying from its piece into its owner's total (RevealMarks.tsx): a layer over the whole game screen */
+  .game-reveal-flight { position: fixed; z-index: 5; pointer-events: none; white-space: nowrap; line-height: 1; opacity: 0;
+    font-family: var(--font-numbers); font-weight: 800; paint-order: stroke; -webkit-text-stroke: 0.18em var(--pop-outline); }
 
   .game-panel { grid-area: panel; display: flex; flex-direction: column; align-items: center; gap: var(--gap-s); min-block-size: 0; }
   .game[data-layout="side"] .game-panel { justify-content: center; }
@@ -132,7 +135,8 @@
      as wide as the widest. One per line, never side by side: a chip never shrinks, so two in a row ran into each
      other (B016). Skip under them is a normal-size button (ActionBar.tsx). */
   .game-reveal { display: grid; grid-template-columns: max-content; justify-content: center; gap: var(--gap-xs); max-inline-size: 100%; }
-  .game-reveal > .kit-player-chip { inline-size: auto; }
+  .game-reveal > [data-reveal-seat] { display: grid; }
+  .game-reveal > [data-reveal-seat] > .kit-player-chip { inline-size: auto; }
   .game[data-phase="over"] .game-panel { justify-content: center; }
 
   /* After the reveal (data-ended): the finished garden, the chips, and the end bar along the whole bottom
@@ -275,9 +279,8 @@
   .game-end-art[data-size="l"] { inline-size: 4.44em; block-size: 4.44em; }
   @media (max-height: 32rem) { .game-end-art:not([data-size="xs"]) { inline-size: 2.75rem; block-size: 2.75rem; } }
   .game-end-name { min-inline-size: 0; max-inline-size: 100%; }
-  /* The place ribbon, pinned on the glyphling's top-left corner (endscreen.json ribbonSize = its share of the picture) */
-  .game-end-art-pin { position: relative; display: block; flex: none; }
-  .game-end-ribbon { position: absolute; inset-block-start: -6%; inset-inline-start: -2%; inline-size: calc(var(--ribbon-size, 0.45) * 100%); block-size: auto; filter: drop-shadow(0 0.08em 0.12em rgb(0 0 0 / 0.45)); }
+  /* The place ribbon: drawn inside the glyphling's picture (EndResults.tsx), so it never moves the layout */
+  .game-end-ribbon { filter: var(--glow); }
   .game-end-split { display: block; inline-size: 100%; max-inline-size: 10.67em; block-size: 0.44em; }
   /* the highlights: a carousel, one award at a time (EndHighlights.tsx) */
   .game-end-highlights { min-inline-size: 0; inline-size: 100%; max-inline-size: 40.89em; margin-inline: auto; }
@@ -301,7 +304,7 @@
   .game-end-chart-svg { display: block; font-family: var(--font-body); }
   .game-end-chart-svg text { font-family: var(--font-numbers); }
   /* drag sideways = move the scrub line; up/down still scrolls the page */
-  .game-end-chart-svg { touch-action: pan-y; cursor: ew-resize; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; border-radius: var(--radius-s, 0.5rem); }
+  .game-end-chart-svg { touch-action: pan-y; cursor: ew-resize; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; border-radius: var(--radius-control); }
   .game-end-chart-svg:focus-visible { box-shadow: 0 0 0 0.15rem var(--focus); }
   /* The Highlights star: the carousel's award's star pops in as the carousel moves (reduce motion: no pop) */
   .game-end-star-shape { animation: game-end-star-pop var(--motion-normal) var(--ease) backwards; filter: drop-shadow(0 0 0.2rem var(--surface)); }

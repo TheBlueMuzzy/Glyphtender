@@ -194,17 +194,18 @@ export function PlayerSeats({ players, activeId }: { players: Seat[]; activeId?:
 //         side): ONE line — name, badge and detail side by side — with a smaller avatar.
 //   showName={false}: the name is only read out.
 //   avatar: a picture; avatar={false} hides it — with icon, that makes a goal/target chip.
-// The score counts up when it rises (and floats up "+N"); with reduce motion on it just changes.
+// The score counts up when it rises (and floats up "+N" — floatUps={false} when the game already flies the points
+// in itself); with reduce motion on it just changes.
 // Like every HUD piece it never catches taps: the game underneath gets them.
 export const playerChipWords = { score: '{n} points' }
 export type PlayerChipProps = {
   name: string; showName?: boolean; color?: string; avatar?: string | false; icon?: ReactNode
   score?: number; scoreIcon?: ReactNode; detail?: ReactNode; badge?: ReactNode
-  active?: boolean; dim?: boolean; size?: 'xs' | 's' | 'm'; words?: Partial<typeof playerChipWords>
+  active?: boolean; dim?: boolean; size?: 'xs' | 's' | 'm'; floatUps?: boolean; words?: Partial<typeof playerChipWords>
 }
 export function PlayerChip({
   name, showName = true, color, avatar, icon, score, scoreIcon = '★', detail, badge,
-  active, dim, size = 'm', words,
+  active, dim, size = 'm', floatUps = true, words,
 }: PlayerChipProps) {
   const w = { ...playerChipWords, ...words }
   const shownScore = useCountUp(score ?? 0)
@@ -232,7 +233,7 @@ export function PlayerChip({
         <span className="kit-player-chip-score" role="img" aria-label={fill(w.score, { n: score })}>
           <span className="kit-player-chip-star" aria-hidden="true">{scoreIcon}</span>
           <span className="kit-float-anchor" aria-hidden="true">
-            <Text kind={size === 'm' ? 'heading' : 'label'}>{shownScore}</Text>{floats}
+            <Text kind={size === 'm' ? 'heading' : 'label'}>{shownScore}</Text>{floatUps && floats}
           </span>
         </span>
       )}
